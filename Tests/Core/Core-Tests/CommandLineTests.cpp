@@ -18,226 +18,226 @@ static bool InitializeFromLine(const CHAR_T* Line)
 // Real CVar names taken from across the engine, covering every name shape currently in use.
 static const CHAR_T* GNameCorpus[] =
 {
-    "RHI.Type",
-    "RHI.EnableDebugLayer",
-    "RHI.EnableValidation",
-    "RHI.ShaderCompiler.VerboseLogging",
-    "TaskGraph.EnableRHIThread",
-    "VulkanRHI.MaxDefragMovesPerFrame",
-    "D3D12RHI.ResidencyManager.BudgetPercentage",
-    "Renderer.SSAO.Radius",
-    "Console.DumpCVars",
-    "Echo",
-    "Some_Underscored_Name",
-    "Mixed.Case_With123.Digits456",
+    TEXT("RHI.Type"),
+    TEXT("RHI.EnableDebugLayer"),
+    TEXT("RHI.EnableValidation"),
+    TEXT("RHI.ShaderCompiler.VerboseLogging"),
+    TEXT("TaskGraph.EnableRHIThread"),
+    TEXT("VulkanRHI.MaxDefragMovesPerFrame"),
+    TEXT("D3D12RHI.ResidencyManager.BudgetPercentage"),
+    TEXT("Renderer.SSAO.Radius"),
+    TEXT("Console.DumpCVars"),
+    TEXT("Echo"),
+    TEXT("Some_Underscored_Name"),
+    TEXT("Mixed.Case_With123.Digits456"),
 };
 
 bool CommandLine_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Dotted names survive tokenization");
+    TEST_SECTION(TEXT("Dotted names survive tokenization"));
     {
-        InitializeFromLine("-RHI.Type=Vulkan");
+        InitializeFromLine(TEXT("-RHI.Type=Vulkan"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
-        TEST_EXPECT(Value.Equals("Vulkan"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.Type"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Vulkan")));
     }
 
-    TEST_SECTION("Multi-dotted and underscored names");
+    TEST_SECTION(TEXT("Multi-dotted and underscored names"));
     {
-        InitializeFromLine("-RHI.ShaderCompiler.VerboseLogging=true -Some_Underscored_Name=7");
+        InitializeFromLine(TEXT("-RHI.ShaderCompiler.VerboseLogging=true -Some_Underscored_Name=7"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("RHI.ShaderCompiler.VerboseLogging", Value));
-        TEST_EXPECT(Value.Equals("true"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.ShaderCompiler.VerboseLogging"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("true")));
 
-        TEST_EXPECT(CommandLine::FindOption("Some_Underscored_Name", Value));
-        TEST_EXPECT(Value.Equals("7"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("Some_Underscored_Name"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("7")));
     }
 
-    TEST_SECTION("Value keeps its first character");
+    TEST_SECTION(TEXT("Value keeps its first character"));
     {
-        InitializeFromLine("-A.B=Vulkan -C.D=1");
+        InitializeFromLine(TEXT("-A.B=Vulkan -C.D=1"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("A.B", Value));
-        TEST_EXPECT(Value.Equals("Vulkan"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Vulkan")));
 
-        TEST_EXPECT(CommandLine::FindOption("C.D", Value));
-        TEST_EXPECT(Value.Equals("1"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("C.D"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("1")));
     }
 
-    TEST_SECTION("Floats, negatives and paths are not truncated");
+    TEST_SECTION(TEXT("Floats, negatives and paths are not truncated"));
     {
-        InitializeFromLine("-A.B=1.5");
+        InitializeFromLine(TEXT("-A.B=1.5"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("A.B", Value));
-        TEST_EXPECT(Value.Equals("1.5"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("1.5")));
 
-        InitializeFromLine("-A.B=-0.5");
-        TEST_EXPECT(CommandLine::FindOption("A.B", Value));
-        TEST_EXPECT(Value.Equals("-0.5"));
+        InitializeFromLine(TEXT("-A.B=-0.5"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("-0.5")));
 
-        InitializeFromLine("-Log.File=C:/foo/bar.txt");
-        TEST_EXPECT(CommandLine::FindOption("Log.File", Value));
-        TEST_EXPECT(Value.Equals("C:/foo/bar.txt"));
+        InitializeFromLine(TEXT("-Log.File=C:/foo/bar.txt"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("Log.File"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("C:/foo/bar.txt")));
     }
 
-    TEST_SECTION("Quoted values may contain spaces");
+    TEST_SECTION(TEXT("Quoted values may contain spaces"));
     {
-        InitializeFromLine("-A.B=\"Hello World\" -C.D=2");
+        InitializeFromLine(TEXT("-A.B=\"Hello World\" -C.D=2"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("A.B", Value));
-        TEST_EXPECT(Value.Equals("Hello World"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Hello World")));
 
-        TEST_EXPECT(CommandLine::FindOption("C.D", Value));
-        TEST_EXPECT(Value.Equals("2"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("C.D"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("2")));
     }
 
-    TEST_SECTION("Several options on one line");
+    TEST_SECTION(TEXT("Several options on one line"));
     {
-        InitializeFromLine("-RHI.Type=Vulkan -RHI.EnableDebugLayer=true -Foo.Bar=3");
+        InitializeFromLine(TEXT("-RHI.Type=Vulkan -RHI.EnableDebugLayer=true -Foo.Bar=3"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
-        TEST_EXPECT(Value.Equals("Vulkan"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.Type"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Vulkan")));
 
-        TEST_EXPECT(CommandLine::FindOption("RHI.EnableDebugLayer", Value));
-        TEST_EXPECT(Value.Equals("true"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.EnableDebugLayer"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("true")));
 
-        TEST_EXPECT(CommandLine::FindOption("Foo.Bar", Value));
-        TEST_EXPECT(Value.Equals("3"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("Foo.Bar"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("3")));
     }
 
-    TEST_SECTION("A dash inside a value does not start a new option");
+    TEST_SECTION(TEXT("A dash inside a value does not start a new option"));
     {
-        InitializeFromLine("-A.B=x-y -C.D=2");
+        InitializeFromLine(TEXT("-A.B=x-y -C.D=2"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("A.B", Value));
-        TEST_EXPECT(Value.Equals("x-y"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("x-y")));
 
-        TEST_EXPECT(CommandLine::FindOption("C.D", Value));
-        TEST_EXPECT(Value.Equals("2"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("C.D"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("2")));
 
-        TEST_EXPECT(!CommandLine::FindOption("y"));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("y")));
     }
 
-    TEST_SECTION("Matching is by whole token, not substring");
+    TEST_SECTION(TEXT("Matching is by whole token, not substring"));
     {
-        InitializeFromLine("-RHI.TypeExtra=1");
-        TEST_EXPECT(!CommandLine::FindOption("RHI.Type"));
+        InitializeFromLine(TEXT("-RHI.TypeExtra=1"));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("RHI.Type")));
 
         // A partial hit must not stop the scan from reaching the real option
-        InitializeFromLine("-RHI.TypeExtra=1 -RHI.Type=Vulkan");
+        InitializeFromLine(TEXT("-RHI.TypeExtra=1 -RHI.Type=Vulkan"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
-        TEST_EXPECT(Value.Equals("Vulkan"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.Type"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Vulkan")));
 
         // A name that only appears as a suffix of another option is not a match
-        InitializeFromLine("-Prefixed.RHI.Type=1");
-        TEST_EXPECT(!CommandLine::FindOption("RHI.Type"));
+        InitializeFromLine(TEXT("-Prefixed.RHI.Type=1"));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("RHI.Type")));
     }
 
-    TEST_SECTION("Matching is case-insensitive");
+    TEST_SECTION(TEXT("Matching is case-insensitive"));
     {
-        InitializeFromLine("-RHI.Type=Vulkan");
+        InitializeFromLine(TEXT("-RHI.Type=Vulkan"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("rhi.type", Value));
-        TEST_EXPECT(Value.Equals("Vulkan"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("rhi.type"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Vulkan")));
     }
 
-    TEST_SECTION("A bare switch is found with an empty value");
+    TEST_SECTION(TEXT("A bare switch is found with an empty value"));
     {
-        InitializeFromLine("-RHI.EnableDebugLayer -RHI.Type=Vulkan");
+        InitializeFromLine(TEXT("-RHI.EnableDebugLayer -RHI.Type=Vulkan"));
 
-        TEST_EXPECT(CommandLine::FindOption("RHI.EnableDebugLayer"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.EnableDebugLayer")));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("RHI.EnableDebugLayer", Value));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.EnableDebugLayer"), Value));
         TEST_EXPECT(Value.IsEmpty());
 
         // The switch must not swallow the option that follows it
-        TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
-        TEST_EXPECT(Value.Equals("Vulkan"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.Type"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Vulkan")));
     }
 
-    TEST_SECTION("A bare switch at the very end of the line");
+    TEST_SECTION(TEXT("A bare switch at the very end of the line"));
     {
-        InitializeFromLine("-RHI.EnableValidation");
+        InitializeFromLine(TEXT("-RHI.EnableValidation"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("RHI.EnableValidation", Value));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.EnableValidation"), Value));
         TEST_EXPECT(Value.IsEmpty());
     }
 
-    TEST_SECTION("A missing option leaves the output untouched");
+    TEST_SECTION(TEXT("A missing option leaves the output untouched"));
     {
-        InitializeFromLine("-RHI.Type=Vulkan");
+        InitializeFromLine(TEXT("-RHI.Type=Vulkan"));
 
-        FStringView Value("sentinel");
-        TEST_EXPECT(!CommandLine::FindOption("Does.Not.Exist", Value));
-        TEST_EXPECT(Value.Equals("sentinel"));
+        FStringView Value(TEXT("sentinel"));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("Does.Not.Exist"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("sentinel")));
     }
 
-    TEST_SECTION("Argv-style arguments");
+    TEST_SECTION(TEXT("Argv-style arguments"));
     {
-        const CHAR_T* Args[] = { "-RHI.Type=Vulkan", "-RHI.EnableDebugLayer=true" };
+        const CHAR_T* Args[] = { TEXT("-RHI.Type=Vulkan"), TEXT("-RHI.EnableDebugLayer=true") };
         TEST_EXPECT(CommandLine::Initialize(Args, 2));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("RHI.Type", Value));
-        TEST_EXPECT(Value.Equals("Vulkan"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.Type"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Vulkan")));
 
-        TEST_EXPECT(CommandLine::FindOption("RHI.EnableDebugLayer", Value));
-        TEST_EXPECT(Value.Equals("true"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("RHI.EnableDebugLayer"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("true")));
 
         // Arguments must be separated in the raw copy, not run together
-        TEST_EXPECT(FStringView(CommandLine::GetOriginal()).Equals("-RHI.Type=Vulkan -RHI.EnableDebugLayer=true"));
+        TEST_EXPECT(FStringView(CommandLine::GetOriginal()).Equals(TEXT("-RHI.Type=Vulkan -RHI.EnableDebugLayer=true")));
     }
 
-    TEST_SECTION("Re-initializing replaces the previous command line");
+    TEST_SECTION(TEXT("Re-initializing replaces the previous command line"));
     {
-        InitializeFromLine("-A.Long.Option.Name=SomethingLong -B.Another=2");
-        InitializeFromLine("-A.Long.Option.Name=Short");
+        InitializeFromLine(TEXT("-A.Long.Option.Name=SomethingLong -B.Another=2"));
+        InitializeFromLine(TEXT("-A.Long.Option.Name=Short"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("A.Long.Option.Name", Value));
-        TEST_EXPECT(Value.Equals("Short"));
-        TEST_EXPECT(!CommandLine::FindOption("B.Another"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("A.Long.Option.Name"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Short")));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("B.Another")));
     }
 
-    TEST_SECTION("An unterminated quote does not assert");
+    TEST_SECTION(TEXT("An unterminated quote does not assert"));
     {
-        InitializeFromLine("-A.B=\"Unterminated");
+        InitializeFromLine(TEXT("-A.B=\"Unterminated"));
 
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("A.B", Value));
-        TEST_EXPECT(Value.Equals("Unterminated"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Unterminated")));
     }
 
-    TEST_SECTION("A null argument is rejected");
+    TEST_SECTION(TEXT("A null argument is rejected"));
     {
         const CHAR_T* Args[] = { nullptr };
         TEST_EXPECT(!CommandLine::Initialize(Args, 1));
         TEST_EXPECT(!CommandLine::Initialize(nullptr, 1));
     }
 
-    TEST_SECTION("Every CVar name shape round-trips");
+    TEST_SECTION(TEXT("Every CVar name shape round-trips"));
     {
         for (const CHAR_T* Name : GNameCorpus)
         {
-            const FString Line = FString::Printf("-%s=ProbeValue", Name);
+            const FString Line = FString::Printf(TEXT("-%s=ProbeValue"), Name);
             InitializeFromLine(*Line);
 
             FStringView Value;
-            const bool bRoundTripped = CommandLine::FindOption(Name, Value) && Value.Equals("ProbeValue");
+            const bool bRoundTripped = CommandLine::FindOption(Name, Value) && Value.Equals(TEXT("ProbeValue"));
             if (!bRoundTripped)
             {
                 LOG_ERROR("CVar name '%s' did not round-trip through the CommandLine", Name);
@@ -247,17 +247,17 @@ bool CommandLine_Test()
         }
     }
 
-    TEST_SECTION("Generated names over the legal character set");
+    TEST_SECTION(TEXT("Generated names over the legal character set"));
     {
-        const CHAR_T* Alphabet = "abzABZ019._";
+        const CHAR_T* Alphabet = TEXT("abzABZ019._");
         for (const CHAR_T* Char = Alphabet; *Char != '\0'; ++Char)
         {
-            const FString Name = FString::Printf("Prefix%cSuffix", *Char);
-            const FString Line = FString::Printf("-%s=ProbeValue", *Name);
+            const FString Name = FString::Printf(TEXT("Prefix%cSuffix"), *Char);
+            const FString Line = FString::Printf(TEXT("-%s=ProbeValue"), *Name);
             InitializeFromLine(*Line);
 
             FStringView Value;
-            const bool bRoundTripped = CommandLine::FindOption(*Name, Value) && Value.Equals("ProbeValue");
+            const bool bRoundTripped = CommandLine::FindOption(*Name, Value) && Value.Equals(TEXT("ProbeValue"));
             if (!bRoundTripped)
             {
                 LOG_ERROR("Generated name '%s' did not round-trip through the CommandLine", *Name);
@@ -267,12 +267,12 @@ bool CommandLine_Test()
         }
     }
 
-    TEST_SECTION("An over-long command line truncates safely");
+    TEST_SECTION(TEXT("An over-long command line truncates safely"));
     {
         FString LongLine;
         for (int32 Index = 0; Index < 200; ++Index)
         {
-            LongLine.AppendPrintf("-Long.Option%d=Value%d ", Index, Index);
+            LongLine.AppendPrintf(TEXT("-Long.Option%d=Value%d "), Index, Index);
         }
 
         TEST_EXPECT(InitializeFromLine(*LongLine));
@@ -284,8 +284,8 @@ bool CommandLine_Test()
 
         // Whatever did fit has to still be readable
         FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption("Long.Option0", Value));
-        TEST_EXPECT(Value.Equals("Value0"));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("Long.Option0"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Value0")));
     }
 
     TEST_END();

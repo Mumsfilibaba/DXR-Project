@@ -47,14 +47,14 @@ static void SetConsoleVariable(const CHAR_T* VariableName, const CHAR_T* Value)
 
 static int32 RunRendererCoreTests()
 {
-    TestHarness::Initialize("TestResults_RendererCore.log");
+    TestHarness::Initialize(TEXT("TestResults_RendererCore.log"));
     LOG_INFO("=== RendererCore Tests ===");
 
-    SetConsoleVariable("RHI.Type", "Null");
-    SetConsoleVariable("RHI.EnableValidation", true);
-    SetConsoleVariable("RHI.EnableResourceStateValidation", true);
-    SetConsoleVariable("RHI.EnableValidationDebugBreak", false);
-    SetConsoleVariable("TaskGraph.EnableRHIThread", false);
+    SetConsoleVariable(TEXT("RHI.Type"), TEXT("Null"));
+    SetConsoleVariable(TEXT("RHI.EnableValidation"), true);
+    SetConsoleVariable(TEXT("RHI.EnableResourceStateValidation"), true);
+    SetConsoleVariable(TEXT("RHI.EnableValidationDebugBreak"), false);
+    SetConsoleVariable(TEXT("TaskGraph.EnableRHIThread"), false);
 
     if (!FThreadManager::Initialize())
     {
@@ -90,19 +90,19 @@ static int32 RunRendererCoreTests()
         return -1;
     }
 
-    RUN_TEST("RenderGraphValidationSelfCheck", RenderGraphValidationSelfCheck_Test());
-    RUN_TEST("RenderGraph", RenderGraph_Test());
-    RUN_TEST("RenderGraphDisabledPass", RenderGraphDisabledPass_Test());
-    RUN_TEST("RenderGraphFrame", RenderGraphFrame_Test());
-    RUN_TEST("RenderGraphUndefinedExternal", RenderGraphUndefinedExternal_Test());
-    RUN_TEST("SwapChainAcquire", SwapChainAcquire_Test());
-    RUN_TEST("RenderGraphViewSlice", RenderGraphViewSlice_Test());
-    RUN_TEST("RenderGraphViewUndeclared", RenderGraphViewUndeclared_Test());
-    RUN_TEST("RenderGraphViewBufferRange", RenderGraphViewBufferRange_Test());
-    RUN_TEST("RenderGraphViewValidation", RenderGraphViewValidation_Test());
-    RUN_TEST("RenderGraphViewTypelessFormat", RenderGraphViewTypelessFormat_Test());
-    RUN_TEST("RenderGraphViewHybridUsage", RenderGraphViewHybridUsage_Test());
-    RUN_TEST("RenderGraphSubresourceRejoin", RenderGraphSubresourceRejoin_Test());
+    RUN_TEST(TEXT("RenderGraphValidationSelfCheck"), RenderGraphValidationSelfCheck_Test());
+    RUN_TEST(TEXT("RenderGraph"), RenderGraph_Test());
+    RUN_TEST(TEXT("RenderGraphDisabledPass"), RenderGraphDisabledPass_Test());
+    RUN_TEST(TEXT("RenderGraphFrame"), RenderGraphFrame_Test());
+    RUN_TEST(TEXT("RenderGraphUndefinedExternal"), RenderGraphUndefinedExternal_Test());
+    RUN_TEST(TEXT("SwapChainAcquire"), SwapChainAcquire_Test());
+    RUN_TEST(TEXT("RenderGraphViewSlice"), RenderGraphViewSlice_Test());
+    RUN_TEST(TEXT("RenderGraphViewUndeclared"), RenderGraphViewUndeclared_Test());
+    RUN_TEST(TEXT("RenderGraphViewBufferRange"), RenderGraphViewBufferRange_Test());
+    RUN_TEST(TEXT("RenderGraphViewValidation"), RenderGraphViewValidation_Test());
+    RUN_TEST(TEXT("RenderGraphViewTypelessFormat"), RenderGraphViewTypelessFormat_Test());
+    RUN_TEST(TEXT("RenderGraphViewHybridUsage"), RenderGraphViewHybridUsage_Test());
+    RUN_TEST(TEXT("RenderGraphSubresourceRejoin"), RenderGraphSubresourceRejoin_Test());
 
     FRenderGraphResourcePool::Release();
     RHI::Release();
@@ -114,4 +114,4 @@ static int32 RunRendererCoreTests()
     return ExitCode;
 }
 
-IMPLEMENT_PROGRAM_MAIN("RendererCore-Tests", RunRendererCoreTests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("RendererCore-Tests"), RunRendererCoreTests);

@@ -43,11 +43,11 @@ static FRHISwapChainRef CreateTestSwapChain()
 static FRHITexture* RunGraphAndReturnTexture()
 {
     FRHICommandList     CommandList;
-    FRenderGraphBuilder GraphBuilder("PoolingProbe");
+    FRenderGraphBuilder GraphBuilder(TEXT("PoolingProbe"));
 
-    FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "SceneColor");
+    FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), TEXT("SceneColor"));
 
-    GraphBuilder.AddPass("Write", ERenderGraphPassFlags::Raster | ERenderGraphPassFlags::NeverCull,
+    GraphBuilder.AddPass(TEXT("Write"), ERenderGraphPassFlags::Raster | ERenderGraphPassFlags::NeverCull,
         [SceneColor](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.SetRenderTarget(0, SceneColor, EAttachmentLoadAction::Clear);
@@ -66,7 +66,7 @@ bool RenderGraphValidationSelfCheck_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A render target bound without a barrier is reported");
+    TEST_SECTION(TEXT("A render target bound without a barrier is reported"));
 
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource;
 
@@ -92,16 +92,16 @@ bool RenderGraph_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A write-then-read chain executes without validation errors");
+    TEST_SECTION(TEXT("A write-then-read chain executes without validation errors"));
     {
         RHIValidation::ResetErrorCount();
 
         FRHICommandList     CommandList;
-        FRenderGraphBuilder GraphBuilder("WriteThenRead");
+        FRenderGraphBuilder GraphBuilder(TEXT("WriteThenRead"));
 
-        FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "SceneColor");
+        FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), TEXT("SceneColor"));
 
-        GraphBuilder.AddPass("Write", ERenderGraphPassFlags::Raster,
+        GraphBuilder.AddPass(TEXT("Write"), ERenderGraphPassFlags::Raster,
             [SceneColor](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.SetRenderTarget(0, SceneColor, EAttachmentLoadAction::Clear);
@@ -110,7 +110,7 @@ bool RenderGraph_Test()
             {
             });
 
-        GraphBuilder.AddPass("Read", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull,
+        GraphBuilder.AddPass(TEXT("Read"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull,
             [SceneColor](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(SceneColor, ERHIResourceState::NonPixelShaderResource);
@@ -126,17 +126,17 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("Two consecutive reads in the same state share one transition");
+    TEST_SECTION(TEXT("Two consecutive reads in the same state share one transition"));
     {
         ResetPool();
         RHIValidation::ResetErrorCount();
 
         FRHICommandList     CommandList;
-        FRenderGraphBuilder GraphBuilder("SharedTransition");
+        FRenderGraphBuilder GraphBuilder(TEXT("SharedTransition"));
 
-        FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "SceneColor");
+        FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), TEXT("SceneColor"));
 
-        GraphBuilder.AddPass("Write", ERenderGraphPassFlags::Raster,
+        GraphBuilder.AddPass(TEXT("Write"), ERenderGraphPassFlags::Raster,
             [SceneColor](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.SetRenderTarget(0, SceneColor, EAttachmentLoadAction::Clear);
@@ -147,7 +147,7 @@ bool RenderGraph_Test()
 
         for (int32 Index = 0; Index < 2; ++Index)
         {
-            GraphBuilder.AddPass("Read", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull,
+            GraphBuilder.AddPass(TEXT("Read"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull,
                 [SceneColor](FRenderGraphPassBuilder& PassBuilder)
                 {
                     PassBuilder.ReadTexture(SceneColor, ERHIResourceState::PixelShaderResource);
@@ -164,7 +164,7 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("A pass nobody reads from is culled, unless it says otherwise");
+    TEST_SECTION(TEXT("A pass nobody reads from is culled, unless it says otherwise"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -172,12 +172,12 @@ bool RenderGraph_Test()
         bool bNeverCullPassRan = false;
 
         FRHICommandList     CommandList;
-        FRenderGraphBuilder GraphBuilder("Culling");
+        FRenderGraphBuilder GraphBuilder(TEXT("Culling"));
 
-        FRenderGraphTexture* Unread   = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "Unread");
-        FRenderGraphTexture* Retained = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "Retained");
+        FRenderGraphTexture* Unread   = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), TEXT("Unread"));
+        FRenderGraphTexture* Retained = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), TEXT("Retained"));
 
-        GraphBuilder.AddPass("Culled", ERenderGraphPassFlags::Raster,
+        GraphBuilder.AddPass(TEXT("Culled"), ERenderGraphPassFlags::Raster,
             [Unread](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.SetRenderTarget(0, Unread, EAttachmentLoadAction::Clear);
@@ -187,7 +187,7 @@ bool RenderGraph_Test()
                 bCulledPassRan = true;
             });
 
-        GraphBuilder.AddPass("Retained", ERenderGraphPassFlags::Raster | ERenderGraphPassFlags::NeverCull,
+        GraphBuilder.AddPass(TEXT("Retained"), ERenderGraphPassFlags::Raster | ERenderGraphPassFlags::NeverCull,
             [Retained](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.SetRenderTarget(0, Retained, EAttachmentLoadAction::Clear);
@@ -209,16 +209,16 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("Passes execute in declaration order");
+    TEST_SECTION(TEXT("Passes execute in declaration order"));
     {
         TArray<int32> ExecutionOrder;
 
         FRHICommandList     CommandList;
-        FRenderGraphBuilder GraphBuilder("Ordering");
+        FRenderGraphBuilder GraphBuilder(TEXT("Ordering"));
 
         for (int32 Index = 0; Index < 3; ++Index)
         {
-            GraphBuilder.AddPass("Ordered", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull,
+            GraphBuilder.AddPass(TEXT("Ordered"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull,
                 [](FRenderGraphPassBuilder&)
                 {
                 },
@@ -237,7 +237,7 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(ExecutionOrder[2], 2);
     }
 
-    TEST_SECTION("An equivalent graph recycles the pooled texture");
+    TEST_SECTION(TEXT("An equivalent graph recycles the pooled texture"));
     {
         ResetPool();
         RHIValidation::ResetErrorCount();
@@ -250,7 +250,7 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("An external resource is restored to its registered final state");
+    TEST_SECTION(TEXT("An external resource is restored to its registered final state"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -268,11 +268,11 @@ bool RenderGraph_Test()
         FRHICommandList CommandList;
 
         {
-            FRenderGraphBuilder GraphBuilder("ExternalFinalState");
+            FRenderGraphBuilder GraphBuilder(TEXT("ExternalFinalState"));
 
-            FRenderGraphTexture* Registered = GraphBuilder.RegisterExternalTexture(External.Get(), "External", ERHIResourceState::CopySource, ERHIResourceState::CopySource);
+            FRenderGraphTexture* Registered = GraphBuilder.RegisterExternalTexture(External.Get(), TEXT("External"), ERHIResourceState::CopySource, ERHIResourceState::CopySource);
 
-            GraphBuilder.AddPass("Write", ERenderGraphPassFlags::Raster,
+            GraphBuilder.AddPass(TEXT("Write"), ERenderGraphPassFlags::Raster,
                 [Registered](FRenderGraphPassBuilder& PassBuilder)
                 {
                     PassBuilder.SetRenderTarget(0, Registered, EAttachmentLoadAction::Clear);
@@ -293,7 +293,7 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("A Tracked external is transitioned without a declared before-state");
+    TEST_SECTION(TEXT("A Tracked external is transitioned without a declared before-state"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -304,11 +304,11 @@ bool RenderGraph_Test()
         TEST_CHECK(Tracked != nullptr);
 
         FRHICommandList     CommandList;
-        FRenderGraphBuilder GraphBuilder("TrackedExternal");
+        FRenderGraphBuilder GraphBuilder(TEXT("TrackedExternal"));
 
-        FRenderGraphTexture* Registered = GraphBuilder.RegisterExternalTexture(Tracked.Get(), "TrackedExternal", ERHIResourceState::RenderTarget, ERHIResourceState::RenderTarget);
+        FRenderGraphTexture* Registered = GraphBuilder.RegisterExternalTexture(Tracked.Get(), TEXT("TrackedExternal"), ERHIResourceState::RenderTarget, ERHIResourceState::RenderTarget);
 
-        GraphBuilder.AddPass("Read", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [Registered](FRenderGraphPassBuilder& PassBuilder)
+        GraphBuilder.AddPass(TEXT("Read"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [Registered](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(Registered, ERHIResourceState::NonPixelShaderResource);
             },
@@ -323,7 +323,7 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("A Static external is declared but never transitioned");
+    TEST_SECTION(TEXT("A Static external is declared but never transitioned"));
     {
         ResetPool();
         RHIValidation::ResetErrorCount();
@@ -335,11 +335,11 @@ bool RenderGraph_Test()
         TEST_CHECK(Immutable != nullptr);
 
         FRHICommandList     CommandList;
-        FRenderGraphBuilder GraphBuilder("StaticExternal");
+        FRenderGraphBuilder GraphBuilder(TEXT("StaticExternal"));
 
-        FRenderGraphTexture* Registered = GraphBuilder.RegisterExternalTexture(Immutable.Get(), "StaticExternal", ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource);
+        FRenderGraphTexture* Registered = GraphBuilder.RegisterExternalTexture(Immutable.Get(), TEXT("StaticExternal"), ERHIResourceState::ShaderResource, ERHIResourceState::ShaderResource);
 
-        GraphBuilder.AddPass("Read", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [Registered](FRenderGraphPassBuilder& PassBuilder)
+        GraphBuilder.AddPass(TEXT("Read"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [Registered](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(Registered, ERHIResourceState::NonPixelShaderResource);
             },
@@ -354,19 +354,19 @@ bool RenderGraph_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("A pass that declares one resource two ways refuses to execute");
+    TEST_SECTION(TEXT("A pass that declares one resource two ways refuses to execute"));
     {
         ResetPool();
         RHIValidation::ResetErrorCount();
 
         FRHICommandList     CommandList;
-        FRenderGraphBuilder GraphBuilder("ConflictingAccess");
+        FRenderGraphBuilder GraphBuilder(TEXT("ConflictingAccess"));
 
-        FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "SceneColor");
+        FRenderGraphTexture* SceneColor = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), TEXT("SceneColor"));
 
         bool bPassExecuted = false;
 
-        GraphBuilder.AddPass("Conflict", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [SceneColor](FRenderGraphPassBuilder& PassBuilder)
+        GraphBuilder.AddPass(TEXT("Conflict"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [SceneColor](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(SceneColor, ERHIResourceState::NonPixelShaderResource);
                 PassBuilder.WriteTexture(SceneColor, ERHIResourceState::RenderTarget);
@@ -393,7 +393,7 @@ bool RenderGraphDisabledPass_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A disabled pass does not execute but still declares resources");
+    TEST_SECTION(TEXT("A disabled pass does not execute but still declares resources"));
 
     ResetPool();
     RHIValidation::ResetErrorCount();
@@ -402,11 +402,11 @@ bool RenderGraphDisabledPass_Test()
     bool bDisabledPassRan = false;
 
     FRHICommandList     CommandList;
-    FRenderGraphBuilder GraphBuilder("DisabledPass");
+    FRenderGraphBuilder GraphBuilder(TEXT("DisabledPass"));
 
-    FRenderGraphTexture* Output = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), "Output");
+    FRenderGraphTexture* Output = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), TEXT("Output"));
 
-    GraphBuilder.AddPass("Enabled", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, true, [Output](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("Enabled"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, true, [Output](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.WriteTexture(Output, ERHIResourceState::UnorderedAccess);
         },
@@ -416,7 +416,7 @@ bool RenderGraphDisabledPass_Test()
             bEnabledPassRan = true;
         });
 
-    GraphBuilder.AddPass("Disabled", ERenderGraphPassFlags::Compute, false, [Output](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("Disabled"), ERenderGraphPassFlags::Compute, false, [Output](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.WriteTexture(Output, ERHIResourceState::UnorderedAccess);
         },
@@ -440,7 +440,7 @@ bool RenderGraphFrame_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A frame-shaped graph drops its dead branch and barriers the rest");
+    TEST_SECTION(TEXT("A frame-shaped graph drops its dead branch and barriers the rest"));
 
     ResetPool();
     RHIValidation::ResetErrorCount();
@@ -455,23 +455,23 @@ bool RenderGraphFrame_Test()
     FRHICommandList        CommandList;
 
     {
-        FRenderGraphBuilder GraphBuilder("Frame");
+        FRenderGraphBuilder GraphBuilder(TEXT("Frame"));
 
-        FRenderGraphTexture* Depth        = GraphBuilder.CreateTexture(MakeDepthStencilDesc(), "SceneDepth");
-        FRenderGraphTexture* Albedo       = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "GBufferAlbedo");
-        FRenderGraphTexture* Normal       = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), "GBufferNormal");
-        FRenderGraphTexture* ShadowMask   = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), "ShadowMask");
-        FRenderGraphTexture* SceneColor   = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), "SceneColor");
-        FRenderGraphTexture* Bloom        = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), "Bloom");
-        FRenderGraphTexture* DebugScratch = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), "DebugScratch");
-        FRenderGraphTexture* DebugHeatmap = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), "DebugHeatmap");
+        FRenderGraphTexture* Depth        = GraphBuilder.CreateTexture(MakeDepthStencilDesc(), TEXT("SceneDepth"));
+        FRenderGraphTexture* Albedo       = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), TEXT("GBufferAlbedo"));
+        FRenderGraphTexture* Normal       = GraphBuilder.CreateTexture(MakeRenderTargetDesc(), TEXT("GBufferNormal"));
+        FRenderGraphTexture* ShadowMask   = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), TEXT("ShadowMask"));
+        FRenderGraphTexture* SceneColor   = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), TEXT("SceneColor"));
+        FRenderGraphTexture* Bloom        = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), TEXT("Bloom"));
+        FRenderGraphTexture* DebugScratch = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), TEXT("DebugScratch"));
+        FRenderGraphTexture* DebugHeatmap = GraphBuilder.CreateTexture(MakeUnorderedAccessDesc(), TEXT("DebugHeatmap"));
 
-        FRenderGraphBuffer* ObjectData = GraphBuilder.CreateBuffer(FRenderGraphBufferDesc::CreateStructuredBuffer(sizeof(uint32), 64, EBufferFlags::CopyDest), "ObjectData");
+        FRenderGraphBuffer* ObjectData = GraphBuilder.CreateBuffer(FRenderGraphBufferDesc::CreateStructuredBuffer(sizeof(uint32), 64, EBufferFlags::CopyDest), TEXT("ObjectData"));
 
-        FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(BackBufferTexture.Get(), "BackBuffer",
+        FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(BackBufferTexture.Get(), TEXT("BackBuffer"),
             ERHIResourceState::RenderTarget, ERHIResourceState::Present);
 
-        GraphBuilder.AddPass("UploadObjectData", ERenderGraphPassFlags::Copy,
+        GraphBuilder.AddPass(TEXT("UploadObjectData"), ERenderGraphPassFlags::Copy,
             [ObjectData](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.WriteBuffer(ObjectData, ERHIResourceState::CopyDest);
@@ -483,7 +483,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(0);
             });
 
-        GraphBuilder.AddPass("DepthPrepass", ERenderGraphPassFlags::Raster,
+        GraphBuilder.AddPass(TEXT("DepthPrepass"), ERenderGraphPassFlags::Raster,
             [Depth](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.SetDepthStencil(Depth, EAttachmentLoadAction::Clear);
@@ -493,7 +493,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(1);
             });
 
-        GraphBuilder.AddPass("GBuffer", ERenderGraphPassFlags::Raster,
+        GraphBuilder.AddPass(TEXT("GBuffer"), ERenderGraphPassFlags::Raster,
             [Albedo, Normal, Depth, ObjectData](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.SetRenderTarget(0, Albedo, EAttachmentLoadAction::Clear);
@@ -506,7 +506,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(2);
             });
 
-        GraphBuilder.AddPass("DebugPrepare", ERenderGraphPassFlags::Compute,
+        GraphBuilder.AddPass(TEXT("DebugPrepare"), ERenderGraphPassFlags::Compute,
             [DebugScratch](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.WriteTexture(DebugScratch, ERHIResourceState::UnorderedAccess);
@@ -516,7 +516,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(3);
             });
 
-        GraphBuilder.AddPass("ShadowMask", ERenderGraphPassFlags::Compute,
+        GraphBuilder.AddPass(TEXT("ShadowMask"), ERenderGraphPassFlags::Compute,
             [Depth, ShadowMask](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(Depth, ERHIResourceState::NonPixelShaderResource);
@@ -528,7 +528,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(4);
             });
 
-        GraphBuilder.AddPass("DebugOverlay", ERenderGraphPassFlags::Compute,
+        GraphBuilder.AddPass(TEXT("DebugOverlay"), ERenderGraphPassFlags::Compute,
             [DebugScratch, DebugHeatmap](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(DebugScratch, ERHIResourceState::NonPixelShaderResource);
@@ -539,7 +539,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(5);
             });
 
-        GraphBuilder.AddPass("Lighting", ERenderGraphPassFlags::Compute,
+        GraphBuilder.AddPass(TEXT("Lighting"), ERenderGraphPassFlags::Compute,
             [Albedo, Normal, ShadowMask, Depth, SceneColor](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(Albedo, ERHIResourceState::NonPixelShaderResource);
@@ -554,7 +554,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(6);
             });
 
-        GraphBuilder.AddPass("BloomDownsample", ERenderGraphPassFlags::Compute,
+        GraphBuilder.AddPass(TEXT("BloomDownsample"), ERenderGraphPassFlags::Compute,
             [SceneColor, Bloom](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(SceneColor, ERHIResourceState::NonPixelShaderResource);
@@ -566,7 +566,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(7);
             });
 
-        GraphBuilder.AddPass("BloomBlur", ERenderGraphPassFlags::Compute,
+        GraphBuilder.AddPass(TEXT("BloomBlur"), ERenderGraphPassFlags::Compute,
             [Bloom](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.WriteTexture(Bloom, ERHIResourceState::UnorderedAccess);
@@ -577,7 +577,7 @@ bool RenderGraphFrame_Test()
                 ExecutedPasses.Emplace(8);
             });
 
-        GraphBuilder.AddPass("Tonemap", ERenderGraphPassFlags::Raster,
+        GraphBuilder.AddPass(TEXT("Tonemap"), ERenderGraphPassFlags::Raster,
             [SceneColor, Bloom, BackBuffer](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.ReadTexture(SceneColor, ERHIResourceState::PixelShaderResource);
@@ -621,7 +621,7 @@ bool RenderGraphUndefinedExternal_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A freshly acquired back-buffer is transitioned out of Undefined by its first pass");
+    TEST_SECTION(TEXT("A freshly acquired back-buffer is transitioned out of Undefined by its first pass"));
     {
         ResetPool();
         RHIValidation::ResetErrorCount();
@@ -636,19 +636,19 @@ bool RenderGraphUndefinedExternal_Test()
         TEST_CHECK(BackBufferTexture != nullptr);
 
         {
-            FRenderGraphBuilder GraphBuilder("AcquiredBackBuffer");
+            FRenderGraphBuilder GraphBuilder(TEXT("AcquiredBackBuffer"));
 
-            FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(BackBufferTexture, "BackBuffer",
+            FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(BackBufferTexture, TEXT("BackBuffer"),
                 ERHIResourceState::Undefined, ERHIResourceState::Present);
 
             TEST_CHECK(BackBuffer != nullptr);
 
             FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
-                SwapChain->GetRenderTargetView(), "BackBufferRTV");
+                SwapChain->GetRenderTargetView(), TEXT("BackBufferRTV"));
 
             TEST_CHECK(BackBufferView != nullptr);
 
-            GraphBuilder.AddPass("Tonemap", ERenderGraphPassFlags::Raster,
+            GraphBuilder.AddPass(TEXT("Tonemap"), ERenderGraphPassFlags::Raster,
                 [BackBufferView](FRenderGraphPassBuilder& PassBuilder)
                 {
                     PassBuilder.SetRenderTarget(0, BackBufferView, EAttachmentLoadAction::DontCare);
@@ -678,7 +678,7 @@ bool RenderGraphUndefinedExternal_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("A first access that loads unspecified contents is refused");
+    TEST_SECTION(TEXT("A first access that loads unspecified contents is refused"));
     {
         ResetPool();
         RHIValidation::ResetErrorCount();
@@ -687,19 +687,19 @@ bool RenderGraphUndefinedExternal_Test()
         TEST_CHECK(SwapChain != nullptr);
 
         FRHICommandList     CommandList;
-        FRenderGraphBuilder GraphBuilder("LoadsUndefined");
+        FRenderGraphBuilder GraphBuilder(TEXT("LoadsUndefined"));
 
-        FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), "BackBuffer",
+        FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), TEXT("BackBuffer"),
             ERHIResourceState::Undefined, ERHIResourceState::Present);
 
         TEST_CHECK(BackBuffer != nullptr);
 
         FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
-            SwapChain->GetRenderTargetView(), "BackBufferRTV");
+            SwapChain->GetRenderTargetView(), TEXT("BackBufferRTV"));
 
         TEST_CHECK(BackBufferView != nullptr);
 
-        GraphBuilder.AddPass("LoadsBackBuffer", ERenderGraphPassFlags::Raster,
+        GraphBuilder.AddPass(TEXT("LoadsBackBuffer"), ERenderGraphPassFlags::Raster,
             [BackBufferView](FRenderGraphPassBuilder& PassBuilder)
             {
                 PassBuilder.SetRenderTarget(0, BackBufferView, EAttachmentLoadAction::Load);
@@ -717,7 +717,7 @@ bool RenderGraphUndefinedExternal_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("A pass that overwrites first leaves a later one free to load");
+    TEST_SECTION(TEXT("A pass that overwrites first leaves a later one free to load"));
     {
         ResetPool();
         RHIValidation::ResetErrorCount();
@@ -729,19 +729,19 @@ bool RenderGraphUndefinedExternal_Test()
         CommandList.AcquireNextBackBuffer(SwapChain.Get());
 
         {
-            FRenderGraphBuilder GraphBuilder("OverwriteThenLoad");
+            FRenderGraphBuilder GraphBuilder(TEXT("OverwriteThenLoad"));
 
-            FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), "BackBuffer",
+            FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), TEXT("BackBuffer"),
                 ERHIResourceState::Undefined, ERHIResourceState::Present);
 
             TEST_CHECK(BackBuffer != nullptr);
 
             FRenderGraphRenderTargetView* BackBufferView = GraphBuilder.RegisterExternalRTV(BackBuffer,
-                SwapChain->GetRenderTargetView(), "BackBufferRTV");
+                SwapChain->GetRenderTargetView(), TEXT("BackBufferRTV"));
 
             TEST_CHECK(BackBufferView != nullptr);
 
-            GraphBuilder.AddPass("Tonemap", ERenderGraphPassFlags::Raster,
+            GraphBuilder.AddPass(TEXT("Tonemap"), ERenderGraphPassFlags::Raster,
                 [BackBufferView](FRenderGraphPassBuilder& PassBuilder)
                 {
                     PassBuilder.SetRenderTarget(0, BackBufferView, EAttachmentLoadAction::DontCare);
@@ -750,7 +750,7 @@ bool RenderGraphUndefinedExternal_Test()
                 {
                 });
 
-            GraphBuilder.AddPass("UserInterface", ERenderGraphPassFlags::Raster,
+            GraphBuilder.AddPass(TEXT("UserInterface"), ERenderGraphPassFlags::Raster,
                 [BackBufferView](FRenderGraphPassBuilder& PassBuilder)
                 {
                     PassBuilder.SetRenderTarget(0, BackBufferView, EAttachmentLoadAction::Load);
@@ -770,7 +770,7 @@ bool RenderGraphUndefinedExternal_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("Undefined is refused as a final state");
+    TEST_SECTION(TEXT("Undefined is refused as a final state"));
     {
         ResetPool();
         RHIValidation::ResetErrorCount();
@@ -778,9 +778,9 @@ bool RenderGraphUndefinedExternal_Test()
         FRHISwapChainRef SwapChain = CreateTestSwapChain();
         TEST_CHECK(SwapChain != nullptr);
 
-        FRenderGraphBuilder GraphBuilder("UndefinedFinalState");
+        FRenderGraphBuilder GraphBuilder(TEXT("UndefinedFinalState"));
 
-        FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), "BackBuffer",
+        FRenderGraphTexture* BackBuffer = GraphBuilder.RegisterExternalTexture(SwapChain->GetBackBuffer(), TEXT("BackBuffer"),
             ERHIResourceState::Undefined, ERHIResourceState::Undefined);
 
         TEST_EXPECT(BackBuffer == nullptr);

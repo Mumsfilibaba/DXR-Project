@@ -61,7 +61,7 @@ bool TestCameraBasis()
 
     constexpr float Tolerance = 1.0e-4f;
 
-    TEST_SECTION("Camera basis matches identity orientation");
+    TEST_SECTION(TEXT("Camera basis matches identity orientation"));
     {
         const FCameraBasis Basis = BuildCameraBasis(0.0f, 0.0f);
 
@@ -70,7 +70,7 @@ bool TestCameraBasis()
         TEST_EXPECT(Basis.Up.IsEqual(FVector3::Up, Tolerance));
     }
 
-    TEST_SECTION("Camera basis matches RotationRollPitchYaw forward");
+    TEST_SECTION(TEXT("Camera basis matches RotationRollPitchYaw forward"));
     {
         const float Pitch = Math::DegreesToRadians(45.0f);
         const float Yaw   = Math::DegreesToRadians(30.0f);
@@ -81,7 +81,7 @@ bool TestCameraBasis()
         TEST_EXPECT(Basis.Forward.IsEqual(MatrixForward, Tolerance));
     }
 
-    TEST_SECTION("Camera basis is orthonormal at representative pitch angles");
+    TEST_SECTION(TEXT("Camera basis is orthonormal at representative pitch angles"));
     {
         const float PitchAngles[] = { 0.0f, 45.0f, 85.0f, -85.0f, 89.0f, -89.0f };
         const float Yaw           = Math::DegreesToRadians(15.0f);
@@ -93,7 +93,7 @@ bool TestCameraBasis()
         }
     }
 
-    TEST_SECTION("Camera right vector stays continuous near pitch limits");
+    TEST_SECTION(TEXT("Camera right vector stays continuous near pitch limits"));
     {
         const float Yaw = Math::DegreesToRadians(45.0f);
         FVector3 PreviousRight = BuildCameraBasis(Math::DegreesToRadians(80.0f), Yaw).Right;
@@ -106,7 +106,7 @@ bool TestCameraBasis()
         }
     }
 
-    TEST_SECTION("Camera right movement stays horizontal at high pitch");
+    TEST_SECTION(TEXT("Camera right movement stays horizontal at high pitch"));
     {
         const float Pitch = Math::DegreesToRadians(85.0f);
         const float Yaw   = Math::DegreesToRadians(20.0f);

@@ -173,7 +173,7 @@ public:
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final
     {
         FMonitorInfo MonitorInfo;
-        MonitorInfo.DeviceName     = "Stub";
+        MonitorInfo.DeviceName     = TEXT("Stub");
         MonitorInfo.MainSize       = FIntVector2(1920, 1080);
         MonitorInfo.WorkSize       = FIntVector2(1920, 1080);
         MonitorInfo.DisplayDPI     = 96;
@@ -219,7 +219,7 @@ inline TSharedPtr<FApplication> CreateStubApplication()
 inline TSharedPtr<FWindow> CreateStubWindow(const TSharedPtr<FApplication>& Application, const FIntVector2& Size)
 {
     FWindow::FDesc Desc;
-    Desc.Title = "Stub";
+    Desc.Title = TEXT("Stub");
     Desc.Size  = Size;
 
     TSharedPtr<FWindow> Window = FWindow::Create(Desc);
@@ -265,7 +265,7 @@ public:
     TSharedPtr<FWindow> CreateWindow(const FIntVector2& Size, const FIntVector2& Position = FIntVector2(0, 0), EWindowStyleFlags StyleFlags = EWindowStyleFlags::Default)
     {
         FWindow::FDesc Desc;
-        Desc.Title      = "Stub";
+        Desc.Title      = TEXT("Stub");
         Desc.Size       = Size;
         Desc.Position   = Position;
         Desc.StyleFlags = StyleFlags;

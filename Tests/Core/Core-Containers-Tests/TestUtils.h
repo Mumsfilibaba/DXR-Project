@@ -23,7 +23,7 @@
 #define TEST_CHECK_ARRAY(Array, ...) \
     if (Array.IsEmpty()) \
     { \
-        LOG_ERROR("[TEST FAILED] '%s' is empty (%s:%d)", MAKE_STRING(Array), __FILE__, __LINE__); \
+        LOG_ERROR("[TEST FAILED] '%s' is empty (%s:%d)", TEXT(MAKE_STRING(Array)), TEXT(__FILE__), __LINE__); \
         return false; \
     } \
     else \
@@ -35,8 +35,8 @@
         { \
             if ((Index >= static_cast<int32>(Array.Size())) || (Array[Index] != Element)) \
             { \
-                LOG_ERROR("[TEST FAILED] '%s[%d]' mismatch (%s:%d)", MAKE_STRING(Array), \
-                    Index, __FILE__, __LINE__); \
+                LOG_ERROR("[TEST FAILED] '%s[%d]' mismatch (%s:%d)", TEXT(MAKE_STRING(Array)), \
+                    Index, TEXT(__FILE__), __LINE__); \
                 return false; \
             } \
  \
@@ -50,7 +50,7 @@
             TCString<decltype(String)::CharType>::Strncmp(String.Data(), Value, NumChars) == 0; \
         if (!bResult) \
         { \
-            LOG_ERROR("[TEST FAILED] String '%s' mismatch (%s:%d)", #String, __FILE__, __LINE__); \
+            LOG_ERROR("[TEST FAILED] String '%s' mismatch (%s:%d)", TEXT(#String), TEXT(__FILE__), __LINE__); \
             return false; \
         } \
     }
@@ -94,7 +94,7 @@ public:
 public:
     FInstanced()
         : Id(0)
-        , Payload("0")
+        , Payload(TEXT("0"))
     {
         Counters().Live++;
         Counters().Ctor++;
@@ -102,7 +102,7 @@ public:
 
     explicit FInstanced(int32 InId)
         : Id(InId)
-        , Payload(FString::Printf("%d", InId))
+        , Payload(FString::Printf(TEXT("%d"), InId))
     {
         Counters().Live++;
         Counters().ValueCtor++;
@@ -156,7 +156,7 @@ public:
     // The payload must always mirror the id; a torn copy/move breaks this invariant.
     bool IsPayloadValid() const
     {
-        return Payload == FString::Printf("%d", Id);
+        return Payload == FString::Printf(TEXT("%d"), Id);
     }
 
     bool operator==(const FInstanced& Other) const

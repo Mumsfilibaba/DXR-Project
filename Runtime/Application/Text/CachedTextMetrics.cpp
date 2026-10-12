@@ -21,7 +21,7 @@ void FCachedTextMetrics::Refresh(const IFontFace* Font, const FStringView& Text)
     const uint64      LayoutRevision = Atlas ? Atlas->GetLayoutRevision() : 0;
 
     const bool bSameText = CachedText.Length() == Text.Length()
-        && (Text.Length() == 0 || Memory::Memcmp(CachedText.Data(), Text.Data(), static_cast<uint64>(Text.Length())) == 0);
+        && (Text.Length() == 0 || Memory::Memcmp(CachedText.Data(), Text.Data(), static_cast<uint64>(Text.SizeInBytes())) == 0);
 
     if (Font == CachedFont && LayoutRevision == CachedLayoutRevision && bSameText)
     {

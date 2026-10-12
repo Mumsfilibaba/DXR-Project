@@ -52,7 +52,7 @@ static void RefreshReadout(const FPlaygroundFonts& Fonts, const TSharedPtr<FText
 
     if (GOpenWindows.IsEmpty())
     {
-        Readout->SetText("no floating windows open");
+        Readout->SetText(TEXT("no floating windows open"));
         return;
     }
 
@@ -60,7 +60,7 @@ static void RefreshReadout(const FPlaygroundFonts& Fonts, const TSharedPtr<FText
     const FWindowTitleBarRegions& Regions = TitleBar->GetRegions();
 
     Readout->SetText(FString::Printf(
-        "%d open, last caption %d x %d with %d clickable region(s), platform inset %.0f leading %.0f trailing",
+        TEXT("%d open, last caption %d x %d with %d clickable region(s), platform inset %.0f leading %.0f trailing"),
         GOpenWindows.Size(),
         Regions.CaptionRect.Right - Regions.CaptionRect.Left,
         Regions.CaptionRect.Bottom - Regions.CaptionRect.Top,
@@ -72,7 +72,7 @@ static void RefreshReadout(const FPlaygroundFonts& Fonts, const TSharedPtr<FText
 static TSharedPtr<FMenuBar> MakeCaptionMenuBar(const FPlaygroundFonts& Fonts)
 {
     TSharedPtr<FMenu> ViewMenu = FMenu::Create();
-    for (const CHAR_T* Label : { "Wireframe", "Normals", "Overdraw" })
+    for (const CHAR_T* Label : { TEXT("Wireframe"), TEXT("Normals"), TEXT("Overdraw") })
     {
         FMenuItem::FDesc ItemDesc;
         ItemDesc.SetLabel(Label).SetFont(Fonts.Body);
@@ -82,7 +82,7 @@ static TSharedPtr<FMenuBar> MakeCaptionMenuBar(const FPlaygroundFonts& Fonts)
     }
 
     TSharedPtr<FMenu> PanelMenu = FMenu::Create();
-    for (const CHAR_T* Label : { "Details", "Materials", "Statistics" })
+    for (const CHAR_T* Label : { TEXT("Details"), TEXT("Materials"), TEXT("Statistics") })
     {
         FMenuItem::FDesc ItemDesc;
         ItemDesc.SetLabel(Label).SetFont(Fonts.Body);
@@ -91,20 +91,20 @@ static TSharedPtr<FMenuBar> MakeCaptionMenuBar(const FPlaygroundFonts& Fonts)
     }
 
     TSharedPtr<FMenuBar> MenuBar = FMenuBar::Create();
-    MenuBar->AddMenu("View", Fonts.Body, ViewMenu);
-    MenuBar->AddMenu("Panel", Fonts.Body, PanelMenu);
+    MenuBar->AddMenu(TEXT("View"), Fonts.Body, ViewMenu);
+    MenuBar->AddMenu(TEXT("Panel"), Fonts.Body, PanelMenu);
     return MenuBar;
 }
 
 static TSharedPtr<FVisualElement> MakeFloatingWindowBody(const FPlaygroundFonts& Fonts, int32 Ordinal)
 {
     FTextBlock::FDesc HeadingDesc;
-    HeadingDesc.Text            = FString::Printf("Floating window %d", Ordinal);
+    HeadingDesc.Text            = FString::Printf(TEXT("Floating window %d"), Ordinal);
     HeadingDesc.Font            = Fonts.Heading;
     HeadingDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.Text;
 
     FTextBlock::FDesc BodyDesc;
-    BodyDesc.Text            = "Drag the caption to move it. The gaps drag, the buttons and menus do not.";
+    BodyDesc.Text            = TEXT("Drag the caption to move it. The gaps drag, the buttons and menus do not.");
     BodyDesc.Font            = Fonts.Body;
     BodyDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
 
@@ -129,7 +129,7 @@ static void OpenFloatingWindow(const FPlaygroundFonts& Fonts, const TSharedPtr<F
     const int32 Offset  = GOpenWindows.Size() * FLOATING_WINDOW_CASCADE;
 
     FFloatingWindow::FDesc Desc;
-    Desc.SetTitle(FString::Printf("Inspector %d", Ordinal));
+    Desc.SetTitle(FString::Printf(TEXT("Inspector %d"), Ordinal));
     Desc.SetBounds(FIntVector2(FLOATING_WINDOW_ORIGIN_X + Offset, FLOATING_WINDOW_ORIGIN_Y + Offset), FIntVector2(520, 300));
     Desc.SetContent(MakeFloatingWindowBody(Fonts, Ordinal));
 
@@ -147,17 +147,17 @@ static void OpenFloatingWindow(const FPlaygroundFonts& Fonts, const TSharedPtr<F
 
 static TSharedPtr<FVisualElement> MakeFloatingWindowRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, "no floating windows open");
+    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, TEXT("no floating windows open"));
 
     FButton::FDesc OpenDesc;
-    OpenDesc.SetText("Open a floating window").SetFont(Fonts.Body);
+    OpenDesc.SetText(TEXT("Open a floating window")).SetFont(Fonts.Body);
     OpenDesc.SetOnClicked(FOnClicked::CreateLambda([Fonts, Readout]()
     {
         OpenFloatingWindow(Fonts, Readout);
     }));
 
     FButton::FDesc CloseDesc;
-    CloseDesc.SetText("Close the last one").SetFont(Fonts.Body);
+    CloseDesc.SetText(TEXT("Close the last one")).SetFont(Fonts.Body);
     CloseDesc.SetOnClicked(FOnClicked::CreateLambda([Fonts, Readout]()
     {
         PruneClosedWindows();
@@ -172,7 +172,7 @@ static TSharedPtr<FVisualElement> MakeFloatingWindowRow(const FPlaygroundFonts& 
     }));
 
     FButton::FDesc RefreshDesc;
-    RefreshDesc.SetText("Re-read the regions").SetFont(Fonts.Body);
+    RefreshDesc.SetText(TEXT("Re-read the regions")).SetFont(Fonts.Body);
     RefreshDesc.SetOnClicked(FOnClicked::CreateLambda([Fonts, Readout]()
     {
         RefreshReadout(Fonts, Readout);
@@ -193,7 +193,7 @@ static TSharedPtr<FVisualElement> MakeFloatingWindowRow(const FPlaygroundFonts& 
 static TSharedPtr<FVisualElement> MakeTitleBarPreview(const FPlaygroundFonts& Fonts)
 {
     FTitleBar::FDesc Desc;
-    Desc.SetTitle("Sandbox").SetFont(Fonts.Body).SetContent(MakeCaptionMenuBar(Fonts));
+    Desc.SetTitle(TEXT("Sandbox")).SetFont(Fonts.Body).SetContent(MakeCaptionMenuBar(Fonts));
     Desc.bShowCaptionButtons = true;
 
     FBorder::FDesc BorderDesc;
@@ -210,8 +210,8 @@ FPlaygroundScene CreateWindowsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Floating windows";
-        Desc.Description = "Real top-level windows with the caption drawn by us. Each one carries a menu bar where the title text usually sits.";
+        Desc.Title       = TEXT("Floating windows");
+        Desc.Description = TEXT("Real top-level windows with the caption drawn by us. Each one carries a menu bar where the title text usually sits.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeFloatingWindowRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -219,12 +219,12 @@ FPlaygroundScene CreateWindowsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Caption up close";
-        Desc.Description = "The same bar laid out in the page. On macOS the window commands collapse, because the OS draws its own at the leading edge.";
+        Desc.Title       = TEXT("Caption up close");
+        Desc.Description = TEXT("The same bar laid out in the page. On macOS the window commands collapse, because the OS draws its own at the leading edge.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeTitleBarPreview(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Windows", MakeSceneColumn("Windows", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Windows"), MakeSceneColumn(TEXT("Windows"), Fonts, Panels));
 }

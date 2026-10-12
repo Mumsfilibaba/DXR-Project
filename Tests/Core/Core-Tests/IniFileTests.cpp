@@ -9,9 +9,6 @@
 
 #include "TestCommon/TestMacros.h"
 
-// The platform file layer exposes no delete, so the temp-file section cleans up through the CRT
-#include <cstdio>
-
 static FIniFile ParseIni(const CHAR_T* InText)
 {
     // The parser walks the buffer in place, so the null-terminator has to be copied along
@@ -37,263 +34,263 @@ bool IniFile_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Sections and lookup");
+    TEST_SECTION(TEXT("Sections and lookup"));
     {
         FIniFile Ini = ParseIni(
-            "[Renderer]\n"
+            TEXT("[Renderer]\n"
             "Width = 1280\n"
             "Height = 720\n"
             "[Audio]\n"
-            "Volume = 0.5\n");
+            "Volume = 0.5\n"));
 
         TEST_EXPECT_EQ(Ini.Sections.Size(), 2);
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("Renderer", "Width", Value));
-        TEST_EXPECT(Value == "1280");
-        TEST_EXPECT(Ini.GetString("Audio", "Volume", Value));
-        TEST_EXPECT(Value == "0.5");
+        TEST_EXPECT(Ini.GetString(TEXT("Renderer"), TEXT("Width"), Value));
+        TEST_EXPECT(Value == TEXT("1280"));
+        TEST_EXPECT(Ini.GetString(TEXT("Audio"), TEXT("Volume"), Value));
+        TEST_EXPECT(Value == TEXT("0.5"));
 
         // A key that lives in another section is not visible through this one
-        TEST_EXPECT(!Ini.GetString("Renderer", "Volume", Value));
+        TEST_EXPECT(!Ini.GetString(TEXT("Renderer"), TEXT("Volume"), Value));
 
         // Neither is anything in a section that does not exist
-        TEST_EXPECT(!Ini.GetString("Missing", "Width", Value));
+        TEST_EXPECT(!Ini.GetString(TEXT("Missing"), TEXT("Width"), Value));
     }
 
-    TEST_SECTION("A section header that appears twice reopens the section rather than replacing it");
+    TEST_SECTION(TEXT("A section header that appears twice reopens the section rather than replacing it"));
     {
         FIniFile Ini = ParseIni(
-            "[Renderer]\n"
+            TEXT("[Renderer]\n"
             "Width = 1280\n"
             "[Audio]\n"
             "Volume = 0.5\n"
             "[Renderer]\n"
-            "Height = 720\n");
+            "Height = 720\n"));
 
         TEST_EXPECT_EQ(Ini.Sections.Size(), 2);
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("Renderer", "Width", Value));
-        TEST_EXPECT(Value == "1280");
-        TEST_EXPECT(Ini.GetString("Renderer", "Height", Value));
-        TEST_EXPECT(Value == "720");
+        TEST_EXPECT(Ini.GetString(TEXT("Renderer"), TEXT("Width"), Value));
+        TEST_EXPECT(Value == TEXT("1280"));
+        TEST_EXPECT(Ini.GetString(TEXT("Renderer"), TEXT("Height"), Value));
+        TEST_EXPECT(Value == TEXT("720"));
     }
 
-    TEST_SECTION("Keys before any header land in the global section");
+    TEST_SECTION(TEXT("Keys before any header land in the global section"));
     {
         FIniFile Ini = ParseIni(
-            "GlobalKey = 7\n"
+            TEXT("GlobalKey = 7\n"
             "[Renderer]\n"
-            "Width = 1280\n");
+            "Width = 1280\n"));
 
-        TEST_EXPECT(Ini.Sections.Contains(""));
+        TEST_EXPECT(Ini.Sections.Contains(TEXT("")));
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("", "GlobalKey", Value));
-        TEST_EXPECT(Value == "7");
+        TEST_EXPECT(Ini.GetString(TEXT(""), TEXT("GlobalKey"), Value));
+        TEST_EXPECT(Value == TEXT("7"));
     }
 
-    TEST_SECTION("An empty section name searches every section");
+    TEST_SECTION(TEXT("An empty section name searches every section"));
     {
         FIniFile Ini = ParseIni(
-            "[Renderer]\n"
-            "Width = 1280\n");
+            TEXT("[Renderer]\n"
+            "Width = 1280\n"));
 
         // This is the path FConsoleManager::RegisterObject relies on
         FString Value;
-        TEST_EXPECT(Ini.GetString("", "Width", Value));
-        TEST_EXPECT(Value == "1280");
+        TEST_EXPECT(Ini.GetString(TEXT(""), TEXT("Width"), Value));
+        TEST_EXPECT(Value == TEXT("1280"));
 
-        TEST_EXPECT(Ini.FindValue("Width") != nullptr);
-        TEST_EXPECT(Ini.FindValue(nullptr, "Width") != nullptr);
-        TEST_EXPECT(Ini.FindValue("NotPresent") == nullptr);
+        TEST_EXPECT(Ini.FindValue(TEXT("Width")) != nullptr);
+        TEST_EXPECT(Ini.FindValue(nullptr, TEXT("Width")) != nullptr);
+        TEST_EXPECT(Ini.FindValue(TEXT("NotPresent")) == nullptr);
     }
 
-    TEST_SECTION("Comments and surrounding whitespace");
+    TEST_SECTION(TEXT("Comments and surrounding whitespace"));
     {
         FIniFile Ini = ParseIni(
-            "; A leading comment\n"
+            TEXT("; A leading comment\n"
             "[Renderer]\n"
             "   Indented = 1\n"
             "Spaced   =   2\n"
-            "; Commented = 3\n");
+            "; Commented = 3\n"));
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("Renderer", "Indented", Value));
-        TEST_EXPECT(Value == "1");
-        TEST_EXPECT(Ini.GetString("Renderer", "Spaced", Value));
-        TEST_EXPECT(Value == "2");
+        TEST_EXPECT(Ini.GetString(TEXT("Renderer"), TEXT("Indented"), Value));
+        TEST_EXPECT(Value == TEXT("1"));
+        TEST_EXPECT(Ini.GetString(TEXT("Renderer"), TEXT("Spaced"), Value));
+        TEST_EXPECT(Value == TEXT("2"));
 
         // Commented-out entries are not values
-        TEST_EXPECT(!Ini.GetString("Renderer", "Commented", Value));
+        TEST_EXPECT(!Ini.GetString(TEXT("Renderer"), TEXT("Commented"), Value));
     }
 
-    TEST_SECTION("Quoted values keep their inner spaces");
+    TEST_SECTION(TEXT("Quoted values keep their inner spaces"));
     {
         FIniFile Ini = ParseIni(
-            "[Window]\n"
+            TEXT("[Window]\n"
             "Title = \"Main Window\"\n"
-            "Trailing = \"Value \"\n");
+            "Trailing = \"Value \"\n"));
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("Window", "Title", Value));
-        TEST_EXPECT(Value == "Main Window");
-        TEST_EXPECT(Ini.GetString("Window", "Trailing", Value));
-        TEST_EXPECT(Value == "Value ");
+        TEST_EXPECT(Ini.GetString(TEXT("Window"), TEXT("Title"), Value));
+        TEST_EXPECT(Value == TEXT("Main Window"));
+        TEST_EXPECT(Ini.GetString(TEXT("Window"), TEXT("Trailing"), Value));
+        TEST_EXPECT(Value == TEXT("Value "));
     }
 
-    TEST_SECTION("Unquoted values stop at the first space");
+    TEST_SECTION(TEXT("Unquoted values stop at the first space"));
     {
         FIniFile Ini = ParseIni(
-            "[Renderer]\n"
-            "Key = 5 ignored\n");
+            TEXT("[Renderer]\n"
+            "Key = 5 ignored\n"));
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("Renderer", "Key", Value));
-        TEST_EXPECT(Value == "5");
+        TEST_EXPECT(Ini.GetString(TEXT("Renderer"), TEXT("Key"), Value));
+        TEST_EXPECT(Value == TEXT("5"));
     }
 
-    TEST_SECTION("CRLF parses the same as LF");
+    TEST_SECTION(TEXT("CRLF parses the same as LF"));
     {
         FIniFile Unix = ParseIni(
-            "[Renderer]\n"
+            TEXT("[Renderer]\n"
             "Width = 1280\n"
-            "Name = \"Main Window\"\n");
+            "Name = \"Main Window\"\n"));
 
         FIniFile Windows = ParseIni(
-            "[Renderer]\r\n"
+            TEXT("[Renderer]\r\n"
             "Width = 1280\r\n"
-            "Name = \"Main Window\"\r\n");
+            "Name = \"Main Window\"\r\n"));
 
         TEST_EXPECT(Windows.Sections == Unix.Sections);
     }
 
-    TEST_SECTION("Typed getters");
+    TEST_SECTION(TEXT("Typed getters"));
     {
         FIniFile Ini = ParseIni(
-            "[Values]\n"
+            TEXT("[Values]\n"
             "IntValue = 42\n"
             "NegativeInt = -7\n"
             "FloatValue = 0.5\n"
             "BoolTrue = true\n"
             "BoolFalse = false\n"
-            "NotANumber = abc\n");
+            "NotANumber = abc\n"));
 
         int32 IntValue = 0;
-        TEST_EXPECT(Ini.GetInt("Values", "IntValue", IntValue));
+        TEST_EXPECT(Ini.GetInt(TEXT("Values"), TEXT("IntValue"), IntValue));
         TEST_EXPECT_EQ(IntValue, 42);
-        TEST_EXPECT(Ini.GetInt("Values", "NegativeInt", IntValue));
+        TEST_EXPECT(Ini.GetInt(TEXT("Values"), TEXT("NegativeInt"), IntValue));
         TEST_EXPECT_EQ(IntValue, -7);
 
         float FloatValue = 0.0f;
-        TEST_EXPECT(Ini.GetFloat("Values", "FloatValue", FloatValue));
+        TEST_EXPECT(Ini.GetFloat(TEXT("Values"), TEXT("FloatValue"), FloatValue));
         TEST_EXPECT_EQ(FloatValue, 0.5f);
 
         bool bValue = false;
-        TEST_EXPECT(Ini.GetBool("Values", "BoolTrue", bValue));
+        TEST_EXPECT(Ini.GetBool(TEXT("Values"), TEXT("BoolTrue"), bValue));
         TEST_EXPECT_EQ(bValue, true);
-        TEST_EXPECT(Ini.GetBool("Values", "BoolFalse", bValue));
+        TEST_EXPECT(Ini.GetBool(TEXT("Values"), TEXT("BoolFalse"), bValue));
         TEST_EXPECT_EQ(bValue, false);
 
         // A value that does not convert reports failure rather than a garbage result
-        TEST_EXPECT(!Ini.GetInt("Values", "NotANumber", IntValue));
-        TEST_EXPECT(!Ini.GetFloat("Values", "NotANumber", FloatValue));
-        TEST_EXPECT(!Ini.GetBool("Values", "NotANumber", bValue));
+        TEST_EXPECT(!Ini.GetInt(TEXT("Values"), TEXT("NotANumber"), IntValue));
+        TEST_EXPECT(!Ini.GetFloat(TEXT("Values"), TEXT("NotANumber"), FloatValue));
+        TEST_EXPECT(!Ini.GetBool(TEXT("Values"), TEXT("NotANumber"), bValue));
     }
 
-    TEST_SECTION("Typed setters round-trip through the getters");
+    TEST_SECTION(TEXT("Typed setters round-trip through the getters"));
     {
         FIniFile Ini = ParseIni(
-            "[Values]\n"
+            TEXT("[Values]\n"
             "IntValue = 0\n"
             "FloatValue = 0.0\n"
             "BoolValue = false\n"
-            "StringValue = Original\n");
+            "StringValue = Original\n"));
 
-        TEST_EXPECT(Ini.SetInt("Values", "IntValue", 7));
+        TEST_EXPECT(Ini.SetInt(TEXT("Values"), TEXT("IntValue"), 7));
         int32 IntValue = 0;
-        TEST_EXPECT(Ini.GetInt("Values", "IntValue", IntValue));
+        TEST_EXPECT(Ini.GetInt(TEXT("Values"), TEXT("IntValue"), IntValue));
         TEST_EXPECT_EQ(IntValue, 7);
 
-        TEST_EXPECT(Ini.SetFloat("Values", "FloatValue", 0.25f));
+        TEST_EXPECT(Ini.SetFloat(TEXT("Values"), TEXT("FloatValue"), 0.25f));
         float FloatValue = 0.0f;
-        TEST_EXPECT(Ini.GetFloat("Values", "FloatValue", FloatValue));
+        TEST_EXPECT(Ini.GetFloat(TEXT("Values"), TEXT("FloatValue"), FloatValue));
         TEST_EXPECT_EQ(FloatValue, 0.25f);
 
-        TEST_EXPECT(Ini.SetBool("Values", "BoolValue", true));
+        TEST_EXPECT(Ini.SetBool(TEXT("Values"), TEXT("BoolValue"), true));
         bool bValue = false;
-        TEST_EXPECT(Ini.GetBool("Values", "BoolValue", bValue));
+        TEST_EXPECT(Ini.GetBool(TEXT("Values"), TEXT("BoolValue"), bValue));
         TEST_EXPECT_EQ(bValue, true);
 
-        TEST_EXPECT(Ini.SetString("Values", "StringValue", FString("Changed")));
+        TEST_EXPECT(Ini.SetString(TEXT("Values"), TEXT("StringValue"), FString(TEXT("Changed"))));
         FString Value;
-        TEST_EXPECT(Ini.GetString("Values", "StringValue", Value));
-        TEST_EXPECT(Value == "Changed");
+        TEST_EXPECT(Ini.GetString(TEXT("Values"), TEXT("StringValue"), Value));
+        TEST_EXPECT(Value == TEXT("Changed"));
 
         // Setting a key that was never in the file fails rather than creating it
-        TEST_EXPECT(!Ini.SetString("Values", "NotPresent", FString("Value")));
+        TEST_EXPECT(!Ini.SetString(TEXT("Values"), TEXT("NotPresent"), FString(TEXT("Value"))));
     }
 
-    TEST_SECTION("The set-or-add setters author a file that starts out empty");
+    TEST_SECTION(TEXT("The set-or-add setters author a file that starts out empty"));
     {
         FIniFile Ini;
 
-        Ini.SetOrAddString("Layout", "Kind", FString("Split"));
-        Ini.SetOrAddInt("Layout", "NumNodes", 3);
-        Ini.SetOrAddFloat("Layout", "Fraction", 0.25f);
-        Ini.SetOrAddBool("Layout", "Collapsed", true);
+        Ini.SetOrAddString(TEXT("Layout"), TEXT("Kind"), FString(TEXT("Split")));
+        Ini.SetOrAddInt(TEXT("Layout"), TEXT("NumNodes"), 3);
+        Ini.SetOrAddFloat(TEXT("Layout"), TEXT("Fraction"), 0.25f);
+        Ini.SetOrAddBool(TEXT("Layout"), TEXT("Collapsed"), true);
 
         TEST_EXPECT_EQ(Ini.Sections.Size(), 1);
 
         // The section carries its own name, which is what a dump writes the header from
-        FIniSection* Section = Ini.Sections.Find("Layout");
+        FIniSection* Section = Ini.Sections.Find(TEXT("Layout"));
         TEST_EXPECT(Section != nullptr);
-        TEST_EXPECT(Section->Name == "Layout");
+        TEST_EXPECT(Section->Name == TEXT("Layout"));
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("Layout", "Kind", Value));
-        TEST_EXPECT(Value == "Split");
+        TEST_EXPECT(Ini.GetString(TEXT("Layout"), TEXT("Kind"), Value));
+        TEST_EXPECT(Value == TEXT("Split"));
 
         int32 NumNodes = 0;
-        TEST_EXPECT(Ini.GetInt("Layout", "NumNodes", NumNodes));
+        TEST_EXPECT(Ini.GetInt(TEXT("Layout"), TEXT("NumNodes"), NumNodes));
         TEST_EXPECT_EQ(NumNodes, 3);
 
         float Fraction = 0.0f;
-        TEST_EXPECT(Ini.GetFloat("Layout", "Fraction", Fraction));
+        TEST_EXPECT(Ini.GetFloat(TEXT("Layout"), TEXT("Fraction"), Fraction));
         TEST_EXPECT_EQ(Fraction, 0.25f);
 
         bool bCollapsed = false;
-        TEST_EXPECT(Ini.GetBool("Layout", "Collapsed", bCollapsed));
+        TEST_EXPECT(Ini.GetBool(TEXT("Layout"), TEXT("Collapsed"), bCollapsed));
         TEST_EXPECT_EQ(bCollapsed, true);
     }
 
-    TEST_SECTION("A set-or-add over a parsed key changes it without adding a second one");
+    TEST_SECTION(TEXT("A set-or-add over a parsed key changes it without adding a second one"));
     {
         FIniFile Ini = ParseIni(
-            "[Values]\n"
-            "StringValue = Original\n");
+            TEXT("[Values]\n"
+            "StringValue = Original\n"));
 
-        Ini.SetOrAddString("Values", "StringValue", FString("Changed"));
+        Ini.SetOrAddString(TEXT("Values"), TEXT("StringValue"), FString(TEXT("Changed")));
 
         TEST_EXPECT_EQ(Ini.Sections.Size(), 1);
-        TEST_EXPECT_EQ(Ini.Sections.Find("Values")->Values.Size(), 1);
+        TEST_EXPECT_EQ(Ini.Sections.Find(TEXT("Values"))->Values.Size(), 1);
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("Values", "StringValue", Value));
-        TEST_EXPECT(Value == "Changed");
+        TEST_EXPECT(Ini.GetString(TEXT("Values"), TEXT("StringValue"), Value));
+        TEST_EXPECT(Value == TEXT("Changed"));
 
         // The value read from disk is left alone, so a restore still reaches it
-        Ini.Sections.Find("Values")->Restore();
-        TEST_EXPECT(Ini.GetString("Values", "StringValue", Value));
-        TEST_EXPECT(Value == "Original");
+        Ini.Sections.Find(TEXT("Values"))->Restore();
+        TEST_EXPECT(Ini.GetString(TEXT("Values"), TEXT("StringValue"), Value));
+        TEST_EXPECT(Value == TEXT("Original"));
     }
 
-    TEST_SECTION("An authored file parses back from its own dump");
+    TEST_SECTION(TEXT("An authored file parses back from its own dump"));
     {
         FIniFile Ini;
-        Ini.SetOrAddInt("Layout", "Version", 1);
-        Ini.SetOrAddString("Node0", "Kind", FString("Tabs"));
+        Ini.SetOrAddInt(TEXT("Layout"), TEXT("Version"), 1);
+        Ini.SetOrAddString(TEXT("Node0"), TEXT("Kind"), FString(TEXT("Tabs")));
 
         FString Dumped;
         Ini.DumpToString(Dumped);
@@ -302,13 +299,13 @@ bool IniFile_Test()
         TEST_EXPECT(Reparsed.Sections == Ini.Sections);
     }
 
-    TEST_SECTION("Restore and SaveCurrent");
+    TEST_SECTION(TEXT("Restore and SaveCurrent"));
     {
         FIniFile Ini = ParseIni(
-            "[Values]\n"
-            "Key = Original\n");
+            TEXT("[Values]\n"
+            "Key = Original\n"));
 
-        FIniSection* Section = Ini.Sections.Find("Values");
+        FIniSection* Section = Ini.Sections.Find(TEXT("Values"));
         TEST_EXPECT(Section != nullptr);
 
         if (Section)
@@ -316,34 +313,34 @@ bool IniFile_Test()
             FString Value;
 
             // An edit is visible immediately but can be rolled back to what the file held
-            TEST_EXPECT(Ini.SetString("Values", "Key", FString("Changed")));
-            TEST_EXPECT(Ini.GetString("Values", "Key", Value));
-            TEST_EXPECT(Value == "Changed");
+            TEST_EXPECT(Ini.SetString(TEXT("Values"), TEXT("Key"), FString(TEXT("Changed"))));
+            TEST_EXPECT(Ini.GetString(TEXT("Values"), TEXT("Key"), Value));
+            TEST_EXPECT(Value == TEXT("Changed"));
 
             Section->Restore();
-            TEST_EXPECT(Ini.GetString("Values", "Key", Value));
-            TEST_EXPECT(Value == "Original");
+            TEST_EXPECT(Ini.GetString(TEXT("Values"), TEXT("Key"), Value));
+            TEST_EXPECT(Value == TEXT("Original"));
 
             // Once saved, the edit becomes the value a restore falls back to
-            TEST_EXPECT(Ini.SetString("Values", "Key", FString("Kept")));
-            if (FIniValue* IniValue = Ini.FindValue("Values", "Key"))
+            TEST_EXPECT(Ini.SetString(TEXT("Values"), TEXT("Key"), FString(TEXT("Kept"))));
+            if (FIniValue* IniValue = Ini.FindValue(TEXT("Values"), TEXT("Key")))
             {
                 IniValue->SaveCurrent();
             }
 
             Section->Restore();
-            TEST_EXPECT(Ini.GetString("Values", "Key", Value));
-            TEST_EXPECT(Value == "Kept");
+            TEST_EXPECT(Ini.GetString(TEXT("Values"), TEXT("Key"), Value));
+            TEST_EXPECT(Value == TEXT("Kept"));
         }
     }
 
-    TEST_SECTION("Dump round-trip");
+    TEST_SECTION(TEXT("Dump round-trip"));
     {
         FIniFile Original = ParseIni(
-            "GlobalKey = 1\n"
+            TEXT("GlobalKey = 1\n"
             "[Renderer]\n"
             "Width = 1280\n"
-            "Name = \"Main Window\"\n");
+            "Name = \"Main Window\"\n"));
 
         FString Dumped;
         Original.DumpToString(Dumped);
@@ -352,36 +349,36 @@ bool IniFile_Test()
         TEST_EXPECT(Reparsed.Sections == Original.Sections);
     }
 
-    TEST_SECTION("Malformed input");
+    TEST_SECTION(TEXT("Malformed input"));
     {
         FIniFile Ini = ParseIni(
-            "[Unclosed\n"
+            TEXT("[Unclosed\n"
             "NoEqualsSign\n"
             "Unterminated = \"oops\n"
             "[Valid]\n"
-            "Key = 1\n");
+            "Key = 1\n"));
 
         // The malformed lines are ignored or clamped to the line, parsing continues
         FString Value;
-        TEST_EXPECT(Ini.GetString("Valid", "Key", Value));
-        TEST_EXPECT(Value == "1");
-        TEST_EXPECT(Ini.GetString("", "Unterminated", Value));
-        TEST_EXPECT(Value == "oops");
+        TEST_EXPECT(Ini.GetString(TEXT("Valid"), TEXT("Key"), Value));
+        TEST_EXPECT(Value == TEXT("1"));
+        TEST_EXPECT(Ini.GetString(TEXT(""), TEXT("Unterminated"), Value));
+        TEST_EXPECT(Value == TEXT("oops"));
 
         // The unclosed header never opened a section
-        TEST_EXPECT(!Ini.Sections.Contains("Unclosed"));
-        TEST_EXPECT(Ini.FindValue("NoEqualsSign") == nullptr);
+        TEST_EXPECT(!Ini.Sections.Contains(TEXT("Unclosed")));
+        TEST_EXPECT(Ini.FindValue(TEXT("NoEqualsSign")) == nullptr);
     }
 
-    TEST_SECTION("File round-trip");
+    TEST_SECTION(TEXT("File round-trip"));
     {
         // Relative, so it lands in the working directory next to TestResults_Core.log
-        const FString TempPath("IniFileTests.tmp.ini");
+        const FString TempPath(TEXT("IniFileTests.tmp.ini"));
 
         FIniFile Written = ParseIni(
-            "[Renderer]\n"
+            TEXT("[Renderer]\n"
             "Width = 1280\n"
-            "Name = \"Main Window\"\n");
+            "Name = \"Main Window\"\n"));
         Written.Filename = TempPath;
         TEST_EXPECT(Written.WriteToFile());
 
@@ -392,172 +389,172 @@ bool IniFile_Test()
 
         // Loading a path that does not exist fails without leaving state behind
         FIniFile Missing;
-        TEST_EXPECT(!Missing.LoadFromFile(TempPath + ".does-not-exist"));
+        TEST_EXPECT(!Missing.LoadFromFile(TempPath + TEXT(".does-not-exist")));
         TEST_EXPECT(Missing.Sections.IsEmpty());
 
-        ::remove(TempPath.Data());
+        FPlatformFile::DeleteFile(TempPath.Data());
     }
 
-    TEST_SECTION("Include directive");
+    TEST_SECTION(TEXT("Include directive"));
     {
-        const FString ChildPath("IniFileTests.child.ini");
-        const FString ParentPath("IniFileTests.parent.ini");
+        const FString ChildPath(TEXT("IniFileTests.child.ini"));
+        const FString ParentPath(TEXT("IniFileTests.parent.ini"));
 
         TEST_EXPECT(WriteTextFile(ChildPath,
-            "[Audio]\n"
+            TEXT("[Audio]\n"
             "Volume = 0.5\n"
             "[Renderer]\n"
-            "Height = 720\n"));
+            "Height = 720\n")));
 
         TEST_EXPECT(WriteTextFile(ParentPath,
-            "[Renderer]\n"
+            TEXT("[Renderer]\n"
             "include \"IniFileTests.child.ini\"\n"
             "Width = 1280\n"
-            "Height = 900\n"));
+            "Height = 900\n")));
 
         FIniFile Parent;
         TEST_EXPECT(Parent.LoadFromFile(ParentPath));
 
         FString Value;
-        TEST_EXPECT(Parent.GetString("Audio", "Volume", Value));
-        TEST_EXPECT(Value == "0.5");
-        TEST_EXPECT(Parent.GetString("Renderer", "Width", Value));
-        TEST_EXPECT(Value == "1280");
+        TEST_EXPECT(Parent.GetString(TEXT("Audio"), TEXT("Volume"), Value));
+        TEST_EXPECT(Value == TEXT("0.5"));
+        TEST_EXPECT(Parent.GetString(TEXT("Renderer"), TEXT("Width"), Value));
+        TEST_EXPECT(Value == TEXT("1280"));
 
-        TEST_EXPECT(Parent.GetString("Renderer", "Height", Value));
-        TEST_EXPECT(Value == "900");
+        TEST_EXPECT(Parent.GetString(TEXT("Renderer"), TEXT("Height"), Value));
+        TEST_EXPECT(Value == TEXT("900"));
 
-        ::remove(ChildPath.Data());
-        ::remove(ParentPath.Data());
+        FPlatformFile::DeleteFile(ChildPath.Data());
+        FPlatformFile::DeleteFile(ParentPath.Data());
     }
 
-    TEST_SECTION("Include override order");
+    TEST_SECTION(TEXT("Include override order"));
     {
-        const FString ChildPath("IniFileTests.override.child.ini");
-        const FString ParentPath("IniFileTests.override.parent.ini");
+        const FString ChildPath(TEXT("IniFileTests.override.child.ini"));
+        const FString ParentPath(TEXT("IniFileTests.override.parent.ini"));
 
         TEST_EXPECT(WriteTextFile(ChildPath,
-            "[Values]\n"
-            "Key = FromChild\n"));
+            TEXT("[Values]\n"
+            "Key = FromChild\n")));
 
         TEST_EXPECT(WriteTextFile(ParentPath,
-            "[Values]\n"
+            TEXT("[Values]\n"
             "Key = FromParentBefore\n"
             "include \"IniFileTests.override.child.ini\"\n"
-            "Key = FromParentAfter\n"));
+            "Key = FromParentAfter\n")));
 
         FIniFile Parent;
         TEST_EXPECT(Parent.LoadFromFile(ParentPath));
 
         FString Value;
-        TEST_EXPECT(Parent.GetString("Values", "Key", Value));
-        TEST_EXPECT(Value == "FromParentAfter");
+        TEST_EXPECT(Parent.GetString(TEXT("Values"), TEXT("Key"), Value));
+        TEST_EXPECT(Value == TEXT("FromParentAfter"));
 
-        ::remove(ChildPath.Data());
-        ::remove(ParentPath.Data());
+        FPlatformFile::DeleteFile(ChildPath.Data());
+        FPlatformFile::DeleteFile(ParentPath.Data());
     }
 
-    TEST_SECTION("Included file starts in the global section");
+    TEST_SECTION(TEXT("Included file starts in the global section"));
     {
-        const FString ChildPath("IniFileTests.global.child.ini");
-        const FString ParentPath("IniFileTests.global.parent.ini");
+        const FString ChildPath(TEXT("IniFileTests.global.child.ini"));
+        const FString ParentPath(TEXT("IniFileTests.global.parent.ini"));
 
         TEST_EXPECT(WriteTextFile(ChildPath,
-            "GlobalKey = FromChild\n"));
+            TEXT("GlobalKey = FromChild\n")));
 
         TEST_EXPECT(WriteTextFile(ParentPath,
-            "[Renderer]\n"
+            TEXT("[Renderer]\n"
             "include \"IniFileTests.global.child.ini\"\n"
-            "Width = 1280\n"));
+            "Width = 1280\n")));
 
         FIniFile Parent;
         TEST_EXPECT(Parent.LoadFromFile(ParentPath));
 
         FString Value;
-        TEST_EXPECT(Parent.GetString("", "GlobalKey", Value));
-        TEST_EXPECT(Value == "FromChild");
-        TEST_EXPECT(Parent.GetString("Renderer", "Width", Value));
-        TEST_EXPECT(Value == "1280");
+        TEST_EXPECT(Parent.GetString(TEXT(""), TEXT("GlobalKey"), Value));
+        TEST_EXPECT(Value == TEXT("FromChild"));
+        TEST_EXPECT(Parent.GetString(TEXT("Renderer"), TEXT("Width"), Value));
+        TEST_EXPECT(Value == TEXT("1280"));
 
-        ::remove(ChildPath.Data());
-        ::remove(ParentPath.Data());
+        FPlatformFile::DeleteFile(ChildPath.Data());
+        FPlatformFile::DeleteFile(ParentPath.Data());
     }
 
-    TEST_SECTION("A file including itself is refused");
+    TEST_SECTION(TEXT("A file including itself is refused"));
     {
-        const FString SelfPath("IniFileTests.self.ini");
+        const FString SelfPath(TEXT("IniFileTests.self.ini"));
 
         TEST_EXPECT(WriteTextFile(SelfPath,
-            "include \"IniFileTests.self.ini\"\n"
+            TEXT("include \"IniFileTests.self.ini\"\n"
             "[Valid]\n"
-            "Key = 1\n"));
+            "Key = 1\n")));
 
         FIniFile Self;
         TEST_EXPECT(Self.LoadFromFile(SelfPath));
 
         FString Value;
-        TEST_EXPECT(Self.GetString("Valid", "Key", Value));
-        TEST_EXPECT(Value == "1");
+        TEST_EXPECT(Self.GetString(TEXT("Valid"), TEXT("Key"), Value));
+        TEST_EXPECT(Value == TEXT("1"));
 
-        ::remove(SelfPath.Data());
+        FPlatformFile::DeleteFile(SelfPath.Data());
     }
 
-    TEST_SECTION("A missing include warns and parsing continues");
+    TEST_SECTION(TEXT("A missing include warns and parsing continues"));
     {
-        const FString ParentPath("IniFileTests.missing.parent.ini");
+        const FString ParentPath(TEXT("IniFileTests.missing.parent.ini"));
 
         TEST_EXPECT(WriteTextFile(ParentPath,
-            "include \"IniFileTests.missing.does-not-exist.ini\"\n"
+            TEXT("include \"IniFileTests.missing.does-not-exist.ini\"\n"
             "[Valid]\n"
-            "Key = 1\n"));
+            "Key = 1\n")));
 
         FIniFile Parent;
         TEST_EXPECT(Parent.LoadFromFile(ParentPath));
 
         FString Value;
-        TEST_EXPECT(Parent.GetString("Valid", "Key", Value));
-        TEST_EXPECT(Value == "1");
+        TEST_EXPECT(Parent.GetString(TEXT("Valid"), TEXT("Key"), Value));
+        TEST_EXPECT(Value == TEXT("1"));
 
-        ::remove(ParentPath.Data());
+        FPlatformFile::DeleteFile(ParentPath.Data());
     }
 
-    TEST_SECTION("Nested includes reach the deepest file");
+    TEST_SECTION(TEXT("Nested includes reach the deepest file"));
     {
-        const FString NestedCPath("IniFileTests.c.ini");
-        const FString NestedBPath("IniFileTests.b.ini");
-        const FString NestedAPath("IniFileTests.a.ini");
+        const FString NestedCPath(TEXT("IniFileTests.c.ini"));
+        const FString NestedBPath(TEXT("IniFileTests.b.ini"));
+        const FString NestedAPath(TEXT("IniFileTests.a.ini"));
 
         TEST_EXPECT(WriteTextFile(NestedCPath,
-            "[Values]\n"
-            "Key = FromC\n"));
+            TEXT("[Values]\n"
+            "Key = FromC\n")));
 
         TEST_EXPECT(WriteTextFile(NestedBPath,
-            "include \"IniFileTests.c.ini\"\n"));
+            TEXT("include \"IniFileTests.c.ini\"\n")));
 
         TEST_EXPECT(WriteTextFile(NestedAPath,
-            "include \"IniFileTests.b.ini\"\n"));
+            TEXT("include \"IniFileTests.b.ini\"\n")));
 
         FIniFile Root;
         TEST_EXPECT(Root.LoadFromFile(NestedAPath));
 
         FString Value;
-        TEST_EXPECT(Root.GetString("Values", "Key", Value));
-        TEST_EXPECT(Value == "FromC");
+        TEST_EXPECT(Root.GetString(TEXT("Values"), TEXT("Key"), Value));
+        TEST_EXPECT(Value == TEXT("FromC"));
 
-        ::remove(NestedCPath.Data());
-        ::remove(NestedBPath.Data());
-        ::remove(NestedAPath.Data());
+        FPlatformFile::DeleteFile(NestedCPath.Data());
+        FPlatformFile::DeleteFile(NestedBPath.Data());
+        FPlatformFile::DeleteFile(NestedAPath.Data());
     }
 
-    TEST_SECTION("A line with include and an equals sign is still a key");
+    TEST_SECTION(TEXT("A line with include and an equals sign is still a key"));
     {
         FIniFile Ini = ParseIni(
-            "[Values]\n"
-            "include = 1\n");
+            TEXT("[Values]\n"
+            "include = 1\n"));
 
         FString Value;
-        TEST_EXPECT(Ini.GetString("Values", "include", Value));
-        TEST_EXPECT(Value == "1");
+        TEST_EXPECT(Ini.GetString(TEXT("Values"), TEXT("include"), Value));
+        TEST_EXPECT(Value == TEXT("1"));
     }
 
     TEST_END();

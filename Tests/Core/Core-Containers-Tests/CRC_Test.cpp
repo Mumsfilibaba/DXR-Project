@@ -6,16 +6,16 @@
 #include <Core/Misc/CRC.h>
 #include <Core/Templates/CString.h>
 
-static uint32 CRCOf(const CHAR_T* Text)
+static uint32 CRCOf(const ANSICHAR* Text)
 {
-    return CRC32::Generate(Text, static_cast<uint64>(TCString<CHAR_T>::Strlen(Text)));
+    return CRC32::Generate(Text, static_cast<uint64>(TCString<ANSICHAR>::Strlen(Text)));
 }
 
 bool CRC_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("CRC32 known-answer vectors (IEEE / zlib)");
+    TEST_SECTION(TEXT("CRC32 known-answer vectors (IEEE / zlib)"));
     {
         TEST_EXPECT_EQ(CRC32::Generate("", 0), 0x00000000u);
         TEST_EXPECT_EQ(CRCOf("a"), 0xE8B7BE43u);
@@ -24,7 +24,7 @@ bool CRC_Test()
         TEST_EXPECT_EQ(CRCOf("The quick brown fox jumps over the lazy dog"), 0x414FA339u);
     }
 
-    TEST_SECTION("CRC32 determinism / distinctness");
+    TEST_SECTION(TEXT("CRC32 determinism / distinctness"));
     {
         TEST_EXPECT_EQ(CRCOf("abc"), CRCOf("abc"));
         TEST_EXPECT(CRCOf("abc") != CRCOf("abd"));

@@ -26,7 +26,7 @@ static int32 RunCoreBenchmarks()
 {
     // The harness is used here for its logging and output-device setup only; benchmarks
     // report timings rather than pass/fail, so there is nothing to tally.
-    TestHarness::Initialize("BenchmarkResults_Core.log");
+    TestHarness::Initialize(TEXT("BenchmarkResults_Core.log"));
     LOG_INFO("=== Core Benchmarks ===");
 
     FThreadManager::Initialize();
@@ -67,4 +67,4 @@ static int32 RunCoreBenchmarks()
     return 0;
 }
 
-IMPLEMENT_PROGRAM_MAIN("Core-Benchmarks", RunCoreBenchmarks);
+IMPLEMENT_PROGRAM_MAIN(TEXT("Core-Benchmarks"), RunCoreBenchmarks);

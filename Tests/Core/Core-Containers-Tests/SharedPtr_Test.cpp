@@ -62,7 +62,7 @@ bool TSharedPtr_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("TSharedPtr::IsValid / operator bool / Get");
+    TEST_SECTION(TEXT("TSharedPtr::IsValid / operator bool / Get"));
     {
         TSharedPtr<int32> Empty;
         TEST_EXPECT(!Empty.IsValid());
@@ -76,7 +76,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(*Ptr.Get() == 5);
     }
 
-    TEST_SECTION("TSharedPtr::IsUnique");
+    TEST_SECTION(TEXT("TSharedPtr::IsUnique"));
     {
         TSharedPtr<int32> Ptr = MakeSharedPtr<int32>(1);
         TEST_EXPECT(Ptr.IsUnique());
@@ -85,7 +85,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(!Ptr.IsUnique());
     }
 
-    TEST_SECTION("TSharedPtr::Reset");
+    TEST_SECTION(TEXT("TSharedPtr::Reset"));
     {
         TSharedPtr<int32> Ptr = MakeSharedPtr<int32>(9);
         TEST_EXPECT(Ptr.IsValid());
@@ -94,7 +94,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(!Ptr.IsValid());
     }
 
-    TEST_SECTION("TSharedPtr::Swap");
+    TEST_SECTION(TEXT("TSharedPtr::Swap"));
     {
         TSharedPtr<int32> First = MakeSharedPtr<int32>(1);
         TSharedPtr<int32> Second = MakeSharedPtr<int32>(2);
@@ -104,7 +104,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(*Second == 1);
     }
 
-    TEST_SECTION("TSharedPtr assignment operators");
+    TEST_SECTION(TEXT("TSharedPtr assignment operators"));
     {
         TSharedPtr<int32> Ptr = MakeSharedPtr<int32>(3);
 
@@ -124,7 +124,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(!Moved.IsValid());
     }
 
-    TEST_SECTION("TSharedPtr converting ctor (derived -> base)");
+    TEST_SECTION(TEXT("TSharedPtr converting ctor (derived -> base)"));
     {
         TSharedPtr<FDerived> Derived = MakeSharedPtr<FDerived>();
         TSharedPtr<FBase> Base = Derived;
@@ -133,7 +133,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(Base.GetStrongReferenceCount() == 2);
     }
 
-    TEST_SECTION("TWeakPtr Reset/Swap/IsExpired/IsValid/ToSharedPtr");
+    TEST_SECTION(TEXT("TWeakPtr Reset/Swap/IsExpired/IsValid/ToSharedPtr"));
     {
         TSharedPtr<int32> Shared = MakeSharedPtr<int32>(11);
         TWeakPtr<int32> Weak = Shared;
@@ -154,7 +154,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(!Other.IsValid());
     }
 
-    TEST_SECTION("TWeakPtr expiration");
+    TEST_SECTION(TEXT("TWeakPtr expiration"));
     {
         TWeakPtr<int32> Weak;
         {
@@ -172,7 +172,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(!TSharedPtr<int32>(Weak));
     }
 
-    TEST_SECTION("TSharedFromThis AsSharedPtr/AsWeakPtr");
+    TEST_SECTION(TEXT("TSharedFromThis AsSharedPtr/AsWeakPtr"));
     {
         TSharedPtr<FShared> Shared = MakeSharedPtr<FShared>();
         TSharedPtr<FShared> FromThis = Shared->AsSharedPtr();
@@ -184,7 +184,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(WeakThis.Get() == Shared.Get());
     }
 
-    TEST_SECTION("TSharedRef MakeSharedRef / Get / IsValid / operator bool");
+    TEST_SECTION(TEXT("TSharedRef MakeSharedRef / Get / IsValid / operator bool"));
     {
         TSharedRef<FTestRefCounted> Empty;
         TEST_EXPECT(!Empty.IsValid());
@@ -200,7 +200,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(Ref->GetRefCount() == 1);
     }
 
-    TEST_SECTION("TSharedRef AddRef / Reset / Swap");
+    TEST_SECTION(TEXT("TSharedRef AddRef / Reset / Swap"));
     {
         TSharedRef<FTestRefCounted> Ref = new FTestRefCounted();
         TEST_EXPECT(Ref->GetRefCount() == 1);
@@ -218,7 +218,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(!Ref.IsValid());
     }
 
-    TEST_SECTION("TSharedRef ReleaseOwnership / GetAs / assignment");
+    TEST_SECTION(TEXT("TSharedRef ReleaseOwnership / GetAs / assignment"));
     {
         TSharedRef<FTestRefCounted> Ref = new FTestRefCounted();
         TSharedRef<FTestRefCounted> Copy;
@@ -235,7 +235,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(AsDerived == static_cast<FTestRefCountedDerived*>(BaseRef.Get()));
     }
 
-    TEST_SECTION("TSharedRef StaticCastSharedRef");
+    TEST_SECTION(TEXT("TSharedRef StaticCastSharedRef"));
     {
         TSharedRef<FTestRefCounted> Ref = new FTestRefCounted();
         TSharedRef<IRefCounted> AsBase = StaticCastSharedRef<IRefCounted>(Ref);
@@ -243,7 +243,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(Ref->GetRefCount() == 2);
     }
 
-    TEST_SECTION("Cast helpers: Static / Const / Reinterpret (scalar)");
+    TEST_SECTION(TEXT("Cast helpers: Static / Const / Reinterpret (scalar)"));
     {
         TSharedPtr<FDerived> Derived = MakeSharedPtr<FDerived>();
         TSharedPtr<FBase> Base = Derived;
@@ -266,7 +266,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(*AsFloat == 1.0f);
     }
 
-    TEST_SECTION("Array TSharedPtr: MakeSharedPtr / operator[] / cast / weak array");
+    TEST_SECTION(TEXT("Array TSharedPtr: MakeSharedPtr / operator[] / cast / weak array"));
     {
         TSharedPtr<uint32[]> Array = MakeSharedPtr<uint32[]>(5);
         TEST_EXPECT(Array.GetStrongReferenceCount() == 1);
@@ -298,7 +298,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(Promoted.Get() == Array.Get());
     }
 
-    TEST_SECTION("Custom deleter / TUniquePtr -> TSharedPtr");
+    TEST_SECTION(TEXT("Custom deleter / TUniquePtr -> TSharedPtr"));
     {
         struct FMyDeleter
         {
@@ -316,7 +316,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(*FromUnique == 7);
     }
 
-    TEST_SECTION("TUniquePtr scalar / array / Reset / Release / IsValid");
+    TEST_SECTION(TEXT("TUniquePtr scalar / array / Reset / Release / IsValid"));
     {
         TUniquePtr<uint32> Scalar = MakeUniquePtr<uint32>(5);
         TEST_EXPECT(Scalar.IsValid());
@@ -348,7 +348,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(!UniqueInt.IsValid());
     }
 
-    TEST_SECTION("TUniquePtr inside TArray (move)");
+    TEST_SECTION(TEXT("TUniquePtr inside TArray (move)"));
     {
         TArray<TUniquePtr<int32>> UniqueArray;
         for (int32 Index = 0; Index < 64; ++Index)
@@ -361,7 +361,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT(*Moved[10] == 10);
     }
 
-    TEST_SECTION("Weak/Shared equality operators");
+    TEST_SECTION(TEXT("Weak/Shared equality operators"));
     {
         TSharedPtr<FDerived> Derived = MakeSharedPtr<FDerived>();
         TSharedPtr<FBase>    Base    = Derived;
@@ -377,7 +377,7 @@ bool TSharedPtr_Test()
         TEST_EXPECT((Base == WeakBase));
     }
 
-    TEST_SECTION("TSharedPtr / TUniquePtr lifetime stress (FInstanced, seeded sweep)");
+    TEST_SECTION(TEXT("TSharedPtr / TUniquePtr lifetime stress (FInstanced, seeded sweep)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)

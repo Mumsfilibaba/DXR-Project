@@ -28,7 +28,7 @@ static TSharedPtr<FMenuItem> MakeItem(const FPlaygroundFonts& Fonts, const FStri
     Desc.SetLabel(Label).SetFont(Fonts.Body);
     Desc.OnActivated = FOnMenuItemActivated::CreateLambda([Readout, Label]()
     {
-        Readout->SetText(FString::Printf("chose %s", Label.Data()));
+        Readout->SetText(FString::Printf(TEXT("chose %s"), Label.Data()));
     });
 
     return FMenuItem::Create(Desc);
@@ -48,7 +48,7 @@ static TSharedPtr<FVisualElement> FrameToolBar(const TSharedPtr<FVisualElement>&
 
 static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, "nothing pressed yet");
+    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, TEXT("nothing pressed yet"));
 
     FToolBar::FDesc Desc;
     Desc.Font           = Fonts.Body;
@@ -56,57 +56,57 @@ static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fon
 
     TSharedPtr<FToolBar> ToolBar = FToolBar::Create(Desc);
 
-    const CHAR_T* Actions[] = { "New", "Open", "Save" };
+    const CHAR_T* Actions[] = { TEXT("New"), TEXT("Open"), TEXT("Save") };
     for (const CHAR_T* Action : Actions)
     {
         ToolBar->AddButton(
-            FToolBarItemDesc().SetLabel(Action).SetToolTipText(FString::Printf("%s the scene", Action)),
+            FToolBarItemDesc().SetLabel(Action).SetToolTipText(FString::Printf(TEXT("%s the scene"), Action)),
             FOnClicked::CreateLambda([Readout, Action]()
             {
-                Readout->SetText(FString::Printf("pressed %s", Action));
+                Readout->SetText(FString::Printf(TEXT("pressed %s"), Action));
             }));
     }
 
     ToolBar->AddSeparator();
 
-    const CHAR_T* Toggles[] = { "Grid", "Wireframe", "Stats" };
+    const CHAR_T* Toggles[] = { TEXT("Grid"), TEXT("Wireframe"), TEXT("Stats") };
     for (const CHAR_T* Toggle : Toggles)
     {
         ToolBar->AddToggle(
-            FToolBarItemDesc().SetLabel(Toggle).SetToolTipText(FString::Printf("Show %s in the viewport", Toggle)),
+            FToolBarItemDesc().SetLabel(Toggle).SetToolTipText(FString::Printf(TEXT("Show %s in the viewport"), Toggle)),
             ECheckBoxState::Unchecked,
             FOnCheckStateChanged::CreateLambda([Readout, Toggle](ECheckBoxState NewState)
             {
-                Readout->SetText(FString::Printf("%s is now %s", Toggle, NewState == ECheckBoxState::Checked ? "on" : "off"));
+                Readout->SetText(FString::Printf(TEXT("%s is now %s"), Toggle, NewState == ECheckBoxState::Checked ? TEXT("on") : TEXT("off")));
             }));
     }
 
     ToolBar->AddSeparator();
 
     TSharedPtr<FMenu> ShadingMenu = FMenu::Create();
-    ShadingMenu->AddItem(MakeItem(Fonts, "Lit", Readout));
-    ShadingMenu->AddItem(MakeItem(Fonts, "Unlit", Readout));
+    ShadingMenu->AddItem(MakeItem(Fonts, TEXT("Lit"), Readout));
+    ShadingMenu->AddItem(MakeItem(Fonts, TEXT("Unlit"), Readout));
     ShadingMenu->AddSeparator();
-    ShadingMenu->AddItem(MakeItem(Fonts, "Base Color", Readout));
-    ShadingMenu->AddItem(MakeItem(Fonts, "Normals", Readout));
+    ShadingMenu->AddItem(MakeItem(Fonts, TEXT("Base Color"), Readout));
+    ShadingMenu->AddItem(MakeItem(Fonts, TEXT("Normals"), Readout));
 
     TSharedPtr<FMenu> SnapMenu = FMenu::Create();
-    SnapMenu->AddItem(MakeItem(Fonts, "Off", Readout));
-    SnapMenu->AddItem(MakeItem(Fonts, "10 cm", Readout));
-    SnapMenu->AddItem(MakeItem(Fonts, "1 m", Readout));
+    SnapMenu->AddItem(MakeItem(Fonts, TEXT("Off"), Readout));
+    SnapMenu->AddItem(MakeItem(Fonts, TEXT("10 cm"), Readout));
+    SnapMenu->AddItem(MakeItem(Fonts, TEXT("1 m"), Readout));
 
-    ToolBar->AddDropDown(FToolBarItemDesc().SetLabel("Shading"), ShadingMenu);
-    ToolBar->AddDropDown(FToolBarItemDesc().SetLabel("Snap"), SnapMenu);
+    ToolBar->AddDropDown(FToolBarItemDesc().SetLabel(TEXT("Shading")), ShadingMenu);
+    ToolBar->AddDropDown(FToolBarItemDesc().SetLabel(TEXT("Snap")), SnapMenu);
 
     ToolBar->AddSeparator();
 
     FComboBox::FDesc ComboDesc;
-    ComboDesc.SetOptions({ "Perspective", "Top", "Front", "Side" }).SetFont(Fonts.Body);
+    ComboDesc.SetOptions({ TEXT("Perspective"), TEXT("Top"), TEXT("Front"), TEXT("Side") }).SetFont(Fonts.Body);
     ComboDesc.SelectedIndex      = 0;
     ComboDesc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([Readout](int32 SelectedIndex)
     {
-        const CHAR_T* Views[] = { "Perspective", "Top", "Front", "Side" };
-        Readout->SetText(FString::Printf("camera is now %s", Views[Math::Clamp(SelectedIndex, 0, 3)]));
+        const CHAR_T* Views[] = { TEXT("Perspective"), TEXT("Top"), TEXT("Front"), TEXT("Side") };
+        Readout->SetText(FString::Printf(TEXT("camera is now %s"), Views[Math::Clamp(SelectedIndex, 0, 3)]));
     });
 
     ToolBar->AddWidget(FComboBox::Create(ComboDesc));
@@ -119,7 +119,7 @@ static TSharedPtr<FVisualElement> MakeMainToolBarRow(const FPlaygroundFonts& Fon
 
 static TSharedPtr<FVisualElement> MakeVerticalToolBarRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, "select is the tool in force");
+    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, TEXT("select is the tool in force"));
 
     FToolBar::FDesc Desc;
     Desc.Font           = Fonts.Body;
@@ -129,11 +129,11 @@ static TSharedPtr<FVisualElement> MakeVerticalToolBarRow(const FPlaygroundFonts&
     TSharedPtr<FToolBar> ToolBar = FToolBar::Create(Desc);
     TSharedPtr<TArray<TSharedPtr<FToolBarButton>>> Tools = MakeSharedPtr<TArray<TSharedPtr<FToolBarButton>>>();
 
-    const CHAR_T* ToolNames[] = { "Select", "Move", "Rotate", "Scale" };
+    const CHAR_T* ToolNames[] = { TEXT("Select"), TEXT("Move"), TEXT("Rotate"), TEXT("Scale") };
     for (const CHAR_T* ToolName : ToolNames)
     {
         TSharedPtr<FToolBarButton> Tool = ToolBar->AddToggle(
-            FToolBarItemDesc().SetLabel(ToolName).SetToolTipText(FString::Printf("The %s tool", ToolName)),
+            FToolBarItemDesc().SetLabel(ToolName).SetToolTipText(FString::Printf(TEXT("The %s tool"), ToolName)),
             ECheckBoxState::Unchecked,
             FOnCheckStateChanged());
 
@@ -159,7 +159,7 @@ static TSharedPtr<FVisualElement> MakeVerticalToolBarRow(const FPlaygroundFonts&
                 }
             }
 
-            Readout->SetText(FString::Printf("%s is the tool in force", LiveTool->GetLabel().Data()));
+            Readout->SetText(FString::Printf(TEXT("%s is the tool in force"), LiveTool->GetLabel().Data()));
         }));
     }
 
@@ -168,7 +168,7 @@ static TSharedPtr<FVisualElement> MakeVerticalToolBarRow(const FPlaygroundFonts&
     ToolBar->AddSeparator();
 
     TSharedPtr<FToolBarButton> Retired = ToolBar->AddButton(
-        FToolBarItemDesc().SetLabel("Bake").SetToolTipText("Nothing to bake in the playground"),
+        FToolBarItemDesc().SetLabel(TEXT("Bake")).SetToolTipText(TEXT("Nothing to bake in the playground")),
         FOnClicked());
 
     Retired->SetEnabled(false);
@@ -186,8 +186,8 @@ FPlaygroundScene CreateToolBarScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Toolbar";
-        Desc.Description = "Buttons that fire, toggles that latch and dropdowns that open menus, in groups divided by rules. Rest on one for its tip, and once a dropdown is open, hovering its sibling switches.";
+        Desc.Title       = TEXT("Toolbar");
+        Desc.Description = TEXT("Buttons that fire, toggles that latch and dropdowns that open menus, in groups divided by rules. Rest on one for its tip, and once a dropdown is open, hovering its sibling switches.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeMainToolBarRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -195,12 +195,12 @@ FPlaygroundScene CreateToolBarScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Vertical strip";
-        Desc.Description = "The same strip stacked downwards, holding a one-of-many tool group and an entry that is disabled.";
+        Desc.Title       = TEXT("Vertical strip");
+        Desc.Description = TEXT("The same strip stacked downwards, holding a one-of-many tool group and an entry that is disabled.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeVerticalToolBarRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Toolbar", MakeSceneColumn("Toolbar", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Toolbar"), MakeSceneColumn(TEXT("Toolbar"), Fonts, Panels));
 }

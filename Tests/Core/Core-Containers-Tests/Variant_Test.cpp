@@ -10,7 +10,7 @@ bool TVariant_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Default / IsValid / IsType");
+    TEST_SECTION(TEXT("Default / IsValid / IsType"));
     {
         TVariant<int32, float, char> Var;
         TEST_EXPECT(!Var.IsValid());
@@ -18,7 +18,7 @@ bool TVariant_Test()
         TEST_EXPECT(!Var.IsType<float>());
     }
 
-    TEST_SECTION("TInPlaceType construction / GetValue / GetIndex");
+    TEST_SECTION(TEXT("TInPlaceType construction / GetValue / GetIndex"));
     {
         TVariant<int32, float, char> Var(TInPlaceType<float>(), 3.5f);
         TEST_EXPECT(Var.IsValid());
@@ -28,7 +28,7 @@ bool TVariant_Test()
         TEST_EXPECT_EQ(Var.GetIndex(), 1);
     }
 
-    TEST_SECTION("TInPlaceIndex construction");
+    TEST_SECTION(TEXT("TInPlaceIndex construction"));
     {
         TVariant<int32, float, char> V0(TInPlaceIndex<0>(), 11);
         TVariant<int32, float, char> V2(TInPlaceIndex<2>(), 'z');
@@ -38,7 +38,7 @@ bool TVariant_Test()
         TEST_EXPECT_EQ(V2.GetValue<char>(), 'z');
     }
 
-    TEST_SECTION("TryGetValue / GetValueOrDefault");
+    TEST_SECTION(TEXT("TryGetValue / GetValueOrDefault"));
     {
         TVariant<int32, float, char> Var(TInPlaceType<int32>(), 77);
         TEST_EXPECT(Var.TryGetValue<int32>() != nullptr);
@@ -48,7 +48,7 @@ bool TVariant_Test()
         TEST_EXPECT_EQ(Var.GetValueOrDefault<float>(1.5f), 1.5f);
     }
 
-    TEST_SECTION("Emplace / Reset");
+    TEST_SECTION(TEXT("Emplace / Reset"));
     {
         TVariant<int32, float, char> Var;
         Var.Emplace<int32>(5);
@@ -64,7 +64,7 @@ bool TVariant_Test()
         TEST_EXPECT(!Var.IsValid());
     }
 
-    TEST_SECTION("Copy / move / value assignment");
+    TEST_SECTION(TEXT("Copy / move / value assignment"));
     {
         TVariant<int32, float, char> Var(TInPlaceType<int32>(), 9);
         TVariant<int32, float, char> Copy = Var;
@@ -80,7 +80,7 @@ bool TVariant_Test()
         TEST_EXPECT_EQ(Moved.GetValue<float>(), 2.5f);
     }
 
-    TEST_SECTION("Swap");
+    TEST_SECTION(TEXT("Swap"));
     {
         TVariant<int32, float, char> First(TInPlaceType<int32>(), 1);
         TVariant<int32, float, char> Second(TInPlaceType<char>(), 'x');
@@ -91,7 +91,7 @@ bool TVariant_Test()
         TEST_EXPECT_EQ(Second.GetValue<int32>(), 1);
     }
 
-    TEST_SECTION("Comparison operators");
+    TEST_SECTION(TEXT("Comparison operators"));
     {
         TVariant<int32, float, char> First(TInPlaceType<int32>(), 5);
         TVariant<int32, float, char> Second(TInPlaceType<int32>(), 5);
@@ -104,23 +104,23 @@ bool TVariant_Test()
         TEST_EXPECT(First >= Second);
     }
 
-    TEST_SECTION("Non-trivial type (String): InPlace / const GetValue / TryGetValue");
+    TEST_SECTION(TEXT("Non-trivial type (FString): InPlace / const GetValue / TryGetValue"));
     {
-        TVariant<FString, int32> Var(TInPlaceType<FString>(), "Test");
+        TVariant<FString, int32> Var(TInPlaceType<FString>(), TEXT("Test"));
         TEST_EXPECT(Var.IsType<FString>());
         TEST_EXPECT(!Var.IsType<int32>());
-        TEST_EXPECT(Var.GetValue<FString>() == "Test");
+        TEST_EXPECT(Var.GetValue<FString>() == TEXT("Test"));
 
         const TVariant<FString, int32>& Ref = Var;
-        TEST_EXPECT(Ref.GetValue<FString>() == "Test");
+        TEST_EXPECT(Ref.GetValue<FString>() == TEXT("Test"));
         TEST_EXPECT(Ref.TryGetValue<int32>() == nullptr);
         TEST_EXPECT(Ref.TryGetValue<FString>() != nullptr);
     }
 
-    TEST_SECTION("Non-trivial type (String): Swap with heap strings / Emplace reassign");
+    TEST_SECTION(TEXT("Non-trivial type (FString): Swap with heap strings / Emplace reassign"));
     {
-        const FString One = "String Number One 11111111111111111111111111111111111111111111111111";
-        const FString Two = "String Number Two 22222222222222222222222222222222222222222222222222";
+        const FString One = TEXT("String Number One 11111111111111111111111111111111111111111111111111");
+        const FString Two = TEXT("String Number Two 22222222222222222222222222222222222222222222222222");
 
         TVariant<FString, int32> First(TInPlaceType<FString>(), One);
         TVariant<FString, int32> Second(TInPlaceType<FString>(), Two);
@@ -131,11 +131,11 @@ bool TVariant_Test()
 
         TVariant<FString, int32> Var;
         
-        Var.Emplace<FString>("Long string long string long string long string 1111111111111111");
-        TEST_EXPECT(Var.GetValue<FString>() == "Long string long string long string long string 1111111111111111");
+        Var.Emplace<FString>(TEXT("Long string long string long string long string 1111111111111111"));
+        TEST_EXPECT(Var.GetValue<FString>() == TEXT("Long string long string long string long string 1111111111111111"));
 
-        Var.Emplace<FString>("Long string long string long string long string 2222222222222222");
-        TEST_EXPECT(Var.GetValue<FString>() == "Long string long string long string long string 2222222222222222");
+        Var.Emplace<FString>(TEXT("Long string long string long string long string 2222222222222222"));
+        TEST_EXPECT(Var.GetValue<FString>() == TEXT("Long string long string long string long string 2222222222222222"));
     }
 
     TEST_END();

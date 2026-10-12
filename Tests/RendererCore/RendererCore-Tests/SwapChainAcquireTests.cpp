@@ -26,7 +26,7 @@ bool SwapChainAcquire_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Acquire, overwrite and present runs clean, frame after frame");
+    TEST_SECTION(TEXT("Acquire, overwrite and present runs clean, frame after frame"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -53,7 +53,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
     }
 
-    TEST_SECTION("The back-buffer views are the texture's own views");
+    TEST_SECTION(TEXT("The back-buffer views are the texture's own views"));
     {
         FRHISwapChainRef SwapChain = CreateSwapChain(ESwapChainUsageFlags::RenderTarget | ESwapChainUsageFlags::UnorderedAccess);
         TEST_CHECK(SwapChain != nullptr);
@@ -68,7 +68,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT_EQ(SwapChain->GetUnorderedAccessView(), BackBuffer->GetUnorderedAccessView());
     }
 
-    TEST_SECTION("A back buffer asked for ShaderResource carries a shader-resource view");
+    TEST_SECTION(TEXT("A back buffer asked for ShaderResource carries a shader-resource view"));
     {
         FRHISwapChainRef SwapChain = CreateSwapChain(ESwapChainUsageFlags::RenderTarget | ESwapChainUsageFlags::ShaderResource);
         TEST_CHECK(SwapChain != nullptr);
@@ -80,7 +80,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT_EQ(SwapChain->GetShaderResourceView(), BackBuffer->GetShaderResourceView());
     }
 
-    TEST_SECTION("A back buffer not asked for ShaderResource carries no shader-resource view");
+    TEST_SECTION(TEXT("A back buffer not asked for ShaderResource carries no shader-resource view"));
     {
         FRHISwapChainRef SwapChain = CreateSwapChain();
         TEST_CHECK(SwapChain != nullptr);
@@ -92,7 +92,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT_EQ(BackBuffer->GetShaderResourceView(), nullptr);
     }
 
-    TEST_SECTION("ShaderResource on its own is refused");
+    TEST_SECTION(TEXT("ShaderResource on its own is refused"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -102,7 +102,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT(RHIValidation::GetErrorCount() > 0);
     }
 
-    TEST_SECTION("A second acquire without a present in between is refused");
+    TEST_SECTION(TEXT("A second acquire without a present in between is refused"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -118,7 +118,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT(RHIValidation::GetErrorCount() > 0);
     }
 
-    TEST_SECTION("Presenting without acquiring is refused");
+    TEST_SECTION(TEXT("Presenting without acquiring is refused"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -133,7 +133,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT(RHIValidation::GetErrorCount() > 0);
     }
 
-    TEST_SECTION("Presenting a back-buffer nothing wrote is refused");
+    TEST_SECTION(TEXT("Presenting a back-buffer nothing wrote is refused"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -153,7 +153,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT(RHIValidation::GetErrorCount() > 0);
     }
 
-    TEST_SECTION("A Present before-state after an acquire is refused");
+    TEST_SECTION(TEXT("A Present before-state after an acquire is refused"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -169,7 +169,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT(RHIValidation::GetErrorCount() > 0);
     }
 
-    TEST_SECTION("Undefined is refused as an after-state");
+    TEST_SECTION(TEXT("Undefined is refused as an after-state"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -186,7 +186,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT(RHIValidation::GetErrorCount() > 0);
     }
 
-    TEST_SECTION("Writing a back-buffer that was never acquired is refused");
+    TEST_SECTION(TEXT("Writing a back-buffer that was never acquired is refused"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -201,7 +201,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT(RHIValidation::GetErrorCount() > 0);
     }
 
-    TEST_SECTION("A resize invalidates the acquire it interrupts");
+    TEST_SECTION(TEXT("A resize invalidates the acquire it interrupts"));
     {
         RHIValidation::ResetErrorCount();
 
@@ -219,7 +219,7 @@ bool SwapChainAcquire_Test()
         TEST_EXPECT_EQ(SwapChain->GetDesc().Width, uint16(TestExtent * 2));
     }
 
-    TEST_SECTION("A resize keeps the back-buffer texture and its views");
+    TEST_SECTION(TEXT("A resize keeps the back-buffer texture and its views"));
     {
         FRHISwapChainRef SwapChain = CreateSwapChain(ESwapChainUsageFlags::RenderTarget | ESwapChainUsageFlags::UnorderedAccess | ESwapChainUsageFlags::ShaderResource);
         TEST_CHECK(SwapChain != nullptr);

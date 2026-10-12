@@ -55,7 +55,7 @@ bool Margin_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A uniform margin applies to every side");
+    TEST_SECTION(TEXT("A uniform margin applies to every side"));
     const FMargin Uniform(4);
     TEST_EXPECT_EQ(Uniform.Left, 4);
     TEST_EXPECT_EQ(Uniform.Top, 4);
@@ -64,7 +64,7 @@ bool Margin_Test()
     TEST_EXPECT_EQ(Uniform.GetTotalHorizontal(), 8);
     TEST_EXPECT_EQ(Uniform.GetTotalVertical(), 8);
 
-    TEST_SECTION("The two-argument form is horizontal then vertical");
+    TEST_SECTION(TEXT("The two-argument form is horizontal then vertical"));
     const FMargin Axes(10, 6);
     TEST_EXPECT_EQ(Axes.Left, 10);
     TEST_EXPECT_EQ(Axes.Right, 10);
@@ -73,12 +73,12 @@ bool Margin_Test()
     TEST_EXPECT_EQ(Axes.GetTotalHorizontal(), 20);
     TEST_EXPECT_EQ(Axes.GetTotalVertical(), 12);
 
-    TEST_SECTION("The four-argument form goes left, top, right, bottom");
+    TEST_SECTION(TEXT("The four-argument form goes left, top, right, bottom"));
     const FMargin Sides(1, 2, 3, 4);
     TEST_EXPECT_EQ(Sides.GetTotalHorizontal(), 4);
     TEST_EXPECT_EQ(Sides.GetTotalVertical(), 6);
 
-    TEST_SECTION("Equality compares every side");
+    TEST_SECTION(TEXT("Equality compares every side"));
     TEST_EXPECT(FMargin(1, 2, 3, 4) == Sides);
     TEST_EXPECT(FMargin(1, 2, 3, 5) != Sides);
 
@@ -91,32 +91,32 @@ bool Rectangle_Test()
 
     const FRectangle Bounds(FIntVector2(10, 20), 100, 50);
 
-    TEST_SECTION("The edges are one past the far side");
+    TEST_SECTION(TEXT("The edges are one past the far side"));
     TEST_EXPECT_EQ(Bounds.GetRight(), 110);
     TEST_EXPECT_EQ(Bounds.GetBottom(), 70);
     TEST_EXPECT(!Bounds.IsEmpty());
 
-    TEST_SECTION("Deflate moves the origin in and shrinks the extent");
+    TEST_SECTION(TEXT("Deflate moves the origin in and shrinks the extent"));
     const FRectangle Deflated = Bounds.Deflate(FMargin(5, 4, 3, 2));
     TEST_EXPECT_EQ(Deflated.Position.X, 15);
     TEST_EXPECT_EQ(Deflated.Position.Y, 24);
     TEST_EXPECT_EQ(Deflated.Width, 92);
     TEST_EXPECT_EQ(Deflated.Height, 44);
 
-    TEST_SECTION("Deflate clamps at zero rather than going negative");
+    TEST_SECTION(TEXT("Deflate clamps at zero rather than going negative"));
     const FRectangle Collapsed = Bounds.Deflate(FMargin(200));
     TEST_EXPECT_EQ(Collapsed.Width, 0);
     TEST_EXPECT_EQ(Collapsed.Height, 0);
     TEST_EXPECT(Collapsed.IsEmpty());
 
-    TEST_SECTION("Intersect returns the overlap");
+    TEST_SECTION(TEXT("Intersect returns the overlap"));
     const FRectangle Overlap = Bounds.Intersect(FRectangle(FIntVector2(60, 0), 100, 40));
     TEST_EXPECT_EQ(Overlap.Position.X, 60);
     TEST_EXPECT_EQ(Overlap.Position.Y, 20);
     TEST_EXPECT_EQ(Overlap.Width, 50);
     TEST_EXPECT_EQ(Overlap.Height, 20);
 
-    TEST_SECTION("Disjoint rectangles intersect to nothing");
+    TEST_SECTION(TEXT("Disjoint rectangles intersect to nothing"));
     const FRectangle Disjoint = Bounds.Intersect(FRectangle(FIntVector2(500, 500), 10, 10));
     TEST_EXPECT(Disjoint.IsEmpty());
     TEST_EXPECT_EQ(Disjoint.Width, 0);
@@ -131,37 +131,37 @@ bool FixedWidthFontFace_Test()
 
     const FFixedWidthFontFace Font(8, 16);
 
-    TEST_SECTION("The metrics come straight from the two numbers");
+    TEST_SECTION(TEXT("The metrics come straight from the two numbers"));
     TEST_EXPECT_EQ(Font.GetLineHeight(), 16);
     TEST_EXPECT_EQ(Font.GetAscent(), 12);
     TEST_EXPECT_EQ(Font.GetDescent(), 4);
 
-    TEST_SECTION("Every character shapes to the same advance, at a pen that steps by it");
-    const FShapedRun& Shaped = Font.ShapeText(FStringView("Test"));
+    TEST_SECTION(TEXT("Every character shapes to the same advance, at a pen that steps by it"));
+    const FShapedRun& Shaped = Font.ShapeText(FStringView(TEXT("Test")));
     TEST_EXPECT_EQ(Shaped.Glyphs.Size(), 4);
     TEST_EXPECT_EQ(Shaped.Glyphs[0].Offset, 0);
     TEST_EXPECT_EQ(Shaped.Glyphs[0].Advance, 8);
     TEST_EXPECT_EQ(Shaped.Glyphs[3].Offset, 24);
 
-    TEST_SECTION("Width is the character count times the advance");
-    TEST_EXPECT_EQ(Font.MeasureWidth(FStringView("")), 0);
-    TEST_EXPECT_EQ(Font.MeasureWidth(FStringView("Test")), 32);
+    TEST_SECTION(TEXT("Width is the character count times the advance"));
+    TEST_EXPECT_EQ(Font.MeasureWidth(FStringView(TEXT(""))), 0);
+    TEST_EXPECT_EQ(Font.MeasureWidth(FStringView(TEXT("Test"))), 32);
 
-    TEST_SECTION("Hit testing an offset rounds to the nearest position between characters");
-    const FStringView Text("Test");
+    TEST_SECTION(TEXT("Hit testing an offset rounds to the nearest position between characters"));
+    const FStringView Text(TEXT("Test"));
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, 0), 0);
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, 3), 0);
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, 5), 1);
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, 12), 2);
 
-    TEST_SECTION("Hit testing clamps into the text");
+    TEST_SECTION(TEXT("Hit testing clamps into the text"));
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, -100), 0);
     TEST_EXPECT_EQ(Font.FindCharacterIndexAtOffset(Text, 1000), 4);
 
-    TEST_SECTION("A degenerate face still measures");
+    TEST_SECTION(TEXT("A degenerate face still measures"));
     const FFixedWidthFontFace Degenerate(0, 0);
     TEST_EXPECT_EQ(Degenerate.GetLineHeight(), 1);
-    TEST_EXPECT_EQ(Degenerate.MeasureWidth(FStringView("A")), 1);
+    TEST_EXPECT_EQ(Degenerate.MeasureWidth(FStringView(TEXT("A"))), 1);
 
     TEST_END();
 }
@@ -172,9 +172,9 @@ bool TextBlockDesiredSize_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TEST_SECTION("The desired size is the measured text plus the margin");
+    TEST_SECTION(TEXT("The desired size is the measured text plus the margin"));
     FTextBlock::FDesc Desc;
-    Desc.Text   = "Hello";
+    Desc.Text   = TEXT("Hello");
     Desc.Font   = Font;
     Desc.Margin = FMargin(2, 3);
 
@@ -185,9 +185,9 @@ bool TextBlockDesiredSize_Test()
     TEST_EXPECT_EQ(DesiredSize.Y, 16 + 6);
     TEST_EXPECT(TextBlock->GetCachedDesiredSize() == DesiredSize);
 
-    TEST_SECTION("A block with no face asks only for its margin");
+    TEST_SECTION(TEXT("A block with no face asks only for its margin"));
     FTextBlock::FDesc FontlessDesc;
-    FontlessDesc.Text   = "Hello";
+    FontlessDesc.Text   = TEXT("Hello");
     FontlessDesc.Margin = FMargin(2);
 
     TSharedPtr<FTextBlock> Fontless = FTextBlock::Create(FontlessDesc);
@@ -205,28 +205,28 @@ bool VerticalBoxLayout_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TSharedPtr<FTextBlock> First  = CreateTextBlock("AAAA", Font);
-    TSharedPtr<FTextBlock> Second = CreateTextBlock("BB", Font);
+    TSharedPtr<FTextBlock> First  = CreateTextBlock(TEXT("AAAA"), Font);
+    TSharedPtr<FTextBlock> Second = CreateTextBlock(TEXT("BB"), Font);
 
     TSharedPtr<FVerticalBox> Box = FVerticalBox::Create();
     Box->AddSlot(First);
     Box->AddSlot(Second);
 
-    TEST_SECTION("Heights stack and widths take the widest child");
+    TEST_SECTION(TEXT("Heights stack and widths take the widest child"));
     const FIntVector2 DesiredSize = Box->PrepareDesiredSize();
     TEST_EXPECT_EQ(DesiredSize.X, 4 * 8);
     TEST_EXPECT_EQ(DesiredSize.Y, 2 * 16);
 
-    TEST_SECTION("Auto slots get exactly their desired height, stacked downward");
+    TEST_SECTION(TEXT("Auto slots get exactly their desired height, stacked downward"));
     Box->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(First->GetContentRectangle().Position.Y, 0);
     TEST_EXPECT_EQ(First->GetContentRectangle().Height, 16);
     TEST_EXPECT_EQ(Second->GetContentRectangle().Position.Y, 16);
     TEST_EXPECT_EQ(Second->GetContentRectangle().Height, 16);
 
-    TEST_SECTION("Two fill slots split the leftover height");
-    TSharedPtr<FTextBlock> FillFirst  = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlock> FillSecond = CreateTextBlock("B", Font);
+    TEST_SECTION(TEXT("Two fill slots split the leftover height"));
+    TSharedPtr<FTextBlock> FillFirst  = CreateTextBlock(TEXT("A"), Font);
+    TSharedPtr<FTextBlock> FillSecond = CreateTextBlock(TEXT("B"), Font);
 
     TSharedPtr<FVerticalBox> FillBox = FVerticalBox::Create();
     FillBox->AddSlot(FillFirst).SetFillCoefficient(1.0f);
@@ -239,9 +239,9 @@ bool VerticalBoxLayout_Test()
     TEST_EXPECT_EQ(FillSecond->GetContentRectangle().Height, 50);
     TEST_EXPECT_EQ(FillSecond->GetContentRectangle().Position.Y, 50);
 
-    TEST_SECTION("The last fill slot absorbs the rounding remainder");
-    TSharedPtr<FTextBlock> OddFirst  = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlock> OddSecond = CreateTextBlock("B", Font);
+    TEST_SECTION(TEXT("The last fill slot absorbs the rounding remainder"));
+    TSharedPtr<FTextBlock> OddFirst  = CreateTextBlock(TEXT("A"), Font);
+    TSharedPtr<FTextBlock> OddSecond = CreateTextBlock(TEXT("B"), Font);
 
     TSharedPtr<FVerticalBox> OddBox = FVerticalBox::Create();
     OddBox->AddSlot(OddFirst).SetFillCoefficient(1.0f);
@@ -255,9 +255,9 @@ bool VerticalBoxLayout_Test()
     TEST_EXPECT_EQ(OddFirst->GetContentRectangle().Height, 50);
     TEST_EXPECT_EQ(OddSecond->GetContentRectangle().Height, 51);
 
-    TEST_SECTION("A fill slot only gets what an auto slot leaves behind");
-    TSharedPtr<FTextBlock> AutoChild = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlock> FillChild = CreateTextBlock("B", Font);
+    TEST_SECTION(TEXT("A fill slot only gets what an auto slot leaves behind"));
+    TSharedPtr<FTextBlock> AutoChild = CreateTextBlock(TEXT("A"), Font);
+    TSharedPtr<FTextBlock> FillChild = CreateTextBlock(TEXT("B"), Font);
 
     TSharedPtr<FVerticalBox> MixedBox = FVerticalBox::Create();
     MixedBox->AddSlot(FillChild).SetFillCoefficient(1.0f);
@@ -279,28 +279,28 @@ bool HorizontalBoxLayout_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TSharedPtr<FTextBlock> First  = CreateTextBlock("AAAA", Font);
-    TSharedPtr<FTextBlock> Second = CreateTextBlock("BB", Font);
+    TSharedPtr<FTextBlock> First  = CreateTextBlock(TEXT("AAAA"), Font);
+    TSharedPtr<FTextBlock> Second = CreateTextBlock(TEXT("BB"), Font);
 
     TSharedPtr<FHorizontalBox> Box = FHorizontalBox::Create();
     Box->AddSlot(First);
     Box->AddSlot(Second);
 
-    TEST_SECTION("Widths stack and heights take the tallest child");
+    TEST_SECTION(TEXT("Widths stack and heights take the tallest child"));
     const FIntVector2 DesiredSize = Box->PrepareDesiredSize();
     TEST_EXPECT_EQ(DesiredSize.X, (4 * 8) + (2 * 8));
     TEST_EXPECT_EQ(DesiredSize.Y, 16);
 
-    TEST_SECTION("Auto slots get their desired width, stacked rightward");
+    TEST_SECTION(TEXT("Auto slots get their desired width, stacked rightward"));
     Box->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(First->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(First->GetContentRectangle().Width, 32);
     TEST_EXPECT_EQ(Second->GetContentRectangle().Position.X, 32);
     TEST_EXPECT_EQ(Second->GetContentRectangle().Width, 16);
 
-    TEST_SECTION("Two fill slots split the leftover width");
-    TSharedPtr<FTextBlock> FillFirst  = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlock> FillSecond = CreateTextBlock("B", Font);
+    TEST_SECTION(TEXT("Two fill slots split the leftover width"));
+    TSharedPtr<FTextBlock> FillFirst  = CreateTextBlock(TEXT("A"), Font);
+    TSharedPtr<FTextBlock> FillSecond = CreateTextBlock(TEXT("B"), Font);
 
     TSharedPtr<FHorizontalBox> FillBox = FHorizontalBox::Create();
     FillBox->AddSlot(FillFirst).SetFillCoefficient(1.0f);
@@ -322,10 +322,10 @@ bool BoxSlotAlignment_Test()
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     // Every child measures 32x16, so a 200x100 slot leaves plenty of room to align inside
-    TEST_SECTION("Left, center and right place a narrow child horizontally");
-    TSharedPtr<FTextBlock> Left   = CreateTextBlock("AAAA", Font);
-    TSharedPtr<FTextBlock> Center = CreateTextBlock("AAAA", Font);
-    TSharedPtr<FTextBlock> Right  = CreateTextBlock("AAAA", Font);
+    TEST_SECTION(TEXT("Left, center and right place a narrow child horizontally"));
+    TSharedPtr<FTextBlock> Left   = CreateTextBlock(TEXT("AAAA"), Font);
+    TSharedPtr<FTextBlock> Center = CreateTextBlock(TEXT("AAAA"), Font);
+    TSharedPtr<FTextBlock> Right  = CreateTextBlock(TEXT("AAAA"), Font);
 
     TSharedPtr<FVerticalBox> Box = FVerticalBox::Create();
     Box->AddSlot(Left).SetHorizontalAlignment(EHorizontalAlignment::Left);
@@ -340,8 +340,8 @@ bool BoxSlotAlignment_Test()
     TEST_EXPECT_EQ(Center->GetContentRectangle().Position.X, (200 - 32) / 2);
     TEST_EXPECT_EQ(Right->GetContentRectangle().Position.X, 200 - 32);
 
-    TEST_SECTION("Fill gives the child the whole slot");
-    TSharedPtr<FTextBlock> Filled = CreateTextBlock("AAAA", Font);
+    TEST_SECTION(TEXT("Fill gives the child the whole slot"));
+    TSharedPtr<FTextBlock> Filled = CreateTextBlock(TEXT("AAAA"), Font);
 
     TSharedPtr<FVerticalBox> FillBox = FVerticalBox::Create();
     FillBox->AddSlot(Filled).SetFillCoefficient(1.0f);
@@ -352,10 +352,10 @@ bool BoxSlotAlignment_Test()
     TEST_EXPECT_EQ(Filled->GetContentRectangle().Width, 200);
     TEST_EXPECT_EQ(Filled->GetContentRectangle().Height, 100);
 
-    TEST_SECTION("Top, center and bottom place a short child vertically");
-    TSharedPtr<FTextBlock> Top    = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlock> Middle = CreateTextBlock("A", Font);
-    TSharedPtr<FTextBlock> Bottom = CreateTextBlock("A", Font);
+    TEST_SECTION(TEXT("Top, center and bottom place a short child vertically"));
+    TSharedPtr<FTextBlock> Top    = CreateTextBlock(TEXT("A"), Font);
+    TSharedPtr<FTextBlock> Middle = CreateTextBlock(TEXT("A"), Font);
+    TSharedPtr<FTextBlock> Bottom = CreateTextBlock(TEXT("A"), Font);
 
     TSharedPtr<FHorizontalBox> VerticalBox = FHorizontalBox::Create();
     VerticalBox->AddSlot(Top).SetVerticalAlignment(EVerticalAlignment::Top);
@@ -369,8 +369,8 @@ bool BoxSlotAlignment_Test()
     TEST_EXPECT_EQ(Middle->GetContentRectangle().Position.Y, (100 - 16) / 2);
     TEST_EXPECT_EQ(Bottom->GetContentRectangle().Position.Y, 100 - 16);
 
-    TEST_SECTION("Padding shrinks the space the child is aligned in");
-    TSharedPtr<FTextBlock> Padded = CreateTextBlock("AAAA", Font);
+    TEST_SECTION(TEXT("Padding shrinks the space the child is aligned in"));
+    TSharedPtr<FTextBlock> Padded = CreateTextBlock(TEXT("AAAA"), Font);
 
     TSharedPtr<FVerticalBox> PaddedBox = FVerticalBox::Create();
     PaddedBox->AddSlot(Padded).SetPadding(FMargin(10, 5)).SetHorizontalAlignment(EHorizontalAlignment::Left);
@@ -394,7 +394,7 @@ bool ScrollBoxClamping_Test()
     TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
     for (int32 Index = 0; Index < 10; ++Index)
     {
-        Content->AddSlot(CreateTextBlock("Line", Font));
+        Content->AddSlot(CreateTextBlock(TEXT("Line"), Font));
     }
 
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
@@ -403,16 +403,16 @@ bool ScrollBoxClamping_Test()
     ScrollBox->PrepareDesiredSize();
     ScrollBox->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
 
-    TEST_SECTION("The scrollable range is the content overflow");
+    TEST_SECTION(TEXT("The scrollable range is the content overflow"));
     TEST_EXPECT_EQ(ScrollBox->GetMaxScrollOffset(), 60);
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 0);
     TEST_EXPECT(!ScrollBox->IsScrolledToEnd());
 
-    TEST_SECTION("An offset inside the range is kept");
+    TEST_SECTION(TEXT("An offset inside the range is kept"));
     ScrollBox->SetScrollOffset(20);
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 20);
 
-    TEST_SECTION("Offsets outside the range clamp to it");
+    TEST_SECTION(TEXT("Offsets outside the range clamp to it"));
     ScrollBox->SetScrollOffset(-50);
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 0);
 
@@ -420,11 +420,11 @@ bool ScrollBoxClamping_Test()
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 60);
     TEST_EXPECT(ScrollBox->IsScrolledToEnd());
 
-    TEST_SECTION("The content is offset upward by the scroll amount");
+    TEST_SECTION(TEXT("The content is offset upward by the scroll amount"));
     ScrollBox->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(Content->GetContentRectangle().Position.Y, -60);
 
-    TEST_SECTION("ScrollToEnd is applied on the next arrange");
+    TEST_SECTION(TEXT("ScrollToEnd is applied on the next arrange"));
     ScrollBox->SetScrollOffset(0);
     ScrollBox->ScrollToEnd();
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 0);
@@ -432,9 +432,9 @@ bool ScrollBoxClamping_Test()
     ScrollBox->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 60);
 
-    TEST_SECTION("Content that fits leaves nothing to scroll");
+    TEST_SECTION(TEXT("Content that fits leaves nothing to scroll"));
     TSharedPtr<FVerticalBox> ShortContent = FVerticalBox::Create();
-    ShortContent->AddSlot(CreateTextBlock("Line", Font));
+    ShortContent->AddSlot(CreateTextBlock(TEXT("Line"), Font));
 
     TSharedPtr<FScrollBox> ShortScrollBox = FScrollBox::Create();
     ShortScrollBox->SetContent(ShortContent);
@@ -457,7 +457,7 @@ bool ScrollBoxHitTestClipping_Test()
     TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
     for (int32 Index = 0; Index < 10; ++Index)
     {
-        Content->AddSlot(CreateTextBlock("Line", Font));
+        Content->AddSlot(CreateTextBlock(TEXT("Line"), Font));
     }
 
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
@@ -468,18 +468,18 @@ bool ScrollBoxHitTestClipping_Test()
     ScrollBox->ScrollToEnd();
     ScrollBox->Arrange(FRectangle(FIntVector2(0, 100), 200, 100));
 
-    TEST_SECTION("Scrolling to the end leaves the content reaching above the view");
+    TEST_SECTION(TEXT("Scrolling to the end leaves the content reaching above the view"));
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 60);
     TEST_EXPECT_EQ(Content->GetContentRectangle().Position.Y, 40);
     TEST_EXPECT(Content->GetContentRectangle().EncapsulatesPoint(FIntVector2(10, 50)));
 
-    TEST_SECTION("A point inside the view finds the content");
+    TEST_SECTION(TEXT("A point inside the view finds the content"));
     FElementPath InsidePath;
     ScrollBox->HitTest(FIntVector2(10, 150), InsidePath);
     TEST_EXPECT(InsidePath.Contains(StaticCastSharedPtr<FVisualElement>(ScrollBox)));
     TEST_EXPECT(InsidePath.Contains(StaticCastSharedPtr<FVisualElement>(Content)));
 
-    TEST_SECTION("The scrolled-out overflow answers for nothing, so what is arranged there stays reachable");
+    TEST_SECTION(TEXT("The scrolled-out overflow answers for nothing, so what is arranged there stays reachable"));
     FElementPath OverflowPath;
     ScrollBox->HitTest(FIntVector2(10, 50), OverflowPath);
     TEST_EXPECT(OverflowPath.IsEmpty());
@@ -493,9 +493,9 @@ bool HitTestPruning_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TSharedPtr<FTextBlock>   First  = CreateTextBlock("First", Font);
-    TSharedPtr<FTextBlock>   Second = CreateTextBlock("Second", Font);
-    TSharedPtr<FTextBlock>   Third  = CreateTextBlock("Third", Font);
+    TSharedPtr<FTextBlock>   First  = CreateTextBlock(TEXT("First"), Font);
+    TSharedPtr<FTextBlock>   Second = CreateTextBlock(TEXT("Second"), Font);
+    TSharedPtr<FTextBlock>   Third  = CreateTextBlock(TEXT("Third"), Font);
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
     Column->AddSlot(First);
     Column->AddSlot(Second);
@@ -511,22 +511,22 @@ bool HitTestPruning_Test()
     TSharedPtr<FVisualElement> SecondElement = Second;
     TSharedPtr<FVisualElement> ThirdElement  = Third;
 
-    TEST_SECTION("A point inside the second row finds only the box and that row");
+    TEST_SECTION(TEXT("A point inside the second row finds only the box and that row"));
     FElementPath RowPath;
     TEST_EXPECT(Column->HitTest(FIntVector2(10, SecondBounds.Position.Y + 1), RowPath));
     TEST_EXPECT_EQ(RowPath.Size(), 2);
     TEST_EXPECT(RowPath[0] == ColumnElement);
     TEST_EXPECT(RowPath[1] == SecondElement);
 
-    TEST_SECTION("The shared edge belongs to the lower row only");
+    TEST_SECTION(TEXT("The shared edge belongs to the lower row only"));
     FElementPath EdgePath;
     Column->HitTest(FIntVector2(10, SecondBounds.GetBottom()), EdgePath);
     TEST_EXPECT(!EdgePath.Contains(SecondElement));
     TEST_EXPECT(EdgePath.Contains(ThirdElement));
 
-    TEST_SECTION("A hidden parent keeps its visible children out of reach");
+    TEST_SECTION(TEXT("A hidden parent keeps its visible children out of reach"));
     TSharedPtr<FCompoundElement> Hidden = MakeSharedPtr<FCompoundElement>();
-    TSharedPtr<FTextBlock>       Inner  = CreateTextBlock("Inner", Font);
+    TSharedPtr<FTextBlock>       Inner  = CreateTextBlock(TEXT("Inner"), Font);
     Hidden->SetContent(Inner);
     Hidden->PrepareDesiredSize();
     Hidden->Arrange(FRectangle(FIntVector2(0, 0), 100, 100));
@@ -536,7 +536,7 @@ bool HitTestPruning_Test()
     TEST_EXPECT(!Hidden->HitTest(FIntVector2(5, 5), HiddenPath));
     TEST_EXPECT(HiddenPath.IsEmpty());
 
-    TEST_SECTION("A child that is not hit testable lets the point fall through to its parent");
+    TEST_SECTION(TEXT("A child that is not hit testable lets the point fall through to its parent"));
     Second->SetHitTestable(false);
     FElementPath PassThroughPath;
     Column->HitTest(FIntVector2(10, SecondBounds.Position.Y + 1), PassThroughPath);
@@ -544,7 +544,7 @@ bool HitTestPruning_Test()
     TEST_EXPECT(PassThroughPath[0] == ColumnElement);
     Second->SetHitTestable(true);
 
-    TEST_SECTION("A point outside the box is pruned before any child is visited");
+    TEST_SECTION(TEXT("A point outside the box is pruned before any child is visited"));
     FElementPath OutsidePath;
     TEST_EXPECT(!Column->HitTest(FIntVector2(250, 10), OutsidePath));
     TEST_EXPECT(OutsidePath.IsEmpty());
@@ -563,36 +563,36 @@ bool ArrangeSkip_Test()
 
     const FRectangle Bounds(FIntVector2(0, 0), 100, 100);
 
-    TEST_SECTION("The first arrange always runs");
+    TEST_SECTION(TEXT("The first arrange always runs"));
     Parent->PrepareDesiredSize();
     Parent->Arrange(Bounds);
     TEST_EXPECT_EQ(Leaf->ArrangeCount, 1);
     TEST_EXPECT(!Parent->IsArrangeDirty());
     TEST_EXPECT(!Leaf->IsArrangeDirty());
 
-    TEST_SECTION("A clean tree given the same bounds is skipped from the root");
+    TEST_SECTION(TEXT("A clean tree given the same bounds is skipped from the root"));
     Parent->Arrange(Bounds);
     TEST_EXPECT_EQ(Leaf->ArrangeCount, 1);
 
-    TEST_SECTION("New bounds arrange again");
+    TEST_SECTION(TEXT("New bounds arrange again"));
     Parent->Arrange(FRectangle(FIntVector2(0, 0), 120, 100));
     TEST_EXPECT_EQ(Leaf->ArrangeCount, 2);
 
-    TEST_SECTION("Invalidating a leaf dirties the path to the root, so the next arrange reaches it");
+    TEST_SECTION(TEXT("Invalidating a leaf dirties the path to the root, so the next arrange reaches it"));
     Leaf->InvalidateArrange();
     TEST_EXPECT(Parent->IsArrangeDirty());
     Parent->Arrange(FRectangle(FIntVector2(0, 0), 120, 100));
     TEST_EXPECT_EQ(Leaf->ArrangeCount, 3);
     TEST_EXPECT(!Parent->IsArrangeDirty());
 
-    TEST_SECTION("A measure change needs a new arrangement as well");
+    TEST_SECTION(TEXT("A measure change needs a new arrangement as well"));
     Leaf->InvalidateDesiredSize();
     TEST_EXPECT(Parent->IsArrangeDirty());
     Parent->PrepareDesiredSize();
     Parent->Arrange(FRectangle(FIntVector2(0, 0), 120, 100));
     TEST_EXPECT_EQ(Leaf->ArrangeCount, 4);
 
-    TEST_SECTION("An element asking to arrange continuously is reached every time");
+    TEST_SECTION(TEXT("An element asking to arrange continuously is reached every time"));
     Leaf->bArrangesContinuously = true;
     Leaf->InvalidateArrange();
     Parent->Arrange(FRectangle(FIntVector2(0, 0), 120, 100));
@@ -601,7 +601,7 @@ bool ArrangeSkip_Test()
     TEST_EXPECT_EQ(Leaf->ArrangeCount, 7);
     TEST_EXPECT(Parent->IsArrangeDirty());
 
-    TEST_SECTION("Once it stops asking, the next arrange is the last one");
+    TEST_SECTION(TEXT("Once it stops asking, the next arrange is the last one"));
     Leaf->bArrangesContinuously = false;
     Parent->Arrange(FRectangle(FIntVector2(0, 0), 120, 100));
     Parent->Arrange(FRectangle(FIntVector2(0, 0), 120, 100));
@@ -617,7 +617,7 @@ bool UIAnimation_Test()
 
     FUIFrameClock::BeginFrame();
 
-    TEST_SECTION("A pinned frame holds one instant, so a move started in it has not moved yet");
+    TEST_SECTION(TEXT("A pinned frame holds one instant, so a move started in it has not moved yet"));
     const double FrameTime = FUIFrameClock::Now();
     TEST_EXPECT(FUIFrameClock::Now() == FrameTime);
 
@@ -628,24 +628,24 @@ bool UIAnimation_Test()
     TEST_EXPECT_EQ(Animation.Evaluate(), 2.0f);
     TEST_EXPECT_EQ(Animation.GetTarget(), 10.0f);
 
-    TEST_SECTION("Settling ends the move on the given value");
+    TEST_SECTION(TEXT("Settling ends the move on the given value"));
     Animation.Settle(5.0f);
     TEST_EXPECT(!Animation.IsRunning());
     TEST_EXPECT_EQ(Animation.Evaluate(), 5.0f);
 
-    TEST_SECTION("A move without a duration lands on its target at once");
+    TEST_SECTION(TEXT("A move without a duration lands on its target at once"));
     Animation.Start(0.0f, 0.0f, 3.0f);
     TEST_EXPECT(!Animation.IsRunning());
     TEST_EXPECT_EQ(Animation.Evaluate(), 3.0f);
 
-    TEST_SECTION("A default animation is at rest on zero");
+    TEST_SECTION(TEXT("A default animation is at rest on zero"));
     const FUIAnimation Default;
     TEST_EXPECT(!Default.IsRunning());
     TEST_EXPECT_EQ(Default.Evaluate(), 0.0f);
 
     FUIFrameClock::EndFrame();
 
-    TEST_SECTION("Outside a frame the clock follows the wall clock and never runs backwards");
+    TEST_SECTION(TEXT("Outside a frame the clock follows the wall clock and never runs backwards"));
     const double Before = FUIFrameClock::Now();
     const double After  = FUIFrameClock::Now();
     TEST_EXPECT(After >= Before);
@@ -661,28 +661,28 @@ bool PopupPlacement_Test()
     const FRectangle Area(FIntVector2(0, 0), 400, 300);
     const FIntVector2 Size(100, 80);
 
-    TEST_SECTION("With room, a popup opens under its anchor with left edges flush, a gap below it");
+    TEST_SECTION(TEXT("With room, a popup opens under its anchor with left edges flush, a gap below it"));
     const FRectangle Below = FPopupPlacement::Resolve(FRectangle(FIntVector2(50, 40), 60, 20), Size, Area, EPopupSide::Below, EPopupFlip::Both, 2);
     TEST_EXPECT_EQ(Below.Position, FIntVector2(50, 62));
     TEST_EXPECT_EQ(Below.Width, 100);
 
-    TEST_SECTION("Near the bottom it flips above, and near the right it right-aligns to the anchor");
+    TEST_SECTION(TEXT("Near the bottom it flips above, and near the right it right-aligns to the anchor"));
     const FRectangle Corner = FPopupPlacement::Resolve(FRectangle(FIntVector2(330, 250), 60, 20), Size, Area, EPopupSide::Below, EPopupFlip::Both);
     TEST_EXPECT_EQ(Corner.Position, FIntVector2(290, 170));
 
-    TEST_SECTION("Without leave to flip it is only clamped in");
+    TEST_SECTION(TEXT("Without leave to flip it is only clamped in"));
     const FRectangle Clamped = FPopupPlacement::Resolve(FRectangle(FIntVector2(330, 250), 60, 20), Size, Area, EPopupSide::Below, EPopupFlip::None);
     TEST_EXPECT_EQ(Clamped.Position, FIntVector2(300, 220));
 
-    TEST_SECTION("Beside an anchor near the right edge it opens on the left instead, lifted by its offset");
+    TEST_SECTION(TEXT("Beside an anchor near the right edge it opens on the left instead, lifted by its offset"));
     const FRectangle Beside = FPopupPlacement::Resolve(FRectangle(FIntVector2(320, 100), 60, 20), Size, Area, EPopupSide::Right, EPopupFlip::Main, 0, -4);
     TEST_EXPECT_EQ(Beside.Position, FIntVector2(220, 96));
 
-    TEST_SECTION("A popup with no room either side stays unflipped and is pushed inside");
+    TEST_SECTION(TEXT("A popup with no room either side stays unflipped and is pushed inside"));
     const FRectangle Wide = FPopupPlacement::Resolve(FRectangle(FIntVector2(150, 100), 60, 20), FIntVector2(380, 80), Area, EPopupSide::Right, EPopupFlip::Main);
     TEST_EXPECT_EQ(Wide.Position, FIntVector2(20, 100));
 
-    TEST_SECTION("A popup larger than the area keeps its top-left inside it");
+    TEST_SECTION(TEXT("A popup larger than the area keeps its top-left inside it"));
     const FRectangle Huge = FPopupPlacement::ClampIntoArea(FRectangle(FIntVector2(-50, -50), 500, 400), Area);
     TEST_EXPECT_EQ(Huge.Position, FIntVector2(0, 0));
 
@@ -696,17 +696,17 @@ bool WindowLayoutOrigin_Test()
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     FWindow::FDesc Desc;
-    Desc.Title    = "Layout Origin";
+    Desc.Title    = TEXT("Layout Origin");
     Desc.Size     = FIntVector2(1280, 720);
     Desc.Position = FIntVector2(340, 180);
 
     TSharedPtr<FWindow> Window = FWindow::Create(Desc);
 
-    TSharedPtr<FTextBlock>   ContentRow = CreateTextBlock("Content", Font);
+    TSharedPtr<FTextBlock>   ContentRow = CreateTextBlock(TEXT("Content"), Font);
     TSharedPtr<FVerticalBox> Content    = FVerticalBox::Create();
     Content->AddSlot(ContentRow);
 
-    TSharedPtr<FTextBlock>   OverlayRow = CreateTextBlock("Overlay", Font);
+    TSharedPtr<FTextBlock>   OverlayRow = CreateTextBlock(TEXT("Overlay"), Font);
     TSharedPtr<FVerticalBox> Overlay    = FVerticalBox::Create();
     Overlay->AddSlot(OverlayRow);
 
@@ -715,7 +715,7 @@ bool WindowLayoutOrigin_Test()
 
     FApplication::LayoutWindow(Window);
 
-    TEST_SECTION("The window is laid out from the client origin, not from its place on the desktop");
+    TEST_SECTION(TEXT("The window is laid out from the client origin, not from its place on the desktop"));
     TEST_EXPECT_EQ(Window->GetPosition().X, 340);
     TEST_EXPECT_EQ(Window->GetPosition().Y, 180);
     TEST_EXPECT_EQ(Window->GetContentRectangle().Position.X, 0);
@@ -723,14 +723,14 @@ bool WindowLayoutOrigin_Test()
     TEST_EXPECT_EQ(Window->GetContentRectangle().Width, 1280);
     TEST_EXPECT_EQ(Window->GetContentRectangle().Height, 720);
 
-    TEST_SECTION("Both subtrees start at the same origin, which is what the renderer projects from");
+    TEST_SECTION(TEXT("Both subtrees start at the same origin, which is what the renderer projects from"));
     TEST_EXPECT_EQ(Content->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(Content->GetContentRectangle().Position.Y, 0);
     TEST_EXPECT_EQ(Overlay->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(Overlay->GetContentRectangle().Position.Y, 0);
     TEST_EXPECT_EQ(OverlayRow->GetContentRectangle().Position.Y, 0);
 
-    TEST_SECTION("Moving the window leaves the layout where it was");
+    TEST_SECTION(TEXT("Moving the window leaves the layout where it was"));
     Window->OnWindowMoved(FIntVector2(900, 40));
     FApplication::LayoutWindow(Window);
 
@@ -749,12 +749,12 @@ bool WindowOverlayMeasure_Test()
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     FWindow::FDesc Desc;
-    Desc.Title = "Overlay Measure";
+    Desc.Title = TEXT("Overlay Measure");
     Desc.Size  = FIntVector2(1280, 720);
 
     TSharedPtr<FWindow> Window = FWindow::Create(Desc);
-    TSharedPtr<FTextBlock> LogRow   = CreateTextBlock("Log", Font);
-    TSharedPtr<FTextBlock> InputRow = CreateTextBlock("Input", Font);
+    TSharedPtr<FTextBlock> LogRow   = CreateTextBlock(TEXT("Log"), Font);
+    TSharedPtr<FTextBlock> InputRow = CreateTextBlock(TEXT("Input"), Font);
 
     TSharedPtr<FVerticalBox> Overlay = FVerticalBox::Create();
     Overlay->AddSlot(LogRow).SetFillCoefficient(1.0f);
@@ -762,7 +762,7 @@ bool WindowOverlayMeasure_Test()
 
     Window->SetOverlay(Overlay);
 
-    TEST_SECTION("The window reports both subtrees as children, so the measure pass reaches them");
+    TEST_SECTION(TEXT("The window reports both subtrees as children, so the measure pass reaches them"));
     TArray<TSharedPtr<FVisualElement>> Children;
     Window->GetChildren(Children);
     TEST_EXPECT_EQ(Children.Size(), 1);
@@ -774,12 +774,12 @@ bool WindowOverlayMeasure_Test()
 
     FApplication::LayoutWindow(Window);
 
-    TEST_SECTION("An element in the overlay is measured rather than left at zero");
+    TEST_SECTION(TEXT("An element in the overlay is measured rather than left at zero"));
     TEST_EXPECT_EQ(InputRow->GetCachedDesiredSize().Y, 16);
     TEST_EXPECT_EQ(InputRow->GetCachedDesiredSize().X, 5 * 8);
     TEST_EXPECT_EQ(Overlay->GetCachedDesiredSize().Y, 32);
 
-    TEST_SECTION("The auto slot is arranged at the height it asked for, above the bottom edge");
+    TEST_SECTION(TEXT("The auto slot is arranged at the height it asked for, above the bottom edge"));
     TEST_EXPECT_EQ(InputRow->GetContentRectangle().Height, 16);
     TEST_EXPECT_EQ(InputRow->GetContentRectangle().Position.Y, 720 - 16);
     TEST_EXPECT_EQ(LogRow->GetContentRectangle().Height, 720 - 16);
@@ -796,7 +796,7 @@ bool ScrollBoxScrollIntoView_Test()
     TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
     for (int32 Index = 0; Index < 10; ++Index)
     {
-        Content->AddSlot(CreateTextBlock("Line", Font));
+        Content->AddSlot(CreateTextBlock(TEXT("Line"), Font));
     }
 
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
@@ -805,20 +805,20 @@ bool ScrollBoxScrollIntoView_Test()
     ScrollBox->PrepareDesiredSize();
     ScrollBox->Arrange(FRectangle(FIntVector2(0, 0), 200, 100));
 
-    TEST_SECTION("A target already in view does not move the offset");
+    TEST_SECTION(TEXT("A target already in view does not move the offset"));
     ScrollBox->SetScrollOffset(0);
     ScrollBox->ScrollIntoView(FRectangle(FIntVector2(0, 32), 200, 16));
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 0);
 
-    TEST_SECTION("A target below the view scrolls the minimum distance down");
+    TEST_SECTION(TEXT("A target below the view scrolls the minimum distance down"));
     ScrollBox->ScrollIntoView(FRectangle(FIntVector2(0, 112), 200, 16));
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 28);
 
-    TEST_SECTION("A target above the view scrolls the minimum distance up");
+    TEST_SECTION(TEXT("A target above the view scrolls the minimum distance up"));
     ScrollBox->ScrollIntoView(FRectangle(FIntVector2(0, 16), 200, 16));
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 16);
 
-    TEST_SECTION("Revealing the last row scrolls to the end");
+    TEST_SECTION(TEXT("Revealing the last row scrolls to the end"));
     ScrollBox->ScrollIntoView(FRectangle(FIntVector2(0, 144), 200, 16));
     TEST_EXPECT_EQ(ScrollBox->GetScrollOffset(), 60);
     TEST_EXPECT(ScrollBox->IsScrolledToEnd());

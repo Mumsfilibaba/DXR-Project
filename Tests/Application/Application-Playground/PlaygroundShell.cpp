@@ -42,7 +42,7 @@ void FPlaygroundShell::Initialize(const FPlaygroundFonts& Fonts, const TArray<FP
     SidebarBox->AddSlot(FDrawCanvas::Create(WidthAnchorDesc));
 
     FTextBlock::FDesc TitleDesc;
-    TitleDesc.Text            = "UI Playground";
+    TitleDesc.Text            = TEXT("UI Playground");
     TitleDesc.Font            = Fonts.Heading;
     TitleDesc.ColorAndOpacity = Style.Colors.Text;
 

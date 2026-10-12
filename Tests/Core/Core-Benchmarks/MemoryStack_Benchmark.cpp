@@ -43,7 +43,7 @@ void MemoryStack_Benchmark()
 {
     LOG_INFO("\nBenchmark (FMemoryStack)");
 
-    IConsoleVariable* Variable = FConsoleManager::Get().FindConsoleVariable("Memory.EnableStackPagePooling");
+    IConsoleVariable* Variable = FConsoleManager::Get().FindConsoleVariable(TEXT("Memory.EnableStackPagePooling"));
     if (!Variable)
     {
         LOG_ERROR("Memory.EnableStackPagePooling was not found, skipping the benchmark");
@@ -57,10 +57,10 @@ void MemoryStack_Benchmark()
     LOG_INFO("\nAllocate and reset (Iterations=%u, TestCount=%u)", Iterations, TestCount);
 
     SetPoolingEnabled(Variable, Pool, false);
-    Benchmark::Report("Page pooling off", RunAllocateAndResetCycles(TestCount, Iterations), Iterations);
+    Benchmark::Report(TEXT("Page pooling off"), RunAllocateAndResetCycles(TestCount, Iterations), Iterations);
 
     SetPoolingEnabled(Variable, Pool, true);
-    Benchmark::Report("Page pooling on", RunAllocateAndResetCycles(TestCount, Iterations), Iterations);
+    Benchmark::Report(TEXT("Page pooling on"), RunAllocateAndResetCycles(TestCount, Iterations), Iterations);
 
     Pool.Flush();
 }

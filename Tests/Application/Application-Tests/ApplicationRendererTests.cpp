@@ -117,18 +117,18 @@ bool ApplicationRendererWindowPass_Test()
 
     Application->Tick(0.0f);
 
-    TEST_SECTION("A visible window opens and closes exactly one list");
+    TEST_SECTION(TEXT("A visible window opens and closes exactly one list"));
     Application->DrawWindows();
 
     TEST_EXPECT_EQ(Renderer->BeginCount, 1);
     TEST_EXPECT_EQ(Renderer->EndCount, 1);
     TEST_EXPECT(Renderer->LastBeginWindow == Window.Get());
 
-    TEST_SECTION("The window paints its content into the list the renderer handed out");
+    TEST_SECTION(TEXT("The window paints its content into the list the renderer handed out"));
     TEST_EXPECT(Renderer->LastCommandCount > 0);
     TEST_EXPECT_EQ(Renderer->Commands.CountCommandsOfType(EDrawCommandType::Box), 1);
 
-    TEST_SECTION("The overlay is painted above the content");
+    TEST_SECTION(TEXT("The overlay is painted above the content"));
     FBorder::FDesc OverlayDesc;
     OverlayDesc.BackgroundColor = FFloatColor(0.5f, 0.0f, 0.0f, 1.0f);
 
@@ -139,7 +139,7 @@ bool ApplicationRendererWindowPass_Test()
     TEST_EXPECT_EQ(Renderer->Commands.CountCommandsOfType(EDrawCommandType::Box), 2);
     TEST_EXPECT(Renderer->Commands[1].LayerId > Renderer->Commands[0].LayerId);
 
-    TEST_SECTION("A hidden window is skipped before the list is opened");
+    TEST_SECTION(TEXT("A hidden window is skipped before the list is opened"));
     Window->SetVisibility(EVisibility::Hidden);
     Application->DrawWindows();
 
@@ -148,7 +148,7 @@ bool ApplicationRendererWindowPass_Test()
 
     Window->SetVisibility(EVisibility::Visible);
 
-    TEST_SECTION("A renderer that refuses a window is never asked to close its list");
+    TEST_SECTION(TEXT("A renderer that refuses a window is never asked to close its list"));
     Renderer->bRefuseWindows = true;
     Application->DrawWindows();
 
@@ -157,7 +157,7 @@ bool ApplicationRendererWindowPass_Test()
 
     Renderer->bRefuseWindows = false;
 
-    TEST_SECTION("Without a renderer the pass does nothing at all");
+    TEST_SECTION(TEXT("Without a renderer the pass does nothing at all"));
     Application->SetRenderer(nullptr);
     Application->DrawWindows();
 
@@ -178,13 +178,13 @@ bool ApplicationRendererExternalSurface_Test()
 
     Application->SetRenderer(Renderer);
 
-    TEST_SECTION("A window's surface is the renderer's unless the window says otherwise");
+    TEST_SECTION(TEXT("A window's surface is the renderer's unless the window says otherwise"));
     TSharedPtr<FWindow> Owned = CreateStubWindow(Application, FIntVector2(400, 300));
     TEST_EXPECT(!Owned->HasExternalSurface());
 
-    TEST_SECTION("An ImGui viewport says otherwise, which is what keeps a second swap chain off its native window");
+    TEST_SECTION(TEXT("An ImGui viewport says otherwise, which is what keeps a second swap chain off its native window"));
     FWindow::FDesc ExternalDesc;
-    ExternalDesc.Title               = "Viewport";
+    ExternalDesc.Title               = TEXT("Viewport");
     ExternalDesc.Size                = FIntVector2(400, 300);
     ExternalDesc.bHasExternalSurface = true;
 
@@ -193,7 +193,7 @@ bool ApplicationRendererExternalSurface_Test()
 
     TEST_EXPECT(External->HasExternalSurface());
 
-    TEST_SECTION("It is a window like any other otherwise, so it is still registered and still drawn");
+    TEST_SECTION(TEXT("It is a window like any other otherwise, so it is still registered and still drawn"));
     TEST_EXPECT_EQ(Application->GetWindows().Size(), 2);
 
     Application->Tick(0.0f);
@@ -222,20 +222,20 @@ bool ApplicationRendererWindowLifetime_Test()
 
     Application->Tick(0.0f);
 
-    TEST_SECTION("Every visible window gets its own list");
+    TEST_SECTION(TEXT("Every visible window gets its own list"));
     Application->DrawWindows();
 
     TEST_EXPECT_EQ(Renderer->BeginCount, 2);
     TEST_EXPECT_EQ(Renderer->EndCount, 2);
 
-    TEST_SECTION("A destroyed window is reported before the platform window goes away");
+    TEST_SECTION(TEXT("A destroyed window is reported before the platform window goes away"));
     Application->DestroyWindow(Second);
 
     TEST_EXPECT_EQ(Renderer->DestroyedCount, 1);
     TEST_EXPECT(Renderer->LastDestroyedWindow == Second.Get());
     TEST_EXPECT(Renderer->bWindowWasStillAlive);
 
-    TEST_SECTION("The destroyed window no longer takes part in the pass");
+    TEST_SECTION(TEXT("The destroyed window no longer takes part in the pass"));
     Second.Reset();
     Application->DrawWindows();
 
@@ -260,7 +260,7 @@ bool ApplicationRendererPopupSurface_Test()
     TSharedPtr<FWindow> Parent         = Application.CreateWindow(FIntVector2(800, 600));
     const float         ExpectedRadius = (Popups::ResolveCornerRounding() == EPopupCornerRounding::Content) ? MenuRadius : 0.0f;
 
-    TEST_SECTION("With no renderer at all a popup still opens, and its content rounds by what the platform and RHI allow");
+    TEST_SECTION(TEXT("With no renderer at all a popup still opens, and its content rounds by what the platform and RHI allow"));
     TSharedPtr<FMenu>   NoRendererContent = FMenu::Create();
     TSharedPtr<FWindow> NoRendererPopup   = Popups::Open(Parent, FRectangle(FIntVector2(0, 0), 200, 100), NoRendererContent);
 
@@ -269,7 +269,7 @@ bool ApplicationRendererPopupSurface_Test()
 
     Popups::Close(NoRendererPopup);
 
-    TEST_SECTION("A renderer holding no surface for it is the same answer, since only a surface can say it fell back");
+    TEST_SECTION(TEXT("A renderer holding no surface for it is the same answer, since only a surface can say it fell back"));
     TSharedPtr<FStubApplicationRenderer> Renderer = MakeSharedPtr<FStubApplicationRenderer>();
     Application.GetApplication().SetRenderer(Renderer);
 
@@ -279,7 +279,7 @@ bool ApplicationRendererPopupSurface_Test()
     TEST_EXPECT(NoSurfacePopup != nullptr);
     TEST_EXPECT_EQ(NoSurfaceContent->GetStyle().CornerRadius, ExpectedRadius);
 
-    TEST_SECTION("It is asked for the surface up front all the same, so the answer is there before anything draws");
+    TEST_SECTION(TEXT("It is asked for the surface up front all the same, so the answer is there before anything draws"));
     TEST_EXPECT_EQ(Renderer->EnsuredCount, 1);
     TEST_EXPECT(Renderer->LastEnsuredWindow == NoSurfacePopup.Get());
 

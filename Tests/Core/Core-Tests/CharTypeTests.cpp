@@ -31,13 +31,13 @@ bool CharType_Test()
     TEST_BEGIN();
 
 #if WIDE_CHAR_BUILD
-    TEST_SECTION("A wide build stores code units of wchar_t");
+    TEST_SECTION(TEXT("A wide build stores code units of wchar_t"));
     {
         const CHAR_T* Text = TEXT("ÁÅäö");
         TEST_EXPECT(Text[0] == 0xC1 && Text[1] == 0xC5 && Text[2] == 0xE4 && Text[3] == 0xF6 && Text[4] == 0);
     }
 #else
-    TEST_SECTION("A narrow build stores UTF-8, whatever the system code page is");
+    TEST_SECTION(TEXT("A narrow build stores UTF-8, whatever the system code page is"));
     {
         const CHAR_T*  Text     = TEXT("ÁÅäö 日本語");
         const char8_t* Expected = u8"ÁÅäö 日本語";
@@ -53,7 +53,7 @@ bool CharType_Test()
     }
 #endif
 
-    TEST_SECTION("Wide formats are rewritten so standard C reads %s and %c as wide, like MSVC");
+    TEST_SECTION(TEXT("Wide formats are rewritten so standard C reads %s and %c as wide, like MSVC"));
     {
         WIDECHAR Converted[128];
         TEST_EXPECT(FPlatformString::ConvertWideFormatToStandard(Converted, 128, L"%s %c %ls %lc %d %%s %%%s %-10s %.*s %5.2f %1$s %hs %zu"));
@@ -65,7 +65,7 @@ bool CharType_Test()
         TEST_EXPECT(!FPlatformString::ConvertWideFormatToStandard(Converted, 4, L"%s%s"));
     }
 
-    TEST_SECTION("LOG_* takes a plain literal format and makes it a TEXT() literal");
+    TEST_SECTION(TEXT("LOG_* takes a plain literal format and makes it a TEXT() literal"));
     {
         #define CHARTYPE_TEST_LOG(...) LOG_INFO("[CharType] " __VA_ARGS__)
 

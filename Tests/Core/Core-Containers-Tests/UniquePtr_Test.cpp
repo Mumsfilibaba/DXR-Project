@@ -28,7 +28,7 @@ bool TUniquePtr_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Default / nullptr / IsValid / Get / dereference");
+    TEST_SECTION(TEXT("Default / nullptr / IsValid / Get / dereference"));
     {
         TUniquePtr<int32> Empty;
         TEST_EXPECT(!Empty.IsValid());
@@ -43,7 +43,7 @@ bool TUniquePtr_Test()
         TEST_EXPECT(*Ptr.Get() == 7);
     }
 
-    TEST_SECTION("Reset / Release / Swap");
+    TEST_SECTION(TEXT("Reset / Release / Swap"));
     {
         TUniquePtr<int32> Ptr = MakeUniquePtr<int32>(1);
         Ptr.Reset(new int32(2));
@@ -62,7 +62,7 @@ bool TUniquePtr_Test()
         TEST_EXPECT(*Second == 10);
     }
 
-    TEST_SECTION("Move construction / move assignment");
+    TEST_SECTION(TEXT("Move construction / move assignment"));
     {
         TUniquePtr<int32> Ptr   = MakeUniquePtr<int32>(5);
         TUniquePtr<int32> Moved = ::Move(Ptr);
@@ -78,7 +78,7 @@ bool TUniquePtr_Test()
         TEST_EXPECT(*Assigned == 5);
     }
 
-    TEST_SECTION("Array unique pointer indexing");
+    TEST_SECTION(TEXT("Array unique pointer indexing"));
     {
         TUniquePtr<int32[]> Array = MakeUniquePtr<int32[]>(4);
         for (int32 Index = 0; Index < 4; ++Index)
@@ -90,7 +90,7 @@ bool TUniquePtr_Test()
         TEST_EXPECT(Array[3] == 6);
     }
 
-    TEST_SECTION("FInstanced ownership (single destruction, no leaks)");
+    TEST_SECTION(TEXT("FInstanced ownership (single destruction, no leaks)"));
     {
         FInstanced::Reset();
         {
@@ -102,7 +102,7 @@ bool TUniquePtr_Test()
         TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
-    TEST_SECTION("Custom deleter is invoked exactly once");
+    TEST_SECTION(TEXT("Custom deleter is invoked exactly once"));
     {
         FInstanced::Reset();
         FDeleterCalls::Count() = 0;
@@ -115,7 +115,7 @@ bool TUniquePtr_Test()
         TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
-    TEST_SECTION("TUniquePtr lifetime stress (create / move / reset cycles)");
+    TEST_SECTION(TEXT("TUniquePtr lifetime stress (create / move / reset cycles)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)

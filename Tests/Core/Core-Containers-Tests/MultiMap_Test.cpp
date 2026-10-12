@@ -12,7 +12,7 @@ bool TMultiMap_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Add duplicates / Size / Find / Count / Contains");
+    TEST_SECTION(TEXT("Add duplicates / Size / Find / Count / Contains"));
     {
         TMultiMap<int32, int32> Map;
         TEST_EXPECT_EQ(Map.Size(), 0);
@@ -33,7 +33,7 @@ bool TMultiMap_Test()
         TEST_EXPECT(*Found == 10 || *Found == 20);
     }
 
-    TEST_SECTION("MultiFind / FindNext");
+    TEST_SECTION(TEXT("MultiFind / FindNext"));
     {
         TMultiMap<int32, int32> Map;
         Map.Add(1, 10);
@@ -57,7 +57,7 @@ bool TMultiMap_Test()
         TEST_EXPECT_EQ(Sum, 60);
     }
 
-    TEST_SECTION("Remove all vs RemoveSingle");
+    TEST_SECTION(TEXT("Remove all vs RemoveSingle"));
     {
         TMultiMap<int32, int32> Map;
         Map.Add(1, 10);
@@ -75,7 +75,7 @@ bool TMultiMap_Test()
         TEST_EXPECT_EQ(Map.Size(), 1);
     }
 
-    TEST_SECTION("GetKeys / GetValues / Foreach / iterators");
+    TEST_SECTION(TEXT("GetKeys / GetValues / Foreach / iterators"));
     {
         TMultiMap<int32, int32> Map;
         Map.Add(1, 10);
@@ -107,7 +107,7 @@ bool TMultiMap_Test()
         TEST_EXPECT_EQ(RangeSum, 41);
     }
 
-    TEST_SECTION("copy / move / operator==");
+    TEST_SECTION(TEXT("copy / move / operator=="));
     {
         TMultiMap<int32, int32> First;
         First.Add(1, 10);
@@ -124,15 +124,15 @@ bool TMultiMap_Test()
         TEST_EXPECT_EQ(Third.Count(1), 2);
     }
 
-    TEST_SECTION("String keys");
+    TEST_SECTION(TEXT("FString keys"));
     {
         TMultiMap<FString, int32> Map;
-        Map.Add(FString("a"), 1);
-        Map.Add(FString("a"), 2);
-        TEST_EXPECT_EQ(Map.Count(FString("a")), 2);
+        Map.Add(FString(TEXT("a")), 1);
+        Map.Add(FString(TEXT("a")), 2);
+        TEST_EXPECT_EQ(Map.Count(FString(TEXT("a"))), 2);
     }
 
-    TEST_SECTION("TMultiMap stress vs std::multimap");
+    TEST_SECTION(TEXT("TMultiMap stress vs std::multimap"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
@@ -175,7 +175,7 @@ bool TMultiMap_Test()
         TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
-    TEST_SECTION("TInlineMultiMap stays inline then spills to the heap");
+    TEST_SECTION(TEXT("TInlineMultiMap stays inline then spills to the heap"));
     {
         TInlineMultiMap<int32, int32, 4> Map;
         TEST_EXPECT(!Map.IsHeapAllocated());

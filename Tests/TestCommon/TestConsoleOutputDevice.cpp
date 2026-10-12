@@ -40,22 +40,22 @@ void FTestConsoleOutputDevice::Write(const CHAR_T* Text)
 void FTestConsoleOutputDevice::Log(const FString& Message)
 {
     Write(Message.Data());
-    Write("\n");
+    Write(TEXT("\n"));
 }
 
 void FTestConsoleOutputDevice::Log(ELogSeverity Severity, const FString& Message)
 {
-    const CHAR_T* Prefix = "";
+    const CHAR_T* Prefix = TEXT("");
     switch (Severity)
     {
-        case ELogSeverity::Warning: Prefix = "[WARNING] "; break;
-        case ELogSeverity::Error:   Prefix = "[ERROR] ";   break;
-        default:                    Prefix = "";           break;
+        case ELogSeverity::Warning: Prefix = TEXT("[WARNING] "); break;
+        case ELogSeverity::Error:   Prefix = TEXT("[ERROR] ");   break;
+        default:                    Prefix = TEXT("");           break;
     }
 
     Write(Prefix);
     Write(Message.Data());
-    Write("\n");
+    Write(TEXT("\n"));
 }
 
 void FTestConsoleOutputDevice::Flush()

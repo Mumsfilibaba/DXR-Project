@@ -23,19 +23,19 @@ IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 
 static int32 RunRHITests()
 {
-    TestHarness::Initialize("TestResults_RHI.log");
+    TestHarness::Initialize(TEXT("TestResults_RHI.log"));
     LOG_INFO("=== RHI Tests ===");
 
-    RUN_TEST("RHIValidationHelpers", RHIValidationHelpers_Test());
-    RUN_TEST("ShaderPermutation", ShaderPermutation_Test());
-    RUN_TEST("VertexDeclaration", VertexDeclaration_Test());
-    RUN_TEST("PrimitiveTopology", PrimitiveTopology_Test());
-    RUN_TEST("HDRMetadata", HDRMetadata_Test());
-    RUN_TEST("MSLShaderBinding", MSLShaderBinding_Test());
+    RUN_TEST(TEXT("RHIValidationHelpers"), RHIValidationHelpers_Test());
+    RUN_TEST(TEXT("ShaderPermutation"), ShaderPermutation_Test());
+    RUN_TEST(TEXT("VertexDeclaration"), VertexDeclaration_Test());
+    RUN_TEST(TEXT("PrimitiveTopology"), PrimitiveTopology_Test());
+    RUN_TEST(TEXT("HDRMetadata"), HDRMetadata_Test());
+    RUN_TEST(TEXT("MSLShaderBinding"), MSLShaderBinding_Test());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();
     return ExitCode;
 }
 
-IMPLEMENT_PROGRAM_MAIN("RHI-Tests", RunRHITests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("RHI-Tests"), RunRHITests);

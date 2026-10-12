@@ -24,7 +24,7 @@ static FString JoinTokens(const FShaderPreprocessorOutput& Output)
 
 static bool Preprocess(const CHAR_T* Source, FShaderPreprocessorOutput& OutOutput, const CHAR_T* DefineName = nullptr, const CHAR_T* DefineValue = nullptr)
 {
-    FShaderPreprocessor Preprocessor(Paths::GetAssetDir() + "/Shaders");
+    FShaderPreprocessor Preprocessor(Paths::GetAssetDir() + TEXT("/Shaders"));
     if (DefineName)
     {
         Preprocessor.AddDefine(DefineName, DefineValue);
@@ -38,7 +38,7 @@ static FString PreprocessToText(const CHAR_T* Source, const CHAR_T* DefineName =
     FShaderPreprocessorOutput Output;
     if (!Preprocess(Source, Output, DefineName, DefineValue))
     {
-        return FString("<failed> ") + Output.Errors;
+        return FString(TEXT("<failed> ")) + Output.Errors;
     }
 
     return JoinTokens(Output);
@@ -60,39 +60,39 @@ bool ShaderPreprocessorMacros_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Object-like macros");
-    TEST_EXPECT(PreprocessToText("#define A 1\nA + A") == "1 + 1");
-    TEST_EXPECT(PreprocessToText("#define EMPTY\na EMPTY b") == "a b");
+    TEST_SECTION(TEXT("Object-like macros"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define A 1\nA + A")) == TEXT("1 + 1"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define EMPTY\na EMPTY b")) == TEXT("a b"));
 
-    TEST_SECTION("Function-like macros expand their arguments first");
-    TEST_EXPECT(PreprocessToText("#define ADD(a, b) ((a) + (b))\n#define TWO 2\nADD(TWO, 3)") == "( ( 2 ) + ( 3 ) )");
-    TEST_EXPECT(PreprocessToText("#define CLAUSE(Register) register(Register)\n#define SLOT t4\nCLAUSE(SLOT)") == "register ( t4 )");
-    TEST_EXPECT(PreprocessToText("#define F(x) x\nF((1, 2))") == "( 1 , 2 )");
+    TEST_SECTION(TEXT("Function-like macros expand their arguments first"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define ADD(a, b) ((a) + (b))\n#define TWO 2\nADD(TWO, 3)")) == TEXT("( ( 2 ) + ( 3 ) )"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define CLAUSE(Register) register(Register)\n#define SLOT t4\nCLAUSE(SLOT)")) == TEXT("register ( t4 )"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define F(x) x\nF((1, 2))")) == TEXT("( 1 , 2 )"));
 
-    TEST_SECTION("A function-like macro without parentheses is left alone");
-    TEST_EXPECT(PreprocessToText("#define F(x) x\nfloat F;") == "float F ;");
+    TEST_SECTION(TEXT("A function-like macro without parentheses is left alone"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define F(x) x\nfloat F;")) == TEXT("float F ;"));
 
-    TEST_SECTION("Rescanning continues into the tokens after the expansion");
-    TEST_EXPECT(PreprocessToText("#define F G\n#define G(x) x * 2\nF(4)") == "4 * 2");
+    TEST_SECTION(TEXT("Rescanning continues into the tokens after the expansion"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define F G\n#define G(x) x * 2\nF(4)")) == TEXT("4 * 2"));
 
-    TEST_SECTION("A macro is never expanded inside its own expansion");
-    TEST_EXPECT(PreprocessToText("#define A A + 1\nA") == "A + 1");
-    TEST_EXPECT(PreprocessToText("#define A B\n#define B A\nA B") == "A B");
+    TEST_SECTION(TEXT("A macro is never expanded inside its own expansion"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define A A + 1\nA")) == TEXT("A + 1"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define A B\n#define B A\nA B")) == TEXT("A B"));
 
-    TEST_SECTION("Invocations can span lines");
-    TEST_EXPECT(PreprocessToText("#define SUM(a, b) a + b\nSUM(1,\n2)") == "1 + 2");
+    TEST_SECTION(TEXT("Invocations can span lines"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define SUM(a, b) a + b\nSUM(1,\n2)")) == TEXT("1 + 2"));
 
-    TEST_SECTION("Token pasting and stringizing");
-    TEST_EXPECT(PreprocessToText("#define CAT(a, b) a##b\nCAT(Foo, Bar)") == "FooBar");
-    TEST_EXPECT(PreprocessToText("#define CAT(a, b) a##b\nCAT(, Bar)") == "Bar");
-    TEST_EXPECT(PreprocessToText("#define STR(x) #x\nSTR(a + b)") == "\"a + b\"");
+    TEST_SECTION(TEXT("Token pasting and stringizing"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define CAT(a, b) a##b\nCAT(Foo, Bar)")) == TEXT("FooBar"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define CAT(a, b) a##b\nCAT(, Bar)")) == TEXT("Bar"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define STR(x) #x\nSTR(a + b)")) == TEXT("\"a + b\""));
 
-    TEST_SECTION("Line continuations and comments");
-    TEST_EXPECT(PreprocessToText("#define LONG a \\\n + b // trailing\n/* multi\nline */ LONG") == "a + b");
+    TEST_SECTION(TEXT("Line continuations and comments"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define LONG a \\\n + b // trailing\n/* multi\nline */ LONG")) == TEXT("a + b"));
 
-    TEST_SECTION("Defines added by the compiler");
-    TEST_EXPECT(PreprocessToText("VALUE", "VALUE", "(3)") == "( 3 )");
-    TEST_EXPECT(PreprocessToText("#undef VALUE\nVALUE", "VALUE", "(3)") == "VALUE");
+    TEST_SECTION(TEXT("Defines added by the compiler"));
+    TEST_EXPECT(PreprocessToText(TEXT("VALUE"), TEXT("VALUE"), TEXT("(3)")) == TEXT("( 3 )"));
+    TEST_EXPECT(PreprocessToText(TEXT("#undef VALUE\nVALUE"), TEXT("VALUE"), TEXT("(3)")) == TEXT("VALUE"));
 
     TEST_END();
 }
@@ -101,23 +101,23 @@ bool ShaderPreprocessorConditionals_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("#if evaluates shifts, which FXC's own preprocessor cannot");
-    TEST_EXPECT(PreprocessToText("#define FLAG (1 << 2)\n#if (FLAG & 4) != 0\nyes\n#else\nno\n#endif") == "yes");
+    TEST_SECTION(TEXT("#if evaluates shifts, which FXC's own preprocessor cannot"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define FLAG (1 << 2)\n#if (FLAG & 4) != 0\nyes\n#else\nno\n#endif")) == TEXT("yes"));
 
-    TEST_SECTION("#elif, defined and logical operators");
-    TEST_EXPECT(PreprocessToText("#if defined(X)\na\n#elif !defined Y && 3 > 2\nb\n#else\nc\n#endif") == "b");
-    TEST_EXPECT(PreprocessToText("#define X\n#ifdef X\na\n#endif\n#ifndef X\nb\n#endif") == "a");
+    TEST_SECTION(TEXT("#elif, defined and logical operators"));
+    TEST_EXPECT(PreprocessToText(TEXT("#if defined(X)\na\n#elif !defined Y && 3 > 2\nb\n#else\nc\n#endif")) == TEXT("b"));
+    TEST_EXPECT(PreprocessToText(TEXT("#define X\n#ifdef X\na\n#endif\n#ifndef X\nb\n#endif")) == TEXT("a"));
 
-    TEST_SECTION("Undefined names are zero and the unevaluated side can divide by zero");
-    TEST_EXPECT(PreprocessToText("#if UNDEFINED || 1\na\n#endif") == "a");
-    TEST_EXPECT(PreprocessToText("#if 0 && (1 / 0)\na\n#else\nb\n#endif") == "b");
-    TEST_EXPECT(PreprocessToText("#if 1 ? 0x10 == 16 : 0\na\n#endif") == "a");
+    TEST_SECTION(TEXT("Undefined names are zero and the unevaluated side can divide by zero"));
+    TEST_EXPECT(PreprocessToText(TEXT("#if UNDEFINED || 1\na\n#endif")) == TEXT("a"));
+    TEST_EXPECT(PreprocessToText(TEXT("#if 0 && (1 / 0)\na\n#else\nb\n#endif")) == TEXT("b"));
+    TEST_EXPECT(PreprocessToText(TEXT("#if 1 ? 0x10 == 16 : 0\na\n#endif")) == TEXT("a"));
 
-    TEST_SECTION("Directives in skipped blocks are not evaluated");
-    TEST_EXPECT(PreprocessToText("#ifdef NOPE\n#if 1 / 0\n#error Unreachable\n#endif\n#endif\nok") == "ok");
+    TEST_SECTION(TEXT("Directives in skipped blocks are not evaluated"));
+    TEST_EXPECT(PreprocessToText(TEXT("#ifdef NOPE\n#if 1 / 0\n#error Unreachable\n#endif\n#endif\nok")) == TEXT("ok"));
 
-    TEST_SECTION("Values from the compiler defines");
-    TEST_EXPECT(PreprocessToText("#if VALUE == 3\nthree\n#endif", "VALUE", "(3)") == "three");
+    TEST_SECTION(TEXT("Values from the compiler defines"));
+    TEST_EXPECT(PreprocessToText(TEXT("#if VALUE == 3\nthree\n#endif"), TEXT("VALUE"), TEXT("(3)")) == TEXT("three"));
 
     TEST_END();
 }
@@ -126,16 +126,16 @@ bool ShaderPreprocessorIncludes_Test()
 {
     TEST_BEGIN();
 
-    const FString FilePath = Paths::GetAssetDir() + "/Shaders/GenerateMipsTex2D.hlsl";
+    const FString FilePath = Paths::GetAssetDir() + TEXT("/Shaders/GenerateMipsTex2D.hlsl");
 
-    FShaderPreprocessor Preprocessor(Paths::GetAssetDir() + "/Shaders");
-    Preprocessor.AddDefine("SHADER_BACKEND_D3D12", "(1)");
-    Preprocessor.AddDefine("SHADER_BACKEND", "SHADER_BACKEND_D3D12");
+    FShaderPreprocessor Preprocessor(Paths::GetAssetDir() + TEXT("/Shaders"));
+    Preprocessor.AddDefine(TEXT("SHADER_BACKEND_D3D12"), TEXT("(1)"));
+    Preprocessor.AddDefine(TEXT("SHADER_BACKEND"), TEXT("SHADER_BACKEND_D3D12"));
 
     FShaderPreprocessorOutput Output;
-    const bool bPreprocessed = Preprocessor.Preprocess(FilePath, FStringView("#define CONFIG_CUBE_MAP 0\n#include \"GenerateMips.hlsli\""), Output);
+    const bool bPreprocessed = Preprocessor.Preprocess(FilePath, FStringView(TEXT("#define CONFIG_CUBE_MAP 0\n#include \"GenerateMips.hlsli\"")), Output);
 
-    TEST_SECTION("Includes resolve next to the including file and in the shader directory");
+    TEST_SECTION(TEXT("Includes resolve next to the including file and in the shader directory"));
     TEST_EXPECT(bPreprocessed);
     TEST_EXPECT(Output.Errors.IsEmpty());
 
@@ -143,22 +143,22 @@ bool ShaderPreprocessorIncludes_Test()
     bool bFoundCoreDefines  = false;
     for (const FString& Dependency : Output.Dependencies)
     {
-        bFoundGenerateMips |= Dependency.EndsWith("Shaders/GenerateMips.hlsli");
-        bFoundCoreDefines  |= Dependency.EndsWith("Shaders/CoreDefines.hlsli");
+        bFoundGenerateMips |= Dependency.EndsWith(TEXT("Shaders/GenerateMips.hlsli"));
+        bFoundCoreDefines  |= Dependency.EndsWith(TEXT("Shaders/CoreDefines.hlsli"));
     }
 
     TEST_EXPECT(bFoundGenerateMips);
     TEST_EXPECT(bFoundCoreDefines);
 
-    TEST_SECTION("Include guards keep each header to one copy");
+    TEST_SECTION(TEXT("Include guards keep each header to one copy"));
     int32 NumSourceMips = 0;
     for (const FShaderToken& Token : Output.Tokens)
     {
-        NumSourceMips += Token.Is("SourceMip") ? 1 : 0;
+        NumSourceMips += Token.Is(TEXT("SourceMip")) ? 1 : 0;
     }
 
     TEST_EXPECT(NumSourceMips > 0);
-    TEST_EXPECT(JoinTokens(Output).Contains("void Main"));
+    TEST_EXPECT(JoinTokens(Output).Contains(TEXT("void Main")));
 
     TEST_END();
 }
@@ -175,14 +175,14 @@ bool ShaderPreprocessorErrors_Test()
 
     const FErrorCase Cases[] =
     {
-        { "#error Something went wrong\n",       "Something went wrong" },
-        { "#if 1\na\n",                           "Unterminated #if" },
-        { "#endif\n",                             "#endif without #if" },
-        { "#include \"DoesNotExist.hlsli\"\n",    "Cannot find the include" },
-        { "#define F(a, b) a\nF(1)\n",           "takes 2 arguments" },
-        { "#define F(a) a\nF(1\n",               "Unterminated invocation" },
-        { "#if 1 +\n#endif\n",                    "Unexpected end" },
-        { "#bogus\n",                             "Unsupported directive" },
+        { TEXT("#error Something went wrong\n"),       TEXT("Something went wrong") },
+        { TEXT("#if 1\na\n"),                           TEXT("Unterminated #if") },
+        { TEXT("#endif\n"),                             TEXT("#endif without #if") },
+        { TEXT("#include \"DoesNotExist.hlsli\"\n"),    TEXT("Cannot find the include") },
+        { TEXT("#define F(a, b) a\nF(1)\n"),           TEXT("takes 2 arguments") },
+        { TEXT("#define F(a) a\nF(1\n"),               TEXT("Unterminated invocation") },
+        { TEXT("#if 1 +\n#endif\n"),                    TEXT("Unexpected end") },
+        { TEXT("#bogus\n"),                             TEXT("Unsupported directive") },
     };
 
     for (const FErrorCase& Case : Cases)
@@ -202,28 +202,28 @@ bool ShaderPreprocessorGenerateSource_Test()
     TEST_BEGIN();
 
     FShaderPreprocessorOutput Output;
-    TEST_EXPECT(Preprocess("#define X 1\nfloat a = X;\n\n\nfloat b;\n#pragma warning(disable : 3078)\nfloat c;", Output));
+    TEST_EXPECT(Preprocess(TEXT("#define X 1\nfloat a = X;\n\n\nfloat b;\n#pragma warning(disable : 3078)\nfloat c;"), Output));
 
     const FString Generated = Output.GenerateSource();
 
-    TEST_SECTION("Every line keeps its line number");
-    TEST_EXPECT(Generated.StartsWith("#line 2 \"ShaderSource\"\nfloat a = 1;\n\n\nfloat b;\n"));
+    TEST_SECTION(TEXT("Every line keeps its line number"));
+    TEST_EXPECT(Generated.StartsWith(TEXT("#line 2 \"ShaderSource\"\nfloat a = 1;\n\n\nfloat b;\n")));
 
-    TEST_SECTION("Pragmas are passed through for the compiler");
-    TEST_EXPECT(Generated.Contains("\n#pragma warning(disable : 3078)\nfloat c;"));
+    TEST_SECTION(TEXT("Pragmas are passed through for the compiler"));
+    TEST_EXPECT(Generated.Contains(TEXT("\n#pragma warning(disable : 3078)\nfloat c;")));
 
-    TEST_SECTION("Tokens that were apart stay apart");
+    TEST_SECTION(TEXT("Tokens that were apart stay apart"));
     FShaderPreprocessorOutput Adjacent;
-    TEST_EXPECT(Preprocess("#define NEG -\nint a = -NEG 1;", Adjacent));
-    TEST_EXPECT(Adjacent.GenerateSource().Contains("- - 1"));
+    TEST_EXPECT(Preprocess(TEXT("#define NEG -\nint a = -NEG 1;"), Adjacent));
+    TEST_EXPECT(Adjacent.GenerateSource().Contains(TEXT("- - 1")));
 
-    TEST_SECTION("Files under the base directory are named relative to it, so no machine path reaches the compiler");
+    TEST_SECTION(TEXT("Files under the base directory are named relative to it, so no machine path reaches the compiler"));
     FShaderPreprocessorOutput Named;
-    TEST_EXPECT(Preprocess("float a;", Named));
-    Named.Files[0] = "C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl";
-    TEST_EXPECT(Named.GenerateSource("C:/Motor åäö 日本/Assets/Shaders").StartsWith("#line 1 \"Lighting/Sun.hlsl\"\n"));
-    TEST_EXPECT(Named.GenerateSource("C:/Elsewhere").StartsWith("#line 1 \"C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl\"\n"));
-    TEST_EXPECT(Named.GenerateSource().StartsWith("#line 1 \"C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl\"\n"));
+    TEST_EXPECT(Preprocess(TEXT("float a;"), Named));
+    Named.Files[0] = TEXT("C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl");
+    TEST_EXPECT(Named.GenerateSource(TEXT("C:/Motor åäö 日本/Assets/Shaders")).StartsWith(TEXT("#line 1 \"Lighting/Sun.hlsl\"\n")));
+    TEST_EXPECT(Named.GenerateSource(TEXT("C:/Elsewhere")).StartsWith(TEXT("#line 1 \"C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl\"\n")));
+    TEST_EXPECT(Named.GenerateSource().StartsWith(TEXT("#line 1 \"C:/Motor åäö 日本/Assets/Shaders/Lighting/Sun.hlsl\"\n")));
 
     TEST_END();
 }
@@ -232,28 +232,28 @@ bool FXCShaderTranslator_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("ConstantBuffer<T> becomes a cbuffer with the same layout");
-    TEST_EXPECT(TranslateToText("ConstantBuffer<FCamera> CameraBuffer : register(b0);") == "cbuffer CameraBuffer_CB : register ( b0 ) { FCamera CameraBuffer ; } ;");
-    TEST_EXPECT(TranslateToText("ConstantBuffer<FCamera> CameraBuffer;") == "cbuffer CameraBuffer_CB { FCamera CameraBuffer ; } ;");
+    TEST_SECTION(TEXT("ConstantBuffer<T> becomes a cbuffer with the same layout"));
+    TEST_EXPECT(TranslateToText(TEXT("ConstantBuffer<FCamera> CameraBuffer : register(b0);")) == TEXT("cbuffer CameraBuffer_CB : register ( b0 ) { FCamera CameraBuffer ; } ;"));
+    TEST_EXPECT(TranslateToText(TEXT("ConstantBuffer<FCamera> CameraBuffer;")) == TEXT("cbuffer CameraBuffer_CB { FCamera CameraBuffer ; } ;"));
 
-    TEST_SECTION("The shader constants in space1 get no register, so FXC picks a free slot");
-    TEST_EXPECT(TranslateToText("ConstantBuffer<FShaderBlockConstants> Constants : register(b0, space1);") == "cbuffer Constants_CB { FShaderBlockConstants Constants ; } ;");
+    TEST_SECTION(TEXT("The shader constants in space1 get no register, so FXC picks a free slot"));
+    TEST_EXPECT(TranslateToText(TEXT("ConstantBuffer<FShaderBlockConstants> Constants : register(b0, space1);")) == TEXT("cbuffer Constants_CB { FShaderBlockConstants Constants ; } ;"));
 
-    TEST_SECTION("Register spaces and arrays cannot be expressed");
+    TEST_SECTION(TEXT("Register spaces and arrays cannot be expressed"));
     bool bSucceeded = true;
-    TEST_EXPECT(TranslateToText("ConstantBuffer<FLocal> Local : register(b0, space2);", &bSucceeded).Contains("no register spaces"));
+    TEST_EXPECT(TranslateToText(TEXT("ConstantBuffer<FLocal> Local : register(b0, space2);"), &bSucceeded).Contains(TEXT("no register spaces")));
     TEST_EXPECT(!bSucceeded);
-    TEST_EXPECT(TranslateToText("ConstantBuffer<FLocal> Locals[4] : register(b0);", &bSucceeded).Contains("array of constant buffers"));
+    TEST_EXPECT(TranslateToText(TEXT("ConstantBuffer<FLocal> Locals[4] : register(b0);"), &bSucceeded).Contains(TEXT("array of constant buffers")));
     TEST_EXPECT(!bSucceeded);
 
-    TEST_SECTION("Attributes lose the second pair of brackets, indexing is left alone");
-    TEST_EXPECT(TranslateToText("[[branch]] if (x) { a[b[c]] = 0; }") == "[ branch ] if ( x ) { a [ b [ c ] ] = 0 ; }");
-    TEST_EXPECT(TranslateToText("[[vk::push_constant]] struct S {};") == "[ [ vk :: push_constant ] ] struct S { } ;");
+    TEST_SECTION(TEXT("Attributes lose the second pair of brackets, indexing is left alone"));
+    TEST_EXPECT(TranslateToText(TEXT("[[branch]] if (x) { a[b[c]] = 0; }")) == TEXT("[ branch ] if ( x ) { a [ b [ c ] ] = 0 ; }"));
+    TEST_EXPECT(TranslateToText(TEXT("[[vk::push_constant]] struct S {};")) == TEXT("[ [ vk :: push_constant ] ] struct S { } ;"));
 
-    TEST_SECTION("Hexadecimal floats become decimals with the same value");
-    TEST_EXPECT(TranslateToText("0x1.fffffep-1") == "0.99999994039535522");
-    TEST_EXPECT(TranslateToText("0x1p4f") == "16.0f");
-    TEST_EXPECT(TranslateToText("0x10") == "0x10");
+    TEST_SECTION(TEXT("Hexadecimal floats become decimals with the same value"));
+    TEST_EXPECT(TranslateToText(TEXT("0x1.fffffep-1")) == TEXT("0.99999994039535522"));
+    TEST_EXPECT(TranslateToText(TEXT("0x1p4f")) == TEXT("16.0f"));
+    TEST_EXPECT(TranslateToText(TEXT("0x10")) == TEXT("0x10"));
 
     TEST_END();
 }

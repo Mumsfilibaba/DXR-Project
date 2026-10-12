@@ -103,21 +103,21 @@ bool TDelegate_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("TDelegate CreateStatic / IsBound / Execute");
+    TEST_SECTION(TEXT("TDelegate CreateStatic / IsBound / Execute"));
     {
         TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateStatic(&AddOne);
         TEST_EXPECT(Delegate.IsBound());
         TEST_EXPECT_EQ(Delegate.Execute(10), 11);
     }
 
-    TEST_SECTION("TDelegate CreateStatic with payload");
+    TEST_SECTION(TEXT("TDelegate CreateStatic with payload"));
     {
         TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateStatic(&AddPayload, 100);
         TEST_EXPECT(Delegate.IsBound());
         TEST_EXPECT_EQ(Delegate.Execute(5), 105);
     }
 
-    TEST_SECTION("TDelegate CreateLambda");
+    TEST_SECTION(TEXT("TDelegate CreateLambda"));
     {
         TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateLambda([](int32 Num)
         {
@@ -127,7 +127,7 @@ bool TDelegate_Test()
         TEST_EXPECT_EQ(Delegate.Execute(21), 42);
     }
 
-    TEST_SECTION("TDelegate CreateRaw member / const member");
+    TEST_SECTION(TEXT("TDelegate CreateRaw member / const member"));
     {
         FReceiver Receiver;
         TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateRaw(&Receiver, &FReceiver::MemberAdd);
@@ -138,7 +138,7 @@ bool TDelegate_Test()
         TEST_EXPECT_EQ(ConstDelegate.Execute(8), 11);
     }
 
-    TEST_SECTION("TDelegate Bind* / Unbind / ExecuteIfBound");
+    TEST_SECTION(TEXT("TDelegate Bind* / Unbind / ExecuteIfBound"));
     {
         TDelegate<int32(int32)> Delegate;
         TEST_EXPECT(!Delegate.IsBound());
@@ -159,7 +159,7 @@ bool TDelegate_Test()
         TEST_EXPECT(Delegate.IsBound());
     }
 
-    TEST_SECTION("TDelegate UnbindIfBound by object");
+    TEST_SECTION(TEXT("TDelegate UnbindIfBound by object"));
     {
         FReceiver Receiver;
         TDelegate<int32(int32)> Delegate = TDelegate<int32(int32)>::CreateRaw(&Receiver, &FReceiver::MemberAdd);
@@ -169,7 +169,7 @@ bool TDelegate_Test()
         TEST_EXPECT(!Delegate.UnbindIfBound(&Receiver));
     }
 
-    TEST_SECTION("TMulticastDelegate Add* / Broadcast / GetCount / IsBound");
+    TEST_SECTION(TEXT("TMulticastDelegate Add* / Broadcast / GetCount / IsBound"));
     {
         TMulticastDelegate<int32> Event;
         TEST_EXPECT(!Event.IsBound());
@@ -193,7 +193,7 @@ bool TDelegate_Test()
         TEST_EXPECT_EQ(Receiver.CallCount, 1);
     }
 
-    TEST_SECTION("TMulticastDelegate Unbind by handle");
+    TEST_SECTION(TEXT("TMulticastDelegate Unbind by handle"));
     {
         TMulticastDelegate<int32> Event;
         
@@ -219,7 +219,7 @@ bool TDelegate_Test()
         TEST_EXPECT_EQ(CounterB, 1);
     }
 
-    TEST_SECTION("TMulticastDelegate UnbindIfBound / UnbindAll");
+    TEST_SECTION(TEXT("TMulticastDelegate UnbindIfBound / UnbindAll"));
     {
         TMulticastDelegate<int32> Event;
         FReceiver Receiver;
@@ -237,13 +237,13 @@ bool TDelegate_Test()
         TEST_EXPECT(!Event.IsBound());
     }
 
-    TEST_SECTION("TTuple: size / GetByIndex / comparison / Swap / Apply");
+    TEST_SECTION(TEXT("TTuple: size / GetByIndex / comparison / Swap / Apply"));
     {
-        TTuple<int32, float, double, FString> Tuple(5, 0.9f, 5.0, "A string");
+        TTuple<int32, float, double, FString> Tuple(5, 0.9f, 5.0, TEXT("A string"));
         TEST_EXPECT_EQ(Tuple.Size(), 4);
         TEST_EXPECT_EQ((TTuple<int, float, double>::StaticSize()), 3);
         TEST_EXPECT_EQ(Tuple.GetByIndex<0>(), 5);
-        TEST_EXPECT(Tuple.GetByIndex<3>() == "A string");
+        TEST_EXPECT(Tuple.GetByIndex<3>() == TEXT("A string"));
 
         TTuple<int32, float, double, FString> Copy;
         Copy = Tuple;
@@ -271,10 +271,10 @@ bool TDelegate_Test()
         TEST_EXPECT(GTupleSum == (80 + 900 + 30 + 99));
     }
 
-    TEST_SECTION("TPair: construct / comparison / Swap");
+    TEST_SECTION(TEXT("TPair: construct / comparison / Swap"));
     {
-        TPair<FString, int32> P0("Pair0", 32);
-        TPair<FString, int32> P1("Pair1", 42);
+        TPair<FString, int32> P0(TEXT("Pair0"), 32);
+        TPair<FString, int32> P1(TEXT("Pair1"), 42);
         TEST_EXPECT(!(P0 == P1));
         TEST_EXPECT(P0 != P1);
 
@@ -284,7 +284,7 @@ bool TDelegate_Test()
         TEST_EXPECT(P1 == P0Copy);
     }
 
-    TEST_SECTION("TDelegate BindRaw / virtual member / copy / move / Swap / payload");
+    TEST_SECTION(TEXT("TDelegate BindRaw / virtual member / copy / move / Swap / payload"));
     {
         FVDerived Derived;
         FVBase* Base = &Derived;
@@ -317,7 +317,7 @@ bool TDelegate_Test()
         TEST_EXPECT_EQ(WithPayload.Execute(), 203);
     }
 
-    TEST_SECTION("TMulticastDelegate void signature");
+    TEST_SECTION(TEXT("TMulticastDelegate void signature"));
     {
         FMulticastDelegate VoidEvent;
 
@@ -331,7 +331,7 @@ bool TDelegate_Test()
         TEST_EXPECT_EQ(Counter, 1);
     }
 
-    TEST_SECTION("Delegate declaration macros / Event dispatch");
+    TEST_SECTION(TEXT("Delegate declaration macros / Event dispatch"));
     {
         DECLARE_DELEGATE(FSomeDelegate, int32);
         FSomeDelegate SomeDelegate;

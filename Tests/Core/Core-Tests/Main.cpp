@@ -46,7 +46,7 @@ IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 
 static int32 RunCoreTests()
 {
-    TestHarness::Initialize("TestResults_Core.log");
+    TestHarness::Initialize(TEXT("TestResults_Core.log"));
     LOG_INFO("=== Core Tests ===");
 
     FThreadManager::Initialize();
@@ -59,33 +59,33 @@ static int32 RunCoreTests()
         return -1;
     }
 
-    RUN_TEST("TaskGraph", TaskGraph_Test());
-    RUN_TEST("CommandLine", CommandLine_Test());
-    RUN_TEST("ConsoleManagerCommandLine", ConsoleManagerCommandLine_Test());
-    RUN_TEST("IniFile", IniFile_Test());
-    RUN_TEST("Config", Config_Test());
-    RUN_TEST("JsonParser", JsonParser_Test());
-    RUN_TEST("JsonWriter", JsonWriter_Test());
-    RUN_TEST("JsonArchive", JsonArchive_Test());
-    RUN_TEST("BlueNoiseGenerator", BlueNoiseGenerator_Test());
-    RUN_TEST("PlatformTime", PlatformTime_Test());
-    RUN_TEST("PlatformMisc", PlatformMisc_Test());
-    RUN_TEST("MemoryStack", MemoryStack_Test());
-    RUN_TEST("PlatformEventPool", PlatformEventPool_Test());
-    RUN_TEST("FileOutputDevice", FileOutputDevice_Test());
-    RUN_TEST("Profiler", Profiler_Test());
-    RUN_TEST("ProfilerGPUTraceSentinel", ProfilerGPUTraceSentinel_Test());
-    RUN_TEST("File", File_Test());
-    RUN_TEST("Guid", Guid_Test());
-    RUN_TEST("PlatformProcess", PlatformProcess_Test());
-    RUN_TEST("ProjectDescriptor", ProjectDescriptor_Test());
-    RUN_TEST("Paths", Paths_Test());
-    RUN_TEST("CharType", CharType_Test());
-    RUN_TEST("UnicodePath", UnicodePath_Test());
-    RUN_TEST("SocketAddress", SocketAddress_Test());
-    RUN_TEST("PlatformSocket", PlatformSocket_Test());
-    RUN_TEST("NetworkSocket", NetworkSocket_Test());
-    RUN_TEST("RemoteConsoleProtocol", RemoteConsoleProtocol_Test());
+    RUN_TEST(TEXT("TaskGraph"), TaskGraph_Test());
+    RUN_TEST(TEXT("CommandLine"), CommandLine_Test());
+    RUN_TEST(TEXT("ConsoleManagerCommandLine"), ConsoleManagerCommandLine_Test());
+    RUN_TEST(TEXT("IniFile"), IniFile_Test());
+    RUN_TEST(TEXT("Config"), Config_Test());
+    RUN_TEST(TEXT("JsonParser"), JsonParser_Test());
+    RUN_TEST(TEXT("JsonWriter"), JsonWriter_Test());
+    RUN_TEST(TEXT("JsonArchive"), JsonArchive_Test());
+    RUN_TEST(TEXT("BlueNoiseGenerator"), BlueNoiseGenerator_Test());
+    RUN_TEST(TEXT("PlatformTime"), PlatformTime_Test());
+    RUN_TEST(TEXT("PlatformMisc"), PlatformMisc_Test());
+    RUN_TEST(TEXT("MemoryStack"), MemoryStack_Test());
+    RUN_TEST(TEXT("PlatformEventPool"), PlatformEventPool_Test());
+    RUN_TEST(TEXT("FileOutputDevice"), FileOutputDevice_Test());
+    RUN_TEST(TEXT("Profiler"), Profiler_Test());
+    RUN_TEST(TEXT("ProfilerGPUTraceSentinel"), ProfilerGPUTraceSentinel_Test());
+    RUN_TEST(TEXT("File"), File_Test());
+    RUN_TEST(TEXT("Guid"), Guid_Test());
+    RUN_TEST(TEXT("PlatformProcess"), PlatformProcess_Test());
+    RUN_TEST(TEXT("ProjectDescriptor"), ProjectDescriptor_Test());
+    RUN_TEST(TEXT("Paths"), Paths_Test());
+    RUN_TEST(TEXT("CharType"), CharType_Test());
+    RUN_TEST(TEXT("UnicodePath"), UnicodePath_Test());
+    RUN_TEST(TEXT("SocketAddress"), SocketAddress_Test());
+    RUN_TEST(TEXT("PlatformSocket"), PlatformSocket_Test());
+    RUN_TEST(TEXT("NetworkSocket"), NetworkSocket_Test());
+    RUN_TEST(TEXT("RemoteConsoleProtocol"), RemoteConsoleProtocol_Test());
 
     FTaskGraph::Release();
     FThreadManager::Release();
@@ -95,4 +95,4 @@ static int32 RunCoreTests()
     return ExitCode;
 }
 
-IMPLEMENT_PROGRAM_MAIN("Core-Tests", RunCoreTests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("Core-Tests"), RunCoreTests);

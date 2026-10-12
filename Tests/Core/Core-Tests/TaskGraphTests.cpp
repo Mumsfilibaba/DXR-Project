@@ -18,7 +18,7 @@
 #define TG_CHECK(Condition) \
     if (!(Condition)) \
     { \
-        LOG_ERROR("[TEST FAILED] Condition='%s'", #Condition); \
+        LOG_ERROR("[TEST FAILED] Condition='%s'", TEXT(#Condition)); \
         return false; \
     }
 
@@ -30,7 +30,7 @@ static bool Test_LaunchAndWait()
 {
     FAtomicInt32 Ran(0);
 
-    FTaskHandle Handle = Tasks::Launch("LaunchAndWait", [&Ran]()
+    FTaskHandle Handle = Tasks::Launch(TEXT("LaunchAndWait"), [&Ran]()
     {
         Ran.Increment();
     });
@@ -53,17 +53,17 @@ static bool Test_PrerequisiteChain()
     FAtomicInt32 OrderB(-1);
     FAtomicInt32 OrderC(-1);
 
-    FTaskHandle TaskA = Tasks::Launch("A", [&]()
+    FTaskHandle TaskA = Tasks::Launch(TEXT("A"), [&]()
     {
         OrderA.Store(Order.Increment());
     });
     
-    FTaskHandle TaskB = Tasks::Launch("B", [&]()
+    FTaskHandle TaskB = Tasks::Launch(TEXT("B"), [&]()
     {
         OrderB.Store(Order.Increment());
     }, ENamedThread::AnyThread, ETaskPriority::Normal, { TaskA });
 
-    FTaskHandle TaskC = Tasks::Launch("C", [&]()
+    FTaskHandle TaskC = Tasks::Launch(TEXT("C"), [&]()
     {
         OrderC.Store(Order.Increment());
     }, ENamedThread::AnyThread, ETaskPriority::Normal, { TaskB });
@@ -90,7 +90,7 @@ static bool Test_NamedThreadFIFO()
     FTaskHandle LastHandle;
     for (int32 Index = 0; Index < NumTasks; ++Index)
     {
-        LastHandle = Tasks::LaunchOnRHIThread("FIFO", [&ExecutionOrderCS, &ExecutionOrder, Index]()
+        LastHandle = Tasks::LaunchOnRHIThread(TEXT("FIFO"), [&ExecutionOrderCS, &ExecutionOrder, Index]()
         {
             SCOPED_LOCK(ExecutionOrderCS);
             ExecutionOrder.Add(Index);
@@ -148,9 +148,9 @@ static bool Test_MainThreadPumpNoDeadlock()
 {
     FAtomicInt32 MainTaskRan(0);
 
-    FTaskHandle WorkerHandle = Tasks::Launch("Worker", [&]()
+    FTaskHandle WorkerHandle = Tasks::Launch(TEXT("Worker"), [&]()
     {
-        FTaskHandle MainHandle = Tasks::LaunchOnMainThread("MainWork", [&]()
+        FTaskHandle MainHandle = Tasks::LaunchOnMainThread(TEXT("MainWork"), [&]()
         {
             MainTaskRan.Increment();
         });
@@ -198,7 +198,7 @@ static bool Test_WorkStealingStress()
     {
         FAtomicInt32 Completed(0);
 
-        FTaskHandle Root = Tasks::Launch("StressRoot", [&]()
+        FTaskHandle Root = Tasks::Launch(TEXT("StressRoot"), [&]()
         {
             for (int32 Index = 0; Index < NumChildTasks; ++Index)
             {

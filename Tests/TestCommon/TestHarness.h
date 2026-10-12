@@ -6,7 +6,7 @@
 struct TestHarness
 {
 public:
-    static void Initialize(const CHAR_T* LogFileName = "TestResults.log");
+    static void Initialize(const CHAR_T* LogFileName = TEXT("TestResults.log"));
     static void Shutdown();
 
     static void AddPass();

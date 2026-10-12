@@ -32,16 +32,16 @@ static void FillRandom(TArray<int32>& Values, uint32 Count, uint32 Seed)
 static void MakeDistribution(TArray<int32>& Values, const CHAR_T* Name)
 {
     const int32 Count = Values.Size();
-    if (TCString<CHAR_T>::Strcmp(Name, "sorted") == 0)
+    if (TCString<CHAR_T>::Strcmp(Name, TEXT("sorted")) == 0)
     {
         Algorithm::Sort(Values);
     }
-    else if (TCString<CHAR_T>::Strcmp(Name, "reverse") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, TEXT("reverse")) == 0)
     {
         Algorithm::Sort(Values);
         Values.Reverse();
     }
-    else if (TCString<CHAR_T>::Strcmp(Name, "nearly") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, TEXT("nearly")) == 0)
     {
         Algorithm::Sort(Values);
         const int32 Swaps = Math::Max(1, Count / 100);
@@ -52,21 +52,21 @@ static void MakeDistribution(TArray<int32>& Values, const CHAR_T* Name)
             ::Swap(Values[A], Values[B]);
         }
     }
-    else if (TCString<CHAR_T>::Strcmp(Name, "few-unique") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, TEXT("few-unique")) == 0)
     {
         for (int32 Index = 0; Index < Count; ++Index)
         {
             Values[Index] = Values[Index] % 4;
         }
     }
-    else if (TCString<CHAR_T>::Strcmp(Name, "equal") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, TEXT("equal")) == 0)
     {
         for (int32 Index = 0; Index < Count; ++Index)
         {
             Values[Index] = 1;
         }
     }
-    else if (TCString<CHAR_T>::Strcmp(Name, "organ-pipe") == 0)
+    else if (TCString<CHAR_T>::Strcmp(Name, TEXT("organ-pipe")) == 0)
     {
         Algorithm::Sort(Values);
         TArray<int32> Pipe;
@@ -109,7 +109,7 @@ void Sort_Benchmark()
     const uint32 LargeTrials = Benchmark::ScaleCount(20, 2);
 
     const int32 Sizes[] = { 32, 256, 4096, 65536, 1000000 };
-    const CHAR_T* Distributions[] = { "random", "sorted", "reverse", "nearly", "few-unique", "equal", "organ-pipe" };
+    const CHAR_T* Distributions[] = { TEXT("random"), TEXT("sorted"), TEXT("reverse"), TEXT("nearly"), TEXT("few-unique"), TEXT("equal"), TEXT("organ-pipe") };
 
     for (int32 Size : Sizes)
     {
@@ -119,9 +119,9 @@ void Sort_Benchmark()
 
         for (const CHAR_T* Distribution : Distributions)
         {
-            if (Size >= 1000000 && TCString<CHAR_T>::Strcmp(Distribution, "random") != 0
-                && TCString<CHAR_T>::Strcmp(Distribution, "sorted") != 0
-                && TCString<CHAR_T>::Strcmp(Distribution, "reverse") != 0)
+            if (Size >= 1000000 && TCString<CHAR_T>::Strcmp(Distribution, TEXT("random")) != 0
+                && TCString<CHAR_T>::Strcmp(Distribution, TEXT("sorted")) != 0
+                && TCString<CHAR_T>::Strcmp(Distribution, TEXT("reverse")) != 0)
             {
                 continue;
             }
@@ -131,36 +131,36 @@ void Sort_Benchmark()
 
             LOG_INFO("\nint32 n=%d dist=%s trials=%u", Size, Distribution, Trials);
 
-            TimeSort("Algorithm::Sort", Source, Trials, [](TArray<int32>& Values)
+            TimeSort(TEXT("Algorithm::Sort"), Source, Trials, [](TArray<int32>& Values)
             {
                 Algorithm::Sort(Values);
             });
-            TimeSort("TArray::Sort", Source, Trials, [](TArray<int32>& Values)
+            TimeSort(TEXT("TArray::Sort"), Source, Trials, [](TArray<int32>& Values)
             {
                 Values.Sort();
             });
-            TimeSort("std::sort", Source, Trials, [](TArray<int32>& Values)
+            TimeSort(TEXT("std::sort"), Source, Trials, [](TArray<int32>& Values)
             {
                 std::sort(Values.Data(), Values.Data() + Values.Size());
             });
-            TimeSort("std::stable_sort", Source, Trials, [](TArray<int32>& Values)
+            TimeSort(TEXT("std::stable_sort"), Source, Trials, [](TArray<int32>& Values)
             {
                 std::stable_sort(Values.Data(), Values.Data() + Values.Size());
             });
-            TimeSort("Algorithm::HeapSort", Source, Trials, [](TArray<int32>& Values)
+            TimeSort(TEXT("Algorithm::HeapSort"), Source, Trials, [](TArray<int32>& Values)
             {
                 Algorithm::HeapSort(Values);
             });
-            TimeSort("std::heap", Source, Trials, [](TArray<int32>& Values)
+            TimeSort(TEXT("std::heap"), Source, Trials, [](TArray<int32>& Values)
             {
                 std::make_heap(Values.Data(), Values.Data() + Values.Size());
                 std::sort_heap(Values.Data(), Values.Data() + Values.Size());
             });
-            TimeSort("Algorithm::IntegerSortBy", Source, Trials, [](TArray<int32>& Values)
+            TimeSort(TEXT("Algorithm::IntegerSortBy"), Source, Trials, [](TArray<int32>& Values)
             {
                 Algorithm::IntegerSortBy(Values, [](int32 Value) { return Value; });
             });
-            TimeSort("Algorithm::StableSort", Source, Trials, [](TArray<int32>& Values)
+            TimeSort(TEXT("Algorithm::StableSort"), Source, Trials, [](TArray<int32>& Values)
             {
                 Algorithm::StableSort(Values);
             });
@@ -189,7 +189,7 @@ void Sort_Benchmark()
                     return Left.X < Right.X;
                 });
             }
-            Benchmark::Report("Algorithm::Sort Vector3", Clock.GetTotalDuration() / static_cast<int64>(Trials));
+            Benchmark::Report(TEXT("Algorithm::Sort FVector3"), Clock.GetTotalDuration() / static_cast<int64>(Trials));
         }
         {
             FClock Clock;
@@ -202,7 +202,7 @@ void Sort_Benchmark()
                     return Left.X < Right.X;
                 });
             }
-            Benchmark::Report("std::sort Vector3", Clock.GetTotalDuration() / static_cast<int64>(Trials));
+            Benchmark::Report(TEXT("std::sort FVector3"), Clock.GetTotalDuration() / static_cast<int64>(Trials));
         }
     }
 
@@ -230,7 +230,7 @@ void Sort_Benchmark()
                     return Left.Key < Right.Key;
                 });
             }
-            Benchmark::Report("Algorithm::Sort fat", Clock.GetTotalDuration() / static_cast<int64>(Trials));
+            Benchmark::Report(TEXT("Algorithm::Sort fat"), Clock.GetTotalDuration() / static_cast<int64>(Trials));
         }
         {
             FClock Clock;
@@ -243,7 +243,7 @@ void Sort_Benchmark()
                     return Left.Key < Right.Key;
                 });
             }
-            Benchmark::Report("std::sort fat", Clock.GetTotalDuration() / static_cast<int64>(Trials));
+            Benchmark::Report(TEXT("std::sort fat"), Clock.GetTotalDuration() / static_cast<int64>(Trials));
         }
     }
 }

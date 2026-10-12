@@ -36,7 +36,7 @@ using TArrayAllocator = TDefaultArrayAllocator<T>;
 void TArray_Benchmark()
 {
 #if ENABLE_STANDARD_BENCHMARK
-    LOG_INFO("\nBenchmark (String)");
+    LOG_INFO("\nBenchmark (FString)");
     const uint32 TestCount = Benchmark::ScaleCount(100, 10);
 
     // Insert
@@ -57,7 +57,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings0.insert(Strings0.begin(), "My name is jeff");
+                    Strings0.insert(Strings0.begin(), TEXT("My name is jeff"));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -72,7 +72,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("std::vector", Duration, Iterations);
+            Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
         {
@@ -88,7 +88,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings1.Insert(0, "My name is jeff");
+                    Strings1.Insert(0, TEXT("My name is jeff"));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -103,7 +103,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("TArray", Duration, Iterations);
+            Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
 #endif
@@ -126,7 +126,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings0.emplace(Strings0.begin(), "My name is jeff");
+                    Strings0.emplace(Strings0.begin(), TEXT("My name is jeff"));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -141,7 +141,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("std::vector", Duration, Iterations);
+            Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
         {
@@ -157,7 +157,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings1.EmplaceAt(0, "My name is jeff");
+                    Strings1.EmplaceAt(0, TEXT("My name is jeff"));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -172,7 +172,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("TArray", Duration, Iterations);
+            Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
 #endif
@@ -195,7 +195,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings0.push_back("My name is jeff");
+                    Strings0.push_back(TEXT("My name is jeff"));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -210,7 +210,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("std::vector", Duration, Iterations);
+            Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
         {
@@ -226,7 +226,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings1.Add("My name is jeff");
+                    Strings1.Add(TEXT("My name is jeff"));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -241,7 +241,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("TArray", Duration, Iterations);
+            Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
 #endif
@@ -264,7 +264,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings0.emplace_back("My name is jeff");
+                    Strings0.emplace_back(TEXT("My name is jeff"));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -279,7 +279,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("std::vector", Duration, Iterations);
+            Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
         {
@@ -295,7 +295,7 @@ void TArray_Benchmark()
             #endif
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Strings1.Emplace("My name is jeff");
+                    Strings1.Emplace(TEXT("My name is jeff"));
 
                 #if ENABLE_SHRINKTOFIT_BENCHMARK
                     if (ResetCounter >= 5)
@@ -310,12 +310,12 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("TArray", Duration, Iterations);
+            Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
 #endif
 
-    LOG_INFO("\nBenchmark (Vector3)");
+    LOG_INFO("\nBenchmark (FVector3)");
 
     // Insert
 #if ENABLE_INSERT_BENCHMARK
@@ -350,7 +350,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("std::vector", Duration, Iterations);
+            Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
         {
@@ -381,7 +381,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("TArray", Duration, Iterations);
+            Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
 #endif
@@ -419,7 +419,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("std::vector", Duration, Iterations);
+            Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
         {
@@ -450,7 +450,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("TArray", Duration, Iterations);
+            Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
 #endif
@@ -488,7 +488,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("std::vector", Duration, Iterations);
+            Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
         {
@@ -519,7 +519,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("TArray", Duration, Iterations);
+            Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
 #endif
@@ -557,7 +557,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("std::vector", Duration, Iterations);
+            Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
         {
@@ -588,7 +588,7 @@ void TArray_Benchmark()
             }
 
             auto Duration = Clock.GetTotalDuration() / TestCount;
-            Benchmark::Report("TArray", Duration, Iterations);
+            Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
 #endif

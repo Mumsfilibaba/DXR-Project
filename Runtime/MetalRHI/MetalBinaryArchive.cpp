@@ -1,6 +1,7 @@
 #include "MetalRHI/MetalBinaryArchive.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalStats.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformFile.h"
@@ -30,10 +31,11 @@ static FString GetErrorString(NSError* Error)
     return Error ? FString([Error localizedDescription]) : FString(TEXT("unknown error"));
 }
 
-static void CopyToFixedString(CHAR_T* Dest, uint32 DestSize, const FString& Source)
+static void CopyToFixedString(ANSICHAR* Dest, uint32 DestSize, const FString& Source)
 {
-    const uint32 Length = Math::Min<uint32>(static_cast<uint32>(Source.Length()), DestSize - 1);
-    Memory::Memcpy(Dest, *Source, Length);
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Source = StringCast<ANSICHAR>(Source);
+    const uint32 Length = Math::Min<uint32>(static_cast<uint32>(Utf8Source.Length()), DestSize - 1);
+    Memory::Memcpy(Dest, Utf8Source.Get(), Length);
     Dest[Length] = '\0';
 }
 
@@ -50,8 +52,8 @@ static bool ReadSidecar(const FString& Path, FMetalBinaryArchiveHeader& OutHeade
         return false;
     }
 
-    OutHeader.OSBuild[sizeof(OutHeader.OSBuild) - 1]       = '\0';
-    OutHeader.DeviceName[sizeof(OutHeader.DeviceName) - 1] = '\0';
+    OutHeader.OSBuild[ARRAY_COUNT(OutHeader.OSBuild) - 1]       = '\0';
+    OutHeader.DeviceName[ARRAY_COUNT(OutHeader.DeviceName) - 1] = '\0';
     return true;
 }
 
@@ -100,9 +102,9 @@ static bool ValidateHeader(const FMetalBinaryArchiveHeader& Found, const FMetalB
         return false;
     }
 
-    if (CString::Strcmp(Found.DeviceName, Expected.DeviceName) != 0)
+    if (TCString<ANSICHAR>::Strcmp(Found.DeviceName, Expected.DeviceName) != 0)
     {
-        OutReason = FString::Printf(TEXT("GPU '%s', expected '%s'"), Found.DeviceName, Expected.DeviceName);
+        OutReason = FString::Printf(TEXT("GPU '%s', expected '%s'"), StringCast<CHAR_T>(Found.DeviceName).Get(), StringCast<CHAR_T>(Expected.DeviceName).Get());
         return false;
     }
 
@@ -124,9 +126,9 @@ static bool ValidateHeader(const FMetalBinaryArchiveHeader& Found, const FMetalB
         return false;
     }
 
-    if (CString::Strcmp(Found.OSBuild, Expected.OSBuild) != 0)
+    if (TCString<ANSICHAR>::Strcmp(Found.OSBuild, Expected.OSBuild) != 0)
     {
-        OutReason = FString::Printf(TEXT("OS build %s, expected %s"), Found.OSBuild, Expected.OSBuild);
+        OutReason = FString::Printf(TEXT("OS build %s, expected %s"), StringCast<CHAR_T>(Found.OSBuild).Get(), StringCast<CHAR_T>(Expected.OSBuild).Get());
         return false;
     }
 
@@ -595,12 +597,12 @@ FMetalBinaryArchiveHeader FMetalBinaryArchive::MakeExpectedHeader() const
     Header.OSMinor = static_cast<int32>(OSVersion.minorVersion);
     Header.OSPatch = static_cast<int32>(OSVersion.patchVersion);
 
-    size_t BuildLength = sizeof(Header.OSBuild) - 1;
-    if (::sysctlbyname(TEXT("kern.osversion"), Header.OSBuild, &BuildLength, nullptr, 0) != 0)
+    size_t BuildLength = ARRAY_COUNT(Header.OSBuild) - 1;
+    if (::sysctlbyname("kern.osversion", Header.OSBuild, &BuildLength, nullptr, 0) != 0)
     {
         Header.OSBuild[0] = '\0';
     }
 
-    CopyToFixedString(Header.DeviceName, sizeof(Header.DeviceName), Properties.Name);
+    CopyToFixedString(Header.DeviceName, ARRAY_COUNT(Header.DeviceName), Properties.Name);
     return Header;
 }

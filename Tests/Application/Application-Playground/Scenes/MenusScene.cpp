@@ -40,7 +40,7 @@ static TSharedPtr<FMenuItem> MakeItem(
     Desc.ShortcutText = ShortcutText;
     Desc.OnActivated  = FOnMenuItemActivated::CreateLambda([Readout, Label]()
     {
-        Readout->SetText(FString::Printf("chose %s", Label.Data()));
+        Readout->SetText(FString::Printf(TEXT("chose %s"), Label.Data()));
     });
 
     return FMenuItem::Create(Desc);
@@ -71,7 +71,7 @@ static TSharedPtr<FMenuItem> MakeCheckableItem(
         const bool bIsNowChecked = LiveItem->GetCheckState() != ECheckBoxState::Checked;
         LiveItem->SetCheckState(bIsNowChecked ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
 
-        Readout->SetText(FString::Printf("%s is now %s", Label.Data(), bIsNowChecked ? "on" : "off"));
+        Readout->SetText(FString::Printf(TEXT("%s is now %s"), Label.Data(), bIsNowChecked ? TEXT("on") : TEXT("off")));
     }));
 
     return Item;
@@ -79,52 +79,52 @@ static TSharedPtr<FMenuItem> MakeCheckableItem(
 
 static TSharedPtr<FVisualElement> MakeMenuBarRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, "nothing chosen yet");
+    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, TEXT("nothing chosen yet"));
 
     TSharedPtr<FMenu> FileMenu = FMenu::Create();
-    FileMenu->AddItem(MakeItem(Fonts, "New Scene", "Ctrl+N", Readout));
-    FileMenu->AddItem(MakeItem(Fonts, "Open Scene", "Ctrl+O", Readout));
+    FileMenu->AddItem(MakeItem(Fonts, TEXT("New Scene"), TEXT("Ctrl+N"), Readout));
+    FileMenu->AddItem(MakeItem(Fonts, TEXT("Open Scene"), TEXT("Ctrl+O"), Readout));
 
     TSharedPtr<FMenu> RecentMenu = FMenu::Create();
-    RecentMenu->AddItem(MakeItem(Fonts, "Sponza.scene", "", Readout));
-    RecentMenu->AddItem(MakeItem(Fonts, "Bistro.scene", "", Readout));
+    RecentMenu->AddItem(MakeItem(Fonts, TEXT("Sponza.scene"), TEXT(""), Readout));
+    RecentMenu->AddItem(MakeItem(Fonts, TEXT("Bistro.scene"), TEXT(""), Readout));
     RecentMenu->AddSeparator();
 
     TSharedPtr<FMenu> DeeperMenu = FMenu::Create();
-    DeeperMenu->AddItem(MakeItem(Fonts, "Clear the list", "", Readout));
+    DeeperMenu->AddItem(MakeItem(Fonts, TEXT("Clear the list"), TEXT(""), Readout));
 
     FMenuItem::FDesc DeeperDesc;
-    DeeperDesc.SetLabel("More").SetFont(Fonts.Body);
+    DeeperDesc.SetLabel(TEXT("More")).SetFont(Fonts.Body);
     DeeperDesc.SubMenu = DeeperMenu;
     RecentMenu->AddItem(FMenuItem::Create(DeeperDesc));
 
     FMenuItem::FDesc RecentDesc;
-    RecentDesc.SetLabel("Open Recent").SetFont(Fonts.Body);
+    RecentDesc.SetLabel(TEXT("Open Recent")).SetFont(Fonts.Body);
     RecentDesc.SubMenu = RecentMenu;
     FileMenu->AddItem(FMenuItem::Create(RecentDesc));
 
     FileMenu->AddSeparator();
-    FileMenu->AddItem(MakeItem(Fonts, "Save", "Ctrl+S", Readout));
+    FileMenu->AddItem(MakeItem(Fonts, TEXT("Save"), TEXT("Ctrl+S"), Readout));
 
-    TSharedPtr<FMenuItem> Disabled = MakeItem(Fonts, "Save As", "Ctrl+Shift+S", Readout);
+    TSharedPtr<FMenuItem> Disabled = MakeItem(Fonts, TEXT("Save As"), TEXT("Ctrl+Shift+S"), Readout);
     Disabled->SetEnabled(false);
     FileMenu->AddItem(Disabled);
 
     TSharedPtr<FMenu> EditMenu = FMenu::Create();
-    EditMenu->AddItem(MakeItem(Fonts, "Undo", "Ctrl+Z", Readout));
-    EditMenu->AddItem(MakeItem(Fonts, "Redo", "Ctrl+Y", Readout));
+    EditMenu->AddItem(MakeItem(Fonts, TEXT("Undo"), TEXT("Ctrl+Z"), Readout));
+    EditMenu->AddItem(MakeItem(Fonts, TEXT("Redo"), TEXT("Ctrl+Y"), Readout));
     EditMenu->AddSeparator();
-    EditMenu->AddItem(MakeItem(Fonts, "Delete", "Del", Readout));
+    EditMenu->AddItem(MakeItem(Fonts, TEXT("Delete"), TEXT("Del"), Readout));
 
     TSharedPtr<FMenu> ViewMenu = FMenu::Create();
-    ViewMenu->AddItem(MakeCheckableItem(Fonts, "Grid", true, Readout));
-    ViewMenu->AddItem(MakeCheckableItem(Fonts, "Wireframe", false, Readout));
-    ViewMenu->AddItem(MakeCheckableItem(Fonts, "Statistics", false, Readout));
+    ViewMenu->AddItem(MakeCheckableItem(Fonts, TEXT("Grid"), true, Readout));
+    ViewMenu->AddItem(MakeCheckableItem(Fonts, TEXT("Wireframe"), false, Readout));
+    ViewMenu->AddItem(MakeCheckableItem(Fonts, TEXT("Statistics"), false, Readout));
 
     TSharedPtr<FMenuBar> MenuBar = FMenuBar::Create();
-    MenuBar->AddMenu("File", Fonts.Body, FileMenu);
-    MenuBar->AddMenu("Edit", Fonts.Body, EditMenu);
-    MenuBar->AddMenu("View", Fonts.Body, ViewMenu);
+    MenuBar->AddMenu(TEXT("File"), Fonts.Body, FileMenu);
+    MenuBar->AddMenu(TEXT("Edit"), Fonts.Body, EditMenu);
+    MenuBar->AddMenu(TEXT("View"), Fonts.Body, ViewMenu);
 
     FBorder::FDesc BorderDesc;
     BorderDesc.BackgroundColor = FUIStyle::GetDefault().Colors.ControlNormal;
@@ -183,25 +183,25 @@ private:
 
 static TSharedPtr<FVisualElement> MakeContextMenuRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, "right-click the box");
+    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, TEXT("right-click the box"));
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
-    Menu->AddItem(MakeItem(Fonts, "Cut", "Ctrl+X", Readout));
-    Menu->AddItem(MakeItem(Fonts, "Copy", "Ctrl+C", Readout));
-    Menu->AddItem(MakeItem(Fonts, "Paste", "Ctrl+V", Readout));
+    Menu->AddItem(MakeItem(Fonts, TEXT("Cut"), TEXT("Ctrl+X"), Readout));
+    Menu->AddItem(MakeItem(Fonts, TEXT("Copy"), TEXT("Ctrl+C"), Readout));
+    Menu->AddItem(MakeItem(Fonts, TEXT("Paste"), TEXT("Ctrl+V"), Readout));
     Menu->AddSeparator();
 
     TSharedPtr<FMenu> ConvertMenu = FMenu::Create();
-    ConvertMenu->AddItem(MakeItem(Fonts, "To Static Mesh", "", Readout));
-    ConvertMenu->AddItem(MakeItem(Fonts, "To Instanced Mesh", "", Readout));
+    ConvertMenu->AddItem(MakeItem(Fonts, TEXT("To Static Mesh"), TEXT(""), Readout));
+    ConvertMenu->AddItem(MakeItem(Fonts, TEXT("To Instanced Mesh"), TEXT(""), Readout));
 
     FMenuItem::FDesc ConvertDesc;
-    ConvertDesc.SetLabel("Convert").SetFont(Fonts.Body);
+    ConvertDesc.SetLabel(TEXT("Convert")).SetFont(Fonts.Body);
     ConvertDesc.SubMenu = ConvertMenu;
     Menu->AddItem(FMenuItem::Create(ConvertDesc));
 
     FTextBlock::FDesc HintDesc;
-    HintDesc.Text = "Right-click anywhere in this box";
+    HintDesc.Text = TEXT("Right-click anywhere in this box");
     HintDesc.Font = Fonts.Body;
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
@@ -212,7 +212,7 @@ static TSharedPtr<FVisualElement> MakeContextMenuRow(const FPlaygroundFonts& Fon
 
 static TSharedPtr<FVisualElement> MakeComboBoxRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock>     Readout = MakeReadout(Fonts, "nothing selected yet");
+    TSharedPtr<FTextBlock>     Readout = MakeReadout(Fonts, TEXT("nothing selected yet"));
     TSharedPtr<FHorizontalBox> Row     = FHorizontalBox::Create();
 
     struct FSample
@@ -223,14 +223,14 @@ static TSharedPtr<FVisualElement> MakeComboBoxRow(const FPlaygroundFonts& Fonts)
 
     const FSample Samples[] =
     {
-        { "Shadow quality", 2 },
-        { "Anti-aliasing", -1 },
+        { TEXT("Shadow quality"), 2 },
+        { TEXT("Anti-aliasing"), -1 },
     };
 
     const TArray<FString> Options[] =
     {
-        { "Off", "Low", "Medium", "High", "Ultra" },
-        { "None", "FXAA", "TAA" },
+        { TEXT("Off"), TEXT("Low"), TEXT("Medium"), TEXT("High"), TEXT("Ultra") },
+        { TEXT("None"), TEXT("FXAA"), TEXT("TAA") },
     };
 
     for (int32 Index = 0; Index < static_cast<int32>(ARRAY_COUNT(Samples)); ++Index)
@@ -242,11 +242,11 @@ static TSharedPtr<FVisualElement> MakeComboBoxRow(const FPlaygroundFonts& Fonts)
         FComboBox::FDesc Desc;
         Desc.SetOptions(Options[Index]).SetFont(Fonts.Body);
         Desc.SelectedIndex      = Samples[Index].InitialIndex;
-        Desc.PlaceholderText    = "Select...";
+        Desc.PlaceholderText    = TEXT("Select...");
         Desc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([Readout, Label = FString(Samples[Index].Label), Choices = Options[Index]](int32 SelectedIndex)
         {
-            const FString& Choice = Choices.IsValidIndex(SelectedIndex) ? Choices[SelectedIndex] : FString("nothing");
-            Readout->SetText(FString::Printf("%s is now %s", Label.Data(), Choice.Data()));
+            const FString& Choice = Choices.IsValidIndex(SelectedIndex) ? Choices[SelectedIndex] : FString(TEXT("nothing"));
+            Readout->SetText(FString::Printf(TEXT("%s is now %s"), Label.Data(), Choice.Data()));
         });
 
         Row->AddSlot(FTextBlock::Create(LabelDesc)).SetPadding(FMargin(0, 0, 8, 0)).SetVerticalAlignment(EVerticalAlignment::Center);
@@ -264,17 +264,17 @@ static TSharedPtr<FVisualElement> MakeComboBoxRow(const FPlaygroundFonts& Fonts)
 static TSharedPtr<FVisualElement> MakeToolTipRow(const FPlaygroundFonts& Fonts)
 {
     FButton::FDesc FollowDesc;
-    FollowDesc.SetText("Follows the cursor").SetFont(Fonts.Body);
+    FollowDesc.SetText(TEXT("Follows the cursor")).SetFont(Fonts.Body);
 
     FButton::FDesc AnchoredDesc;
-    AnchoredDesc.SetText("Sits under the button").SetFont(Fonts.Body);
+    AnchoredDesc.SetText(TEXT("Sits under the button")).SetFont(Fonts.Body);
 
     TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
-    Row->AddSlot(FToolTipHost::Create(FButton::Create(FollowDesc), "Rests half a second, then follows", Fonts.Body))
+    Row->AddSlot(FToolTipHost::Create(FButton::Create(FollowDesc), TEXT("Rests half a second, then follows"), Fonts.Body))
         .SetPadding(FMargin(0, 0, 12, 0))
         .SetVerticalAlignment(EVerticalAlignment::Center);
 
-    Row->AddSlot(FToolTipHost::Create(FButton::Create(AnchoredDesc), "Anchored under the thing it describes", Fonts.Body, EToolTipPlacement::BelowAnchor))
+    Row->AddSlot(FToolTipHost::Create(FButton::Create(AnchoredDesc), TEXT("Anchored under the thing it describes"), Fonts.Body, EToolTipPlacement::BelowAnchor))
         .SetVerticalAlignment(EVerticalAlignment::Center);
 
     Row->AddSlot(FSpacer::Create(FIntVector2(0, 0))).SetFillCoefficient(1.0f);
@@ -287,8 +287,8 @@ FPlaygroundScene CreateMenusScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Menu bar";
-        Desc.Description = "Click a title to open it, then hover the siblings to switch. Arrows navigate, Escape closes a level.";
+        Desc.Title       = TEXT("Menu bar");
+        Desc.Description = TEXT("Click a title to open it, then hover the siblings to switch. Arrows navigate, Escape closes a level.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeMenuBarRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -296,8 +296,8 @@ FPlaygroundScene CreateMenusScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Context menu";
-        Desc.Description = "The same menu opened at the cursor instead of under an anchor, flipping when it meets a screen edge.";
+        Desc.Title       = TEXT("Context menu");
+        Desc.Description = TEXT("The same menu opened at the cursor instead of under an anchor, flipping when it meets a screen edge.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeContextMenuRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -305,8 +305,8 @@ FPlaygroundScene CreateMenusScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Combo boxes";
-        Desc.Description = "A button that drops its options as a menu, ticking the one in force and matching the button's width.";
+        Desc.Title       = TEXT("Combo boxes");
+        Desc.Description = TEXT("A button that drops its options as a menu, ticking the one in force and matching the button's width.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeComboBoxRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -314,12 +314,12 @@ FPlaygroundScene CreateMenusScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Tool tips";
-        Desc.Description = "Rest on a button and its tip appears, following the cursor or anchored under it.";
+        Desc.Title       = TEXT("Tool tips");
+        Desc.Description = TEXT("Rest on a button and its tip appears, following the cursor or anchored under it.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeToolTipRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Menus", MakeSceneColumn("Menus", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Menus"), MakeSceneColumn(TEXT("Menus"), Fonts, Panels));
 }

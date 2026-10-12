@@ -43,7 +43,7 @@ bool TStringConversion_Test()
     const char16_t Utf16[] = { 0xC5, 0xE4, 0xF6, ' ', 0x65E5, 0x672C, 0x8A9E, ' ', 0xD83D, 0xDE00 };
     const char32_t Utf32[] = { 0xC5, 0xE4, 0xF6, ' ', 0x65E5, 0x672C, 0x8A9E, ' ', 0x1F600 };
 
-    TEST_SECTION("Every pair of encodings converts both ways");
+    TEST_SECTION(TEXT("Every pair of encodings converts both ways"));
     {
         TEST_EXPECT(ConvertsTo(Utf8, Utf16));
         TEST_EXPECT(ConvertsTo(Utf8, Utf32));
@@ -53,7 +53,7 @@ bool TStringConversion_Test()
         TEST_EXPECT(ConvertsTo(Utf32, Utf16));
     }
 
-    TEST_SECTION("Invalid UTF-8 becomes U+FFFD, one per maximal invalid subsequence");
+    TEST_SECTION(TEXT("Invalid UTF-8 becomes U+FFFD, one per maximal invalid subsequence"));
     {
         const UTF8CHAR LoneContinuation[] = { 'A', 0x80, 'B' };
         const char32_t LoneContinuationExpected[] = { 'A', 0xFFFD, 'B' };
@@ -87,7 +87,7 @@ bool TStringConversion_Test()
         TEST_EXPECT(ConvertsTo(Replacement, ReplacementUtf8));
     }
 
-    TEST_SECTION("Invalid UTF-16 and UTF-32 become U+FFFD");
+    TEST_SECTION(TEXT("Invalid UTF-16 and UTF-32 become U+FFFD"));
     {
         const char16_t LoneSurrogates[] = { 0xD800, 'A', 0xDC00, 'B', 0xD83D };
         const char32_t LoneSurrogatesExpected[] = { 0xFFFD, 'A', 0xFFFD, 'B', 0xFFFD };
@@ -98,14 +98,14 @@ bool TStringConversion_Test()
         TEST_EXPECT(ConvertsTo(OutOfRange, OutOfRangeExpected));
     }
 
-    TEST_SECTION("A code point that does not fit is not written in part");
+    TEST_SECTION(TEXT("A code point that does not fit is not written in part"));
     {
         UTF8CHAR Buffer[8] = {};
         TEST_EXPECT_EQ(FStringConversion::Convert(Buffer, 4, u"日本", 2), 3);
         TEST_EXPECT(Buffer[0] == 0xE6 && Buffer[1] == 0x97 && Buffer[2] == 0xA5 && Buffer[3] == 0);
     }
 
-    TEST_SECTION("StringCast between CHAR_T and WIDECHAR");
+    TEST_SECTION(TEXT("StringCast between CHAR_T and WIDECHAR"));
     {
         const FString Text = TEXT("Åäö 日本語 😀");
 
@@ -121,7 +121,7 @@ bool TStringConversion_Test()
         TEST_EXPECT_EQ(FromWide.Length(), 21);
     }
 
-    TEST_SECTION("StringCast points at null-terminated text of the same encoding instead of copying");
+    TEST_SECTION(TEXT("StringCast points at null-terminated text of the same encoding instead of copying"));
     {
         const FAnsiString Ansi = "Åäö";
         TEST_EXPECT(reinterpret_cast<const void*>(StringCast<UTF8CHAR>(Ansi).Get()) == reinterpret_cast<const void*>(*Ansi));
@@ -140,7 +140,7 @@ bool TStringConversion_Test()
         TEST_EXPECT(FromLength.Length() == 2 && FromLength.Get()[2] == 0);
     }
 
-    TEST_SECTION("StringCast of empty, null and static strings");
+    TEST_SECTION(TEXT("StringCast of empty, null and static strings"));
     {
         const TStringConversion<WIDECHAR, ANSICHAR> Empty = StringCast<WIDECHAR>("");
         TEST_EXPECT(Empty.Length() == 0 && Empty.Get()[0] == 0);

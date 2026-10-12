@@ -18,7 +18,7 @@ bool PlatformEventPool_Test()
     FPlatformEventPool& Pool = FPlatformEventPool::Get();
     Pool.Flush();
 
-    TEST_SECTION("Recycled identity");
+    TEST_SECTION(TEXT("Recycled identity"));
     {
         Pool.Flush();
 
@@ -35,7 +35,7 @@ bool PlatformEventPool_Test()
         FPlatformEvent::Recycle(Second);
     }
 
-    TEST_SECTION("Reset modes do not cross");
+    TEST_SECTION(TEXT("Reset modes do not cross"));
     {
         Pool.Flush();
 
@@ -53,7 +53,7 @@ bool PlatformEventPool_Test()
         FPlatformEvent::Recycle(AutoEvent);
     }
 
-    TEST_SECTION("A recycled event comes back unsignalled");
+    TEST_SECTION(TEXT("A recycled event comes back unsignalled"));
     {
         Pool.Flush();
 
@@ -76,7 +76,7 @@ bool PlatformEventPool_Test()
         FPlatformEvent::Recycle(Recycled);
     }
 
-    TEST_SECTION("The free list is capped at MaxRetainedEvents");
+    TEST_SECTION(TEXT("The free list is capped at MaxRetainedEvents"));
     {
         Pool.Flush();
 
@@ -97,7 +97,7 @@ bool PlatformEventPool_Test()
         Pool.Flush();
     }
 
-    TEST_SECTION("An event nothing asked for over a whole window is pruned");
+    TEST_SECTION(TEXT("An event nothing asked for over a whole window is pruned"));
     {
         Pool.Flush();
         {
@@ -123,7 +123,7 @@ bool PlatformEventPool_Test()
         TEST_EXPECT_EQ(Pool.GetNumFreeEvents(false), 0);
     }
 
-    TEST_SECTION("An event in demand every frame survives the window");
+    TEST_SECTION(TEXT("An event in demand every frame survives the window"));
     {
         Pool.Flush();
         {
@@ -151,7 +151,7 @@ bool PlatformEventPool_Test()
         TEST_EXPECT_EQ(Pool.GetNumFreeEvents(false), 1);
     }
 
-    TEST_SECTION("Flush empties both buckets");
+    TEST_SECTION(TEXT("Flush empties both buckets"));
     {
         Pool.Flush();
 
@@ -171,7 +171,7 @@ bool PlatformEventPool_Test()
         TEST_EXPECT_EQ(Pool.GetNumFreeEvents(true), 0);
     }
 
-    TEST_SECTION("Events on many threads are never handed out twice");
+    TEST_SECTION(TEXT("Events on many threads are never handed out twice"));
     {
         Pool.Flush();
 

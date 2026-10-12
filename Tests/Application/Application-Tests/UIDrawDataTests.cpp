@@ -13,7 +13,7 @@
 
 static TSharedPtr<FTrueTypeFontFace> CreateTrueTypeFont()
 {
-    return FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + "/Editor/Fonts/consola.ttf", 16);
+    return FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + TEXT("/Editor/Fonts/consola.ttf"), 16);
 }
 
 bool UIDrawDataTextCacheTrim_Test()
@@ -32,7 +32,7 @@ bool UIDrawDataTextCacheTrim_Test()
         FDrawCommandList Commands;
         for (int32 Index = 0; Index < TextCount; ++Index)
         {
-            Commands.AddText(0, FRectangle(FIntVector2(0, Index * 16), 80, 16), "Label", Font.Get(), FFloatColor::White);
+            Commands.AddText(0, FRectangle(FIntVector2(0, Index * 16), 80, 16), TEXT("Label"), Font.Get(), FFloatColor::White);
         }
 
         DrawData.BuildFromCommandList(Commands);
@@ -40,11 +40,11 @@ bool UIDrawDataTextCacheTrim_Test()
 
     FUIDrawData DrawData;
 
-    TEST_SECTION("A busy frame grows the cache to one entry per text command");
+    TEST_SECTION(TEXT("A busy frame grows the cache to one entry per text command"));
     BuildFrame(DrawData, 400);
     TEST_EXPECT(DrawData.GetTextGeometryCacheSize() >= 400);
 
-    TEST_SECTION("A brief lull keeps it, so a UI that comes straight back does not pay to refill it");
+    TEST_SECTION(TEXT("A brief lull keeps it, so a UI that comes straight back does not pay to refill it"));
     for (int32 Frame = 0; Frame < 10; ++Frame)
     {
         BuildFrame(DrawData, 10);
@@ -52,7 +52,7 @@ bool UIDrawDataTextCacheTrim_Test()
 
     TEST_EXPECT(DrawData.GetTextGeometryCacheSize() >= 400);
 
-    TEST_SECTION("A lasting lull gives the unused entries back");
+    TEST_SECTION(TEXT("A lasting lull gives the unused entries back"));
     for (int32 Frame = 0; Frame < 200; ++Frame)
     {
         BuildFrame(DrawData, 10);
@@ -71,13 +71,13 @@ bool UIDrawDataLayerOrder_Test()
     FDrawCommandList CommandList;
     FUIDrawData      DrawData;
 
-    TEST_SECTION("An empty list produces no geometry");
+    TEST_SECTION(TEXT("An empty list produces no geometry"));
     DrawData.BuildFromCommandList(CommandList);
     TEST_EXPECT(DrawData.IsEmpty());
     TEST_EXPECT(DrawData.GetVertices().IsEmpty());
     TEST_EXPECT(DrawData.GetIndices().IsEmpty());
 
-    TEST_SECTION("A box becomes one quad of four vertices and six indices");
+    TEST_SECTION(TEXT("A box becomes one quad of four vertices and six indices"));
     CommandList.AddBox(0, FRectangle(FIntVector2(10, 20), 30, 40), FFloatColor::White);
     DrawData.BuildFromCommandList(CommandList);
 
@@ -87,11 +87,11 @@ bool UIDrawDataLayerOrder_Test()
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, 6);
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
 
-    TEST_SECTION("The quad spans the bounds of the command");
+    TEST_SECTION(TEXT("The quad spans the bounds of the command"));
     TEST_EXPECT(DrawData.GetVertices()[0].Position == FVector2(10.0f, 20.0f));
     TEST_EXPECT(DrawData.GetVertices()[2].Position == FVector2(40.0f, 60.0f));
 
-    TEST_SECTION("The tint is packed with red in the low byte");
+    TEST_SECTION(TEXT("The tint is packed with red in the low byte"));
     TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color, 0xffffffffu);
 
     FDrawCommandList RedList;
@@ -99,7 +99,7 @@ bool UIDrawDataLayerOrder_Test()
     DrawData.BuildFromCommandList(RedList);
     TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color, 0xff0000ffu);
 
-    TEST_SECTION("Commands are emitted in layer order rather than emission order");
+    TEST_SECTION(TEXT("Commands are emitted in layer order rather than emission order"));
     FDrawCommandList LayeredList;
     LayeredList.AddBox(5, FRectangle(FIntVector2(100, 100), 10, 10), FFloatColor::White);
     LayeredList.AddBox(1, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
@@ -109,7 +109,7 @@ bool UIDrawDataLayerOrder_Test()
     TEST_EXPECT(DrawData.GetVertices()[0].Position == FVector2(0.0f, 0.0f));
     TEST_EXPECT(DrawData.GetVertices()[4].Position == FVector2(100.0f, 100.0f));
 
-    TEST_SECTION("Two commands on one layer keep the order they were recorded in");
+    TEST_SECTION(TEXT("Two commands on one layer keep the order they were recorded in"));
     FDrawCommandList TiedList;
     TiedList.AddBox(2, FRectangle(FIntVector2(7, 7), 10, 10), FFloatColor::White);
     TiedList.AddBox(2, FRectangle(FIntVector2(9, 9), 10, 10), FFloatColor::White);
@@ -118,13 +118,13 @@ bool UIDrawDataLayerOrder_Test()
     TEST_EXPECT(DrawData.GetVertices()[0].Position == FVector2(7.0f, 7.0f));
     TEST_EXPECT(DrawData.GetVertices()[4].Position == FVector2(9.0f, 9.0f));
 
-    TEST_SECTION("An empty box contributes nothing");
+    TEST_SECTION(TEXT("An empty box contributes nothing"));
     FDrawCommandList EmptyBoxList;
     EmptyBoxList.AddBox(0, FRectangle(FIntVector2(0, 0), 0, 10), FFloatColor::White);
     DrawData.BuildFromCommandList(EmptyBoxList);
     TEST_EXPECT(DrawData.IsEmpty());
 
-    TEST_SECTION("Reset drops the geometry again");
+    TEST_SECTION(TEXT("Reset drops the geometry again"));
     DrawData.BuildFromCommandList(CommandList);
     DrawData.Reset();
     TEST_EXPECT(DrawData.IsEmpty());
@@ -139,7 +139,7 @@ bool UIDrawDataBatching_Test()
 
     FUIDrawData DrawData;
 
-    TEST_SECTION("Boxes under one clip region share a batch");
+    TEST_SECTION(TEXT("Boxes under one clip region share a batch"));
     FDrawCommandList CommandList;
     CommandList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
     CommandList.AddBox(1, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
@@ -152,7 +152,7 @@ bool UIDrawDataBatching_Test()
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, 12);
     TEST_EXPECT(DrawData.GetBatches()[0].ScissorRectangle == FRectangle(FIntVector2(0, 0), 50, 50));
 
-    TEST_SECTION("Entering and leaving a clip region splits the batches");
+    TEST_SECTION(TEXT("Entering and leaving a clip region splits the batches"));
     FDrawCommandList SplitList;
     SplitList.AddBox(0, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
     SplitList.PushClip(1, FRectangle(FIntVector2(0, 0), 50, 50));
@@ -167,7 +167,7 @@ bool UIDrawDataBatching_Test()
     TEST_EXPECT(DrawData.GetBatches()[1].ScissorRectangle == FRectangle(FIntVector2(0, 0), 50, 50));
     TEST_EXPECT(DrawData.GetBatches()[2].ScissorRectangle.IsEmpty());
 
-    TEST_SECTION("The batches partition the index buffer without a gap");
+    TEST_SECTION(TEXT("The batches partition the index buffer without a gap"));
     int32 ExpectedOffset = 0;
     for (const FUIDrawBatch& Batch : DrawData.GetBatches())
     {
@@ -177,12 +177,12 @@ bool UIDrawDataBatching_Test()
 
     TEST_EXPECT_EQ(ExpectedOffset, DrawData.GetIndices().Size());
 
-    TEST_SECTION("A batch that was never clipped is told apart from one that was");
+    TEST_SECTION(TEXT("A batch that was never clipped is told apart from one that was"));
     TEST_EXPECT(!DrawData.GetBatches()[0].bIsClipped);
     TEST_EXPECT(DrawData.GetBatches()[1].bIsClipped);
     TEST_EXPECT(!DrawData.GetBatches()[2].bIsClipped);
 
-    TEST_SECTION("A nested region carries the intersection down to the batch");
+    TEST_SECTION(TEXT("A nested region carries the intersection down to the batch"));
     FDrawCommandList NestedList;
     NestedList.PushClip(0, FRectangle(FIntVector2(0, 0), 100, 100));
     NestedList.PushClip(1, FRectangle(FIntVector2(50, 50), 100, 100));
@@ -205,7 +205,7 @@ bool UIDrawDataClipCulling_Test()
 
     FUIDrawData DrawData;
 
-    TEST_SECTION("A box that misses the active region is dropped rather than scissored away");
+    TEST_SECTION(TEXT("A box that misses the active region is dropped rather than scissored away"));
     FDrawCommandList CulledList;
     CulledList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
     CulledList.AddBox(1, FRectangle(FIntVector2(200, 200), 10, 10), FFloatColor::White);
@@ -215,7 +215,7 @@ bool UIDrawDataClipCulling_Test()
     TEST_EXPECT(DrawData.IsEmpty());
     TEST_EXPECT(DrawData.GetBatches().IsEmpty());
 
-    TEST_SECTION("One that only overlaps it is kept whole, since the scissor takes care of the rest");
+    TEST_SECTION(TEXT("One that only overlaps it is kept whole, since the scissor takes care of the rest"));
     FDrawCommandList OverlappingList;
     OverlappingList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
     OverlappingList.AddBox(1, FRectangle(FIntVector2(40, 40), 100, 100), FFloatColor::White);
@@ -224,7 +224,7 @@ bool UIDrawDataClipCulling_Test()
     DrawData.BuildFromCommandList(OverlappingList);
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
 
-    TEST_SECTION("A line is culled the same way");
+    TEST_SECTION(TEXT("A line is culled the same way"));
     FDrawCommandList LineList;
     LineList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
     LineList.AddLine(1, FRectangle(FIntVector2(200, 0), 1, 16), FFloatColor::White);
@@ -233,7 +233,7 @@ bool UIDrawDataClipCulling_Test()
     DrawData.BuildFromCommandList(LineList);
     TEST_EXPECT(DrawData.IsEmpty());
 
-    TEST_SECTION("A region clipped to nothing draws nothing at all, rather than everything unclipped");
+    TEST_SECTION(TEXT("A region clipped to nothing draws nothing at all, rather than everything unclipped"));
     FDrawCommandList EmptyClipList;
     EmptyClipList.PushClip(0, FRectangle(FIntVector2(0, 0), 0, 0));
     EmptyClipList.AddBox(1, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
@@ -242,7 +242,7 @@ bool UIDrawDataClipCulling_Test()
     DrawData.BuildFromCommandList(EmptyClipList);
     TEST_EXPECT(DrawData.IsEmpty());
 
-    TEST_SECTION("Leaving the region again lets the commands after it through");
+    TEST_SECTION(TEXT("Leaving the region again lets the commands after it through"));
     FDrawCommandList AfterList;
     AfterList.PushClip(0, FRectangle(FIntVector2(0, 0), 50, 50));
     AfterList.AddBox(1, FRectangle(FIntVector2(200, 200), 10, 10), FFloatColor::White);
@@ -263,17 +263,17 @@ bool UIDrawDataClipCulling_Test()
         TEST_END();
     }
 
-    TEST_SECTION("Text off the end of a long list never reaches the atlas either");
+    TEST_SECTION(TEXT("Text off the end of a long list never reaches the atlas either"));
     FDrawCommandList TextList;
     TextList.PushClip(0, FRectangle(FIntVector2(0, 0), 200, 50));
-    TextList.AddText(1, FRectangle(FIntVector2(0, 400), 100, 16), FString("Offscreen"), Font.Get(), FFloatColor::White);
-    TextList.AddText(2, FRectangle(FIntVector2(0, 0), 100, 16), FString("Onscreen"), Font.Get(), FFloatColor::White);
+    TextList.AddText(1, FRectangle(FIntVector2(0, 400), 100, 16), FString(TEXT("Offscreen")), Font.Get(), FFloatColor::White);
+    TextList.AddText(2, FRectangle(FIntVector2(0, 0), 100, 16), FString(TEXT("Onscreen")), Font.Get(), FFloatColor::White);
     TextList.PopClip(3);
 
     DrawData.BuildFromCommandList(TextList);
 
     FDrawCommandList OnscreenOnlyList;
-    OnscreenOnlyList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString("Onscreen"), Font.Get(), FFloatColor::White);
+    OnscreenOnlyList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString(TEXT("Onscreen")), Font.Get(), FFloatColor::White);
 
     FUIDrawData OnscreenOnlyData;
     OnscreenOnlyData.BuildFromCommandList(OnscreenOnlyList);
@@ -292,7 +292,7 @@ bool UIDrawDataSiblingClips_Test()
     const FRectangle LeftRegion(FIntVector2(0, 0), 100, 100);
     const FRectangle RightRegion(FIntVector2(200, 0), 100, 100);
 
-    TEST_SECTION("Two disjoint regions opened on the same layer each keep their own contents");
+    TEST_SECTION(TEXT("Two disjoint regions opened on the same layer each keep their own contents"));
 
     FDrawCommandList SiblingList;
     SiblingList.PushClip(0, LeftRegion);
@@ -309,14 +309,14 @@ bool UIDrawDataSiblingClips_Test()
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 16);
 
-    TEST_SECTION("Every batch is scissored to the region its own geometry was recorded under");
+    TEST_SECTION(TEXT("Every batch is scissored to the region its own geometry was recorded under"));
     for (const FUIDrawBatch& Batch : DrawData.GetBatches())
     {
         TEST_EXPECT(Batch.bIsClipped);
         TEST_EXPECT(Batch.ScissorRectangle == LeftRegion || Batch.ScissorRectangle == RightRegion);
     }
 
-    TEST_SECTION("Closing a region no longer leaks the one beneath it onto a later sibling");
+    TEST_SECTION(TEXT("Closing a region no longer leaks the one beneath it onto a later sibling"));
 
     FDrawCommandList NestedList;
     NestedList.PushClip(0, LeftRegion);
@@ -333,7 +333,7 @@ bool UIDrawDataSiblingClips_Test()
 
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
 
-    TEST_SECTION("A nested region is still intersected with its parent when it is recorded");
+    TEST_SECTION(TEXT("A nested region is still intersected with its parent when it is recorded"));
     FDrawCommandList IntersectedList;
     IntersectedList.PushClip(0, FRectangle(FIntVector2(0, 0), 100, 100));
     IntersectedList.PushClip(0, FRectangle(FIntVector2(50, 50), 100, 100));
@@ -358,7 +358,7 @@ bool UIDrawDataRoundedBox_Test()
 
     const FRectangle Bounds(FIntVector2(0, 0), 100, 20);
 
-    TEST_SECTION("A box with no radius still becomes the four-vertex quad");
+    TEST_SECTION(TEXT("A box with no radius still becomes the four-vertex quad"));
     FDrawCommandList SquareList;
     SquareList.AddBox(0, Bounds, FFloatColor::White);
     DrawData.BuildFromCommandList(SquareList);
@@ -366,7 +366,7 @@ bool UIDrawDataRoundedBox_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
 
-    TEST_SECTION("A rounded box is one padded SDF quad");
+    TEST_SECTION(TEXT("A rounded box is one padded SDF quad"));
     FDrawCommandList RoundedList;
     RoundedList.AddBox(0, Bounds, FFloatColor::White, 3.0f);
     DrawData.BuildFromCommandList(RoundedList);
@@ -379,7 +379,7 @@ bool UIDrawDataRoundedBox_Test()
     TEST_EXPECT(DrawData.GetBatches()[0].Kind == EUIDrawBatchKind::Shape);
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
 
-    TEST_SECTION("The quad covers the bounds and carries the corner radii");
+    TEST_SECTION(TEXT("The quad covers the bounds and carries the corner radii"));
     TEST_EXPECT(GetShapeVertices(DrawData)[0].Position == FVector2(0.0f, 0.0f));
     TEST_EXPECT(GetShapeVertices(DrawData)[2].Position == FVector2(100.0f, 20.0f));
 
@@ -396,7 +396,7 @@ bool UIDrawDataRoundedBox_Test()
         TEST_EXPECT_EQ(Vertex.ShapeKind, FUIDrawData::ShapeKindFill);
     }
 
-    TEST_SECTION("A radius past half the shorter side is clamped rather than turned inside out");
+    TEST_SECTION(TEXT("A radius past half the shorter side is clamped rather than turned inside out"));
     FDrawCommandList OversizedList;
     OversizedList.AddBox(0, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White, 50.0f);
     DrawData.BuildFromCommandList(OversizedList);
@@ -410,7 +410,7 @@ bool UIDrawDataRoundedBox_Test()
         TEST_EXPECT_EQ(Vertex.RadiusTL, 5.0f);
     }
 
-    TEST_SECTION("A line keeps its square ends, since it shares the box path");
+    TEST_SECTION(TEXT("A line keeps its square ends, since it shares the box path"));
     FDrawCommandList LineList;
     LineList.AddLine(0, FRectangle(FIntVector2(0, 0), 1, 16), FFloatColor::White);
     DrawData.BuildFromCommandList(LineList);
@@ -439,7 +439,7 @@ bool UIDrawDataRoundedBottomBar_Test()
     BarList.AddRoundedBottomBar(0, Bounds, FCornerRadii(Radius), Thickness, FFloatColor::White, FadeWidth);
     DrawData.BuildFromCommandList(BarList);
 
-    TEST_SECTION("The band is a strip of column quads, so it carries two vertices and six indices per column");
+    TEST_SECTION(TEXT("The band is a strip of column quads, so it carries two vertices and six indices per column"));
     TEST_EXPECT(!DrawData.IsEmpty());
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == nullptr);
@@ -449,14 +449,14 @@ bool UIDrawDataRoundedBottomBar_Test()
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), ((VertexCount / 2) - 1) * 6);
     TEST_EXPECT_EQ(DrawData.GetBatches()[0].IndexCount, DrawData.GetIndices().Size());
 
-    TEST_SECTION("It sits against the bottom of the rectangle and never rises above the band's own height");
+    TEST_SECTION(TEXT("It sits against the bottom of the rectangle and never rises above the band's own height"));
     for (const FUIVertex& Vertex : DrawData.GetVertices())
     {
         TEST_EXPECT(Vertex.Position.Y >= 28.0f - Thickness - Tolerance);
         TEST_EXPECT(Vertex.Position.Y <= 28.0f + Tolerance);
     }
 
-    TEST_SECTION("The corner cuts it short of either edge, since the arc swallows the band before the rectangle ends");
+    TEST_SECTION(TEXT("The corner cuts it short of either edge, since the arc swallows the band before the rectangle ends"));
     float MinX = 1000.0f;
     float MaxX = -1000.0f;
 
@@ -471,7 +471,7 @@ bool UIDrawDataRoundedBottomBar_Test()
     TEST_EXPECT(MinX < Radius);
     TEST_EXPECT(MaxX > 120.0f - Radius);
 
-    TEST_SECTION("Each end tapers into the curve, so the first column is shorter than one in the middle");
+    TEST_SECTION(TEXT("Each end tapers into the curve, so the first column is shorter than one in the middle"));
     const int32 ColumnCount  = VertexCount / 2;
     const int32 MiddleColumn = ColumnCount / 2;
 
@@ -483,18 +483,18 @@ bool UIDrawDataRoundedBottomBar_Test()
     TEST_EXPECT(LastHeight < MiddleHeight);
     TEST_EXPECT(Math::Abs(MiddleHeight - Thickness) < Tolerance);
 
-    TEST_SECTION("The alpha ramps from nothing at either end to full in the middle");
+    TEST_SECTION(TEXT("The alpha ramps from nothing at either end to full in the middle"));
     TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color >> 24, 0u);
     TEST_EXPECT_EQ(DrawData.GetVertices()[VertexCount - 1].Color >> 24, 0u);
     TEST_EXPECT_EQ(DrawData.GetVertices()[MiddleColumn * 2].Color >> 24, 255u);
 
-    TEST_SECTION("Both vertices of one column share a colour, so the fade runs along the band and not across it");
+    TEST_SECTION(TEXT("Both vertices of one column share a colour, so the fade runs along the band and not across it"));
     for (int32 ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
     {
         TEST_EXPECT_EQ(DrawData.GetVertices()[ColumnIndex * 2].Color, DrawData.GetVertices()[(ColumnIndex * 2) + 1].Color);
     }
 
-    TEST_SECTION("Asked for no fade, the band runs at full strength from end to end");
+    TEST_SECTION(TEXT("Asked for no fade, the band runs at full strength from end to end"));
     FDrawCommandList SolidList;
     SolidList.AddRoundedBottomBar(0, Bounds, FCornerRadii(Radius), Thickness, FFloatColor::White, 0.0f);
     DrawData.BuildFromCommandList(SolidList);
@@ -504,7 +504,7 @@ bool UIDrawDataRoundedBottomBar_Test()
         TEST_EXPECT_EQ(Vertex.Color >> 24, 255u);
     }
 
-    TEST_SECTION("With square corners the band is a plain rectangle spanning the full width");
+    TEST_SECTION(TEXT("With square corners the band is a plain rectangle spanning the full width"));
     FDrawCommandList SquareList;
     SquareList.AddRoundedBottomBar(0, Bounds, FCornerRadii(), Thickness, FFloatColor::White, 0.0f);
     DrawData.BuildFromCommandList(SquareList);
@@ -519,7 +519,7 @@ bool UIDrawDataRoundedBottomBar_Test()
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.X) < Tolerance);
     TEST_EXPECT(Math::Abs(DrawData.GetVertices().Last().Position.X - 120.0f) < Tolerance);
 
-    TEST_SECTION("A band with no thickness draws nothing at all");
+    TEST_SECTION(TEXT("A band with no thickness draws nothing at all"));
     FDrawCommandList ThinList;
     ThinList.AddRoundedBottomBar(0, Bounds, FCornerRadii(Radius), 0.0f, FFloatColor::White, FadeWidth);
     DrawData.BuildFromCommandList(ThinList);
@@ -548,7 +548,7 @@ bool UIDrawDataRoundedAccentRing_Test()
     RingList.AddRoundedAccentRing(0, Bounds, FCornerRadii(Radius), Thickness, FFloatColor::White, FadeFraction, TrailAlpha);
     DrawData.BuildFromCommandList(RingList);
 
-    TEST_SECTION("The stroke is a pair of vertices per sample, closed back on itself so it rings the rectangle");
+    TEST_SECTION(TEXT("The stroke is a pair of vertices per sample, closed back on itself so it rings the rectangle"));
     TEST_EXPECT(!DrawData.IsEmpty());
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
 
@@ -558,7 +558,7 @@ bool UIDrawDataRoundedAccentRing_Test()
     TEST_EXPECT_EQ(VertexCount % 2, 0);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), SampleCount * 6);
 
-    TEST_SECTION("It starts where the top-left corner meets the left side, and its width turns with the curve");
+    TEST_SECTION(TEXT("It starts where the top-left corner meets the left side, and its width turns with the curve"));
     const FUIVertex& FirstInner = DrawData.GetVertices()[0];
     const FUIVertex& FirstOuter = DrawData.GetVertices()[1];
 
@@ -567,7 +567,7 @@ bool UIDrawDataRoundedAccentRing_Test()
     TEST_EXPECT(Math::Abs(FirstInner.Position.X - Thickness) < Tolerance);
     TEST_EXPECT(Math::Abs(FirstInner.Position.Y - FirstOuter.Position.Y) < Tolerance);
 
-    TEST_SECTION("Nothing it draws leaves the rectangle, and it reaches every edge of it");
+    TEST_SECTION(TEXT("Nothing it draws leaves the rectangle, and it reaches every edge of it"));
     float MinY = 1000.0f;
     float MaxY = -1000.0f;
 
@@ -583,7 +583,7 @@ bool UIDrawDataRoundedAccentRing_Test()
     TEST_EXPECT(Math::Abs(MinY) < Tolerance);
     TEST_EXPECT(Math::Abs(MaxY - 28.0f) < Tolerance);
 
-    TEST_SECTION("The top run is at full strength, the bottom is at the trail, and nothing anywhere is lost");
+    TEST_SECTION(TEXT("The top run is at full strength, the bottom is at the trail, and nothing anywhere is lost"));
     const uint32 TrailByte = static_cast<uint32>(Math::RoundToInt(TrailAlpha * 255.0f));
 
     TEST_EXPECT_EQ(FirstOuter.Color >> 24, TrailByte);
@@ -615,7 +615,7 @@ bool UIDrawDataRoundedAccentRing_Test()
     TEST_EXPECT(FullStrengthSamples > 0);
     TEST_EXPECT(FullStrengthSamples < SampleCount);
 
-    TEST_SECTION("That fade climbs a step at a time up the corner, and never dips once it is up");
+    TEST_SECTION(TEXT("That fade climbs a step at a time up the corner, and never dips once it is up"));
     uint32 PreviousAlpha = 0;
     for (int32 SampleIndex = 0; SampleIndex <= SampleCount / 4; ++SampleIndex)
     {
@@ -627,14 +627,14 @@ bool UIDrawDataRoundedAccentRing_Test()
 
     TEST_EXPECT_EQ(PreviousAlpha, 255u);
 
-    TEST_SECTION("Asked for no trail, the ring away from the top is clear and only the rule is left");
+    TEST_SECTION(TEXT("Asked for no trail, the ring away from the top is clear and only the rule is left"));
     FDrawCommandList RuleList;
     RuleList.AddRoundedAccentRing(0, Bounds, FCornerRadii(Radius), Thickness, FFloatColor::White, FadeFraction, 0.0f);
     DrawData.BuildFromCommandList(RuleList);
 
     TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0u);
 
-    TEST_SECTION("With square corners it is four mitred points, each reaching a thickness into the rectangle");
+    TEST_SECTION(TEXT("With square corners it is four mitred points, each reaching a thickness into the rectangle"));
     FDrawCommandList SquareList;
     SquareList.AddRoundedAccentRing(0, Bounds, FCornerRadii(), Thickness, FFloatColor::White, FadeFraction, TrailAlpha);
     DrawData.BuildFromCommandList(SquareList);
@@ -645,12 +645,12 @@ bool UIDrawDataRoundedAccentRing_Test()
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.X - Thickness) < Tolerance);
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.Y - Thickness) < Tolerance);
 
-    TEST_SECTION("Both of its top corners belong to the top run, so that rule reads at full strength end to end");
+    TEST_SECTION(TEXT("Both of its top corners belong to the top run, so that rule reads at full strength end to end"));
     TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 255u);
     TEST_EXPECT_EQ(DrawData.GetVertices()[3].Color >> 24, 255u);
     TEST_EXPECT_EQ(DrawData.GetVertices()[5].Color >> 24, TrailByte);
 
-    TEST_SECTION("A stroke with no width draws nothing at all");
+    TEST_SECTION(TEXT("A stroke with no width draws nothing at all"));
     FDrawCommandList ThinList;
     ThinList.AddRoundedAccentRing(0, Bounds, FCornerRadii(Radius), 0.0f, FFloatColor::White, FadeFraction, TrailAlpha);
     DrawData.BuildFromCommandList(ThinList);
@@ -666,11 +666,11 @@ bool UIDrawDataText_Test()
 
     FUIDrawData DrawData;
 
-    TEST_SECTION("A metrics-only face lays out but draws nothing");
+    TEST_SECTION(TEXT("A metrics-only face lays out but draws nothing"));
     TSharedPtr<FFixedWidthFontFace> FixedFont = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
     FDrawCommandList FixedList;
-    FixedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString("Hello"), FixedFont.Get(), FFloatColor::White);
+    FixedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString(TEXT("Hello")), FixedFont.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(FixedList);
 
     TEST_EXPECT(DrawData.IsEmpty());
@@ -683,9 +683,9 @@ bool UIDrawDataText_Test()
         TEST_END();
     }
 
-    TEST_SECTION("Every printable glyph becomes one quad");
+    TEST_SECTION(TEXT("Every printable glyph becomes one quad"));
     FDrawCommandList TextList;
-    TextList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString("AB"), Font.Get(), FFloatColor::White);
+    TextList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString(TEXT("AB")), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(TextList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 2);
@@ -694,16 +694,16 @@ bool UIDrawDataText_Test()
     TEST_EXPECT_EQ(DrawData.GetBatches().Size(), 1);
     TEST_EXPECT(DrawData.GetBatches()[0].Texture.GetAtlas() == Font->GetAtlas());
 
-    TEST_SECTION("Whitespace advances the pen without adding a quad");
+    TEST_SECTION(TEXT("Whitespace advances the pen without adding a quad"));
     FDrawCommandList SpacedList;
-    SpacedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString("A B"), Font.Get(), FFloatColor::White);
+    SpacedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString(TEXT("A B")), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(SpacedList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 2);
     TEST_EXPECT(DrawData.GetTextGlyphInstances()[1].Position.X
-        > DrawData.GetTextGlyphInstances()[0].Position.X + Font->ShapeText(FStringView("A")).Width);
+        > DrawData.GetTextGlyphInstances()[0].Position.X + Font->ShapeText(FStringView(TEXT("A"))).Width);
 
-    TEST_SECTION("The texture coordinates stay inside the atlas");
+    TEST_SECTION(TEXT("The texture coordinates stay inside the atlas"));
     for (const FUITextGlyphInstance& Glyph : DrawData.GetTextGlyphInstances())
     {
         TEST_EXPECT(Glyph.MinTexCoord.X >= 0.0f && Glyph.MinTexCoord.X <= 1.0f);
@@ -712,7 +712,7 @@ bool UIDrawDataText_Test()
         TEST_EXPECT(Glyph.MaxTexCoord.Y >= 0.0f && Glyph.MaxTexCoord.Y <= 1.0f);
     }
 
-    TEST_SECTION("An empty string draws nothing");
+    TEST_SECTION(TEXT("An empty string draws nothing"));
     FDrawCommandList EmptyTextList;
     EmptyTextList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 16), FString(), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(EmptyTextList);
@@ -721,17 +721,17 @@ bool UIDrawDataText_Test()
     const int32 BandHeight = Font->GetTextBandHeight();
     TEST_EXPECT_EQ(BandHeight, Font->GetAscent() + Font->GetDescent());
 
-    TEST_SECTION("A capital does not reach as far above the baseline as the face claims a glyph can");
+    TEST_SECTION(TEXT("A capital does not reach as far above the baseline as the face claims a glyph can"));
     TEST_EXPECT(Font->GetCapHeight() < Font->GetAscent());
 
-    TEST_SECTION("A rectangle taller than the glyphs need leaves a line of capitals the same space above and below");
+    TEST_SECTION(TEXT("A rectangle taller than the glyphs need leaves a line of capitals the same space above and below"));
 
     for (int32 Padding = 2; Padding <= 6; ++Padding)
     {
         const int32 BoxHeight = BandHeight + (Padding * 2);
 
         FDrawCommandList PaddedList;
-        PaddedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, BoxHeight), FString("HI"), Font.Get(), FFloatColor::White);
+        PaddedList.AddText(0, FRectangle(FIntVector2(0, 0), 100, BoxHeight), FString(TEXT("HI")), Font.Get(), FFloatColor::White);
         DrawData.BuildFromCommandList(PaddedList);
 
         float InkTop    = static_cast<float>(BoxHeight);
@@ -745,12 +745,12 @@ bool UIDrawDataText_Test()
         TEST_EXPECT(InkTop == static_cast<float>(BoxHeight) - InkBottom);
     }
 
-    TEST_SECTION("A descender hangs into that room rather than the two cases splitting the difference");
+    TEST_SECTION(TEXT("A descender hangs into that room rather than the two cases splitting the difference"));
 
     const int32 TallBoxHeight = BandHeight + 8;
 
     FDrawCommandList DescenderList;
-    DescenderList.AddText(0, FRectangle(FIntVector2(0, 0), 100, TallBoxHeight), FString("Hg"), Font.Get(), FFloatColor::White);
+    DescenderList.AddText(0, FRectangle(FIntVector2(0, 0), 100, TallBoxHeight), FString(TEXT("Hg")), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(DescenderList);
 
     float DescenderTop    = static_cast<float>(TallBoxHeight);
@@ -764,10 +764,10 @@ bool UIDrawDataText_Test()
     TEST_EXPECT(DescenderBottom > static_cast<float>(TallBoxHeight) - DescenderTop);
     TEST_EXPECT(DescenderBottom <= static_cast<float>(TallBoxHeight));
 
-    TEST_SECTION("A rectangle with no room to spare starts the band at the top rather than pushing glyphs out of it");
+    TEST_SECTION(TEXT("A rectangle with no room to spare starts the band at the top rather than pushing glyphs out of it"));
 
     FDrawCommandList TightList;
-    TightList.AddText(0, FRectangle(FIntVector2(0, 0), 100, BandHeight), FString("A"), Font.Get(), FFloatColor::White);
+    TightList.AddText(0, FRectangle(FIntVector2(0, 0), 100, BandHeight), FString(TEXT("A")), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(TightList);
 
     TEST_EXPECT_EQ(DrawData.GetTextGlyphInstances().Size(), 1);
@@ -775,15 +775,15 @@ bool UIDrawDataText_Test()
     TEST_EXPECT(TightTop == static_cast<float>(Font->GetAscent() - Font->GetCapHeight()));
 
     FDrawCommandList ShortList;
-    ShortList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 1), FString("A"), Font.Get(), FFloatColor::White);
+    ShortList.AddText(0, FRectangle(FIntVector2(0, 0), 100, 1), FString(TEXT("A")), Font.Get(), FFloatColor::White);
     DrawData.BuildFromCommandList(ShortList);
 
     TEST_EXPECT(DrawData.GetTextGlyphInstances()[0].Position.Y == TightTop);
 
-    TEST_SECTION("Text and boxes land in separate batches, since they sample different textures");
+    TEST_SECTION(TEXT("Text and boxes land in separate batches, since they sample different textures"));
     FDrawCommandList MixedList;
     MixedList.AddBox(0, FRectangle(FIntVector2(0, 0), 100, 16), FFloatColor::White);
-    MixedList.AddText(1, FRectangle(FIntVector2(0, 0), 100, 16), FString("A"), Font.Get(), FFloatColor::White);
+    MixedList.AddText(1, FRectangle(FIntVector2(0, 0), 100, 16), FString(TEXT("A")), Font.Get(), FFloatColor::White);
     MixedList.AddBox(2, FRectangle(FIntVector2(0, 16), 100, 16), FFloatColor::White);
     DrawData.BuildFromCommandList(MixedList);
 
@@ -804,7 +804,7 @@ bool UIDrawDataAntiAliasing_Test()
 
     FUIDrawData DrawData;
 
-    TEST_SECTION("It is on by default, and turning it off is what the counting tests rely on");
+    TEST_SECTION(TEXT("It is on by default, and turning it off is what the counting tests rely on"));
     TEST_EXPECT(DrawData.IsAntiAliasingEnabled());
 
     DrawData.SetAntiAliasingEnabled(false);
@@ -812,7 +812,7 @@ bool UIDrawDataAntiAliasing_Test()
 
     DrawData.SetAntiAliasingEnabled(true);
 
-    TEST_SECTION("A square box is still the plain quad, since an axis-aligned edge already rasterizes crisp");
+    TEST_SECTION(TEXT("A square box is still the plain quad, since an axis-aligned edge already rasterizes crisp"));
     FDrawCommandList SquareList;
     SquareList.AddBox(0, FRectangle(FIntVector2(0, 0), 100, 20), FFloatColor::White);
     DrawData.BuildFromCommandList(SquareList);
@@ -820,7 +820,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
 
-    TEST_SECTION("A rounded box is still one SDF quad; anti-aliasing pads it by half a pixel");
+    TEST_SECTION(TEXT("A rounded box is still one SDF quad; anti-aliasing pads it by half a pixel"));
     const FRectangle Bounds(FIntVector2(0, 0), 100, 20);
 
     FDrawCommandList RoundedList;
@@ -838,7 +838,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT(Math::Abs(GetShapeVertices(DrawData)[2].Position.X - (100.0f + HalfFringe)) <= Tolerance);
     TEST_EXPECT(Math::Abs(GetShapeVertices(DrawData)[2].Position.Y - (20.0f + HalfFringe)) <= Tolerance);
 
-    TEST_SECTION("A stroke gains a fringe either side, so it is four vertices per point and eighteen indices per segment");
+    TEST_SECTION(TEXT("A stroke gains a fringe either side, so it is four vertices per point and eighteen indices per segment"));
     FDrawCommandList LineList;
     LineList.AddLine(0, FVector2(0.0f, 10.0f), FVector2(100.0f, 10.0f), FFloatColor::White, 4.0f);
     DrawData.BuildFromCommandList(LineList);
@@ -846,7 +846,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 2 * 4);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 18);
 
-    TEST_SECTION("The clear rows are the outermost two and the opaque core sits between them at the nominal width");
+    TEST_SECTION(TEXT("The clear rows are the outermost two and the opaque core sits between them at the nominal width"));
     TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color >> 24, 0x00u);
     TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0xffu);
     TEST_EXPECT_EQ(DrawData.GetVertices()[2].Color >> 24, 0xffu);
@@ -856,7 +856,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[1].Position.Y - (12.0f - HalfFringe)) <= Tolerance);
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[3].Position.Y - (8.0f - HalfFringe)) <= Tolerance);
 
-    TEST_SECTION("A stroke thinner than the fringe collapses its core and pays for the width in alpha instead");
+    TEST_SECTION(TEXT("A stroke thinner than the fringe collapses its core and pays for the width in alpha instead"));
     FDrawCommandList HairlineList;
     HairlineList.AddLine(0, FVector2(0.0f, 10.0f), FVector2(100.0f, 10.0f), FFloatColor::White, 0.5f);
     DrawData.BuildFromCommandList(HairlineList);
@@ -867,7 +867,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[2].Position.Y - 10.0f) <= Tolerance);
     TEST_EXPECT(Math::Abs(DrawData.GetVertices()[0].Position.Y - (10.0f + FUIDrawData::FringeWidth)) <= Tolerance);
 
-    TEST_SECTION("A convex polygon keeps its fan and has the fringe stitched around the outside of it");
+    TEST_SECTION(TEXT("A convex polygon keeps its fan and has the fringe stitched around the outside of it"));
     const FVector2 Quad[4] =
     {
         FVector2(0.0f, 0.0f),
@@ -886,7 +886,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices()[0].Color >> 24, 0xffu);
     TEST_EXPECT_EQ(DrawData.GetVertices()[1].Color >> 24, 0x00u);
 
-    TEST_SECTION("The accent bar hangs a clear row under the arc, which is the only edge of it that curves");
+    TEST_SECTION(TEXT("The accent bar hangs a clear row under the arc, which is the only edge of it that curves"));
     const FRectangle BarBounds(FIntVector2(0, 0), 120, 28);
 
     FDrawCommandList BarList;
@@ -909,7 +909,7 @@ bool UIDrawDataAntiAliasing_Test()
         TEST_EXPECT(Fringe.Position.Y > Bottom.Position.Y);
     }
 
-    TEST_SECTION("Away from the corners it straddles the underside, so the band keeps the depth it was asked for");
+    TEST_SECTION(TEXT("Away from the corners it straddles the underside, so the band keeps the depth it was asked for"));
     const FUIVertex& MiddleBottom = DrawData.GetVertices()[((ColumnCount / 2) * 3) + 1];
     const FUIVertex& MiddleFringe = DrawData.GetVertices()[((ColumnCount / 2) * 3) + 2];
 
@@ -917,7 +917,7 @@ bool UIDrawDataAntiAliasing_Test()
     TEST_EXPECT(Math::Abs(MiddleBottom.Position.Y - (BarUnderside - HalfFringe)) <= Tolerance);
     TEST_EXPECT(Math::Abs(MiddleFringe.Position.Y - (BarUnderside + HalfFringe)) <= Tolerance);
 
-    TEST_SECTION("Turning it off gives back the unpadded SDF quad");
+    TEST_SECTION(TEXT("Turning it off gives back the unpadded SDF quad"));
     DrawData.SetAntiAliasingEnabled(false);
     DrawData.BuildFromCommandList(RoundedList);
 

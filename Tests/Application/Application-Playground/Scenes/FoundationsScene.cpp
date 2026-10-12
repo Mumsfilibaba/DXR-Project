@@ -132,7 +132,7 @@ static TSharedPtr<FVisualElement> MakeNestedBorders(const FPlaygroundFonts& Font
     const FUIStyle& Style = FUIStyle::GetDefault();
 
     FTextBlock::FDesc LabelDesc;
-    LabelDesc.Text            = "three borders deep";
+    LabelDesc.Text            = TEXT("three borders deep");
     LabelDesc.Font            = Fonts.Body;
     LabelDesc.ColorAndOpacity = Style.Colors.Text;
 
@@ -167,7 +167,7 @@ static TSharedPtr<FVisualElement> MakeScrollDemo(const FPlaygroundFonts& Fonts)
     for (int32 RowIndex = 0; RowIndex < 24; ++RowIndex)
     {
         FTextBlock::FDesc RowDesc;
-        RowDesc.Text            = FString::Printf("Row %02d - scroll with the wheel, the clip is the scroll box's own", RowIndex);
+        RowDesc.Text            = FString::Printf(TEXT("Row %02d - scroll with the wheel, the clip is the scroll box's own"), RowIndex);
         RowDesc.Font            = Fonts.Monospace;
         RowDesc.ColorAndOpacity = (RowIndex % 2) == 0 ? Style.Colors.Text : Style.Colors.TextDisabled;
 
@@ -195,8 +195,8 @@ FPlaygroundScene CreateFoundationsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Rounded boxes";
-        Desc.Description = "Uniform radii, then the top-only and bottom-only factories, then two opposite corners.";
+        Desc.Title       = TEXT("Rounded boxes");
+        Desc.Description = TEXT("Uniform radii, then the top-only and bottom-only factories, then two opposite corners.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(GSwatchSize, FOnCanvasDraw::CreateStatic(&DrawCornerRadii));
         Panels.Add(FScenePanel::Create(Desc));
@@ -204,8 +204,8 @@ FPlaygroundScene CreateFoundationsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Outlines";
-        Desc.Description = "Stroked inward from the edge at one to four pixels, square then rounded.";
+        Desc.Title       = TEXT("Outlines");
+        Desc.Description = TEXT("Stroked inward from the edge at one to four pixels, square then rounded.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(GSwatchSize, FOnCanvasDraw::CreateStatic(&DrawOutlines));
         Panels.Add(FScenePanel::Create(Desc));
@@ -213,8 +213,8 @@ FPlaygroundScene CreateFoundationsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Borders and padding";
-        Desc.Description = "Real elements rather than raw commands, so this is the measure and arrange path.";
+        Desc.Title       = TEXT("Borders and padding");
+        Desc.Description = TEXT("Real elements rather than raw commands, so this is the measure and arrange path.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeNestedBorders(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -222,8 +222,8 @@ FPlaygroundScene CreateFoundationsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Layers";
-        Desc.Description = "Four boxes, each one layer above the last. Yellow on top means the ordering held.";
+        Desc.Title       = TEXT("Layers");
+        Desc.Description = TEXT("Four boxes, each one layer above the last. Yellow on top means the ordering held.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(GSwatchSize + 40, FOnCanvasDraw::CreateStatic(&DrawLayers));
         Panels.Add(FScenePanel::Create(Desc));
@@ -231,8 +231,8 @@ FPlaygroundScene CreateFoundationsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Clipping";
-        Desc.Description = "A circle and nine lines that all overrun the region they are clipped to.";
+        Desc.Title       = TEXT("Clipping");
+        Desc.Description = TEXT("A circle and nine lines that all overrun the region they are clipped to.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(GSwatchSize + 24, FOnCanvasDraw::CreateStatic(&DrawClipping));
         Panels.Add(FScenePanel::Create(Desc));
@@ -240,12 +240,12 @@ FPlaygroundScene CreateFoundationsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Scrolling";
-        Desc.Description = "A scroll box clipping a column taller than the space it was given.";
+        Desc.Title       = TEXT("Scrolling");
+        Desc.Description = TEXT("A scroll box clipping a column taller than the space it was given.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeScrollDemo(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Foundations", MakeSceneColumn("Foundations", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Foundations"), MakeSceneColumn(TEXT("Foundations"), Fonts, Panels));
 }

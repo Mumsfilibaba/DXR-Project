@@ -60,9 +60,9 @@ static FGraphNode MakeNode(const FString& Title, const FVector2& Position, const
     Node.Position  = Position;
     Node.TitleTint = Style.Colors.ControlNormal;
 
-    Node.Pins.Add(FGraphPin(EGraphPinDirection::Input, "A", TypeTag, Style.Colors.Accent));
-    Node.Pins.Add(FGraphPin(EGraphPinDirection::Input, "B", TypeTag, Style.Colors.Accent));
-    Node.Pins.Add(FGraphPin(EGraphPinDirection::Output, "Out", TypeTag, Style.Colors.Accent));
+    Node.Pins.Add(FGraphPin(EGraphPinDirection::Input, TEXT("A"), TypeTag, Style.Colors.Accent));
+    Node.Pins.Add(FGraphPin(EGraphPinDirection::Input, TEXT("B"), TypeTag, Style.Colors.Accent));
+    Node.Pins.Add(FGraphPin(EGraphPinDirection::Output, TEXT("Out"), TypeTag, Style.Colors.Accent));
 
     return Node;
 }
@@ -151,9 +151,9 @@ bool GraphModelEditing_Test()
 
     FGraphModel Model;
 
-    TEST_SECTION("A node and its pins are handed ids of their own as they arrive");
-    const int32 FirstId  = Model.AddNode(MakeNode("Source", FVector2(0.0f, 0.0f), "Texture"));
-    const int32 SecondId = Model.AddNode(MakeNode("Sink", FVector2(300.0f, 0.0f), "Texture"));
+    TEST_SECTION(TEXT("A node and its pins are handed ids of their own as they arrive"));
+    const int32 FirstId  = Model.AddNode(MakeNode(TEXT("Source"), FVector2(0.0f, 0.0f), TEXT("Texture")));
+    const int32 SecondId = Model.AddNode(MakeNode(TEXT("Sink"), FVector2(300.0f, 0.0f), TEXT("Texture")));
 
     TEST_EXPECT(FirstId >= 0);
     TEST_EXPECT(SecondId != FirstId);
@@ -171,14 +171,14 @@ bool GraphModelEditing_Test()
     const int32 SinkSecondary = Sink->Pins[1].PinId;
     const int32 SinkOutput    = Sink->Pins[2].PinId;
 
-    TEST_SECTION("A pin resolves back to the node holding it");
+    TEST_SECTION(TEXT("A pin resolves back to the node holding it"));
     int32 OwningNodeId = -1;
     TEST_EXPECT(Model.FindPin(SourceOutput, OwningNodeId) != nullptr);
     TEST_EXPECT_EQ(OwningNodeId, FirstId);
     TEST_EXPECT(Model.FindPin(9999, OwningNodeId) == nullptr);
     TEST_EXPECT_EQ(OwningNodeId, -1);
 
-    TEST_SECTION("A link runs from an output to an input, and refuses to run any other way");
+    TEST_SECTION(TEXT("A link runs from an output to an input, and refuses to run any other way"));
     TEST_EXPECT(Model.CanConnect(SourceOutput, SinkInput));
     TEST_EXPECT(!Model.CanConnect(SinkInput, SourceOutput));
     TEST_EXPECT(!Model.CanConnect(SourceInput, SinkSecondary));
@@ -189,13 +189,13 @@ bool GraphModelEditing_Test()
     TEST_EXPECT_EQ(Model.GetLinks().Size(), 1);
     TEST_EXPECT_EQ(Model.CountLinksOnPin(SourceOutput), 1);
 
-    TEST_SECTION("The same pair cannot be connected twice");
+    TEST_SECTION(TEXT("The same pair cannot be connected twice"));
     TEST_EXPECT(!Model.CanConnect(SourceOutput, SinkInput));
     TEST_EXPECT_EQ(Model.AddLink(SourceOutput, SinkInput), -1);
 
-    TEST_SECTION("Type tags gate the connection, and an untagged pin takes anything");
-    const int32 TypedId    = Model.AddNode(MakeNode("Buffer", FVector2(0.0f, 200.0f), "Buffer"));
-    const int32 UntaggedId = Model.AddNode(MakeNode("Any", FVector2(0.0f, 400.0f), ""));
+    TEST_SECTION(TEXT("Type tags gate the connection, and an untagged pin takes anything"));
+    const int32 TypedId    = Model.AddNode(MakeNode(TEXT("Buffer"), FVector2(0.0f, 200.0f), TEXT("Buffer")));
+    const int32 UntaggedId = Model.AddNode(MakeNode(TEXT("Any"), FVector2(0.0f, 400.0f), TEXT("")));
 
     const int32 TypedInput     = Model.FindNode(TypedId)->Pins[0].PinId;
     const int32 TypedOutput    = Model.FindNode(TypedId)->Pins[2].PinId;
@@ -204,29 +204,29 @@ bool GraphModelEditing_Test()
     TEST_EXPECT(!Model.CanConnect(TypedOutput, SinkSecondary));
     TEST_EXPECT(Model.CanConnect(UntaggedOutput, SinkSecondary));
 
-    TEST_SECTION("A link that would close a cycle is refused");
+    TEST_SECTION(TEXT("A link that would close a cycle is refused"));
     TEST_EXPECT(!Model.CanConnect(SinkOutput, SourceInput));
 
-    TEST_SECTION("Removing a node takes every link touching it");
+    TEST_SECTION(TEXT("Removing a node takes every link touching it"));
     Model.RemoveNode(SecondId);
     TEST_EXPECT_EQ(Model.GetNodes().Size(), 3);
     TEST_EXPECT(Model.GetLinks().IsEmpty());
     TEST_EXPECT(Model.FindLink(LinkId) == nullptr);
 
-    TEST_SECTION("Moving a node is an edit like any other");
+    TEST_SECTION(TEXT("Moving a node is an edit like any other"));
     Model.SetNodePosition(FirstId, FVector2(40.0f, 60.0f));
     TEST_EXPECT_EQ(Model.FindNode(FirstId)->Position.X, 40.0f);
 
-    TEST_SECTION("Every edit changes the revision, so an observer can tell it is looking at a stale build");
+    TEST_SECTION(TEXT("Every edit changes the revision, so an observer can tell it is looking at a stale build"));
     const int32 Revision = Model.GetRevision();
     Model.SetNodePosition(FirstId, FVector2(50.0f, 60.0f));
     TEST_EXPECT(Model.GetRevision() != Revision);
 
-    TEST_SECTION("A read-only model refuses every edit and keeps its revision");
+    TEST_SECTION(TEXT("A read-only model refuses every edit and keeps its revision"));
     Model.SetReadOnly(true);
 
     const int32 ReadOnlyRevision = Model.GetRevision();
-    TEST_EXPECT_EQ(Model.AddNode(MakeNode("Blocked", FVector2(0.0f, 0.0f), "")), -1);
+    TEST_EXPECT_EQ(Model.AddNode(MakeNode(TEXT("Blocked"), FVector2(0.0f, 0.0f), TEXT(""))), -1);
     TEST_EXPECT_EQ(Model.AddLink(UntaggedOutput, TypedInput), -1);
 
     Model.RemoveNode(FirstId);
@@ -251,11 +251,11 @@ bool GraphLayoutLayered_Test()
 
     TArray<FVector2> Positions;
 
-    TEST_SECTION("An empty graph lays out to nothing at all");
+    TEST_SECTION(TEXT("An empty graph lays out to nothing at all"));
     FLayeredGraphLayout::Layout(MakeArrayView(NoSizes), MakeArrayView(NoEdges), Settings, Positions);
     TEST_EXPECT(Positions.IsEmpty());
 
-    TEST_SECTION("A lone node sits at the origin");
+    TEST_SECTION(TEXT("A lone node sits at the origin"));
     TArray<FVector2> OneSize = { FVector2(100.0f, 50.0f) };
     FLayeredGraphLayout::Layout(MakeArrayView(OneSize), MakeArrayView(NoEdges), Settings, Positions);
 
@@ -281,21 +281,21 @@ bool GraphLayoutLayered_Test()
 
     FLayeredGraphLayout::Layout(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, Positions);
 
-    TEST_SECTION("Rank puts every node one column right of the furthest thing feeding it");
+    TEST_SECTION(TEXT("Rank puts every node one column right of the furthest thing feeding it"));
     TEST_EXPECT_EQ(Positions.Size(), 4);
     TEST_EXPECT_EQ(Positions[0].X, 0.0f);
     TEST_EXPECT_EQ(Positions[1].X, 200.0f);
     TEST_EXPECT_EQ(Positions[2].X, 200.0f);
     TEST_EXPECT_EQ(Positions[3].X, 400.0f);
 
-    TEST_SECTION("Two nodes sharing a column are kept a row apart");
+    TEST_SECTION(TEXT("Two nodes sharing a column are kept a row apart"));
     TEST_EXPECT(Math::Abs(Positions[1].Y - Positions[2].Y) >= 50.0f + Settings.RowSpacing);
 
-    TEST_SECTION("A sink between two feeders is pulled to the middle of them");
+    TEST_SECTION(TEXT("A sink between two feeders is pulled to the middle of them"));
     const float Middle = (Positions[1].Y + Positions[2].Y) * 0.5f;
     TEST_EXPECT(Math::Abs(Positions[3].Y - Middle) < 1.0f);
 
-    TEST_SECTION("The layout is a function of its input, so the same graph lays out the same way twice");
+    TEST_SECTION(TEXT("The layout is a function of its input, so the same graph lays out the same way twice"));
     TArray<FVector2> SecondRun;
     FLayeredGraphLayout::Layout(MakeArrayView(Sizes), MakeArrayView(Edges), Settings, SecondRun);
 
@@ -304,7 +304,7 @@ bool GraphLayoutLayered_Test()
         TEST_EXPECT_EQ(Positions[Index], SecondRun[Index]);
     }
 
-    TEST_SECTION("An edge skipping a column is routed through a dummy rather than dragging its end back");
+    TEST_SECTION(TEXT("An edge skipping a column is routed through a dummy rather than dragging its end back"));
     TArray<FGraphLayoutEdge> SkippingEdges =
     {
         FGraphLayoutEdge(0, 1),
@@ -319,14 +319,14 @@ bool GraphLayoutLayered_Test()
     TEST_EXPECT_EQ(Positions[1].X, 200.0f);
     TEST_EXPECT_EQ(Positions[2].X, 400.0f);
 
-    TEST_SECTION("A column is as wide as its widest node, so the next one clears it");
+    TEST_SECTION(TEXT("A column is as wide as its widest node, so the next one clears it"));
     TArray<FVector2> WideSizes = { FVector2(300.0f, 50.0f), FVector2(100.0f, 50.0f) };
     TArray<FGraphLayoutEdge> OneEdge = { FGraphLayoutEdge(0, 1) };
 
     FLayeredGraphLayout::Layout(MakeArrayView(WideSizes), MakeArrayView(OneEdge), Settings, Positions);
     TEST_EXPECT_EQ(Positions[1].X, 380.0f);
 
-    TEST_SECTION("Counting crossings as inversions agrees with testing every pair, shared ends included");
+    TEST_SECTION(TEXT("Counting crossings as inversions agrees with testing every pair, shared ends included"));
     {
         TArray<FLayerEdge> LayerEdges;
         uint32 State = 12345u;
@@ -358,7 +358,7 @@ bool GraphLayoutLayered_Test()
         TEST_EXPECT_EQ(FLayeredGraphLayout::CountCrossings(MakeArrayView(LayerEdges), 11), PairwiseCrossings);
     }
 
-    TEST_SECTION("A cycle is cut where it closes, so its nodes still land in distinct, finite columns");
+    TEST_SECTION(TEXT("A cycle is cut where it closes, so its nodes still land in distinct, finite columns"));
     TArray<FGraphLayoutEdge> CycleEdges = { FGraphLayoutEdge(0, 1), FGraphLayoutEdge(1, 2), FGraphLayoutEdge(2, 0) };
     FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(CycleEdges), Settings, Positions);
 
@@ -366,14 +366,14 @@ bool GraphLayoutLayered_Test()
     TEST_EXPECT_EQ(Positions[1].X, 200.0f);
     TEST_EXPECT_EQ(Positions[2].X, 400.0f);
 
-    TEST_SECTION("Seed keys order a column where nothing else decides it");
+    TEST_SECTION(TEXT("Seed keys order a column where nothing else decides it"));
     TArray<int32> ReversedKeys = { 2, 1, 0 };
     FLayeredGraphLayout::Layout(MakeArrayView(ThreeSizes), MakeArrayView(NoEdges), Settings, Positions, MakeArrayView(ReversedKeys));
 
     TEST_EXPECT(Positions[2].Y < Positions[1].Y);
     TEST_EXPECT(Positions[1].Y < Positions[0].Y);
 
-    TEST_SECTION("A source can be told to keep up with the node before it");
+    TEST_SECTION(TEXT("A source can be told to keep up with the node before it"));
     FGraphLayoutSettings FollowSettings = Settings;
     FollowSettings.bSourcesFollowPreviousNode = true;
 
@@ -391,8 +391,8 @@ bool GraphCanvasView_Test()
     TEST_BEGIN();
 
     TSharedPtr<FGraphModel> Model = MakeSharedPtr<FGraphModel>();
-    const int32 FirstId  = Model->AddNode(MakeNode("Source", FVector2(0.0f, 0.0f), "Texture"));
-    const int32 SecondId = Model->AddNode(MakeNode("Sink", FVector2(400.0f, 200.0f), "Texture"));
+    const int32 FirstId  = Model->AddNode(MakeNode(TEXT("Source"), FVector2(0.0f, 0.0f), TEXT("Texture")));
+    const int32 SecondId = Model->AddNode(MakeNode(TEXT("Sink"), FVector2(400.0f, 200.0f), TEXT("Texture")));
 
     FGraphCanvas::FDesc Desc;
     Desc.Font  = CreateFont();
@@ -401,25 +401,25 @@ bool GraphCanvasView_Test()
     TSharedPtr<FGraphCanvas> Canvas = FGraphCanvas::Create(Desc);
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
-    TEST_SECTION("The canvas builds one element per node, sized in graph space");
+    TEST_SECTION(TEXT("The canvas builds one element per node, sized in graph space"));
     TSharedPtr<FGraphNodeElement> SourceElement = Canvas->FindNodeElement(FirstId);
     TEST_EXPECT(SourceElement != nullptr);
     TEST_EXPECT_EQ(SourceElement->GetCachedDesiredSize(), FIntVector2(FGraphNodeElement::MinimumWidth, 72));
     TEST_EXPECT(Canvas->FindNodeElement(999) == nullptr);
 
-    TEST_SECTION("At rest, graph space and client space are the same thing");
+    TEST_SECTION(TEXT("At rest, graph space and client space are the same thing"));
     TEST_EXPECT_EQ(Canvas->GetZoom(), 1.0f);
     TEST_EXPECT_EQ(Canvas->GraphToScreen(FVector2(400.0f, 200.0f)), FVector2(400.0f, 200.0f));
     TEST_EXPECT_EQ(Canvas->FindNodeElement(SecondId)->GetContentRectangle().Position, FIntVector2(400, 200));
 
-    TEST_SECTION("Panning slides the graph and the two spaces stay each other's inverse");
+    TEST_SECTION(TEXT("Panning slides the graph and the two spaces stay each other's inverse"));
     Canvas->SetPan(FVector2(30.0f, -20.0f));
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
     TEST_EXPECT_EQ(Canvas->GraphToScreen(FVector2(0.0f, 0.0f)), FVector2(30.0f, -20.0f));
     TEST_EXPECT_EQ(Canvas->ScreenToGraph(Canvas->GraphToScreen(FVector2(120.0f, 45.0f))), FVector2(120.0f, 45.0f));
 
-    TEST_SECTION("Zoom scales the rectangle a node is arranged into rather than transforming its drawing");
+    TEST_SECTION(TEXT("Zoom scales the rectangle a node is arranged into rather than transforming its drawing"));
     Canvas->SetPan(FVector2(0.0f, 0.0f));
     Canvas->SetZoom(2.0f);
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
@@ -428,14 +428,14 @@ bool GraphCanvasView_Test()
     TEST_EXPECT_EQ(ZoomedBounds.Width, FGraphNodeElement::MinimumWidth * 2);
     TEST_EXPECT_EQ(ZoomedBounds.Height, 144);
 
-    TEST_SECTION("Zoom stops at the two limits");
+    TEST_SECTION(TEXT("Zoom stops at the two limits"));
     Canvas->SetZoom(100.0f);
     TEST_EXPECT_EQ(Canvas->GetZoom(), FGraphCanvas::MaxZoom);
 
     Canvas->SetZoom(0.001f);
     TEST_EXPECT_EQ(Canvas->GetZoom(), FGraphCanvas::MinZoom);
 
-    TEST_SECTION("Zooming about a point leaves the graph position under it where it was");
+    TEST_SECTION(TEXT("Zooming about a point leaves the graph position under it where it was"));
     Canvas->SetZoom(1.0f);
     Canvas->SetPan(FVector2(0.0f, 0.0f));
 
@@ -449,12 +449,12 @@ bool GraphCanvasView_Test()
     TEST_EXPECT(Math::Abs(AnchorAfter.X - 250.0f) < 0.01f);
     TEST_EXPECT(Math::Abs(AnchorAfter.Y - 150.0f) < 0.01f);
 
-    TEST_SECTION("A wheel notch zooms about the cursor, and the far limit stops it");
+    TEST_SECTION(TEXT("A wheel notch zooms about the cursor, and the far limit stops it"));
     Canvas->SetZoom(FGraphCanvas::MaxZoom);
     Canvas->OnMouseScroll(FCursorEvent(EInputEventType::MouseScrolled, FModifierKeyState(), 1.0f, EScrollAxis::Vertical));
     TEST_EXPECT_EQ(Canvas->GetZoom(), FGraphCanvas::MaxZoom);
 
-    TEST_SECTION("Fitting brings every node inside the canvas");
+    TEST_SECTION(TEXT("Fitting brings every node inside the canvas"));
     Canvas->SetZoom(FGraphCanvas::MaxZoom);
     Canvas->FitToNodes();
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
@@ -470,16 +470,16 @@ bool GraphCanvasView_Test()
         TEST_EXPECT(NodeBounds.GetBottom() <= CanvasBounds.GetBottom());
     }
 
-    TEST_SECTION("Laying out again writes the positions back into the model");
+    TEST_SECTION(TEXT("Laying out again writes the positions back into the model"));
     Canvas->SetZoom(1.0f);
     Canvas->AutoLayout();
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
     TEST_EXPECT_EQ(Model->FindNode(FirstId)->Position, FVector2(0.0f, 0.0f));
 
-    TEST_SECTION("A layout run after the arrange pass leaves the rebuilt elements ready to draw");
+    TEST_SECTION(TEXT("A layout run after the arrange pass leaves the rebuilt elements ready to draw"));
     Model->Clear();
-    const int32 RebuiltId = Model->AddNode(MakeNode("Rebuilt", FVector2(0.0f, 0.0f), "Texture"));
+    const int32 RebuiltId = Model->AddNode(MakeNode(TEXT("Rebuilt"), FVector2(0.0f, 0.0f), TEXT("Texture")));
 
     Canvas->AutoLayout();
     Canvas->FitToNodes();
@@ -492,17 +492,17 @@ bool GraphCanvasView_Test()
     DrawElement(Canvas, RebuiltCommands);
     TEST_EXPECT(FindBoxCommand(RebuiltCommands, RebuiltElement->GetContentRectangle()) != nullptr);
 
-    TEST_SECTION("A canvas with no model still measures and arranges");
+    TEST_SECTION(TEXT("A canvas with no model still measures and arranges"));
     TSharedPtr<FGraphCanvas> Empty = FGraphCanvas::Create(FGraphCanvas::FDesc());
     LayoutElement(Empty, FRectangle(FIntVector2(0, 0), 200, 200));
 
     TEST_EXPECT_EQ(Empty->FindNodeAt(FIntVector2(10, 10)), -1);
     TEST_EXPECT_EQ(Empty->FindLinkAt(FIntVector2(10, 10)), -1);
 
-    TEST_SECTION("A fit floor keeps a large graph from shrinking below a readable zoom");
+    TEST_SECTION(TEXT("A fit floor keeps a large graph from shrinking below a readable zoom"));
     TSharedPtr<FGraphModel> WideModel = MakeSharedPtr<FGraphModel>();
-    WideModel->AddNode(MakeNode("Near", FVector2(0.0f, 0.0f), "Texture"));
-    WideModel->AddNode(MakeNode("Far", FVector2(4000.0f, 0.0f), "Texture"));
+    WideModel->AddNode(MakeNode(TEXT("Near"), FVector2(0.0f, 0.0f), TEXT("Texture")));
+    WideModel->AddNode(MakeNode(TEXT("Far"), FVector2(4000.0f, 0.0f), TEXT("Texture")));
 
     FGraphCanvas::FDesc FlooredDesc;
     FlooredDesc.Font       = CreateFont();
@@ -515,14 +515,14 @@ bool GraphCanvasView_Test()
 
     TEST_EXPECT_EQ(Floored->GetZoom(), 1.0f);
 
-    TEST_SECTION("Left square, the canvas fills its bounds to the corner and cuts nothing back out");
+    TEST_SECTION(TEXT("Left square, the canvas fills its bounds to the corner and cuts nothing back out"));
     FDrawCommandList SquareCommands;
     DrawElement(Floored, SquareCommands);
 
     TEST_EXPECT_EQ(SquareCommands.GetCommands()[0].Type, EDrawCommandType::Box);
     TEST_EXPECT_EQ(SquareCommands.GetCommands()[0].CornerRadius.TopLeft, 0.0f);
 
-    TEST_SECTION("Given a radius and what it is laid on, it rounds its fill and cuts the corners back out over the grid");
+    TEST_SECTION(TEXT("Given a radius and what it is laid on, it rounds its fill and cuts the corners back out over the grid"));
     constexpr float CanvasRadius = 6.0f;
 
     FGraphCanvas::FDesc RoundedDesc;
@@ -542,7 +542,7 @@ bool GraphCanvasView_Test()
     TEST_EXPECT_EQ(Fill.CornerRadius.TopLeft, CanvasRadius);
     TEST_EXPECT_EQ(Fill.CornerRadius.BottomRight, CanvasRadius);
 
-    TEST_SECTION("Those wedges are the last thing it draws, so the grid and the links cannot square the card off again");
+    TEST_SECTION(TEXT("Those wedges are the last thing it draws, so the grid and the links cannot square the card off again"));
     int32 WedgeCount   = 0;
     int32 TopWedgeLayer = -1;
 
@@ -577,8 +577,8 @@ bool GraphCanvasInteraction_Test()
     FScopedStubApplication Application;
 
     TSharedPtr<FGraphModel> Model = MakeSharedPtr<FGraphModel>();
-    const int32 FirstId  = Model->AddNode(MakeNode("Source", FVector2(20.0f, 20.0f), "Texture"));
-    const int32 SecondId = Model->AddNode(MakeNode("Sink", FVector2(300.0f, 40.0f), "Texture"));
+    const int32 FirstId  = Model->AddNode(MakeNode(TEXT("Source"), FVector2(20.0f, 20.0f), TEXT("Texture")));
+    const int32 SecondId = Model->AddNode(MakeNode(TEXT("Sink"), FVector2(300.0f, 40.0f), TEXT("Texture")));
 
     int32 SelectionChanges = 0;
     int32 ContextNodeId    = -2;
@@ -602,12 +602,12 @@ bool GraphCanvasInteraction_Test()
     const FIntVector2 SinkTitle(300 + 70, 40 + 12);
     const FIntVector2 EmptyCanvas(500, 350);
 
-    TEST_SECTION("A node context request identifies the node without activating its normal selection action");
+    TEST_SECTION(TEXT("A node context request identifies the node without activating its normal selection action"));
     Canvas->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonRight, SourceTitle));
     TEST_EXPECT_EQ(ContextNodeId, FirstId);
     TEST_EXPECT(Canvas->GetSelectedNodes().IsEmpty());
 
-    TEST_SECTION("Clicking a node selects it and clicking empty canvas drops the selection");
+    TEST_SECTION(TEXT("Clicking a node selects it and clicking empty canvas drops the selection"));
     Canvas->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Keys::MouseButtonLeft, SourceTitle));
     TEST_EXPECT(Canvas->IsNodeSelected(FirstId));
     TEST_EXPECT_EQ(Canvas->GetSelectedNodes().Size(), 1);
@@ -620,7 +620,7 @@ bool GraphCanvasInteraction_Test()
     Canvas->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, Keys::MouseButtonLeft, EmptyCanvas));
     TEST_EXPECT(Canvas->GetSelectedNodes().IsEmpty());
 
-    TEST_SECTION("Dragging a node moves it in graph space, whatever the zoom is");
+    TEST_SECTION(TEXT("Dragging a node moves it in graph space, whatever the zoom is"));
     Canvas->SetZoom(2.0f);
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
@@ -633,7 +633,7 @@ bool GraphCanvasInteraction_Test()
     Canvas->SetZoom(1.0f);
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
-    TEST_SECTION("A marquee selects everything it touches and nothing it misses");
+    TEST_SECTION(TEXT("A marquee selects everything it touches and nothing it misses"));
     Canvas->ClearSelection();
     DragCanvas(Canvas, FIntVector2(10, 10), FIntVector2(200, 120));
 
@@ -645,7 +645,7 @@ bool GraphCanvasInteraction_Test()
     DragCanvas(Canvas, FIntVector2(10, 10), FIntVector2(560, 260));
     TEST_EXPECT_EQ(Canvas->GetSelectedNodes().Size(), 2);
 
-    TEST_SECTION("Dragging from an output pin to an input pin makes the link");
+    TEST_SECTION(TEXT("Dragging from an output pin to an input pin makes the link"));
     Canvas->ClearSelection();
 
     const FIntVector2 SourceOutput = GetPinPosition(Canvas, FirstId, 2);
@@ -662,14 +662,14 @@ bool GraphCanvasInteraction_Test()
     TEST_EXPECT(Canvas->GetDragMode() == EGraphDragMode::None);
     TEST_EXPECT_EQ(Canvas->GetDraggingFromPin(), -1);
 
-    TEST_SECTION("A drag that ends on nothing, or on a pin that cannot take it, leaves the graph alone");
+    TEST_SECTION(TEXT("A drag that ends on nothing, or on a pin that cannot take it, leaves the graph alone"));
     DragCanvas(Canvas, SourceOutput, EmptyCanvas);
     TEST_EXPECT_EQ(Model->GetLinks().Size(), 1);
 
     DragCanvas(Canvas, SourceOutput, GetPinPosition(Canvas, FirstId, 0));
     TEST_EXPECT_EQ(Model->GetLinks().Size(), 1);
 
-    TEST_SECTION("The link can be picked off the curve it is drawn as");
+    TEST_SECTION(TEXT("The link can be picked off the curve it is drawn as"));
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
     const FIntVector2 CurveMiddle((SourceOutput.X + SinkInput.X) / 2, (SourceOutput.Y + SinkInput.Y) / 2);
@@ -682,7 +682,7 @@ bool GraphCanvasInteraction_Test()
     TEST_EXPECT(Canvas->GetSelectedLink() >= 0);
     TEST_EXPECT(Canvas->GetSelectedNodes().IsEmpty());
 
-    TEST_SECTION("Delete removes what is selected, links first and then nodes");
+    TEST_SECTION(TEXT("Delete removes what is selected, links first and then nodes"));
     Canvas->OnKeyDown(MakeKeyEvent(Keys::Delete));
     TEST_EXPECT(Model->GetLinks().IsEmpty());
     TEST_EXPECT_EQ(Model->GetNodes().Size(), 2);
@@ -694,7 +694,7 @@ bool GraphCanvasInteraction_Test()
     TEST_EXPECT_EQ(Model->GetNodes().Size(), 1);
     TEST_EXPECT(Model->FindNode(SecondId) == nullptr);
 
-    TEST_SECTION("The middle button pans instead of selecting");
+    TEST_SECTION(TEXT("The middle button pans instead of selecting"));
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
     Canvas->SetPan(FVector2(0.0f, 0.0f));
 
@@ -708,7 +708,7 @@ bool GraphCanvasInteraction_Test()
     TEST_EXPECT(Canvas->GetDragMode() == EGraphDragMode::None);
     TEST_EXPECT(Canvas->GetSelectedNodes().IsEmpty());
 
-    TEST_SECTION("A read-only model is a viewer: it selects, and it does not move or delete anything");
+    TEST_SECTION(TEXT("A read-only model is a viewer: it selects, and it does not move or delete anything"));
     Model->SetReadOnly(true);
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
@@ -736,9 +736,9 @@ bool GraphNodeStyle_Test()
     const FFloatColor PinOutline(0.90f, 0.10f, 0.10f, 1.0f);
 
     TSharedPtr<FGraphModel> Model = MakeSharedPtr<FGraphModel>();
-    const int32 NormalId = Model->AddNode(MakeNode("Normal", FVector2(0.0f, 0.0f), "Texture"));
+    const int32 NormalId = Model->AddNode(MakeNode(TEXT("Normal"), FVector2(0.0f, 0.0f), TEXT("Texture")));
 
-    FGraphNode Muted = MakeNode("Muted", FVector2(0.0f, 200.0f), "Texture");
+    FGraphNode Muted = MakeNode(TEXT("Muted"), FVector2(0.0f, 200.0f), TEXT("Texture"));
     Muted.bIsMuted   = true;
 
     const int32 MutedId = Model->AddNode(Muted);
@@ -756,7 +756,7 @@ bool GraphNodeStyle_Test()
     TSharedPtr<FGraphCanvas> Canvas = FGraphCanvas::Create(Desc);
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
-    TEST_SECTION("The desc's style reaches every element the canvas builds");
+    TEST_SECTION(TEXT("The desc's style reaches every element the canvas builds"));
     TEST_EXPECT_EQ(Canvas->GetNodeStyle().CornerRadius, 6.0f);
     TEST_EXPECT_EQ(Canvas->FindNodeElement(NormalId)->GetStyle().Body, Body);
 
@@ -765,14 +765,14 @@ bool GraphNodeStyle_Test()
 
     const FRectangle NodeBounds = Canvas->FindNodeElement(NormalId)->GetContentRectangle();
 
-    TEST_SECTION("The body takes the style's fill, rounded on all four corners at the unzoomed radius");
+    TEST_SECTION(TEXT("The body takes the style's fill, rounded on all four corners at the unzoomed radius"));
     const FDrawCommand* BodyCommand = FindBoxCommand(CommandList, NodeBounds);
     TEST_EXPECT(BodyCommand != nullptr);
     TEST_EXPECT(BodyCommand->HasTint(Body));
     TEST_EXPECT_EQ(BodyCommand->CornerRadius.TopLeft, 6.0f);
     TEST_EXPECT_EQ(BodyCommand->CornerRadius.BottomLeft, 6.0f);
 
-    TEST_SECTION("The title bar meets the body square, so only its top corners are rounded");
+    TEST_SECTION(TEXT("The title bar meets the body square, so only its top corners are rounded"));
     const FRectangle    TitleBounds(NodeBounds.Position, NodeBounds.Width, FGraphNodeElement::TitleHeight);
     const FDrawCommand* TitleCommand = FindBoxCommand(CommandList, TitleBounds);
 
@@ -782,11 +782,11 @@ bool GraphNodeStyle_Test()
     TEST_EXPECT_EQ(TitleCommand->CornerRadius.BottomLeft, 0.0f);
     TEST_EXPECT_EQ(TitleCommand->CornerRadius.BottomRight, 0.0f);
 
-    TEST_SECTION("The outline takes the style's border, and every pin is stroked with the outline color");
+    TEST_SECTION(TEXT("The outline takes the style's border, and every pin is stroked with the outline color"));
     TEST_EXPECT(FindOutlineHasTint(CommandList, NodeBounds, Border));
     TEST_EXPECT_EQ(CountPolylinesTinted(CommandList, PinOutline), 3);
 
-    TEST_SECTION("A muted node swaps to the second color set rather than fading the first");
+    TEST_SECTION(TEXT("A muted node swaps to the second color set rather than fading the first"));
     FDrawCommandList MutedCommands;
     DrawElement(Canvas->FindNodeElement(MutedId), MutedCommands);
 
@@ -797,7 +797,7 @@ bool GraphNodeStyle_Test()
     TEST_EXPECT(MutedBox->HasTint(MutedBody));
     TEST_EXPECT(FindOutlineHasTint(MutedCommands, MutedBounds, MutedBorder));
 
-    TEST_SECTION("The radius tracks the zoom, so a node twice the size is rounded twice as far");
+    TEST_SECTION(TEXT("The radius tracks the zoom, so a node twice the size is rounded twice as far"));
     Canvas->SetZoom(2.0f);
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
@@ -816,7 +816,7 @@ bool GraphStackedPins_Test()
     TEST_BEGIN();
 
     TSharedPtr<FGraphModel> Model = MakeSharedPtr<FGraphModel>();
-    const int32 NodeId = Model->AddNode(MakeNode("Pass", FVector2(0.0f, 0.0f), "Texture"));
+    const int32 NodeId = Model->AddNode(MakeNode(TEXT("Pass"), FVector2(0.0f, 0.0f), TEXT("Texture")));
 
     FGraphCanvas::FDesc PairedDesc;
     PairedDesc.Font  = CreateFont();
@@ -825,7 +825,7 @@ bool GraphStackedPins_Test()
     TSharedPtr<FGraphCanvas> Paired = FGraphCanvas::Create(PairedDesc);
     LayoutElement(Paired, FRectangle(FIntVector2(0, 0), 600, 400));
 
-    TEST_SECTION("Paired, an input and an output share a row, so two inputs and one output make two");
+    TEST_SECTION(TEXT("Paired, an input and an output share a row, so two inputs and one output make two"));
     const int32 PairedHeight = Paired->FindNodeElement(NodeId)->GetCachedDesiredSize().Y;
     TEST_EXPECT_EQ(PairedHeight, 72);
 
@@ -839,10 +839,10 @@ bool GraphStackedPins_Test()
 
     TSharedPtr<FGraphNodeElement> Element = Stacked->FindNodeElement(NodeId);
 
-    TEST_SECTION("Stacked, every pin takes a row of its own, so the same node is a row taller");
+    TEST_SECTION(TEXT("Stacked, every pin takes a row of its own, so the same node is a row taller"));
     TEST_EXPECT_EQ(Element->GetCachedDesiredSize().Y, PairedHeight + FGraphNodeElement::PinRowHeight);
 
-    TEST_SECTION("The inputs take the first rows and the output follows below both of them");
+    TEST_SECTION(TEXT("The inputs take the first rows and the output follows below both of them"));
     const FGraphNode* Node = Model->FindNode(NodeId);
 
     FVector2 FirstInput(0.0f, 0.0f);
@@ -857,7 +857,7 @@ bool GraphStackedPins_Test()
     TEST_EXPECT_EQ(Output.Y - SecondInput.Y, static_cast<float>(FGraphNodeElement::PinRowHeight));
     TEST_EXPECT(Output.X > SecondInput.X);
 
-    TEST_SECTION("A rule separates the two groups, drawn where the outputs begin");
+    TEST_SECTION(TEXT("A rule separates the two groups, drawn where the outputs begin"));
     FDrawCommandList CommandList;
     DrawElement(Element, CommandList);
 
@@ -874,11 +874,11 @@ bool GraphStackedPins_Test()
 
     TEST_EXPECT(bFoundRule);
 
-    TEST_SECTION("A node with only inputs has nothing to separate");
+    TEST_SECTION(TEXT("A node with only inputs has nothing to separate"));
     FGraphNode InputsOnly;
-    InputsOnly.Title    = "Sink";
+    InputsOnly.Title    = TEXT("Sink");
     InputsOnly.Position = FVector2(0.0f, 300.0f);
-    InputsOnly.Pins.Add(FGraphPin(EGraphPinDirection::Input, "A", "Texture", FFloatColor::White));
+    InputsOnly.Pins.Add(FGraphPin(EGraphPinDirection::Input, TEXT("A"), TEXT("Texture"), FFloatColor::White));
 
     const int32 SinkId = Model->AddNode(InputsOnly);
     LayoutElement(Stacked, FRectangle(FIntVector2(0, 0), 600, 400));
@@ -898,8 +898,8 @@ bool GraphViewerMode_Test()
     FScopedStubApplication Application;
 
     TSharedPtr<FGraphModel> Model = MakeSharedPtr<FGraphModel>();
-    const int32 FirstId  = Model->AddNode(MakeNode("Source", FVector2(20.0f, 20.0f), "Texture"));
-    const int32 SecondId = Model->AddNode(MakeNode("Sink", FVector2(300.0f, 40.0f), "Texture"));
+    const int32 FirstId  = Model->AddNode(MakeNode(TEXT("Source"), FVector2(20.0f, 20.0f), TEXT("Texture")));
+    const int32 SecondId = Model->AddNode(MakeNode(TEXT("Sink"), FVector2(300.0f, 40.0f), TEXT("Texture")));
 
     FGraphCanvas::FDesc Desc;
     Desc.Font      = CreateFont();
@@ -911,14 +911,14 @@ bool GraphViewerMode_Test()
 
     TEST_EXPECT(Canvas->IsViewer());
 
-    TEST_SECTION("A viewer still selects and still moves what it selected");
+    TEST_SECTION(TEXT("A viewer still selects and still moves what it selected"));
     const FIntVector2 SourceTitle(20 + 70, 20 + 12);
     DragCanvas(Canvas, SourceTitle, SourceTitle + FIntVector2(40, 25));
 
     TEST_EXPECT(Canvas->IsNodeSelected(FirstId));
     TEST_EXPECT_EQ(Model->FindNode(FirstId)->Position, FVector2(60.0f, 45.0f));
 
-    TEST_SECTION("A press on a pin drags the node it belongs to rather than pulling a link off it");
+    TEST_SECTION(TEXT("A press on a pin drags the node it belongs to rather than pulling a link off it"));
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
     const FIntVector2 SourceOutput = GetPinPosition(Canvas, FirstId, 2);
@@ -933,7 +933,7 @@ bool GraphViewerMode_Test()
 
     TEST_EXPECT(Model->GetLinks().IsEmpty());
 
-    TEST_SECTION("Delete leaves the graph alone, however much of it is selected");
+    TEST_SECTION(TEXT("Delete leaves the graph alone, however much of it is selected"));
     LayoutElement(Canvas, FRectangle(FIntVector2(0, 0), 600, 400));
 
     Canvas->SetSelectedNodes({ FirstId, SecondId });

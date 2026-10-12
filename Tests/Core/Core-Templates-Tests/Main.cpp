@@ -121,7 +121,7 @@ auto Func2(CHAR_T) -> int(*)()
 
 static int32 RunTemplateTests()
 {
-    TestHarness::Initialize("TestResults_Core.log");
+    TestHarness::Initialize(TEXT("TestResults_Core.log"));
     LOG_INFO("=== Template Tests ===");
 
     /* Is Same */
@@ -500,4 +500,4 @@ static int32 RunTemplateTests()
     return ExitCode;
 }
 
-IMPLEMENT_PROGRAM_MAIN("Core-Templates-Tests", RunTemplateTests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("Core-Templates-Tests"), RunTemplateTests);

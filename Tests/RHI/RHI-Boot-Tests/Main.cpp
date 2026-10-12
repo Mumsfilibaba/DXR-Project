@@ -32,7 +32,7 @@ static FMetalDebugLayerArmer GMetalDebugLayerArmer;
 
 static int32 RunRHIBootTests()
 {
-    TestHarness::Initialize("TestResults_RHIBoot.log");
+    TestHarness::Initialize(TEXT("TestResults_RHIBoot.log"));
     LOG_INFO("=== RHI Boot Tests ===");
 
     if (!FThreadManager::Initialize())
@@ -50,15 +50,15 @@ static int32 RunRHIBootTests()
         return -1;
     }
 
-    RUN_TEST("RHIBoot_Null", RHIBoot_Null_Test());
+    RUN_TEST(TEXT("RHIBoot_Null"), RHIBoot_Null_Test());
 
 #if PLATFORM_MACOS
-    RUN_TEST("RHIBoot_Vulkan", RHIBoot_Vulkan_Test());
-    RUN_TEST("RHIBoot_Metal", RHIBoot_Metal_Test());
-    RUN_TEST("RHIBoot_MetalResidencyFallback", RHIBoot_MetalResidencyFallback_Test());
+    RUN_TEST(TEXT("RHIBoot_Vulkan"), RHIBoot_Vulkan_Test());
+    RUN_TEST(TEXT("RHIBoot_Metal"), RHIBoot_Metal_Test());
+    RUN_TEST(TEXT("RHIBoot_MetalResidencyFallback"), RHIBoot_MetalResidencyFallback_Test());
 #elif PLATFORM_WINDOWS
-    RUN_TEST("RHIBoot_D3D12", RHIBoot_D3D12_Test());
-    RUN_TEST("RHIBoot_Vulkan", RHIBoot_Vulkan_Test());
+    RUN_TEST(TEXT("RHIBoot_D3D12"), RHIBoot_D3D12_Test());
+    RUN_TEST(TEXT("RHIBoot_Vulkan"), RHIBoot_Vulkan_Test());
 #endif
 
     FTaskGraph::Release();
@@ -69,4 +69,4 @@ static int32 RunRHIBootTests()
     return ExitCode;
 }
 
-IMPLEMENT_PROGRAM_MAIN("RHI-Boot-Tests", RunRHIBootTests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("RHI-Boot-Tests"), RunRHIBootTests);

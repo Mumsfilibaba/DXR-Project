@@ -6,11 +6,11 @@ bool TestFormatStructs()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("FRGBA16Snorm::FRGBA16Snorm (size and layout)");
+    TEST_SECTION(TEXT("FRGBA16Snorm::FRGBA16Snorm (size and layout)"));
     TEST_EXPECT(sizeof(FRGBA16Snorm) == 8);
     TEST_EXPECT(FRGBA16Snorm() == FRGBA16Snorm(int16(0), int16(0), int16(0), int16(0)));
 
-    TEST_SECTION("FRGBA16Snorm::EncodeChannel / DecodeChannel (exact unit values)");
+    TEST_SECTION(TEXT("FRGBA16Snorm::EncodeChannel / DecodeChannel (exact unit values)"));
     TEST_EXPECT(FRGBA16Snorm::EncodeChannel(1.0f) == int16(32767));
     TEST_EXPECT(FRGBA16Snorm::EncodeChannel(-1.0f) == int16(-32767));
     TEST_EXPECT(FRGBA16Snorm::EncodeChannel(0.0f) == int16(0));
@@ -18,14 +18,14 @@ bool TestFormatStructs()
     TEST_EXPECT(FRGBA16Snorm::DecodeChannel(int16(-32767)) == -1.0f);
     TEST_EXPECT(FRGBA16Snorm::DecodeChannel(int16(0)) == 0.0f);
 
-    TEST_SECTION("FRGBA16Snorm::EncodeChannel (clamping)");
+    TEST_SECTION(TEXT("FRGBA16Snorm::EncodeChannel (clamping)"));
     TEST_EXPECT(FRGBA16Snorm::EncodeChannel(2.0f) == int16(32767));
     TEST_EXPECT(FRGBA16Snorm::EncodeChannel(-2.0f) == int16(-32767));
 
-    TEST_SECTION("FRGBA16Snorm::DecodeChannel (lowest channel clamps at -1)");
+    TEST_SECTION(TEXT("FRGBA16Snorm::DecodeChannel (lowest channel clamps at -1)"));
     TEST_EXPECT(FRGBA16Snorm::DecodeChannel(TNumericLimits<int16>::Min()) == -1.0f);
 
-    TEST_SECTION("FRGBA16Snorm::ToVector3 / GetAlpha (axis round trip)");
+    TEST_SECTION(TEXT("FRGBA16Snorm::ToVector3 / GetAlpha (axis round trip)"));
     {
         const FRGBA16Snorm AxisX(FVector3(1.0f, 0.0f, 0.0f), 1.0f);
         const FRGBA16Snorm AxisY(FVector3(0.0f, -1.0f, 0.0f), -1.0f);
@@ -36,7 +36,7 @@ bool TestFormatStructs()
         TEST_EXPECT(AxisY.GetAlpha() == -1.0f);
     }
 
-    TEST_SECTION("FRGBA16Snorm::ToVector3 (arbitrary direction stays within a quantization step)");
+    TEST_SECTION(TEXT("FRGBA16Snorm::ToVector3 (arbitrary direction stays within a quantization step)"));
     {
         const FVector3     Direction = FVector3(0.267261f, 0.534522f, 0.801784f);
         const FRGBA16Snorm Encoded(Direction);
@@ -48,7 +48,7 @@ bool TestFormatStructs()
         TEST_EXPECT(Math::Abs(Decoded.Z - Direction.Z) <= Tolerance);
     }
 
-    TEST_SECTION("FRGBA16Snorm::operator== / operator!=");
+    TEST_SECTION(TEXT("FRGBA16Snorm::operator== / operator!="));
     TEST_EXPECT(FRGBA16Snorm(0.5f, 0.5f, 0.5f, 0.5f) == FRGBA16Snorm(0.5f, 0.5f, 0.5f, 0.5f));
     TEST_EXPECT(FRGBA16Snorm(0.5f, 0.5f, 0.5f, 0.5f) != FRGBA16Snorm(0.5f, 0.5f, 0.5f, -0.5f));
 

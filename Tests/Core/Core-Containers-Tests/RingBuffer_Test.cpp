@@ -12,7 +12,7 @@ bool RingBuffer_Test()
 
     TRingBuffer<int32> Buffer(3);
 
-    TEST_SECTION("Until it is full a ring buffer is an ordinary queue, oldest first");
+    TEST_SECTION(TEXT("Until it is full a ring buffer is an ordinary queue, oldest first"));
     Buffer.Emplace(1);
     Buffer.Emplace(2);
     TEST_EXPECT_EQ(Buffer.Size(), 2);
@@ -20,7 +20,7 @@ bool RingBuffer_Test()
     TEST_EXPECT_EQ(Buffer[0], 1);
     TEST_EXPECT_EQ(Buffer[1], 2);
 
-    TEST_SECTION("Once full, every append drops the oldest element");
+    TEST_SECTION(TEXT("Once full, every append drops the oldest element"));
     Buffer.Emplace(3);
     Buffer.Emplace(4);
     Buffer.Emplace(5);
@@ -30,32 +30,32 @@ bool RingBuffer_Test()
     TEST_EXPECT_EQ(Buffer[1], 4);
     TEST_EXPECT_EQ(Buffer[2], 5);
 
-    TEST_SECTION("Growing keeps every element in order and makes room for more");
+    TEST_SECTION(TEXT("Growing keeps every element in order and makes room for more"));
     Buffer.SetCapacity(5);
     Buffer.Emplace(6);
     TEST_EXPECT_EQ(Buffer.Size(), 4);
     TEST_EXPECT_EQ(Buffer[0], 3);
     TEST_EXPECT_EQ(Buffer[3], 6);
 
-    TEST_SECTION("Shrinking keeps the newest elements");
+    TEST_SECTION(TEXT("Shrinking keeps the newest elements"));
     Buffer.SetCapacity(2);
     TEST_EXPECT_EQ(Buffer.Size(), 2);
     TEST_EXPECT_EQ(Buffer[0], 5);
     TEST_EXPECT_EQ(Buffer[1], 6);
 
-    TEST_SECTION("Clearing empties it, and it fills again from the start");
+    TEST_SECTION(TEXT("Clearing empties it, and it fills again from the start"));
     Buffer.Clear();
     TEST_EXPECT(Buffer.IsEmpty());
     Buffer.Emplace(7);
     TEST_EXPECT_EQ(Buffer[0], 7);
 
-    TEST_SECTION("Non-trivial elements are overwritten in place rather than leaked");
+    TEST_SECTION(TEXT("Non-trivial elements are overwritten in place rather than leaked"));
     TRingBuffer<FString> Strings(2);
-    Strings.Emplace("Alpha");
-    Strings.Emplace("Bravo");
-    Strings.Emplace("Charlie");
-    TEST_EXPECT(Strings[0] == "Bravo");
-    TEST_EXPECT(Strings[1] == "Charlie");
+    Strings.Emplace(TEXT("Alpha"));
+    Strings.Emplace(TEXT("Bravo"));
+    Strings.Emplace(TEXT("Charlie"));
+    TEST_EXPECT(Strings[0] == TEXT("Bravo"));
+    TEST_EXPECT(Strings[1] == TEXT("Charlie"));
 
     TEST_END();
 }

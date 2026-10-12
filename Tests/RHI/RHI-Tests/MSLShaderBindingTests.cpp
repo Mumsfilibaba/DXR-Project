@@ -8,7 +8,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-static const CHAR_T* const CollidingShaderFile = "Shaders/Shadows/CascadeMatrixGen.hlsl";
+static const CHAR_T* const CollidingShaderFile = TEXT("Shaders/Shadows/CascadeMatrixGen.hlsl");
 
 static constexpr uint8 InvalidSlot = UINT8_MAX;
 
@@ -57,7 +57,7 @@ bool MSLShaderBinding_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("The shader compiler comes up");
+    TEST_SECTION(TEXT("The shader compiler comes up"));
     if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
     {
         TEST_EXPECT(false);
@@ -68,38 +68,38 @@ bool MSLShaderBinding_Test()
     TArray<FMSLShaderBinding> Bindings;
     FShaderCodeView           CodeView;
 
-    TEST_SECTION("A shader with colliding HLSL registers compiles to MSL");
-    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::MSL);
+    TEST_SECTION(TEXT("A shader with colliding HLSL registers compiles to MSL"));
+    const FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::MSL);
     const bool bCompiled = FShaderCompiler::Get().CompileFromFile(CollidingShaderFile, CompileInfo, ByteCode);
     TEST_EXPECT(bCompiled);
 
     if (bCompiled)
     {
-        TEST_SECTION("The container splits into a binding table and MSL source");
+        TEST_SECTION(TEXT("The container splits into a binding table and MSL source"));
         TEST_EXPECT(ReadMSLShaderCode(ByteCode, CodeView, Bindings));
 
         const TArrayView<const uint8> Source = CodeView.GetNativeCode();
         TEST_EXPECT(Source.Size() > 0);
         TEST_EXPECT(Bindings.Size() > 0);
 
-        const FString SourceText(reinterpret_cast<const CHAR_T*>(Source.Data()), Source.Size());
-        TEST_EXPECT(SourceText.Contains("metal_stdlib"));
+        const FString SourceText = StringCast<CHAR_T>(reinterpret_cast<const ANSICHAR*>(Source.Data()), Source.Size()).ToString();
+        TEST_EXPECT(SourceText.Contains(TEXT("metal_stdlib")));
 
-        TEST_SECTION("No aliased argument survives into the MSL");
-        TEST_EXPECT(!SourceText.Contains("constant void*"));
+        TEST_SECTION(TEXT("No aliased argument survives into the MSL"));
+        TEST_EXPECT(!SourceText.Contains(TEXT("constant void*")));
 
-        TEST_SECTION("Every register the shader declares reaches the table");
+        TEST_SECTION(TEXT("Every register the shader declares reaches the table"));
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::ConstantBuffer, 0) != InvalidSlot);
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::ConstantBuffer, 1) != InvalidSlot);
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::UnorderedAccessBuffer, 0) != InvalidSlot);
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::UnorderedAccessBuffer, 1) != InvalidSlot);
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::ShaderResourceTexture, 0) != InvalidSlot);
 
-        TEST_SECTION("Registers that collided in SPIR-V resolve to separate MSL slots");
+        TEST_SECTION(TEXT("Registers that collided in SPIR-V resolve to separate MSL slots"));
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::ConstantBuffer, 0) != FindSlot(Bindings, EMSLBindingType::UnorderedAccessBuffer, 0));
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::ConstantBuffer, 1) != FindSlot(Bindings, EMSLBindingType::UnorderedAccessBuffer, 1));
 
-        TEST_SECTION("No two bindings share a slot within one MSL table");
+        TEST_SECTION(TEXT("No two bindings share a slot within one MSL table"));
         for (int32 Index = 0; Index < Bindings.Size(); Index++)
         {
             for (int32 OtherIndex = Index + 1; OtherIndex < Bindings.Size(); OtherIndex++)
@@ -121,31 +121,31 @@ bool MSLShaderBinding_Test()
             }
         }
 
-        TEST_SECTION("Every resolved slot is below the per-table max");
+        TEST_SECTION(TEXT("Every resolved slot is below the per-table max"));
         for (int32 Index = 0; Index < Bindings.Size(); Index++)
         {
             const FMSLShaderBinding& Binding = Bindings[Index];
             TEST_EXPECT(Binding.SlotIndex < GetMSLMaxSlotCount(Binding.BindingType));
         }
 
-        TEST_SECTION("A compute shader container carries a non-zero threadgroup size");
+        TEST_SECTION(TEXT("A compute shader container carries a non-zero threadgroup size"));
         const FMSLShaderInfo& MSLInfo = CodeView.GetMSLInfo();
         TEST_EXPECT(MSLInfo.ThreadGroupSize[0] != 0);
         TEST_EXPECT_EQ(MSLInfo.ThreadGroupSize[1], static_cast<uint16>(1));
         TEST_EXPECT_EQ(MSLInfo.ThreadGroupSize[2], static_cast<uint16>(1));
 
-        TEST_SECTION("A shader without descriptor heaps has no heap bindings");
+        TEST_SECTION(TEXT("A shader without descriptor heaps has no heap bindings"));
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::BindlessResourceHeap, 0) == InvalidSlot);
         TEST_EXPECT(FindSlot(Bindings, EMSLBindingType::BindlessSamplerHeap, 0) == InvalidSlot);
 
-        TEST_SECTION("The container names the entry point");
+        TEST_SECTION(TEXT("The container names the entry point"));
         TEST_EXPECT(CString::Strlen(CodeView.GetEntryPoint()) > 0);
     }
 
-    TEST_SECTION("A bindless compute shader pins heap tables at MSL buffers 29 and 30");
+    TEST_SECTION(TEXT("A bindless compute shader pins heap tables at MSL buffers 29 and 30"));
     {
         static const CHAR_T BindlessSource[] =
-            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint SamplerIndex; uint Pad0; uint Pad1; };\n"
             "[numthreads(1,1,1)]\n"
             "void Main()\n"
@@ -154,13 +154,13 @@ bool MSLShaderBinding_Test()
             "    SamplerState Samp = SamplerDescriptorHeap[SamplerIndex];\n"
             "    float4 Color = Tex.SampleLevel(Samp, float2(0.5, 0.5), 0);\n"
             "    OutBuffer[0] = (uint)(Color.x * 255.0f + 0.5f);\n"
-            "}\n";
+            "}\n");
 
         TArray<uint8>             BindlessByteCode;
         TArray<FMSLShaderBinding> BindlessBindings;
         FShaderCodeView           BindlessCodeView;
 
-        const FShaderCompileInfo BindlessInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute, EShaderOutputLanguage::MSL);
+        const FShaderCompileInfo BindlessInfo(TEXT("Main"), EShaderModel::SM_6_6, EShaderStage::Compute, EShaderOutputLanguage::MSL);
         const bool bBindlessCompiled = FShaderCompiler::Get().CompileFromSource(BindlessSource, BindlessInfo, BindlessByteCode);
         TEST_EXPECT(bBindlessCompiled);
 
@@ -173,11 +173,11 @@ bool MSLShaderBinding_Test()
             TEST_EXPECT(FindSlot(BindlessBindings, EMSLBindingType::BindlessResourceHeap, 0) == MSL_BINDLESS_RESOURCE_HEAP_BUFFER_INDEX);
             TEST_EXPECT(FindSlot(BindlessBindings, EMSLBindingType::BindlessSamplerHeap, 0) == MSL_BINDLESS_SAMPLER_HEAP_BUFFER_INDEX);
 
-            const FString BindlessText(reinterpret_cast<const CHAR_T*>(BindlessSourceView.Data()), BindlessSourceView.Size());
-            TEST_EXPECT(BindlessText.Contains("spvDescriptorSet31Binding0"));
-            TEST_EXPECT(BindlessText.Contains("spvDescriptorSet31Binding1"));
-            TEST_EXPECT(BindlessText.Contains("[[buffer(29)]]"));
-            TEST_EXPECT(BindlessText.Contains("[[buffer(30)]]"));
+            const FString BindlessText = StringCast<CHAR_T>(reinterpret_cast<const ANSICHAR*>(BindlessSourceView.Data()), BindlessSourceView.Size()).ToString();
+            TEST_EXPECT(BindlessText.Contains(TEXT("spvDescriptorSet31Binding0")));
+            TEST_EXPECT(BindlessText.Contains(TEXT("spvDescriptorSet31Binding1")));
+            TEST_EXPECT(BindlessText.Contains(TEXT("[[buffer(29)]]")));
+            TEST_EXPECT(BindlessText.Contains(TEXT("[[buffer(30)]]")));
         }
     }
 

@@ -18,41 +18,41 @@ static bool WaitUntilReadable(FNetworkSocket& Socket)
     return (FNetworkSocket::WaitForRead(Sockets, 1, &bReadable, GWaitMilliseconds) == 1) && bReadable;
 }
 
-static FString ReceiveText(FNetworkSocket& Socket)
+static FAnsiString ReceiveText(FNetworkSocket& Socket)
 {
-    CHAR_T Buffer[GReceiveBufferSize];
+    ANSICHAR Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     if (!WaitUntilReadable(Socket) || (Socket.Recv(Buffer, sizeof(Buffer), BytesRead) != ESocketResult::Success))
     {
-        return FString();
+        return FAnsiString();
     }
 
-    return FString(Buffer, BytesRead);
+    return FAnsiString(Buffer, BytesRead);
 }
 
-static FString ReceiveDatagram(FNetworkSocket& Socket)
+static FAnsiString ReceiveDatagram(FNetworkSocket& Socket)
 {
-    CHAR_T Buffer[GReceiveBufferSize];
+    ANSICHAR Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     FSocketAddress From;
     if (!WaitUntilReadable(Socket) || (Socket.RecvFrom(Buffer, sizeof(Buffer), BytesRead, From) != ESocketResult::Success))
     {
-        return FString();
+        return FAnsiString();
     }
 
-    return FString(Buffer, BytesRead);
+    return FAnsiString(Buffer, BytesRead);
 }
 
-static bool SendText(FNetworkSocket& Socket, const CHAR_T* Text)
+static bool SendText(FNetworkSocket& Socket, const ANSICHAR* Text)
 {
-    const int32 Length = CString::Strlen(Text);
+    const int32 Length = TCString<ANSICHAR>::Strlen(Text);
     int32 BytesSent = 0;
     return (Socket.Send(Text, Length, BytesSent) == ESocketResult::Success) && (BytesSent == Length);
 }
 
-static bool SendDatagram(FNetworkSocket& Socket, const CHAR_T* Text, const FSocketAddress& Address)
+static bool SendDatagram(FNetworkSocket& Socket, const ANSICHAR* Text, const FSocketAddress& Address)
 {
-    const int32 Length = CString::Strlen(Text);
+    const int32 Length = TCString<ANSICHAR>::Strlen(Text);
     int32 BytesSent = 0;
     return (Socket.SendTo(Text, Length, Address, BytesSent) == ESocketResult::Success) && (BytesSent == Length);
 }
@@ -85,7 +85,7 @@ bool NetworkSocket_Test()
         LOG_WARNING("[NetworkSocket] IPv6 is not available, skipping the IPv6 sections");
     }
 
-    TEST_SECTION("A socket has no platform socket until it is used");
+    TEST_SECTION(TEXT("A socket has no platform socket until it is used"));
     {
         FNetworkSocket Socket(ESocketType::TCP);
         TEST_EXPECT(!Socket.IsOpen());
@@ -93,7 +93,7 @@ bool NetworkSocket_Test()
         TEST_EXPECT_EQ(Socket.GetType(), ESocketType::TCP);
     }
 
-    TEST_SECTION("Bind picks the family from the address");
+    TEST_SECTION(TEXT("Bind picks the family from the address"));
     TEST_EXPECT(BindsAs(FSocketAddress::LoopbackIPv4(GAnyPort), ESocketFamily::IPv4));
     TEST_EXPECT(BindsAs(FSocketAddress::AnyIPv4(GAnyPort), ESocketFamily::IPv4));
     if (bHasIPv6)
@@ -102,7 +102,7 @@ bool NetworkSocket_Test()
         TEST_EXPECT(BindsAs(FSocketAddress::AnyIPv6(GAnyPort), ESocketFamily::DualStack));
     }
 
-    TEST_SECTION("A failed Bind leaves the socket closed");
+    TEST_SECTION(TEXT("A failed Bind leaves the socket closed"));
     {
         FNetworkSocket Holder(ESocketType::TCP);
         TEST_CHECK(Holder.Bind(FSocketAddress::LoopbackIPv4(GAnyPort)));
@@ -113,7 +113,7 @@ bool NetworkSocket_Test()
         TEST_EXPECT(!Second.IsOpen());
     }
 
-    TEST_SECTION("ConnectToHost reaches an IPv4-only listener through localhost");
+    TEST_SECTION(TEXT("ConnectToHost reaches an IPv4-only listener through localhost"));
     FNetworkSocket Listener(ESocketType::TCP);
     TEST_CHECK(Listener.SetNonBlocking(true));
     TEST_CHECK(Listener.Bind(FSocketAddress::LoopbackIPv4(GAnyPort)));
@@ -123,7 +123,7 @@ bool NetworkSocket_Test()
     TEST_CHECK(Port != GAnyPort);
 
     FNetworkSocket Client(ESocketType::TCP);
-    TEST_CHECK(Client.ConnectToHost("localhost", Port, GWaitMilliseconds));
+    TEST_CHECK(Client.ConnectToHost(TEXT("localhost"), Port, GWaitMilliseconds));
     TEST_EXPECT(Client.IsOpen());
     {
         FSocketAddress Peer;
@@ -131,7 +131,7 @@ bool NetworkSocket_Test()
         TEST_EXPECT(Peer == FSocketAddress::LoopbackIPv4(Port));
     }
 
-    TEST_SECTION("Accept fills the socket it is given, which can then send and receive");
+    TEST_SECTION(TEXT("Accept fills the socket it is given, which can then send and receive"));
     FNetworkSocket Server(ESocketType::TCP);
     TEST_CHECK(WaitUntilReadable(Listener));
     TEST_CHECK(Listener.Accept(Server));
@@ -141,14 +141,14 @@ bool NetworkSocket_Test()
     TEST_EXPECT(SendText(Server, "pong"));
     TEST_EXPECT(ReceiveText(Client) == "pong");
 
-    TEST_SECTION("Accept returns false while no connection is pending");
+    TEST_SECTION(TEXT("Accept returns false while no connection is pending"));
     {
         FNetworkSocket Nothing(ESocketType::TCP);
         TEST_EXPECT(!Listener.Accept(Nothing));
         TEST_EXPECT(!Nothing.IsOpen());
     }
 
-    TEST_SECTION("A moved socket takes the connection with it");
+    TEST_SECTION(TEXT("A moved socket takes the connection with it"));
     {
         FNetworkSocket Moved(::Move(Server));
         TEST_EXPECT(Moved.IsOpen());
@@ -157,18 +157,18 @@ bool NetworkSocket_Test()
         TEST_EXPECT(ReceiveText(Moved) == "moved");
     }
 
-    TEST_SECTION("SetNonBlocking before Connect carries over to the socket Connect creates");
+    TEST_SECTION(TEXT("SetNonBlocking before Connect carries over to the socket Connect creates"));
     {
         FNetworkSocket NonBlockingClient(ESocketType::TCP);
         TEST_CHECK(NonBlockingClient.SetNonBlocking(true));
         TEST_CHECK(NonBlockingClient.Connect(FSocketAddress::LoopbackIPv4(Port), GWaitMilliseconds));
 
-        CHAR_T Buffer[GReceiveBufferSize];
+        ANSICHAR Buffer[GReceiveBufferSize];
         int32 BytesRead = 0;
         TEST_EXPECT_EQ(NonBlockingClient.Recv(Buffer, sizeof(Buffer), BytesRead), ESocketResult::WouldBlock);
     }
 
-    TEST_SECTION("ConnectToAny skips addresses that refuse and uses the first that accepts");
+    TEST_SECTION(TEXT("ConnectToAny skips addresses that refuse and uses the first that accepts"));
     {
         FNetworkSocket Unused(ESocketType::TCP);
         TEST_CHECK(Unused.Bind(FSocketAddress::LoopbackIPv4(GAnyPort)));
@@ -187,18 +187,18 @@ bool NetworkSocket_Test()
         TEST_EXPECT(Peer == FSocketAddress::LoopbackIPv4(Port));
     }
 
-    TEST_SECTION("Resolve fails for a name that does not exist");
+    TEST_SECTION(TEXT("Resolve fails for a name that does not exist"));
     {
         TArray<FSocketAddress> Addresses;
-        TEST_EXPECT(!FNetworkSocket::Resolve("no-such-host.invalid", Port, Addresses));
+        TEST_EXPECT(!FNetworkSocket::Resolve(TEXT("no-such-host.invalid"), Port, Addresses));
         TEST_EXPECT(Addresses.IsEmpty());
 
         FNetworkSocket Unresolved(ESocketType::TCP);
-        TEST_EXPECT(!Unresolved.ConnectToHost("no-such-host.invalid", Port, GWaitMilliseconds));
+        TEST_EXPECT(!Unresolved.ConnectToHost(TEXT("no-such-host.invalid"), Port, GWaitMilliseconds));
         TEST_EXPECT(!Unresolved.IsOpen());
     }
 
-    TEST_SECTION("WaitForRead treats null entries and unused sockets as never readable");
+    TEST_SECTION(TEXT("WaitForRead treats null entries and unused sockets as never readable"));
     {
         FNetworkSocket Unused(ESocketType::TCP);
 
@@ -209,16 +209,16 @@ bool NetworkSocket_Test()
         TEST_EXPECT(!Readable[1]);
     }
 
-    TEST_SECTION("RecvFrom before any platform socket exists is an Error");
+    TEST_SECTION(TEXT("RecvFrom before any platform socket exists is an Error"));
     {
         FNetworkSocket Unbound(ESocketType::UDP);
-        CHAR_T Buffer[GReceiveBufferSize];
+        ANSICHAR Buffer[GReceiveBufferSize];
         int32 BytesRead = 0;
         FSocketAddress From;
         TEST_EXPECT_EQ(Unbound.RecvFrom(Buffer, sizeof(Buffer), BytesRead, From), ESocketResult::Error);
     }
 
-    TEST_SECTION("An unbound UDP socket's first SendTo creates a dual-stack socket that reaches both families");
+    TEST_SECTION(TEXT("An unbound UDP socket's first SendTo creates a dual-stack socket that reaches both families"));
     {
         FNetworkSocket ReceiverIPv4(ESocketType::UDP);
         TEST_CHECK(ReceiverIPv4.Bind(FSocketAddress::LoopbackIPv4(GAnyPort)));

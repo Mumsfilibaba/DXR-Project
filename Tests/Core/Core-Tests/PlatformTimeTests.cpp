@@ -11,7 +11,7 @@ bool PlatformTime_Test()
 
 #if PLATFORM_MACOS
     // Ratios fed in directly, so both cases are checkable from either machine
-    TEST_SECTION("Timebase ticks per second");
+    TEST_SECTION(TEXT("Timebase ticks per second"));
     {
         // Intel: mach_absolute_time already counts nanoseconds
         TEST_EXPECT_EQ(FPlatformTime::TicksPerSecondFromTimebase(1, 1), 1000000000ull);
@@ -20,7 +20,7 @@ bool PlatformTime_Test()
         TEST_EXPECT_EQ(FPlatformTime::TicksPerSecondFromTimebase(125, 3), 24000000ull);
     }
 
-    TEST_SECTION("Frequency matches the running machine's timebase");
+    TEST_SECTION(TEXT("Frequency matches the running machine's timebase"));
     {
         mach_timebase_info_data_t TimeBaseInfo = {};
         mach_timebase_info(&TimeBaseInfo);
@@ -29,7 +29,7 @@ bool PlatformTime_Test()
     }
 #endif
 
-    TEST_SECTION("Counter advances");
+    TEST_SECTION(TEXT("Counter advances"));
     {
         const uint64 First = FPlatformTime::QueryPerformanceCounter();
 

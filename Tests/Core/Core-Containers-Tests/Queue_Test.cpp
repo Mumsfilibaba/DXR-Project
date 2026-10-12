@@ -119,10 +119,10 @@ namespace MPSCTest
         for (int32 i = 0; i < NumProducers; ++i)
         {
             const int32 ProducerIndex = (i + 1) * ProducerOffset;
-            Producers.Add(FPlatformThread::Create(new FProducerThread(ProducerIndex), "ProducerThread", false));
+            Producers.Add(FPlatformThread::Create(new FProducerThread(ProducerIndex), TEXT("ProducerThread"), false));
         }
 
-        IPlatformThread* Consumer = FPlatformThread::Create(new FConsumerThread, "ConsumerThread", false);
+        IPlatformThread* Consumer = FPlatformThread::Create(new FConsumerThread, TEXT("ConsumerThread"), false);
 
         for (IPlatformThread* Producer : Producers)
         {
@@ -219,14 +219,14 @@ namespace SPMCTest
         GIsRunning.Store(1);
         GQueue = new TQueue<FString, EQueueType::SPMC>;
 
-        IPlatformThread* Producer = FPlatformThread::Create(new FProducerThread, "ProducerThread", false);
+        IPlatformThread* Producer = FPlatformThread::Create(new FProducerThread, TEXT("ProducerThread"), false);
 
         TArray<TUniquePtr<FConsumerThread>> ConsumerInterfaces;
         TArray<IPlatformThread*> Consumers;
         for (int32 i = 0; i < NumConsumers; ++i)
         {
             TUniquePtr<FConsumerThread>& Interface = ConsumerInterfaces.Add(MakeUniquePtr<FConsumerThread>());
-            Consumers.Add(FPlatformThread::Create(Interface.Get(), "ConsumerThread", false));
+            Consumers.Add(FPlatformThread::Create(Interface.Get(), TEXT("ConsumerThread"), false));
         }
 
         Producer->WaitForCompletion();
@@ -265,7 +265,7 @@ bool TQueue_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Empty queue / IsEmpty / Size / Peek");
+    TEST_SECTION(TEXT("Empty queue / IsEmpty / Size / Peek"));
     {
         TQueue<int32> Queue;
         TEST_EXPECT(Queue.IsEmpty());
@@ -277,7 +277,7 @@ bool TQueue_Test()
         TEST_EXPECT(!Queue.Dequeue(Out));
     }
 
-    TEST_SECTION("Enqueue / Size / Peek (FIFO order)");
+    TEST_SECTION(TEXT("Enqueue / Size / Peek (FIFO order)"));
     {
         TQueue<int32> Queue;
         TEST_EXPECT(Queue.Enqueue(1));
@@ -294,7 +294,7 @@ bool TQueue_Test()
         TEST_EXPECT_EQ(Queue.Size(), 3);
     }
 
-    TEST_SECTION("Dequeue preserves FIFO order");
+    TEST_SECTION(TEXT("Dequeue preserves FIFO order"));
     {
         TQueue<int32> Queue;
         Queue.Enqueue(10);
@@ -313,19 +313,19 @@ bool TQueue_Test()
         TEST_EXPECT(!Queue.Dequeue(Value));
     }
 
-    TEST_SECTION("Enqueue move overload");
+    TEST_SECTION(TEXT("Enqueue move overload"));
     {
         TQueue<FString> Queue;
-        FString Item = "Hello";
+        FString Item = TEXT("Hello");
         TEST_EXPECT(Queue.Enqueue(::Move(Item)));
         TEST_EXPECT_EQ(Queue.Size(), 1);
 
         FString Out;
         TEST_EXPECT(Queue.Dequeue(Out));
-        TEST_EXPECT(Out.Equals("Hello"));
+        TEST_EXPECT(Out.Equals(TEXT("Hello")));
     }
 
-    TEST_SECTION("Clear");
+    TEST_SECTION(TEXT("Clear"));
     {
         TQueue<int32> Queue;
         Queue.Enqueue(1);
@@ -337,7 +337,7 @@ bool TQueue_Test()
         TEST_EXPECT_EQ(Queue.Size(), 0);
     }
 
-    TEST_SECTION("DequeueAll");
+    TEST_SECTION(TEXT("DequeueAll"));
     {
         TQueue<int32> Queue;
         Queue.Enqueue(5);
@@ -354,7 +354,7 @@ bool TQueue_Test()
         TEST_EXPECT(Out.Contains(7));
     }
 
-    TEST_SECTION("SPMC single consumer: FIFO / Clear / DequeueAll");
+    TEST_SECTION(TEXT("SPMC single consumer: FIFO / Clear / DequeueAll"));
     {
         TQueue<int32, EQueueType::SPMC> Queue;
         TEST_EXPECT(Queue.IsEmpty());
@@ -398,7 +398,7 @@ bool TQueue_Test()
         TEST_EXPECT_EQ(Out[2], 7);
     }
 
-    TEST_SECTION("Concurrency: SPSC / MPSC / SPMC");
+    TEST_SECTION(TEXT("Concurrency: SPSC / MPSC / SPMC"));
     {
         constexpr int32 NumConcurrencyIterations = 8;
         for (int32 Iteration = 0; Iteration < NumConcurrencyIterations; ++Iteration)
@@ -409,7 +409,7 @@ bool TQueue_Test()
         }
     }
 
-    TEST_SECTION("TQueue enqueue/dequeue stress (FInstanced, FIFO + no leaks)");
+    TEST_SECTION(TEXT("TQueue enqueue/dequeue stress (FInstanced, FIFO + no leaks)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
@@ -444,7 +444,7 @@ bool TQueue_Test()
         TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
-    TEST_SECTION("TQueue SPMC enqueue/dequeue stress (FInstanced, FIFO + no leaks)");
+    TEST_SECTION(TEXT("TQueue SPMC enqueue/dequeue stress (FInstanced, FIFO + no leaks)"));
     {
         FInstanced::Reset();
 

@@ -12,7 +12,7 @@ bool TArray_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("TArray::Find / FindLast / Contains");
+    TEST_SECTION(TEXT("TArray::Find / FindLast / Contains"));
     {
         const TArray<int32> Array = { 10, 20, 30, 20, 40 };
         TEST_EXPECT(Array.Find(20) == 1);
@@ -21,7 +21,7 @@ bool TArray_Test()
         TEST_EXPECT(!Array.Contains(99));
     }
 
-    TEST_SECTION("TArray::FindWithPredicate / FindLastWithPredicate / ContainsWithPredicate");
+    TEST_SECTION(TEXT("TArray::FindWithPredicate / FindLastWithPredicate / ContainsWithPredicate"));
     {
         const TArray<int32> Array = { 10, 20, 30, 20, 40 };
         TEST_EXPECT(Array.FindWithPredicate([](int32 Value)
@@ -42,7 +42,7 @@ bool TArray_Test()
         }));
     }
 
-    TEST_SECTION("TArray::IsValidIndex");
+    TEST_SECTION(TEXT("TArray::IsValidIndex"));
     {
         const TArray<int32> Array = { 1, 2, 3 };
         TEST_EXPECT(Array.IsValidIndex(0));
@@ -51,7 +51,7 @@ bool TArray_Test()
         TEST_EXPECT(!Array.IsValidIndex(-1));
     }
 
-    TEST_SECTION("TArray::First / Last");
+    TEST_SECTION(TEXT("TArray::First / Last"));
     {
         TArray<int32> Array = { 10, 20, 40 };
         TEST_EXPECT(Array.First() == 10);
@@ -62,7 +62,7 @@ bool TArray_Test()
         TEST_EXPECT(ConstArray.Last() == 40);
     }
 
-    TEST_SECTION("TArray::LastIndex");
+    TEST_SECTION(TEXT("TArray::LastIndex"));
     {
         const TArray<int32> Array = { 10, 20, 40 };
         TEST_EXPECT_EQ(Array.LastIndex(), 2);
@@ -87,7 +87,7 @@ bool TArray_Test()
         TEST_EXPECT_EQ(Visits, 0);
     }
 
-    TEST_SECTION("TArray metadata (Stride/SizeInBytes/CapacityInBytes)");
+    TEST_SECTION(TEXT("TArray metadata (Stride/SizeInBytes/CapacityInBytes)"));
     {
         const TArray<int32> Array = { 1, 2, 3, 4 };
         TEST_EXPECT(Array.Stride() == static_cast<int32>(sizeof(int32)));
@@ -95,7 +95,7 @@ bool TArray_Test()
         TEST_EXPECT(Array.CapacityInBytes() == Array.Capacity() * static_cast<int32>(sizeof(int32)));
     }
 
-    TEST_SECTION("TArray::AddUnique / AddDefault / AddUninitialized");
+    TEST_SECTION(TEXT("TArray::AddUnique / AddDefault / AddUninitialized"));
     {
         TArray<int32> Array = { 10, 20 };
         TEST_EXPECT(Array.AddUnique(20) == 1);
@@ -113,14 +113,14 @@ bool TArray_Test()
         TEST_EXPECT(Array.Size() == SizeBefore + 1);
     }
 
-    TEST_SECTION("TArray::Reverse");
+    TEST_SECTION(TEXT("TArray::Reverse"));
     {
         TArray<int32> Array = { 10, 20, 30, 20, 40 };
         Array.Reverse();
         TEST_EXPECT(Array == TArray<int32>({ 40, 20, 30, 20, 10 }));
     }
 
-    TEST_SECTION("TArray::SortWithPredicate");
+    TEST_SECTION(TEXT("TArray::SortWithPredicate"));
     {
         TArray<int32> Array = { 30, 10, 40, 20 };
         Array.SortWithPredicate([](int32 Left, int32 Right)
@@ -131,7 +131,7 @@ bool TArray_Test()
         TEST_EXPECT(Array == TArray<int32>({ 40, 30, 20, 10 }));
     }
 
-    TEST_SECTION("TArray::Sort (empty / single / populated)");
+    TEST_SECTION(TEXT("TArray::Sort (empty / single / populated)"));
     {
         TArray<int32> Empty;
         Empty.Sort();
@@ -154,7 +154,7 @@ bool TArray_Test()
         TEST_EXPECT(EmptyPredicate.IsEmpty());
     }
 
-    TEST_SECTION("TArray::RemoveAtSwap / RemoveSingleSwap / RemoveAllSwap");
+    TEST_SECTION(TEXT("TArray::RemoveAtSwap / RemoveSingleSwap / RemoveAllSwap"));
     {
         TArray<int32> Array = { 1, 2, 3, 4, 5 };
         Array.RemoveAtSwap(1);
@@ -178,7 +178,7 @@ bool TArray_Test()
         }));
     }
 
-    TEST_SECTION("TArray::Remove / RemoveAll");
+    TEST_SECTION(TEXT("TArray::Remove / RemoveAll"));
     {
         // Remove deletes every matching instance.
         TArray<int32> Array = { 1, 2, 2, 3, 2 };
@@ -195,7 +195,7 @@ bool TArray_Test()
         TEST_EXPECT(All == TArray<int32>({ 1, 3 }));
     }
 
-    TEST_SECTION("TArray::operator+ / operator+=");
+    TEST_SECTION(TEXT("TArray::operator+ / operator+="));
     {
         TArray<int32> First = { 1, 2 };
         const TArray<int32> Second = { 3, 4 };
@@ -209,7 +209,7 @@ bool TArray_Test()
         TEST_EXPECT(First == TArray<int32>({ 1, 2, 3, 4, 5, 6 }));
     }
 
-    TEST_SECTION("TArray::operator== / operator!=");
+    TEST_SECTION(TEXT("TArray::operator== / operator!="));
     {
         const TArray<int32> First = { 1, 2, 3 };
         const TArray<int32> Second = { 1, 2, 3 };
@@ -218,7 +218,7 @@ bool TArray_Test()
         TEST_EXPECT(First != Third);
     }
 
-    TEST_SECTION("TArray const iterators");
+    TEST_SECTION(TEXT("TArray const iterators"));
     {
         const TArray<int32> Array = { 1, 2, 3, 4 };
         int32 Sum = 0;
@@ -230,25 +230,25 @@ bool TArray_Test()
         TEST_EXPECT(Sum == 10);
     }
 
-    TEST_SECTION("TArray construction (count/value, ptr+size, initializer-list)");
+    TEST_SECTION(TEXT("TArray construction (count/value, ptr+size, initializer-list)"));
     {
         TArray<FString> Empty;
         TEST_EXPECT(Empty.IsEmpty());
 
-        TArray<FString> Filled(5, "Hello");
+        TArray<FString> Filled(5, TEXT("Hello"));
         TEST_EXPECT_EQ(Filled.Size(), 5);
-        TEST_EXPECT(Filled == TArray<FString>({ "Hello", "Hello", "Hello", "Hello", "Hello" }));
+        TEST_EXPECT(Filled == TArray<FString>({ TEXT("Hello"), TEXT("Hello"), TEXT("Hello"), TEXT("Hello"), TEXT("Hello") }));
 
         TArray<FString> FromPtr(Filled.Data(), Filled.Size());
         TEST_EXPECT(FromPtr == Filled);
 
-        TArray<FString> FromList = { "Hello World", "TArray", "This is a longer teststring" };
+        TArray<FString> FromList = { TEXT("Hello World"), TEXT("TArray"), TEXT("This is a longer teststring") };
         TEST_EXPECT_EQ(FromList.Size(), 3);
     }
 
-    TEST_SECTION("TArray copy / move construction");
+    TEST_SECTION(TEXT("TArray copy / move construction"));
     {
-        TArray<FString> Source = { "A", "B", "C" };
+        TArray<FString> Source = { TEXT("A"), TEXT("B"), TEXT("C") };
         TArray<FString> Copy = Source;
         TEST_EXPECT(Copy == Source);
 
@@ -257,47 +257,47 @@ bool TArray_Test()
         TEST_EXPECT(Copy.IsEmpty());
     }
 
-    TEST_SECTION("TArray::Reset (count/value, init-list, ptr+size)");
+    TEST_SECTION(TEXT("TArray::Reset (count/value, init-list, ptr+size)"));
     {
         TArray<FString> Array;
-        Array.Reset(3, "X");
-        TEST_EXPECT(Array == TArray<FString>({ "X", "X", "X" }));
+        Array.Reset(3, TEXT("X"));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("X"), TEXT("X"), TEXT("X") }));
 
-        Array.Reset({ "1", "2" });
-        TEST_EXPECT(Array == TArray<FString>({ "1", "2" }));
+        Array.Reset({ TEXT("1"), TEXT("2") });
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("1"), TEXT("2") }));
 
-        TArray<FString> Other = { "p", "q", "r" };
+        TArray<FString> Other = { TEXT("p"), TEXT("q"), TEXT("r") };
         Array.Reset(Other.Data(), Other.Size());
         TEST_EXPECT(Array == Other);
     }
 
-    TEST_SECTION("TArray::Resize grow / shrink");
+    TEST_SECTION(TEXT("TArray::Resize grow / shrink"));
     {
-        TArray<FString> Array = { "a", "b", "c", "d" };
+        TArray<FString> Array = { TEXT("a"), TEXT("b"), TEXT("c"), TEXT("d") };
         Array.Resize(6);
         TEST_EXPECT_EQ(Array.Size(), 6);
-        TEST_EXPECT(Array[0] == "a" && Array[3] == "d");
+        TEST_EXPECT(Array[0] == TEXT("a") && Array[3] == TEXT("d"));
         TEST_EXPECT(Array[4].IsEmpty() && Array[5].IsEmpty());
 
         Array.Resize(2);
-        TEST_EXPECT(Array == TArray<FString>({ "a", "b" }));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("a"), TEXT("b") }));
         TEST_EXPECT(Array.Capacity() >= Array.Size());
     }
 
-    TEST_SECTION("TArray::Reserve / Shrink");
+    TEST_SECTION(TEXT("TArray::Reserve / Shrink"));
     {
-        TArray<FString> Array = { "a", "b" };
+        TArray<FString> Array = { TEXT("a"), TEXT("b") };
         Array.Reserve(32);
         TEST_EXPECT(Array.Capacity() >= 32);
-        TEST_EXPECT(Array == TArray<FString>({ "a", "b" }));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("a"), TEXT("b") }));
 
         Array.Shrink();
         TEST_EXPECT(Array.Capacity() == Array.Size());
     }
 
-    TEST_SECTION("TArray assignment (copy / move / initializer-list)");
+    TEST_SECTION(TEXT("TArray assignment (copy / move / initializer-list)"));
     {
-        TArray<FString> Source = { "a", "b", "c" };
+        TArray<FString> Source = { TEXT("a"), TEXT("b"), TEXT("c") };
         TArray<FString> Copy;
         Copy = Source;
         TEST_EXPECT(Copy == Source);
@@ -308,75 +308,75 @@ bool TArray_Test()
         TEST_EXPECT_EQ(Copy.Size(), 0);
 
         TArray<FString> FromList;
-        FromList = { "x", "y" };
-        TEST_EXPECT(FromList == TArray<FString>({ "x", "y" }));
+        FromList = { TEXT("x"), TEXT("y") };
+        TEST_EXPECT(FromList == TArray<FString>({ TEXT("x"), TEXT("y") }));
     }
 
-    TEST_SECTION("TArray::Add / Emplace / Pop");
+    TEST_SECTION(TEXT("TArray::Add / Emplace / Pop"));
     {
         TArray<FString> Array;
         for (int32 Index = 0; Index < 3; ++Index)
         {
-            Array.Add(FString::Printf("P%d", Index));
+            Array.Add(FString::Printf(TEXT("P%d"), Index));
         }
 
-        Array.Emplace("E0");
-        TEST_EXPECT(Array == TArray<FString>({ "P0", "P1", "P2", "E0" }));
+        Array.Emplace(TEXT("E0"));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("P0"), TEXT("P1"), TEXT("P2"), TEXT("E0") }));
 
         Array.Pop();
-        TEST_EXPECT(Array == TArray<FString>({ "P0", "P1", "P2" }));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("P0"), TEXT("P1"), TEXT("P2") }));
 
         Array.Pop(2);
-        TEST_EXPECT(Array == TArray<FString>({ "P0" }));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("P0") }));
     }
 
-    TEST_SECTION("TArray::Insert (value / initializer-list at front/middle/end)");
+    TEST_SECTION(TEXT("TArray::Insert (value / initializer-list at front/middle/end)"));
     {
-        TArray<FString> Array = { "a", "b", "c" };
-        Array.Insert(0, "front");
-        TEST_EXPECT(Array == TArray<FString>({ "front", "a", "b", "c" }));
+        TArray<FString> Array = { TEXT("a"), TEXT("b"), TEXT("c") };
+        Array.Insert(0, TEXT("front"));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("front"), TEXT("a"), TEXT("b"), TEXT("c") }));
 
-        Array.Insert(2, "mid");
-        TEST_EXPECT(Array == TArray<FString>({ "front", "a", "mid", "b", "c" }));
+        Array.Insert(2, TEXT("mid"));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("front"), TEXT("a"), TEXT("mid"), TEXT("b"), TEXT("c") }));
 
-        Array.Insert(Array.Size(), { "e1", "e2" });
-        TEST_EXPECT(Array == TArray<FString>({ "front", "a", "mid", "b", "c", "e1", "e2" }));
+        Array.Insert(Array.Size(), { TEXT("e1"), TEXT("e2") });
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("front"), TEXT("a"), TEXT("mid"), TEXT("b"), TEXT("c"), TEXT("e1"), TEXT("e2") }));
 
         // Force reallocation, then insert at the front.
         Array.Shrink();
-        Array.Insert(0, { "r1", "r2" });
-        TEST_EXPECT(Array == TArray<FString>({ "r1", "r2", "front", "a", "mid", "b", "c", "e1", "e2" }));
+        Array.Insert(0, { TEXT("r1"), TEXT("r2") });
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("r1"), TEXT("r2"), TEXT("front"), TEXT("a"), TEXT("mid"), TEXT("b"), TEXT("c"), TEXT("e1"), TEXT("e2") }));
     }
 
-    TEST_SECTION("TArray::RemoveAt (single / range)");
+    TEST_SECTION(TEXT("TArray::RemoveAt (single / range)"));
     {
-        TArray<FString> Array = { "0", "1", "2", "3", "4", "5" };
+        TArray<FString> Array = { TEXT("0"), TEXT("1"), TEXT("2"), TEXT("3"), TEXT("4"), TEXT("5") };
         Array.RemoveAt(0);
-        TEST_EXPECT(Array == TArray<FString>({ "1", "2", "3", "4", "5" }));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("1"), TEXT("2"), TEXT("3"), TEXT("4"), TEXT("5") }));
 
         Array.RemoveAt(1, 2);
-        TEST_EXPECT(Array == TArray<FString>({ "1", "4", "5" }));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("1"), TEXT("4"), TEXT("5") }));
 
         Array.RemoveAt(Array.Size() - 1);
-        TEST_EXPECT(Array == TArray<FString>({ "1", "4" }));
+        TEST_EXPECT(Array == TArray<FString>({ TEXT("1"), TEXT("4") }));
     }
 
-    TEST_SECTION("TArray::Swap / Fill / Append");
+    TEST_SECTION(TEXT("TArray::Swap / Fill / Append"));
     {
-        TArray<FString> First = { "a", "b" };
-        TArray<FString> Second = { "x", "y", "z" };
+        TArray<FString> First = { TEXT("a"), TEXT("b") };
+        TArray<FString> Second = { TEXT("x"), TEXT("y"), TEXT("z") };
         ::Swap(First, Second);
-        TEST_EXPECT(First == TArray<FString>({ "x", "y", "z" }));
-        TEST_EXPECT(Second == TArray<FString>({ "a", "b" }));
+        TEST_EXPECT(First == TArray<FString>({ TEXT("x"), TEXT("y"), TEXT("z") }));
+        TEST_EXPECT(Second == TArray<FString>({ TEXT("a"), TEXT("b") }));
 
-        First.Fill("F");
-        TEST_EXPECT(First == TArray<FString>({ "F", "F", "F" }));
+        First.Fill(TEXT("F"));
+        TEST_EXPECT(First == TArray<FString>({ TEXT("F"), TEXT("F"), TEXT("F") }));
 
-        First.Append({ "g", "h" });
-        TEST_EXPECT(First == TArray<FString>({ "F", "F", "F", "g", "h" }));
+        First.Append({ TEXT("g"), TEXT("h") });
+        TEST_EXPECT(First == TArray<FString>({ TEXT("F"), TEXT("F"), TEXT("F"), TEXT("g"), TEXT("h") }));
     }
 
-    TEST_SECTION("TArray heap operations (Heapify/HeapPush/HeapPop/HeapSort)");
+    TEST_SECTION(TEXT("TArray heap operations (Heapify/HeapPush/HeapPop/HeapSort)"));
     {
         TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
         Heap.Heapify();
@@ -393,24 +393,24 @@ bool TArray_Test()
         TEST_EXPECT(Sorted == TArray<int32>({ 1, 3, 4, 5, 6, 8, 9, 10, 13, 15, 17 }));
     }
 
-    TEST_SECTION("TArray with inline allocator");
+    TEST_SECTION(TEXT("TArray with inline allocator"));
     {
         TInlineArray<FString, 4> Array;
         for (int32 Index = 0; Index < 8; ++Index)
         {
-            Array.Add(FString::Printf("S%d", Index));
+            Array.Add(FString::Printf(TEXT("S%d"), Index));
         }
 
         TEST_EXPECT_EQ(Array.Size(), 8);
-        TEST_EXPECT(Array[0] == "S0" && Array[7] == "S7");
+        TEST_EXPECT(Array[0] == TEXT("S0") && Array[7] == TEXT("S7"));
 
-        Array.Insert(0, "front");
-        TEST_EXPECT(Array[0] == "front");
+        Array.Insert(0, TEXT("front"));
+        TEST_EXPECT(Array[0] == TEXT("front"));
         Array.RemoveAt(0);
-        TEST_EXPECT(Array[0] == "S0");
+        TEST_EXPECT(Array[0] == TEXT("S0"));
     }
 
-    TEST_SECTION("TArray iterator edge cases (forward / reverse / empty / erase-during-iteration)");
+    TEST_SECTION(TEXT("TArray iterator edge cases (forward / reverse / empty / erase-during-iteration)"));
     {
         // Empty container: range-for and explicit iterators must not execute the body.
         TArray<int32> Empty;
@@ -461,7 +461,7 @@ bool TArray_Test()
         TEST_EXPECT(Erase == TArray<int32>({ 1, 3, 5, 7 }));
     }
 
-    TEST_SECTION("TArray reallocation stress (FInstanced, seeded size sweep)");
+    TEST_SECTION(TEXT("TArray reallocation stress (FInstanced, seeded size sweep)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
@@ -525,7 +525,7 @@ bool TArray_Test()
         TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
-    TEST_SECTION("TArray heap-string reallocation stress (inline allocator, seeded size sweep)");
+    TEST_SECTION(TEXT("TArray heap-string reallocation stress (inline allocator, seeded size sweep)"));
     {
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
         {
@@ -535,7 +535,7 @@ bool TArray_Test()
 
             for (int32 Step = 0; Step < TargetSize; ++Step)
             {
-                FString Value = FString::Printf("StressString-%d-padding-to-exceed-inline-buffer", Step);
+                FString Value = FString::Printf(TEXT("StressString-%d-padding-to-exceed-inline-buffer"), Step);
                 if (!Array.IsEmpty() && Random.RandBool())
                 {
                     const int32 At = static_cast<int32>(Random.RandInt(0, Array.Size() - 1));
@@ -567,7 +567,7 @@ bool TArray_Test()
 
             if (!bMatches)
             {
-                LOG_ERROR("[STRESS FAIL] TArray<String> grow seed=%u size=%d", Seed, TargetSize);
+                LOG_ERROR("[STRESS FAIL] TArray<FString> grow seed=%u size=%d", Seed, TargetSize);
             }
 
             TEST_EXPECT(bMatches);

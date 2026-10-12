@@ -113,7 +113,7 @@ bool GizmoProjection_Test()
     const FMatrix4   ViewProjection = MakeFrontView() * MakeOrthographic();
     const FRectangle Viewport       = GetViewport();
 
-    TEST_SECTION("A known world point lands on a known pixel");
+    TEST_SECTION(TEXT("A known world point lands on a known pixel"));
     FVector2 Client(0.0f, 0.0f);
 
     TEST_EXPECT(FGizmoMath::WorldToClient(ViewProjection, Viewport, FVector3(0.0f, 0.0f, 0.0f), Client));
@@ -122,17 +122,17 @@ bool GizmoProjection_Test()
     TEST_EXPECT(FGizmoMath::WorldToClient(ViewProjection, Viewport, FVector3(1.0f, 0.0f, 0.0f), Client));
     TEST_EXPECT(IsNearly(Client, FVector2(500.0f, 300.0f)));
 
-    TEST_SECTION("Up in the world is up on the screen, which is down the pixels");
+    TEST_SECTION(TEXT("Up in the world is up on the screen, which is down the pixels"));
     TEST_EXPECT(FGizmoMath::WorldToClient(ViewProjection, Viewport, FVector3(0.0f, 1.0f, 0.0f), Client));
     TEST_EXPECT(IsNearly(Client, FVector2(400.0f, 200.0f)));
 
-    TEST_SECTION("A point behind the camera has nowhere to land");
+    TEST_SECTION(TEXT("A point behind the camera has nowhere to land"));
     const FMatrix4 PerspectiveViewProjection = MakeFrontView() * MakePerspective();
 
     TEST_EXPECT(FGizmoMath::WorldToClient(PerspectiveViewProjection, Viewport, FVector3(0.0f, 0.0f, 0.0f), Client));
     TEST_EXPECT(!FGizmoMath::WorldToClient(PerspectiveViewProjection, Viewport, FVector3(0.0f, 0.0f, -20.0f), Client));
 
-    TEST_SECTION("The ray through a pixel passes back through the point that projected onto it");
+    TEST_SECTION(TEXT("The ray through a pixel passes back through the point that projected onto it"));
     const FVector3 Sample(0.5f, -0.25f, 0.0f);
 
     FVector3 RayOrigin;
@@ -142,25 +142,25 @@ bool GizmoProjection_Test()
     const FVector3 Closest = RayOrigin + (RayDirection * (Sample - RayOrigin).DotProduct(RayDirection));
     TEST_EXPECT(IsNearly(Closest, Sample));
 
-    TEST_SECTION("A ray meets the plane it is cast at, and misses the one behind it");
+    TEST_SECTION(TEXT("A ray meets the plane it is cast at, and misses the one behind it"));
     FVector3 Hit;
     TEST_EXPECT(FGizmoMath::IntersectRayPlane(FVector3(0.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 1.0f), RayOrigin, RayDirection, Hit));
     TEST_EXPECT(IsNearly(Hit, Sample));
 
     TEST_EXPECT(!FGizmoMath::IntersectRayPlane(FVector3(0.0f, 0.0f, 0.0f), FVector3(0.0f, 1.0f, 0.0f), FVector3(0.0f, 5.0f, 0.0f), FVector3(1.0f, 0.0f, 0.0f), Hit));
 
-    TEST_SECTION("The plane an axis is dragged on holds that axis and turns to face the camera");
+    TEST_SECTION(TEXT("The plane an axis is dragged on holds that axis and turns to face the camera"));
     const FVector3 PlaneNormal = FGizmoMath::ComputeAxisPlaneNormal(FVector3(1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 1.0f));
 
     TEST_EXPECT(IsNearly(PlaneNormal.DotProduct(FVector3(1.0f, 0.0f, 0.0f)), 0.0f));
     TEST_EXPECT(IsNearly(Math::Abs(PlaneNormal.DotProduct(FVector3(0.0f, 0.0f, 1.0f))), 1.0f));
 
-    TEST_SECTION("Distance to a segment measures across it between the ends and to an end beyond them");
+    TEST_SECTION(TEXT("Distance to a segment measures across it between the ends and to an end beyond them"));
     TEST_EXPECT(IsNearly(FGizmoMath::DistanceToSegment(FVector2(5.0f, 3.0f), FVector2(0.0f, 0.0f), FVector2(10.0f, 0.0f)), 3.0f));
     TEST_EXPECT(IsNearly(FGizmoMath::DistanceToSegment(FVector2(-4.0f, 0.0f), FVector2(0.0f, 0.0f), FVector2(10.0f, 0.0f)), 4.0f));
     TEST_EXPECT(IsNearly(FGizmoMath::DistanceToSegment(FVector2(0.0f, 0.0f), FVector2(2.0f, 2.0f), FVector2(2.0f, 2.0f)), Math::Sqrt(8.0f)));
 
-    TEST_SECTION("A quad takes the points inside it, and those within the padding of an edge");
+    TEST_SECTION(TEXT("A quad takes the points inside it, and those within the padding of an edge"));
     const FVector2 Quad[4] =
     {
         FVector2(0.0f, 0.0f),
@@ -174,14 +174,14 @@ bool GizmoProjection_Test()
     TEST_EXPECT(FGizmoMath::IsPointOverQuad(FVector2(13.0f, 5.0f), Quad, 6.0f));
     TEST_EXPECT(!FGizmoMath::IsPointOverQuad(FVector2(20.0f, 5.0f), Quad, 6.0f));
 
-    TEST_SECTION("Snapping quantises to the nearest stop, and does nothing at all when it is off");
+    TEST_SECTION(TEXT("Snapping quantises to the nearest stop, and does nothing at all when it is off"));
     TEST_EXPECT_EQ(FGizmoMath::SnapValue(1.3f, 0.25f), 1.25f);
     TEST_EXPECT_EQ(FGizmoMath::SnapValue(1.4f, 0.25f), 1.5f);
     TEST_EXPECT_EQ(FGizmoMath::SnapValue(-1.3f, 0.25f), -1.25f);
     TEST_EXPECT_EQ(FGizmoMath::SnapValue(7.7f, 0.0f), 7.7f);
     TEST_EXPECT(IsNearly(FGizmoMath::SnapVector(FVector3(1.3f, -0.4f, 2.6f), 0.5f), FVector3(1.5f, -0.5f, 2.5f)));
 
-    TEST_SECTION("An axis pointing at the camera projects to nothing, which is how it is spotted");
+    TEST_SECTION(TEXT("An axis pointing at the camera projects to nothing, which is how it is spotted"));
     const float AspectRatio = static_cast<float>(ViewportWidth) / static_cast<float>(ViewportHeight);
 
     const float AcrossLength = FGizmoMath::GetSegmentLengthInClipSpace(ViewProjection, AspectRatio, FVector3(0.0f, 0.0f, 0.0f), FVector3(1.0f, 0.0f, 0.0f));
@@ -190,14 +190,14 @@ bool GizmoProjection_Test()
     TEST_EXPECT(AcrossLength > 0.2f);
     TEST_EXPECT(AwayLength < 0.0001f);
 
-    TEST_SECTION("A plane seen edge-on covers no area, and one facing the camera covers plenty");
+    TEST_SECTION(TEXT("A plane seen edge-on covers no area, and one facing the camera covers plenty"));
     const float FacingArea = FGizmoMath::GetParallelogramArea(ViewProjection, AspectRatio, FVector3(0.0f, 0.0f, 0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector3(0.0f, 1.0f, 0.0f));
     const float EdgeOnArea = FGizmoMath::GetParallelogramArea(ViewProjection, AspectRatio, FVector3(0.0f, 0.0f, 0.0f), FVector3(1.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 1.0f));
 
     TEST_EXPECT(FacingArea > 0.05f);
     TEST_EXPECT(EdgeOnArea < 0.0001f);
 
-    TEST_SECTION("The screen factor holds the gizmo one size on screen however far away it is");
+    TEST_SECTION(TEXT("The screen factor holds the gizmo one size on screen however far away it is"));
     const FVector3 CameraRight(1.0f, 0.0f, 0.0f);
 
     const float NearFactor = FGizmoMath::ComputeScreenFactor(ViewProjection, CameraRight, FVector3(0.0f, 0.0f, 0.0f), FGizmo::SizeInClipSpace);
@@ -206,7 +206,7 @@ bool GizmoProjection_Test()
     TEST_EXPECT(IsNearly(NearFactor, 0.4f));
     TEST_EXPECT(IsNearly(FarFactor, NearFactor));
 
-    TEST_SECTION("Under perspective the same size on screen costs twice the world units at twice the distance");
+    TEST_SECTION(TEXT("Under perspective the same size on screen costs twice the world units at twice the distance"));
     const float CloseFactor  = FGizmoMath::ComputeScreenFactor(PerspectiveViewProjection, CameraRight, FVector3(0.0f, 0.0f, 0.0f), FGizmo::SizeInClipSpace);
     const float DistantFactor = FGizmoMath::ComputeScreenFactor(PerspectiveViewProjection, CameraRight, FVector3(0.0f, 0.0f, 10.0f), FGizmo::SizeInClipSpace);
 
@@ -221,11 +221,11 @@ bool GizmoHitTest_Test()
 
     TSharedPtr<FGizmo> Gizmo = MakeGizmo(EGizmoOperation::Translate, EGizmoMode::World);
 
-    TEST_SECTION("The gizmo reaches as far as it needs to for the size it wants on screen");
+    TEST_SECTION(TEXT("The gizmo reaches as far as it needs to for the size it wants on screen"));
     TEST_EXPECT(IsNearly(Gizmo->GetScreenFactor(), 0.48f));
     TEST_EXPECT(Gizmo->IsProjected());
 
-    TEST_SECTION("An axis pointing at the camera is culled, and so are the planes standing edge-on");
+    TEST_SECTION(TEXT("An axis pointing at the camera is culled, and so are the planes standing edge-on"));
     TEST_EXPECT(Gizmo->IsAxisVisible(0));
     TEST_EXPECT(Gizmo->IsAxisVisible(1));
     TEST_EXPECT(!Gizmo->IsAxisVisible(2));
@@ -234,7 +234,7 @@ bool GizmoHitTest_Test()
     TEST_EXPECT(!Gizmo->IsPlaneVisible(0));
     TEST_EXPECT(!Gizmo->IsPlaneVisible(1));
 
-    TEST_SECTION("The cursor on a shaft picks that axis, and thirty pixels off it picks nothing");
+    TEST_SECTION(TEXT("The cursor on a shaft picks that axis, and thirty pixels off it picks nothing"));
     Gizmo->OnMouseMove(MakeMoveEvent(FIntVector2(423, 300)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::TranslateX);
     TEST_EXPECT(Gizmo->IsHovered());
@@ -246,7 +246,7 @@ bool GizmoHitTest_Test()
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::None);
     TEST_EXPECT(!Gizmo->IsHovered());
 
-    TEST_SECTION("A host re-pushing what the gizmo already has keeps the hover, since nothing moved under the cursor");
+    TEST_SECTION(TEXT("A host re-pushing what the gizmo already has keeps the hover, since nothing moved under the cursor"));
     Gizmo->OnMouseMove(MakeMoveEvent(FIntVector2(423, 300)));
 
     Gizmo->SetOperation(EGizmoOperation::Translate);
@@ -256,7 +256,7 @@ bool GizmoHitTest_Test()
 
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::TranslateX);
 
-    TEST_SECTION("Changing the handle set does drop it, since the handle it named is gone with the set");
+    TEST_SECTION(TEXT("Changing the handle set does drop it, since the handle it named is gone with the set"));
     Gizmo->SetOperation(EGizmoOperation::Rotate);
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::None);
 
@@ -268,11 +268,11 @@ bool GizmoHitTest_Test()
 
     Gizmo->SetMode(EGizmoMode::World);
 
-    TEST_SECTION("The square at the pivot takes the cursor before any axis does");
+    TEST_SECTION(TEXT("The square at the pivot takes the cursor before any axis does"));
     Gizmo->OnMouseMove(MakeMoveEvent(FIntVector2(400, 300)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::TranslateScreen);
 
-    TEST_SECTION("A plane handle takes the cursor inside its quad and just outside its edge");
+    TEST_SECTION(TEXT("A plane handle takes the cursor inside its quad and just outside its edge"));
     Gizmo->OnMouseMove(MakeMoveEvent(FIntVector2(420, 280)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::TranslateXY);
 
@@ -282,12 +282,12 @@ bool GizmoHitTest_Test()
     Gizmo->OnMouseMove(MakeMoveEvent(FIntVector2(444, 280)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::None);
 
-    TEST_SECTION("A press on nothing is left for whatever is behind the gizmo");
+    TEST_SECTION(TEXT("A press on nothing is left for whatever is behind the gizmo"));
     const FEventResponse Response = Gizmo->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(700, 500)));
     TEST_EXPECT(!Response.IsEventHandled());
     TEST_EXPECT(!Gizmo->IsDragging());
 
-    TEST_SECTION("Rotation picks the ring the cursor is on, and the outer ring outside them all");
+    TEST_SECTION(TEXT("Rotation picks the ring the cursor is on, and the outer ring outside them all"));
     Gizmo->SetCamera(MakeCornerView(), MakeOrthographic(), true);
     Gizmo->SetOperation(EGizmoOperation::Rotate);
 
@@ -309,7 +309,7 @@ bool GizmoHitTest_Test()
     Gizmo->OnMouseMove(MakeMoveEvent(ToPixel(MakeCornerView(), MakeOrthographic(), OnOuterRing)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::RotateScreen);
 
-    TEST_SECTION("Scale picks the knob at the end of an axis, and the one at the pivot");
+    TEST_SECTION(TEXT("Scale picks the knob at the end of an axis, and the one at the pivot"));
     Gizmo->SetCamera(MakeFrontView(), MakeOrthographic(), true);
     Gizmo->SetOperation(EGizmoOperation::Scale);
 
@@ -319,14 +319,14 @@ bool GizmoHitTest_Test()
     Gizmo->OnMouseMove(MakeMoveEvent(FIntVector2(400, 300)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::ScaleUniform);
 
-    TEST_SECTION("Scale has the same plane quads translate does, in the same places");
+    TEST_SECTION(TEXT("Scale has the same plane quads translate does, in the same places"));
     Gizmo->OnMouseMove(MakeMoveEvent(FIntVector2(420, 280)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::ScaleXY);
 
     Gizmo->OnMouseMove(MakeMoveEvent(FIntVector2(444, 280)));
     TEST_EXPECT(Gizmo->GetHoveredHandle() == EGizmoHandle::None);
 
-    TEST_SECTION("Nothing is drawn and nothing can be grabbed while the pivot is behind the camera");
+    TEST_SECTION(TEXT("Nothing is drawn and nothing can be grabbed while the pivot is behind the camera"));
     Gizmo->SetCamera(MakeFrontView(), MakePerspective(), false);
     Gizmo->SetTransform(FMatrix4::Translation(FVector3(0.0f, 0.0f, -30.0f)));
 
@@ -339,7 +339,7 @@ bool GizmoHitTest_Test()
     Gizmo->OnDraw(FDrawGeometry(Gizmo->GetContentRectangle(), 1.0f), CommandList, 0);
     TEST_EXPECT(CommandList.GetCommands().IsEmpty());
 
-    TEST_SECTION("Back in front of the camera it draws again");
+    TEST_SECTION(TEXT("Back in front of the camera it draws again"));
     Gizmo->SetTransform(FMatrix4::Identity());
     TEST_EXPECT(Gizmo->IsProjected());
 
@@ -368,7 +368,7 @@ bool GizmoDrag_Test()
 
     TSharedPtr<FGizmo> Gizmo = MakeGizmo(EGizmoOperation::Translate, EGizmoMode::World, Desc);
 
-    TEST_SECTION("A drag along an axis moves along it and leaves the other two alone");
+    TEST_SECTION(TEXT("A drag along an axis moves along it and leaves the other two alone"));
     DragGizmo(Gizmo, FIntVector2(423, 300), FIntVector2(523, 300));
 
     TEST_EXPECT(IsNearly(Gizmo->GetTransform().GetTranslation(), FVector3(1.0f, 0.0f, 0.0f)));
@@ -376,13 +376,13 @@ bool GizmoDrag_Test()
     TEST_EXPECT(IsNearly(LastDelta.GetTranslation(), FVector3(1.0f, 0.0f, 0.0f)));
     TEST_EXPECT(!Gizmo->IsDragging());
 
-    TEST_SECTION("A cursor wandering off the axis still only moves along it");
+    TEST_SECTION(TEXT("A cursor wandering off the axis still only moves along it"));
     Gizmo->SetTransform(FMatrix4::Identity());
     DragGizmo(Gizmo, FIntVector2(423, 300), FIntVector2(523, 380));
 
     TEST_EXPECT(IsNearly(Gizmo->GetTransform().GetTranslation(), FVector3(1.0f, 0.0f, 0.0f)));
 
-    TEST_SECTION("Snapping quantises the step the drag made");
+    TEST_SECTION(TEXT("Snapping quantises the step the drag made"));
     FGizmoSnapSettings Snap;
     Snap.TranslationSnap = 0.25f;
 
@@ -394,17 +394,17 @@ bool GizmoDrag_Test()
 
     Gizmo->SetSnap(FGizmoSnapSettings());
 
-    TEST_SECTION("A plane handle moves in both of the axes it spans");
+    TEST_SECTION(TEXT("A plane handle moves in both of the axes it spans"));
     Gizmo->SetTransform(FMatrix4::Identity());
     DragGizmo(Gizmo, FIntVector2(420, 280), FIntVector2(520, 380));
 
     TEST_EXPECT(IsNearly(Gizmo->GetTransform().GetTranslation(), FVector3(1.0f, -1.0f, 0.0f)));
 
-    TEST_SECTION("The delta is the step from where the drag began, so it lands on the same transform");
+    TEST_SECTION(TEXT("The delta is the step from where the drag began, so it lands on the same transform"));
     const FMatrix4 Composed = FMatrix4::Identity() * LastDelta;
     TEST_EXPECT(Composed.IsEqual(Gizmo->GetTransform()));
 
-    TEST_SECTION("A ring turns the transform about its own axis");
+    TEST_SECTION(TEXT("A ring turns the transform about its own axis"));
     Gizmo->SetCamera(MakeCornerView(), MakeOrthographic(), true);
     Gizmo->SetOperation(EGizmoOperation::Rotate);
     Gizmo->SetTransform(FMatrix4::Identity());
@@ -423,7 +423,7 @@ bool GizmoDrag_Test()
     TEST_EXPECT(IsNearly(GetRow(Turned, 1), FVector3(-1.0f, 0.0f, 0.0f), 0.05f));
     TEST_EXPECT(IsNearly(GetRow(Turned, 2), FVector3(0.0f, 0.0f, 1.0f), 0.05f));
 
-    TEST_SECTION("A rotation snap holds the turn to whole increments");
+    TEST_SECTION(TEXT("A rotation snap holds the turn to whole increments"));
     Snap = FGizmoSnapSettings();
     Snap.RotationSnapDegrees = 45.0f;
 
@@ -442,7 +442,7 @@ bool GizmoDrag_Test()
 
     Gizmo->SetSnap(FGizmoSnapSettings());
 
-    TEST_SECTION("A scale knob multiplies the axis it belongs to and nothing else");
+    TEST_SECTION(TEXT("A scale knob multiplies the axis it belongs to and nothing else"));
     Gizmo->SetCamera(MakeFrontView(), MakeOrthographic(), true);
     Gizmo->SetOperation(EGizmoOperation::Scale);
     Gizmo->SetTransform(FMatrix4::Identity());
@@ -455,7 +455,7 @@ bool GizmoDrag_Test()
     TEST_EXPECT(IsNearly(GetRow(Scaled, 2), FVector3(0.0f, 0.0f, 1.0f)));
     TEST_EXPECT(IsNearly(Scaled.GetTranslation(), FVector3(0.0f, 0.0f, 0.0f)));
 
-    TEST_SECTION("A scale snap holds the factor to whole increments");
+    TEST_SECTION(TEXT("A scale snap holds the factor to whole increments"));
     Snap = FGizmoSnapSettings();
     Snap.ScaleSnap = 0.5f;
 
@@ -467,7 +467,7 @@ bool GizmoDrag_Test()
 
     Gizmo->SetSnap(FGizmoSnapSettings());
 
-    TEST_SECTION("A scale plane handle carries a factor of its own for each of the two axes it spans");
+    TEST_SECTION(TEXT("A scale plane handle carries a factor of its own for each of the two axes it spans"));
     Gizmo->SetTransform(FMatrix4::Identity());
     DragGizmo(Gizmo, FIntVector2(420, 280), FIntVector2(440, 270));
 
@@ -476,7 +476,7 @@ bool GizmoDrag_Test()
     TEST_EXPECT(IsNearly(GetRow(Planar, 1), FVector3(0.0f, 1.5f, 0.0f)));
     TEST_EXPECT(IsNearly(GetRow(Planar, 2), FVector3(0.0f, 0.0f, 1.0f)));
 
-    TEST_SECTION("Universal scale drags every axis together, whichever handle it was grabbed by");
+    TEST_SECTION(TEXT("Universal scale drags every axis together, whichever handle it was grabbed by"));
     Gizmo->SetOperation(EGizmoOperation::UniversalScale);
     Gizmo->SetTransform(FMatrix4::Identity());
 
@@ -510,7 +510,7 @@ bool GizmoDeltaContract_Test()
 
     TSharedPtr<FGizmo> Gizmo = MakeGizmo(EGizmoOperation::Translate, EGizmoMode::World, Desc);
 
-    TEST_SECTION("Every frame of a drag reports the whole step from where it began, not the step since the frame before");
+    TEST_SECTION(TEXT("Every frame of a drag reports the whole step from where it began, not the step since the frame before"));
     constexpr int32 NumSteps      = 10;
     constexpr int32 PixelsPerStep = 10;
 
@@ -526,20 +526,20 @@ bool GizmoDeltaContract_Test()
 
     TEST_EXPECT_EQ(Changes, NumSteps);
 
-    TEST_SECTION("So the transform the drag began on, times the last delta, is where the cursor left it");
+    TEST_SECTION(TEXT("So the transform the drag began on, times the last delta, is where the cursor left it"));
     TEST_EXPECT(IsNearly((FMatrix4::Identity() * LastDelta).GetTranslation(), Gizmo->GetTransform().GetTranslation()));
     TEST_EXPECT(IsNearly(Gizmo->GetTransform().GetTranslation(), FVector3(1.0f, 0.0f, 0.0f)));
 
-    TEST_SECTION("Composing all of them instead overshoots by their sum, which is the runaway a host must not write");
+    TEST_SECTION(TEXT("Composing all of them instead overshoots by their sum, which is the runaway a host must not write"));
     TEST_EXPECT(IsNearly(Compounded.GetTranslation(), FVector3(5.5f, 0.0f, 0.0f)));
 
-    TEST_SECTION("A second drag measures from where the first one left off rather than from the origin");
+    TEST_SECTION(TEXT("A second drag measures from where the first one left off rather than from the origin"));
     DragGizmo(Gizmo, FIntVector2(523, 300), FIntVector2(573, 300));
 
     TEST_EXPECT(IsNearly(LastDelta.GetTranslation(), FVector3(0.5f, 0.0f, 0.0f)));
     TEST_EXPECT(IsNearly(Gizmo->GetTransform().GetTranslation(), FVector3(1.5f, 0.0f, 0.0f)));
 
-    TEST_SECTION("A scale drag holds the pivot still, so a host applying the delta resizes about it and does not slide");
+    TEST_SECTION(TEXT("A scale drag holds the pivot still, so a host applying the delta resizes about it and does not slide"));
     TSharedPtr<FGizmo> ScaleGizmo = MakeGizmo(EGizmoOperation::Scale, EGizmoMode::World, Desc);
     ScaleGizmo->SetTransform(FMatrix4::Translation(FVector3(2.0f, 0.0f, 0.0f)));
 
@@ -551,11 +551,11 @@ bool GizmoDeltaContract_Test()
     TEST_EXPECT(IsNearly(GetRow(ScaleGizmo->GetTransform(), 0), FVector3(2.0f, 0.0f, 0.0f)));
     TEST_EXPECT(IsNearly(LastDelta.TransformCoord(ScalePivot), ScalePivot));
 
-    TEST_SECTION("An actor away from that pivot moves out from it by the same factor rather than staying put");
+    TEST_SECTION(TEXT("An actor away from that pivot moves out from it by the same factor rather than staying put"));
     const FVector3 AwayFromPivot(3.0f, 0.0f, 0.0f);
     TEST_EXPECT(IsNearly(LastDelta.TransformCoord(AwayFromPivot), FVector3(4.0f, 0.0f, 0.0f)));
 
-    TEST_SECTION("A turned gizmo scales along the axis its handle is drawn on, not along the world axis behind it");
+    TEST_SECTION(TEXT("A turned gizmo scales along the axis its handle is drawn on, not along the world axis behind it"));
     TSharedPtr<FGizmo> TurnedGizmo = MakeGizmo(EGizmoOperation::Scale, EGizmoMode::Local, Desc);
     TurnedGizmo->SetTransform(FMatrix4::RotationZ(Math::Constants::PI * 0.5f));
 
@@ -587,15 +587,15 @@ bool GizmoModes_Test()
 
     const FMatrix4 Turned = FMatrix4::RotationZ(Math::Constants::HalfPI);
 
-    TEST_SECTION("World mode lines the handles up with the world, whatever the transform is doing");
+    TEST_SECTION(TEXT("World mode lines the handles up with the world, whatever the transform is doing"));
     Gizmo->SetTransform(Turned);
     TEST_EXPECT(IsNearly(Gizmo->GetAxisDirection(0), FVector3(1.0f, 0.0f, 0.0f)));
 
-    TEST_SECTION("Local mode lines them up with the transform");
+    TEST_SECTION(TEXT("Local mode lines them up with the transform"));
     Gizmo->SetMode(EGizmoMode::Local);
     TEST_EXPECT(IsNearly(Gizmo->GetAxisDirection(0), FVector3(0.0f, 1.0f, 0.0f)));
 
-    TEST_SECTION("So a drag on the same handle moves the transform a different way in each mode");
+    TEST_SECTION(TEXT("So a drag on the same handle moves the transform a different way in each mode"));
     Gizmo->SetTransform(FMatrix4::Identity());
     DragGizmo(Gizmo, FIntVector2(423, 300), FIntVector2(523, 300));
 
@@ -614,14 +614,14 @@ bool GizmoModes_Test()
     DragGizmo(Gizmo, FIntVector2(400, 277), FIntVector2(400, 177));
     TEST_EXPECT(IsNearly(Gizmo->GetTransform().GetTranslation(), FVector3(0.0f, 1.0f, 0.0f)));
 
-    TEST_SECTION("Scale keeps to the transform's own axes even when the mode says otherwise");
+    TEST_SECTION(TEXT("Scale keeps to the transform's own axes even when the mode says otherwise"));
     Gizmo->SetMode(EGizmoMode::World);
     Gizmo->SetOperation(EGizmoOperation::Scale);
     Gizmo->SetTransform(Turned);
 
     TEST_EXPECT(IsNearly(Gizmo->GetAxisDirection(0), FVector3(0.0f, 1.0f, 0.0f)));
 
-    TEST_SECTION("A drag holds the gizmo: the transform, the mode and the operation are all its own until it ends");
+    TEST_SECTION(TEXT("A drag holds the gizmo: the transform, the mode and the operation are all its own until it ends"));
     Gizmo->SetOperation(EGizmoOperation::Translate);
     Gizmo->SetMode(EGizmoMode::Local);
     Gizmo->SetTransform(FMatrix4::Identity());
@@ -649,7 +649,7 @@ bool GizmoModes_Test()
     TEST_EXPECT(Gizmo->GetActiveHandle() == EGizmoHandle::None);
     TEST_EXPECT_EQ(DragsFinished, DragsStarted);
 
-    TEST_SECTION("And once it has ended the settings take again");
+    TEST_SECTION(TEXT("And once it has ended the settings take again"));
     Gizmo->SetOperation(EGizmoOperation::Rotate);
     TEST_EXPECT(Gizmo->GetOperation() == EGizmoOperation::Rotate);
 

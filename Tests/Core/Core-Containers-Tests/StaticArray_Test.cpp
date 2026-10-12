@@ -10,7 +10,7 @@ bool TStaticArray_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Size / Capacity / SizeInBytes / indexing");
+    TEST_SECTION(TEXT("Size / Capacity / SizeInBytes / indexing"));
     {
         TStaticArray<int32, 5> Array = { 10, 20, 30, 40, 50 };
         TEST_EXPECT_EQ(Array.Size(), 5);
@@ -25,7 +25,7 @@ bool TStaticArray_Test()
         TEST_EXPECT(!Array.IsValidIndex(-1));
     }
 
-    TEST_SECTION("First / Last / Data");
+    TEST_SECTION(TEXT("First / Last / Data"));
     {
         TStaticArray<int32, 5> Array = { 1, 2, 3, 4, 5 };
         TEST_EXPECT_EQ(Array.First(), 1);
@@ -38,7 +38,7 @@ bool TStaticArray_Test()
         TEST_EXPECT_EQ(ConstArray.Last(), 5);
     }
 
-    TEST_SECTION("Fill / Memzero");
+    TEST_SECTION(TEXT("Fill / Memzero"));
     {
         TStaticArray<int32, 5> Array = { 1, 2, 3, 4, 5 };
         Array.Fill(7);
@@ -55,7 +55,7 @@ bool TStaticArray_Test()
         }
     }
 
-    TEST_SECTION("Find / FindLast / Contains / predicates");
+    TEST_SECTION(TEXT("Find / FindLast / Contains / predicates"));
     {
         TStaticArray<int32, 5> Array = { 5, 10, 15, 10, 25 };
         TEST_EXPECT_EQ(Array.Find(15), 2);
@@ -79,7 +79,7 @@ bool TStaticArray_Test()
         }), 3);
     }
 
-    TEST_SECTION("Swap(index, index) / Foreach");
+    TEST_SECTION(TEXT("Swap(index, index) / Foreach"));
     {
         TStaticArray<int32, 5> Array = { 1, 2, 3, 4, 5 };
         Array.Swap(0, 4);
@@ -96,7 +96,7 @@ bool TStaticArray_Test()
         TEST_EXPECT_EQ(Sum, 15);
     }
 
-    TEST_SECTION("Range-based iteration");
+    TEST_SECTION(TEXT("Range-based iteration"));
     {
         TStaticArray<int32, 5> Array = { 2, 4, 6, 8, 10 };
         
@@ -109,7 +109,7 @@ bool TStaticArray_Test()
         TEST_EXPECT_EQ(Sum, 30);
     }
 
-    TEST_SECTION("operator== / operator!= against TArray");
+    TEST_SECTION(TEXT("operator== / operator!= against TArray"));
     {
         TStaticArray<int32, 5> Array = { 1, 2, 3, 4, 5 };
         
@@ -120,7 +120,7 @@ bool TStaticArray_Test()
         TEST_EXPECT(Array != Different);
     }
 
-    TEST_SECTION("Whole-array ::Swap / partial initializer list");
+    TEST_SECTION(TEXT("Whole-array ::Swap / partial initializer list"));
     {
         TStaticArray<uint32, 6> First = { 5, 6, 7 };
         TStaticArray<uint32, 6> Second = { 15, 16, 17 };

@@ -12,7 +12,7 @@ bool TMap_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Add / Size / Find / Contains");
+    TEST_SECTION(TEXT("Add / Size / Find / Contains"));
     {
         TMap<int32, int32> Map;
         TEST_EXPECT_EQ(Map.Size(), 0);
@@ -36,7 +36,7 @@ bool TMap_Test()
         TEST_EXPECT(!Map.Contains(99));
     }
 
-    TEST_SECTION("operator[] update / insert default");
+    TEST_SECTION(TEXT("operator[] update / insert default"));
     {
         TMap<int32, int32> Map;
         Map.Add(2, 200);
@@ -49,7 +49,7 @@ bool TMap_Test()
         TEST_EXPECT(Map.Contains(10));
     }
 
-    TEST_SECTION("Add(Key) reference / RemoveKey");
+    TEST_SECTION(TEXT("Add(Key) reference / RemoveKey"));
     {
         TMap<int32, int32> Map;
         Map.Add(1, 1);
@@ -62,7 +62,7 @@ bool TMap_Test()
         TEST_EXPECT(!Map.RemoveKey(1));
     }
 
-    TEST_SECTION("Growth / rehash (1000 entries) / Clear");
+    TEST_SECTION(TEXT("Growth / rehash (1000 entries) / Clear"));
     {
         TMap<int32, int32> Big;
         for (int32 Index = 0; Index < 1000; ++Index)
@@ -85,19 +85,19 @@ bool TMap_Test()
         TEST_EXPECT_EQ(Big.Size(), 0);
     }
 
-    TEST_SECTION("String keys (non-trivial key hashing)");
+    TEST_SECTION(TEXT("FString keys (non-trivial key hashing)"));
     {
         TMap<FString, int32> StringMap;
-        StringMap.Add(FString("one"), 1);
-        StringMap.Add(FString("two"), 2);
+        StringMap.Add(FString(TEXT("one")), 1);
+        StringMap.Add(FString(TEXT("two")), 2);
 
-        TEST_EXPECT(StringMap.Contains(FString("one")));
+        TEST_EXPECT(StringMap.Contains(FString(TEXT("one"))));
 
-        const int32* OneValue = StringMap.Find(FString("one"));
+        const int32* OneValue = StringMap.Find(FString(TEXT("one")));
         TEST_EXPECT(OneValue != nullptr && *OneValue == 1);
     }
 
-    TEST_SECTION("Emplace / Append / FindOrAdd / Remove");
+    TEST_SECTION(TEXT("Emplace / Append / FindOrAdd / Remove"));
     {
         TMap<int32, int32> Map;
         Map.Emplace(1, 10);
@@ -123,7 +123,7 @@ bool TMap_Test()
         TEST_EXPECT(!Map.Contains(1));
     }
 
-    TEST_SECTION("GetKeys / GetValues / Foreach / iterators");
+    TEST_SECTION(TEXT("GetKeys / GetValues / Foreach / iterators"));
     {
         TMap<int32, int32> Map;
         for (int32 Index = 1; Index <= 5; ++Index)
@@ -166,7 +166,7 @@ bool TMap_Test()
         TEST_EXPECT_EQ(RangeKeySum, 15);
     }
 
-    TEST_SECTION("operator== / operator!= / copy / move / assignment");
+    TEST_SECTION(TEXT("operator== / operator!= / copy / move / assignment"));
     {
         TMap<int32, int32> First;
         First.Add(1, 1);
@@ -186,7 +186,7 @@ bool TMap_Test()
         TEST_EXPECT(Fourth == First);
     }
 
-    TEST_SECTION("Count / RemoveKey(out) / Reserve / Rehash / load factor");
+    TEST_SECTION(TEXT("Count / RemoveKey(out) / Reserve / Rehash / load factor"));
     {
         TMap<int32, int32> Map;
         Map.Add(1, 100);
@@ -209,7 +209,7 @@ bool TMap_Test()
         TEST_EXPECT(Map.Contains(5));
     }
 
-    TEST_SECTION("Reserve keeps Find pointers until rehash");
+    TEST_SECTION(TEXT("Reserve keeps Find pointers until rehash"));
     {
         TMap<int32, int32> Map;
         Map.Reserve(256);
@@ -230,7 +230,7 @@ bool TMap_Test()
         TEST_EXPECT(*Pointer == 7);
     }
 
-    TEST_SECTION("Iterator decrement from end");
+    TEST_SECTION(TEXT("Iterator decrement from end"));
     {
         TMap<int32, int32> Map;
         Map.Add(1, 10);
@@ -249,7 +249,7 @@ bool TMap_Test()
         TEST_EXPECT_EQ(Sum, 60);
     }
 
-    TEST_SECTION("TMap rehash stress (FInstanced values, seeded size sweep vs std::map)");
+    TEST_SECTION(TEXT("TMap rehash stress (FInstanced values, seeded size sweep vs std::map)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
@@ -301,7 +301,7 @@ bool TMap_Test()
         TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
-    TEST_SECTION("TInlineMap stays inline then spills to the heap");
+    TEST_SECTION(TEXT("TInlineMap stays inline then spills to the heap"));
     {
         TInlineMap<int32, int32, 4> Map;
         TEST_EXPECT(!Map.IsHeapAllocated());
@@ -336,10 +336,10 @@ bool TMap_Test()
         TEST_EXPECT_EQ(*Moved.Find(7), 70);
 
         TInlineMap<FString, int32, 4> Strings;
-        Strings.Add(FString("alpha"), 1);
-        Strings.Add(FString("beta"), 2);
+        Strings.Add(FString(TEXT("alpha")), 1);
+        Strings.Add(FString(TEXT("beta")), 2);
         TEST_EXPECT(!Strings.IsHeapAllocated());
-        TEST_EXPECT_EQ(*Strings.Find(FString("beta")), 2);
+        TEST_EXPECT_EQ(*Strings.Find(FString(TEXT("beta"))), 2);
 
         Moved.Reset();
         TEST_EXPECT(!Moved.IsHeapAllocated());

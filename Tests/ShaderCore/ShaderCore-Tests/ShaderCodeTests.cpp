@@ -71,7 +71,7 @@ bool ShaderCodeRoundTrip_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A release DXIL container with 6 bindings is 52 bytes plus the code");
+    TEST_SECTION(TEXT("A release DXIL container with 6 bindings is 52 bytes plus the code"));
     {
         const FShaderReflection Reflection = CreateSixBindings();
 
@@ -97,21 +97,21 @@ bool ShaderCodeRoundTrip_Test()
         TEST_EXPECT(CodeView.GetVertexInputs().IsEmpty());
         TEST_EXPECT(CodeView.GetEntryPoint()[0] == '\0');
 
-        TEST_SECTION("The native code is 4-byte aligned and byte-identical to the input");
+        TEST_SECTION(TEXT("The native code is 4-byte aligned and byte-identical to the input"));
         TEST_EXPECT(IsAligned(CodeView.GetNativeCode().Data(), FShaderCodeWriter::CodeAlignment));
         TEST_EXPECT(NativeCodeMatches(CodeView.GetNativeCode()));
 
-        TEST_SECTION("Release containers report empty binding names");
+        TEST_SECTION(TEXT("Release containers report empty binding names"));
         for (int32 Index = 0; Index < CodeView.GetBindings().Size(); ++Index)
         {
             TEST_EXPECT(CodeView.GetBindingName(Index)[0] == '\0');
         }
     }
 
-    TEST_SECTION("A SPIR-V container with 6 bindings and entry point 'main' is 80 bytes plus the code");
+    TEST_SECTION(TEXT("A SPIR-V container with 6 bindings and entry point 'main' is 80 bytes plus the code"));
     {
         FShaderReflection Reflection = CreateSixBindings();
-        Reflection.EntryPoint = "main";
+        Reflection.EntryPoint = TEXT("main");
         for (uint16 Index = 0; Index < 6; ++Index)
         {
             Reflection.SpirvOffsets.Add({ static_cast<uint16>(100 + Index * 8), static_cast<uint16>(104 + Index * 8) });
@@ -123,11 +123,11 @@ bool ShaderCodeRoundTrip_Test()
 
         FShaderCodeView CodeView;
         TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
-        TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), "main") == 0);
+        TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), TEXT("main")) == 0);
         TEST_EXPECT(BindingsMatch(CodeView.GetBindings(), Reflection.Bindings));
         TEST_EXPECT(NativeCodeMatches(CodeView.GetNativeCode()));
 
-        TEST_SECTION("The SPIR-V offsets are 2-byte aligned and survive the round trip");
+        TEST_SECTION(TEXT("The SPIR-V offsets are 2-byte aligned and survive the round trip"));
         const TArrayView<const FSpirvBindingOffsets> SpirvOffsets = CodeView.GetSpirvOffsets();
         TEST_EXPECT_EQ(SpirvOffsets.Size(), 6);
         TEST_EXPECT(IsAligned(SpirvOffsets.Data(), alignof(FSpirvBindingOffsets)));
@@ -145,10 +145,10 @@ bool ShaderCodeLanguageBlocks_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("The MSL info and slots survive the round trip");
+    TEST_SECTION(TEXT("The MSL info and slots survive the round trip"));
     {
         FShaderReflection Reflection = CreateSixBindings();
-        Reflection.EntryPoint                 = "Main0";
+        Reflection.EntryPoint                 = TEXT("Main0");
         Reflection.MSLInfo.ThreadGroupSize[0] = 8;
         Reflection.MSLInfo.ThreadGroupSize[1] = 4;
         Reflection.MSLInfo.ThreadGroupSize[2] = 2;
@@ -162,7 +162,7 @@ bool ShaderCodeLanguageBlocks_Test()
 
         FShaderCodeView CodeView;
         TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
-        TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), "Main0") == 0);
+        TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), TEXT("Main0")) == 0);
         TEST_EXPECT_EQ(CodeView.GetMSLInfo().ThreadGroupSize[0], 8);
         TEST_EXPECT_EQ(CodeView.GetMSLInfo().ThreadGroupSize[1], 4);
         TEST_EXPECT_EQ(CodeView.GetMSLInfo().ThreadGroupSize[2], 2);
@@ -177,7 +177,7 @@ bool ShaderCodeLanguageBlocks_Test()
         }
     }
 
-    TEST_SECTION("A container without bindings holds only the header, the info and the entry point");
+    TEST_SECTION(TEXT("A container without bindings holds only the header, the info and the entry point"));
     {
         FShaderReflection Reflection;
 
@@ -198,12 +198,12 @@ bool ShaderCodeDebugInfo_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A DebugInfo container brings back every name");
+    TEST_SECTION(TEXT("A DebugInfo container brings back every name"));
 
     FShaderReflection Reflection = CreateSixBindings();
-    Reflection.EntryPoint = "ClosestHit";
+    Reflection.EntryPoint = TEXT("ClosestHit");
 
-    const CHAR_T* const Names[] = { "PerFrame", "LinearSampler", "Skybox", "Materials", "Output", "Scene" };
+    const CHAR_T* const Names[] = { TEXT("PerFrame"), TEXT("LinearSampler"), TEXT("Skybox"), TEXT("Materials"), TEXT("Output"), TEXT("Scene") };
     for (const CHAR_T* Name : Names)
     {
         Reflection.BindingNames.Add(Name);
@@ -215,7 +215,7 @@ bool ShaderCodeDebugInfo_Test()
     FShaderCodeView CodeView;
     TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
     TEST_EXPECT(CodeView.HasDebugInfo());
-    TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), "ClosestHit") == 0);
+    TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), TEXT("ClosestHit")) == 0);
     TEST_EXPECT(NativeCodeMatches(CodeView.GetNativeCode()));
     TEST_EXPECT(IsAligned(CodeView.GetNativeCode().Data(), FShaderCodeWriter::CodeAlignment));
 
@@ -231,13 +231,13 @@ bool ShaderCodeVertexInputs_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Vertex inputs survive the round trip");
+    TEST_SECTION(TEXT("Vertex inputs survive the round trip"));
 
     FShaderReflection Reflection;
-    Reflection.EntryPoint = "VSMain";
-    Reflection.VertexInputs.Add({ HashShaderSemantic("POSITION"), 0, 0, EShaderComponentType::Float32, 2 });
-    Reflection.VertexInputs.Add({ HashShaderSemantic("TEXCOORD"), 0, 1, EShaderComponentType::Float32, 2 });
-    Reflection.VertexInputs.Add({ HashShaderSemantic("COLOR"),    0, 2, EShaderComponentType::Float32, 4 });
+    Reflection.EntryPoint = TEXT("VSMain");
+    Reflection.VertexInputs.Add({ HashShaderSemantic(TEXT("POSITION")), 0, 0, EShaderComponentType::Float32, 2 });
+    Reflection.VertexInputs.Add({ HashShaderSemantic(TEXT("TEXCOORD")), 0, 1, EShaderComponentType::Float32, 2 });
+    Reflection.VertexInputs.Add({ HashShaderSemantic(TEXT("COLOR")),    0, 2, EShaderComponentType::Float32, 4 });
     Reflection.Bindings.Add({ EShaderResourceType::Texture, EShaderResourceDimension::Texture2D, EShaderBindingSpace::Global, 0, 1 });
 
     TArray<uint8> ShaderCode;
@@ -259,7 +259,7 @@ bool ShaderCodeVertexInputs_Test()
         TEST_EXPECT_EQ(VertexInputs[Index].NumComponents, Reflection.VertexInputs[Index].NumComponents);
     }
 
-    TEST_SECTION("Only vertex shaders carry vertex inputs");
+    TEST_SECTION(TEXT("Only vertex shaders carry vertex inputs"));
     TEST_EXPECT(!FShaderCodeWriter::Write(EShaderOutputLanguage::DXIL, EShaderStage::Pixel, EShaderCodeFlags::None, Reflection, GetNativeCode(), ShaderCode));
 
     TEST_END();
@@ -293,7 +293,7 @@ bool ShaderCodeReaderRejects_Test()
         return ShaderCode;
     };
 
-    TEST_SECTION("An empty array and a truncated header");
+    TEST_SECTION(TEXT("An empty array and a truncated header"));
     {
         TArray<uint8> Empty;
         TEST_EXPECT(IsRejected(Empty));
@@ -302,33 +302,33 @@ bool ShaderCodeReaderRejects_Test()
         TEST_EXPECT(IsRejected(Truncated));
     }
 
-    TEST_SECTION("A wrong magic and another version");
+    TEST_SECTION(TEXT("A wrong magic and another version"));
     TEST_EXPECT(IsRejected(WithByte(0, 'X')));
     TEST_EXPECT(IsRejected(WithByte(static_cast<int32>(offsetof(FShaderCodeHeader, Version)), FShaderCodeHeader::CurrentVersion + 1)));
 
-    TEST_SECTION("An unknown stage or output language");
+    TEST_SECTION(TEXT("An unknown stage or output language"));
     TEST_EXPECT(IsRejected(WithByte(static_cast<int32>(offsetof(FShaderCodeHeader, Stage)), 0xFF)));
     TEST_EXPECT(IsRejected(WithByte(static_cast<int32>(offsetof(FShaderCodeHeader, OutputLanguage)), 0xFF)));
 
-    TEST_SECTION("A CodeOffset that is unaligned or past the end");
+    TEST_SECTION(TEXT("A CodeOffset that is unaligned or past the end"));
     TEST_EXPECT(IsRejected(WithCodeOffset(50)));
     TEST_EXPECT(IsRejected(WithCodeOffset(static_cast<uint32>(Valid.Size()) + 4)));
     TEST_EXPECT(IsRejected(WithCodeOffset(8)));
 
-    TEST_SECTION("An out-of-range Type, Dimension or Space, or Count == 0");
+    TEST_SECTION(TEXT("An out-of-range Type, Dimension or Space, or Count == 0"));
     TEST_EXPECT(IsRejected(WithByte(FirstBinding + static_cast<int32>(offsetof(FShaderResourceBinding, Type)), static_cast<uint8>(EShaderResourceType::Count))));
     TEST_EXPECT(IsRejected(WithByte(FirstBinding + static_cast<int32>(offsetof(FShaderResourceBinding, Dimension)), static_cast<uint8>(EShaderResourceDimension::Count))));
     TEST_EXPECT(IsRejected(WithByte(FirstBinding + static_cast<int32>(offsetof(FShaderResourceBinding, Space)), static_cast<uint8>(EShaderBindingSpace::Count))));
     TEST_EXPECT(IsRejected(WithByte(FirstBinding + static_cast<int32>(offsetof(FShaderResourceBinding, Count)), 0)));
 
-    TEST_SECTION("More bindings than the reflection block holds");
+    TEST_SECTION(TEXT("More bindings than the reflection block holds"));
     TEST_EXPECT(IsRejected(WithByte(static_cast<int32>(sizeof(FShaderCodeHeader) + offsetof(FShaderReflectionInfo, NumBindings)), 0xFF)));
 
-    TEST_SECTION("A missing null terminator");
+    TEST_SECTION(TEXT("A missing null terminator"));
     {
         // The entry point ends exactly at the native code, so overwriting its terminator leaves no zero inside the block
         FShaderReflection Reflection;
-        Reflection.EntryPoint = "abc";
+        Reflection.EntryPoint = TEXT("abc");
 
         TArray<uint8> ShaderCode;
         TEST_EXPECT(FShaderCodeWriter::Write(EShaderOutputLanguage::DXIL, EShaderStage::Compute, EShaderCodeFlags::None, Reflection, GetNativeCode(), ShaderCode));
@@ -342,12 +342,12 @@ bool ShaderCodeReaderRejects_Test()
         TEST_EXPECT(IsRejected(ShaderCode));
     }
 
-    TEST_SECTION("A name table with the wrong number of names");
+    TEST_SECTION(TEXT("A name table with the wrong number of names"));
     {
         FShaderReflection Reflection = CreateSixBindings();
         for (int32 Index = 0; Index < 6; ++Index)
         {
-            Reflection.BindingNames.Add("N");
+            Reflection.BindingNames.Add(TEXT("N"));
         }
 
         TArray<uint8> DebugCode;
@@ -367,7 +367,7 @@ bool ShaderCodeReaderRejects_Test()
         TEST_EXPECT(IsRejected(WithFlag));
     }
 
-    TEST_SECTION("Non-zero padding before the native code");
+    TEST_SECTION(TEXT("Non-zero padding before the native code"));
     TEST_EXPECT(IsRejected(WithByte(51, 1)));
 
     TEST_END();
@@ -379,7 +379,7 @@ bool ShaderCodeWriterRejects_Test()
 
     TArray<uint8> ShaderCode;
 
-    TEST_SECTION("More than 255 bindings");
+    TEST_SECTION(TEXT("More than 255 bindings"));
     {
         FShaderReflection Reflection;
         for (int32 Index = 0; Index < 256; ++Index)
@@ -390,7 +390,7 @@ bool ShaderCodeWriterRejects_Test()
         TEST_EXPECT(!FShaderCodeWriter::Write(EShaderOutputLanguage::DXIL, EShaderStage::Pixel, EShaderCodeFlags::None, Reflection, GetNativeCode(), ShaderCode));
     }
 
-    TEST_SECTION("Mismatched SpirvOffsets");
+    TEST_SECTION(TEXT("Mismatched SpirvOffsets"));
     {
         FShaderReflection Reflection = CreateSixBindings();
         TEST_EXPECT(!FShaderCodeWriter::Write(EShaderOutputLanguage::SPIRV, EShaderStage::Pixel, EShaderCodeFlags::None, Reflection, GetNativeCode(), ShaderCode));
@@ -400,23 +400,23 @@ bool ShaderCodeWriterRejects_Test()
         TEST_EXPECT(!FShaderCodeWriter::Write(EShaderOutputLanguage::DXIL, EShaderStage::Pixel, EShaderCodeFlags::None, Reflection, GetNativeCode(), ShaderCode));
     }
 
-    TEST_SECTION("Mismatched MSLSlots");
+    TEST_SECTION(TEXT("Mismatched MSLSlots"));
     {
         const FShaderReflection Reflection = CreateSixBindings();
         TEST_EXPECT(!FShaderCodeWriter::Write(EShaderOutputLanguage::MSL, EShaderStage::Pixel, EShaderCodeFlags::None, Reflection, GetNativeCode(), ShaderCode));
     }
 
-    TEST_SECTION("Mismatched BindingNames, and names without DebugInfo");
+    TEST_SECTION(TEXT("Mismatched BindingNames, and names without DebugInfo"));
     {
         FShaderReflection Reflection = CreateSixBindings();
         TEST_EXPECT(!FShaderCodeWriter::Write(EShaderOutputLanguage::DXIL, EShaderStage::Pixel, EShaderCodeFlags::DebugInfo, Reflection, GetNativeCode(), ShaderCode));
 
-        Reflection.BindingNames.Add("Only");
+        Reflection.BindingNames.Add(TEXT("Only"));
         TEST_EXPECT(!FShaderCodeWriter::Write(EShaderOutputLanguage::DXIL, EShaderStage::Pixel, EShaderCodeFlags::DebugInfo, Reflection, GetNativeCode(), ShaderCode));
 
         for (int32 Index = 1; Index < 6; ++Index)
         {
-            Reflection.BindingNames.Add("Name");
+            Reflection.BindingNames.Add(TEXT("Name"));
         }
 
         TEST_EXPECT(!FShaderCodeWriter::Write(EShaderOutputLanguage::DXIL, EShaderStage::Pixel, EShaderCodeFlags::None, Reflection, GetNativeCode(), ShaderCode));
@@ -430,13 +430,13 @@ bool ShaderSemanticHash_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Semantics are hashed case-insensitively");
-    TEST_EXPECT_EQ(HashShaderSemantic("texcoord"), HashShaderSemantic("TEXCOORD"));
-    TEST_EXPECT_EQ(HashShaderSemantic("Position"), HashShaderSemantic("POSITION"));
+    TEST_SECTION(TEXT("Semantics are hashed case-insensitively"));
+    TEST_EXPECT_EQ(HashShaderSemantic(TEXT("texcoord")), HashShaderSemantic(TEXT("TEXCOORD")));
+    TEST_EXPECT_EQ(HashShaderSemantic(TEXT("Position")), HashShaderSemantic(TEXT("POSITION")));
 
-    TEST_SECTION("Different semantics hash differently");
-    TEST_EXPECT(HashShaderSemantic("POSITION") != HashShaderSemantic("NORMAL"));
-    TEST_EXPECT(HashShaderSemantic("TEXCOORD") != HashShaderSemantic("COLOR"));
+    TEST_SECTION(TEXT("Different semantics hash differently"));
+    TEST_EXPECT(HashShaderSemantic(TEXT("POSITION")) != HashShaderSemantic(TEXT("NORMAL")));
+    TEST_EXPECT(HashShaderSemantic(TEXT("TEXCOORD")) != HashShaderSemantic(TEXT("COLOR")));
 
     TEST_END();
 }

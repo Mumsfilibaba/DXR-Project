@@ -119,7 +119,7 @@ static bool ProbeBuffers(bool bCanMap)
 
     const uint32 InitialData[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-    TEST_SECTION("Buffers");
+    TEST_SECTION(TEXT("Buffers"));
 
     FRHIBufferRef VertexBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateVertexBuffer(sizeof(uint32) * 4, 2));
     TEST_EXPECT(VertexBuffer != nullptr);
@@ -140,7 +140,7 @@ static bool ProbeBuffers(bool bCanMap)
     FRHIBufferRef RawUAVBuffer = RHI::CreateBuffer(RawUAVDesc);
     TEST_EXPECT(RawUAVBuffer != nullptr);
 
-    TEST_SECTION("Buffer views");
+    TEST_SECTION(TEXT("Buffer views"));
 
     if (StructuredBuffer)
     {
@@ -154,7 +154,7 @@ static bool ProbeBuffers(bool bCanMap)
         TEST_EXPECT(BufferUAV != nullptr);
     }
 
-    TEST_SECTION("Dynamic map round-trip");
+    TEST_SECTION(TEXT("Dynamic map round-trip"));
 
     const FRHIBufferDesc DynamicDesc(EBufferFlags::Dynamic | EBufferFlags::VertexBuffer, sizeof(uint32), sizeof(InitialData));
     FRHIBufferRef DynamicBuffer = RHI::CreateBuffer(DynamicDesc);
@@ -184,7 +184,7 @@ static bool ProbeBuffers(bool bCanMap)
         }
     }
 
-    TEST_SECTION("Readback buffer");
+    TEST_SECTION(TEXT("Readback buffer"));
 
     FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(InitialData)));
     TEST_EXPECT(ReadbackBuffer != nullptr);
@@ -204,7 +204,7 @@ static bool ProbeTextures()
 
     const ETextureUsageFlags SRVUsage = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopyDest;
 
-    TEST_SECTION("Texture dimensions");
+    TEST_SECTION(TEXT("Texture dimensions"));
 
     FRHITextureRef Texture1D = RHI::CreateTexture(FRHITextureDesc::CreateTexture1D(EFormat::R8G8B8A8_Unorm, 4, 1, SRVUsage));
     TEST_EXPECT(Texture1D != nullptr);
@@ -227,7 +227,7 @@ static bool ProbeTextures()
     FRHITextureRef Texture3D = RHI::CreateTexture(FRHITextureDesc::CreateTexture3D(EFormat::R8G8B8A8_Unorm, 4, 4, 4, 1, 1, SRVUsage));
     TEST_EXPECT(Texture3D != nullptr);
 
-    TEST_SECTION("Default views");
+    TEST_SECTION(TEXT("Default views"));
 
     TEST_EXPECT(Texture2D && Texture2D->GetShaderResourceView() != nullptr);
 
@@ -246,7 +246,7 @@ static bool ProbeTextures()
     TEST_EXPECT(UAVTexture != nullptr);
     TEST_EXPECT(UAVTexture && UAVTexture->GetUnorderedAccessView() != nullptr);
 
-    TEST_SECTION("Explicit views");
+    TEST_SECTION(TEXT("Explicit views"));
 
     if (Texture2DArray)
     {
@@ -262,7 +262,7 @@ static bool ProbeTextures()
         TEST_EXPECT(MipUAV != nullptr);
     }
 
-    TEST_SECTION("Upload with initial data");
+    TEST_SECTION(TEXT("Upload with initial data"));
 
     const uint32 Pixels[16] =
     {
@@ -289,7 +289,7 @@ static bool ProbeCreateAndDestroy()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Destroy immediately after create");
+    TEST_SECTION(TEXT("Destroy immediately after create"));
 
     const uint32 InitialData[4] = { 1, 2, 3, 4 };
 
@@ -315,7 +315,7 @@ static bool ProbePipelineObjects()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Fixed-function state");
+    TEST_SECTION(TEXT("Fixed-function state"));
 
     FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(FRHIDepthStencilStateDesc());
     TEST_EXPECT(DepthStencilState != nullptr);
@@ -329,11 +329,11 @@ static bool ProbePipelineObjects()
     TEST_EXPECT(BlendState != nullptr);
     TEST_EXPECT(BlendState && BlendState->GetRHINativeState() == nullptr);
 
-    TEST_SECTION("Input layout");
+    TEST_SECTION(TEXT("Input layout"));
 
     TArray<FRHIInputElementDesc> InputElements;
     FRHIInputElementDesc& Position = InputElements.Emplace();
-    Position.Semantic     = "POSITION";
+    Position.Semantic     = TEXT("POSITION");
     Position.Format       = EFormat::R32G32B32_Float;
     Position.VertexStride = static_cast<uint16>(sizeof(float) * 3);
     Position.InputSlot    = 0;
@@ -351,7 +351,7 @@ static bool ProbeShaders()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Compile a shader with colliding HLSL registers");
+    TEST_SECTION(TEXT("Compile a shader with colliding HLSL registers"));
 
     if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
     {
@@ -360,20 +360,20 @@ static bool ProbeShaders()
     }
 
     TArray<uint8> ByteCode;
-    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
-    const bool bCompiled = FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadeMatrixGen.hlsl", CompileInfo, ByteCode);
+    const FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+    const bool bCompiled = FShaderCompiler::Get().CompileFromFile(TEXT("Shaders/Shadows/CascadeMatrixGen.hlsl"), CompileInfo, ByteCode);
     TEST_EXPECT(bCompiled);
 
     if (bCompiled)
     {
-        TEST_SECTION("The backend accepts the compiled shader");
+        TEST_SECTION(TEXT("The backend accepts the compiled shader"));
 
         FRHIComputeShaderRef ComputeShader = RHI::CreateComputeShader(ByteCode);
         TEST_EXPECT(ComputeShader != nullptr);
 
         if (ComputeShader)
         {
-            TEST_SECTION("A pipeline resolves the shader's bindings");
+            TEST_SECTION(TEXT("A pipeline resolves the shader's bindings"));
 
             FRHIComputePipelineStateDesc PipelineDesc;
             PipelineDesc.Shader = ComputeShader.Get();
@@ -386,7 +386,7 @@ static bool ProbeShaders()
 #if PLATFORM_MACOS
     if (bCompiled && RHI::Device->GetRHIType() == ERHIType::Metal)
     {
-        TEST_SECTION("The compute container carries a non-zero threadgroup size");
+        TEST_SECTION(TEXT("The compute container carries a non-zero threadgroup size"));
         FShaderCodeView CodeView;
         TEST_EXPECT(FShaderCodeReader::Read(ByteCode, CodeView));
         TEST_EXPECT(CodeView.GetMSLInfo().ThreadGroupSize[0] != 0);
@@ -396,20 +396,20 @@ static bool ProbeShaders()
 #if PLATFORM_MACOS
     if (RHI::Device->GetRHIType() == ERHIType::Metal)
     {
-        TEST_SECTION("A compute PSO materialises a static sampler on s0");
+        TEST_SECTION(TEXT("A compute PSO materialises a static sampler on s0"));
 
         const FString SamplerSource(
-            "SamplerState LinearSampler : register(s0);\n"
+            TEXT("SamplerState LinearSampler : register(s0);\n"
             "Texture2D<float4> SourceTex : register(t0);\n"
             "RWTexture2D<float4> DestTex : register(u0);\n"
             "[numthreads(1, 1, 1)]\n"
             "void Main(uint3 DispatchThreadID : SV_DispatchThreadID)\n"
             "{\n"
             "    DestTex[DispatchThreadID.xy] = SourceTex.SampleLevel(LinearSampler, float2(0.5, 0.5), 0);\n"
-            "}\n");
+            "}\n"));
 
         TArray<uint8> SamplerByteCode;
-        const FShaderCompileInfo SamplerCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+        const FShaderCompileInfo SamplerCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
         const bool bSamplerCompiled = FShaderCompiler::Get().CompileFromSource(SamplerSource, SamplerCompileInfo, SamplerByteCode);
         TEST_EXPECT(bSamplerCompiled);
 
@@ -462,7 +462,7 @@ static bool ProbeCommandRecording()
         TEST_EXPECT(ProbeTimestamps());
     }
 
-    TEST_SECTION("WriteFence becomes signaled after submit");
+    TEST_SECTION(TEXT("WriteFence becomes signaled after submit"));
     {
         FRHIFenceRef Fence = RHI::CreateFence();
         TEST_EXPECT(Fence != nullptr);
@@ -490,7 +490,7 @@ static bool ProbeCommandRecording()
 
     if (RHI::Device->GetRHIType() != ERHIType::Null)
     {
-        TEST_SECTION("A fence polled before the RHI thread drains reports signaled only after its copy landed");
+        TEST_SECTION(TEXT("A fence polled before the RHI thread drains reports signaled only after its copy landed"));
 
         FRHIFenceRef Fence = RHI::CreateFence();
         TEST_EXPECT(Fence != nullptr);
@@ -544,7 +544,7 @@ static bool ProbeCommandRecording()
         }
     }
 
-    TEST_SECTION("ClearDepthStencilView records without crashing");
+    TEST_SECTION(TEXT("ClearDepthStencilView records without crashing"));
     {
         FRHITextureRef DepthTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
             EFormat::D32_Float, 8, 8, 1, 1, ETextureUsageFlags::DepthStencil));
@@ -559,7 +559,7 @@ static bool ProbeCommandRecording()
         }
     }
 
-    TEST_SECTION("Buffer UAV clear copies the pattern to a readback");
+    TEST_SECTION(TEXT("Buffer UAV clear copies the pattern to a readback"));
     {
         const uint32 ClearValues[4] = { 7u, 7u, 7u, 7u };
         const uint32 NumUInt4       = 2;
@@ -615,7 +615,7 @@ static bool ProbeCommandRecording()
         }
         else
         {
-            TEST_SECTION("A static sampler dispatch samples into a UAV");
+            TEST_SECTION(TEXT("A static sampler dispatch samples into a UAV"));
             {
                 const uint8 Magenta[4] = { 255, 0, 255, 255 };
                 uint8 SourcePixels[4 * 4 * 4];
@@ -639,17 +639,17 @@ static bool ProbeCommandRecording()
                 TEST_EXPECT(DestTexture != nullptr);
 
                 const FString SamplerSource(
-                    "SamplerState LinearSampler : register(s0);\n"
+                    TEXT("SamplerState LinearSampler : register(s0);\n"
                     "Texture2D<float4> SourceTex : register(t0);\n"
                     "RWTexture2D<float4> DestTex : register(u0);\n"
                     "[numthreads(1, 1, 1)]\n"
                     "void Main(uint3 DispatchThreadID : SV_DispatchThreadID)\n"
                     "{\n"
                     "    DestTex[DispatchThreadID.xy] = SourceTex.SampleLevel(LinearSampler, float2(0.5, 0.5), 0);\n"
-                    "}\n");
+                    "}\n"));
 
                 TArray<uint8> SamplerByteCode;
-                const FShaderCompileInfo SamplerCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+                const FShaderCompileInfo SamplerCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
                 const bool bSamplerCompiled = FShaderCompiler::Get().CompileFromSource(SamplerSource, SamplerCompileInfo, SamplerByteCode);
                 TEST_EXPECT(bSamplerCompiled);
 
@@ -708,19 +708,19 @@ static bool ProbeCommandRecording()
                 }
             }
 
-            TEST_SECTION("Each dispatch reads its own update of a transient constant buffer");
+            TEST_SECTION(TEXT("Each dispatch reads its own update of a transient constant buffer"));
             {
                 const FString ConstantsSource(
-                    "cbuffer Params : register(b0) { uint Index; uint Value; uint2 Padding; };\n"
+                    TEXT("cbuffer Params : register(b0) { uint Index; uint Value; uint2 Padding; };\n"
                     "RWBuffer<uint> Dest : register(u0);\n"
                     "[numthreads(1, 1, 1)]\n"
                     "void Main()\n"
                     "{\n"
                     "    Dest[Index] = Value;\n"
-                    "}\n");
+                    "}\n"));
 
                 TArray<uint8> ConstantsByteCode;
-                const FShaderCompileInfo ConstantsCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+                const FShaderCompileInfo ConstantsCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
                 const bool bConstantsCompiled = FShaderCompiler::Get().CompileFromSource(ConstantsSource, ConstantsCompileInfo, ConstantsByteCode);
                 TEST_EXPECT(bConstantsCompiled);
 
@@ -799,10 +799,10 @@ static bool ProbeCommandRecording()
                 }
             }
 
-            TEST_SECTION("Views of a transient buffer follow it to each update's storage");
+            TEST_SECTION(TEXT("Views of a transient buffer follow it to each update's storage"));
             {
                 const FString ViewsSource(
-                    "StructuredBuffer<uint> Structured : register(t0);\n"
+                    TEXT("StructuredBuffer<uint> Structured : register(t0);\n"
                     "Buffer<uint> Typed : register(t1);\n"
                     "RWBuffer<uint> Dest : register(u0);\n"
                     "[numthreads(1, 1, 1)]\n"
@@ -811,10 +811,10 @@ static bool ProbeCommandRecording()
                     "    const uint Index = Structured[0];\n"
                     "    Dest[Index * 2 + 0] = Structured[1];\n"
                     "    Dest[Index * 2 + 1] = Typed[1];\n"
-                    "}\n");
+                    "}\n"));
 
                 TArray<uint8> ViewsByteCode;
-                const FShaderCompileInfo ViewsCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+                const FShaderCompileInfo ViewsCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
                 const bool bViewsCompiled = FShaderCompiler::Get().CompileFromSource(ViewsSource, ViewsCompileInfo, ViewsByteCode);
                 TEST_EXPECT(bViewsCompiled);
 
@@ -902,28 +902,28 @@ static bool ProbeCommandRecording()
                 }
             }
 
-            TEST_SECTION("An offscreen Draw(3) writes a red pixel");
+            TEST_SECTION(TEXT("An offscreen Draw(3) writes a red pixel"));
             {
                 const FString VertexSource(
-                    "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
+                    TEXT("float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
                     "{\n"
                     "    float2 Positions[3];\n"
                     "    Positions[0] = float2(-1.0, -1.0);\n"
                     "    Positions[1] = float2( 3.0, -1.0);\n"
                     "    Positions[2] = float2(-1.0,  3.0);\n"
                     "    return float4(Positions[VertexID], 0.0, 1.0);\n"
-                    "}\n");
+                    "}\n"));
 
                 const FString PixelSource(
-                    "float4 Main() : SV_Target\n"
+                    TEXT("float4 Main() : SV_Target\n"
                     "{\n"
                     "    return float4(1.0, 0.0, 0.0, 1.0);\n"
-                    "}\n");
+                    "}\n"));
 
                 TArray<uint8> VertexByteCode;
                 TArray<uint8> PixelByteCode;
-                const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
-                const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+                const FShaderCompileInfo VertexCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+                const FShaderCompileInfo PixelCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
                 const bool bVertexCompiled = FShaderCompiler::Get().CompileFromSource(VertexSource, VertexCompileInfo, VertexByteCode);
                 const bool bPixelCompiled  = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
                 TEST_EXPECT(bVertexCompiled);
@@ -962,7 +962,7 @@ static bool ProbeCommandRecording()
 
                     if (RHI::bSupportsViewInstancing)
                     {
-                        TEST_SECTION("A graphics PSO with view instancing creates on this device");
+                        TEST_SECTION(TEXT("A graphics PSO with view instancing creates on this device"));
                         GraphicsDesc.ViewInstancingState.bEnableViewInstancing = 1;
                         GraphicsDesc.ViewInstancingState.NumArraySlices        = 2;
                         FRHIGraphicsPipelineStateRef InstancedPipeline = RHI::CreateGraphicsPipelineState(GraphicsDesc);
@@ -1022,10 +1022,10 @@ static bool ProbeCommandRecording()
                 }
             }
 
-            TEST_SECTION("Indirect draw, indexed draw and dispatch");
+            TEST_SECTION(TEXT("Indirect draw, indexed draw and dispatch"));
             TEST_EXPECT(ProbeIndirectCommands());
 
-            TEST_SECTION("Mesh dispatch");
+            TEST_SECTION(TEXT("Mesh dispatch"));
             TEST_EXPECT(ProbeDispatchMesh());
 
             FShaderCompiler::Destroy();
@@ -1047,35 +1047,35 @@ static bool ProbeIndirectCommands()
     }
 
     const FString VertexSource(
-        "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
+        TEXT("float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
         "{\n"
         "    float2 Positions[3];\n"
         "    Positions[0] = float2(-1.0, -1.0);\n"
         "    Positions[1] = float2( 3.0, -1.0);\n"
         "    Positions[2] = float2(-1.0,  3.0);\n"
         "    return float4(Positions[VertexID], 0.0, 1.0);\n"
-        "}\n");
+        "}\n"));
 
     const FString PixelSource(
-        "float4 Main() : SV_Target\n"
+        TEXT("float4 Main() : SV_Target\n"
         "{\n"
         "    return float4(1.0, 0.0, 0.0, 1.0);\n"
-        "}\n");
+        "}\n"));
 
     const FString ComputeSource(
-        "RWBuffer<uint> OutBuf : register(u0);\n"
+        TEXT("RWBuffer<uint> OutBuf : register(u0);\n"
         "[numthreads(1, 1, 1)]\n"
         "void Main(uint3 DispatchThreadID : SV_DispatchThreadID)\n"
         "{\n"
         "    OutBuf[0] = 42;\n"
-        "}\n");
+        "}\n"));
 
     TArray<uint8> VertexByteCode;
     TArray<uint8> PixelByteCode;
     TArray<uint8> ComputeByteCode;
-    const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
-    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
-    const FShaderCompileInfo ComputeCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo VertexCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo PixelCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo ComputeCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
     const bool bVertexCompiled  = FShaderCompiler::Get().CompileFromSource(VertexSource, VertexCompileInfo, VertexByteCode);
     const bool bPixelCompiled   = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
     const bool bComputeCompiled = FShaderCompiler::Get().CompileFromSource(ComputeSource, ComputeCompileInfo, ComputeByteCode);
@@ -1132,7 +1132,7 @@ static bool ProbeIndirectCommands()
 
     if (RHI::bSupportsDrawIndirect && GraphicsPipeline)
     {
-        TEST_SECTION("DrawIndirect fills a render target from GPU arguments");
+        TEST_SECTION(TEXT("DrawIndirect fills a render target from GPU arguments"));
         {
             FRHIDrawIndirectParameters Args;
             Args.VertexCountPerInstance = 3;
@@ -1186,7 +1186,7 @@ static bool ProbeIndirectCommands()
             }
         }
 
-        TEST_SECTION("DrawIndexedIndirect fills a render target from GPU arguments");
+        TEST_SECTION(TEXT("DrawIndexedIndirect fills a render target from GPU arguments"));
         {
             FRHIDrawIndexedIndirectParameters Args;
             Args.IndexCountPerInstance = 3;
@@ -1252,7 +1252,7 @@ static bool ProbeIndirectCommands()
             }
         }
 
-        TEST_SECTION("DrawIndirect CommandCount 2 encodes two packed records");
+        TEST_SECTION(TEXT("DrawIndirect CommandCount 2 encodes two packed records"));
         {
             FRHIDrawIndirectParameters Args[2];
             Args[0].VertexCountPerInstance = 3;
@@ -1309,7 +1309,7 @@ static bool ProbeIndirectCommands()
 
     if (RHI::bSupportsDispatchIndirect && bComputeCompiled)
     {
-        TEST_SECTION("DispatchIndirect runs a compute grid from GPU arguments");
+        TEST_SECTION(TEXT("DispatchIndirect runs a compute grid from GPU arguments"));
         {
             FRHIComputeShaderRef ComputeShader = RHI::CreateComputeShader(ComputeByteCode);
             TEST_EXPECT(ComputeShader != nullptr);
@@ -1395,7 +1395,7 @@ static bool ProbeDispatchMesh()
     }
 
     const FString MeshSource(
-        "struct VertexOut\n"
+        TEXT("struct VertexOut\n"
         "{\n"
         "    float4 Position : SV_Position;\n"
         "};\n"
@@ -1409,18 +1409,18 @@ static bool ProbeDispatchMesh()
         "    Verts[1].Position = float4( 3.0, -1.0, 0.0, 1.0);\n"
         "    Verts[2].Position = float4(-1.0,  3.0, 0.0, 1.0);\n"
         "    Tris[0] = uint3(0, 1, 2);\n"
-        "}\n");
+        "}\n"));
 
     const FString PixelSource(
-        "float4 Main() : SV_Target\n"
+        TEXT("float4 Main() : SV_Target\n"
         "{\n"
         "    return float4(1.0, 0.0, 0.0, 1.0);\n"
-        "}\n");
+        "}\n"));
 
     TArray<uint8> MeshByteCode;
     TArray<uint8> PixelByteCode;
-    const FShaderCompileInfo MeshCompileInfo("Main", EShaderModel::SM_6_5, EShaderStage::Mesh, RHI::GetShaderOutputLanguage());
-    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo MeshCompileInfo(TEXT("Main"), EShaderModel::SM_6_5, EShaderStage::Mesh, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo PixelCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
     const bool bMeshCompiled  = FShaderCompiler::Get().CompileFromSource(MeshSource, MeshCompileInfo, MeshByteCode);
     const bool bPixelCompiled = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
     TEST_EXPECT(bMeshCompiled);
@@ -1502,7 +1502,7 @@ static bool ProbeDispatchMesh()
 
     if (MeshletPipeline)
     {
-        TEST_SECTION("DispatchMesh writes a red pixel");
+        TEST_SECTION(TEXT("DispatchMesh writes a red pixel"));
         {
             FRHITextureRef RenderTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
                 EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1,
@@ -1528,7 +1528,7 @@ static bool ProbeDispatchMesh()
             }
         }
 
-        TEST_SECTION("DispatchMeshIndirect fills a render target from GPU arguments");
+        TEST_SECTION(TEXT("DispatchMeshIndirect fills a render target from GPU arguments"));
         {
             FRHIDispatchMeshIndirectParameters Args;
             Args.ThreadGroupCountX = 1;
@@ -1579,7 +1579,7 @@ static bool ProbeTimestamps()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Timestamp queries resolve to increasing nanoseconds");
+    TEST_SECTION(TEXT("Timestamp queries resolve to increasing nanoseconds"));
     {
         FRHIQueryRef BeginQuery = RHI::CreateQuery(EQueryType::Timestamp);
         FRHIQueryRef EndQuery   = RHI::CreateQuery(EQueryType::Timestamp);
@@ -1630,7 +1630,7 @@ static bool ProbeCopyQueue()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Command-list copy then GPU readback");
+    TEST_SECTION(TEXT("Command-list copy then GPU readback"));
     {
         const uint32 SourceValue = 0xA1B2C3D4u;
         FRHIBufferRef SourceBuffer = RHI::CreateBuffer(
@@ -1666,7 +1666,7 @@ static bool ProbeCopyQueue()
         }
     }
 
-    TEST_SECTION("Heap-slice CreateBuffer initial data");
+    TEST_SECTION(TEXT("Heap-slice CreateBuffer initial data"));
     {
         const uint32 SourceValue = 0x11223344u;
         FRHIBufferRef SourceBuffer = RHI::CreateBuffer(
@@ -1698,7 +1698,7 @@ static bool ProbeCopyQueue()
         }
     }
 
-    TEST_SECTION("Deferred delete after Copy submit recycles after Copy completion");
+    TEST_SECTION(TEXT("Deferred delete after Copy submit recycles after Copy completion"));
     {
         const uint32 SourceValue = 7u;
         FRHIBufferRef Transient = RHI::CreateBuffer(
@@ -1737,7 +1737,7 @@ static bool ProbeCopyQueue()
 static bool ProbeParallelRender()
 {
     TEST_BEGIN();
-    TEST_SECTION("Parallel render encoder clears a render target");
+    TEST_SECTION(TEXT("Parallel render encoder clears a render target"));
 
     FMetalDeviceRHI* MetalDeviceRHI = FMetalDeviceRHI::Get();
     TEST_EXPECT(MetalDeviceRHI != nullptr);
@@ -1810,7 +1810,7 @@ static bool ProbeBindlessDescriptors()
 
     if (!RHI::bSupportsBindless)
     {
-        TEST_SECTION("Bindless is unavailable on this Metal device");
+        TEST_SECTION(TEXT("Bindless is unavailable on this Metal device"));
         TEST_END();
     }
 
@@ -1822,7 +1822,7 @@ static bool ProbeBindlessDescriptors()
 
     auto CompileBindless = [](const CHAR_T* Source, TArray<uint8>& OutByteCode) -> bool
     {
-        const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_6, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+        const FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_6, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
         return FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, OutByteCode);
     };
 
@@ -1875,10 +1875,10 @@ static bool ProbeBindlessDescriptors()
         : nullptr;
     TEST_EXPECT(OutputUAV != nullptr);
 
-    TEST_SECTION("Bindless SRV texture and sampler round-trip");
+    TEST_SECTION(TEXT("Bindless SRV texture and sampler round-trip"));
     {
         static const CHAR_T Source[] =
-            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint SamplerIndex; uint Pad0; uint Pad1; };\n"
             "[numthreads(1,1,1)]\n"
             "void Main()\n"
@@ -1887,7 +1887,7 @@ static bool ProbeBindlessDescriptors()
             "    SamplerState Samp = SamplerDescriptorHeap[SamplerIndex];\n"
             "    float4 Color = Tex.SampleLevel(Samp, float2(0.5, 0.5), 0);\n"
             "    OutBuffer[0] = (uint)(Color.x * 255.0f + 0.5f);\n"
-            "}\n";
+            "}\n");
 
         TArray<uint8> ByteCode;
         TEST_EXPECT(CompileBindless(Source, ByteCode));
@@ -1924,7 +1924,7 @@ static bool ProbeBindlessDescriptors()
             TEST_EXPECT(DispatchAndReadUint(Pipeline.Get(), Shader.Get(), Params.Get(), OutputBuffer.Get(), OutputUAV.Get(), 255u));
         }
 
-        TEST_SECTION("Update-after-submit rewrites the same resource slot");
+        TEST_SECTION(TEXT("Update-after-submit rewrites the same resource slot"));
         const uint8 Green[4] = { 0, 255, 0, 255 };
         FBootTextureData GreenData(Green, 4, 4);
         FRHITextureRef TextureB = RHI::CreateTexture(
@@ -1954,10 +1954,10 @@ static bool ProbeBindlessDescriptors()
         }
     }
 
-    TEST_SECTION("Bindless UAV structured buffer round-trip");
+    TEST_SECTION(TEXT("Bindless UAV structured buffer round-trip"));
     {
         static const CHAR_T Source[] =
-            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
             "[numthreads(1,1,1)]\n"
             "void Main()\n"
@@ -1965,7 +1965,7 @@ static bool ProbeBindlessDescriptors()
             "    RWStructuredBuffer<uint> HeapOut = ResourceDescriptorHeap[ResourceIndex];\n"
             "    HeapOut[0] = 99;\n"
             "    OutBuffer[0] = HeapOut[0];\n"
-            "}\n";
+            "}\n");
 
         TArray<uint8> ByteCode;
         TEST_EXPECT(CompileBindless(Source, ByteCode));
@@ -1986,10 +1986,10 @@ static bool ProbeBindlessDescriptors()
         }
     }
 
-    TEST_SECTION("Bindless CBV round-trip");
+    TEST_SECTION(TEXT("Bindless CBV round-trip"));
     {
         static const CHAR_T Source[] =
-            "struct FData { uint Value; uint Pad0; uint Pad1; uint Pad2; };\n"
+            TEXT("struct FData { uint Value; uint Pad0; uint Pad1; uint Pad2; };\n"
             "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint PadA; uint PadB; uint PadC; };\n"
             "[numthreads(1,1,1)]\n"
@@ -1997,7 +1997,7 @@ static bool ProbeBindlessDescriptors()
             "{\n"
             "    ConstantBuffer<FData> CB = ResourceDescriptorHeap[ResourceIndex];\n"
             "    OutBuffer[0] = CB.Value;\n"
-            "}\n";
+            "}\n");
 
         TArray<uint8> ByteCode;
         TEST_EXPECT(CompileBindless(Source, ByteCode));
@@ -2021,7 +2021,7 @@ static bool ProbeBindlessDescriptors()
         }
     }
 
-    TEST_SECTION("Reuse-after-retirement recycles the bindless index");
+    TEST_SECTION(TEXT("Reuse-after-retirement recycles the bindless index"));
     {
         const uint8 Blue[4] = { 0, 0, 255, 255 };
         FBootTextureData BlueData(Blue, 4, 4);
@@ -2052,10 +2052,10 @@ static bool ProbeBindlessDescriptors()
         TEST_EXPECT_EQ(SecondHandle.Index, FirstIndex);
     }
 
-    TEST_SECTION("A recycled bindless slot reads zeros");
+    TEST_SECTION(TEXT("A recycled bindless slot reads zeros"));
     {
         static const CHAR_T Source[] =
-            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
             "[numthreads(1,1,1)]\n"
             "void Main()\n"
@@ -2063,7 +2063,7 @@ static bool ProbeBindlessDescriptors()
             "    Texture2D<float4> Tex = ResourceDescriptorHeap[ResourceIndex];\n"
             "    float4 Color = Tex.Load(int3(0, 0, 0));\n"
             "    OutBuffer[0] = (asuint(Color.x) | asuint(Color.y) | asuint(Color.z) | asuint(Color.w)) ^ 0xA5A5A5A5u;\n"
-            "}\n";
+            "}\n");
 
         TArray<uint8> ByteCode;
         TEST_EXPECT(CompileBindless(Source, ByteCode));
@@ -2124,7 +2124,7 @@ static bool ProbeDefaultResourcesAndClears()
     auto CreateComputePipeline = [](const CHAR_T* Source, FRHIComputeShaderRef& OutShader) -> FRHIComputePipelineState*
     {
         TArray<uint8> ByteCode;
-        const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+        const FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
         if (!FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ByteCode))
         {
             return nullptr;
@@ -2191,10 +2191,10 @@ static bool ProbeDefaultResourcesAndClears()
 
     auto NoCommands = [](FRHICommandList&) {};
 
-    TEST_SECTION("Unbound SRV, UAV and constant buffer registers read zeros");
+    TEST_SECTION(TEXT("Unbound SRV, UAV and constant buffer registers read zeros"));
     {
         static const CHAR_T Source[] =
-            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "RWBuffer<uint> NullRWBuffer : register(u1);\n"
             "Texture2D<float4> NullTexture : register(t0);\n"
             "Buffer<uint> NullTypedBuffer : register(t1);\n"
@@ -2208,7 +2208,7 @@ static bool ProbeDefaultResourcesAndClears()
             "    Bits |= NullTypedBuffer[0] | NullStructuredBuffer[0] | NullRWBuffer[0];\n"
             "    Bits |= NullValue.x | NullValue.y | NullValue.z | NullValue.w;\n"
             "    OutBuffer[0] = Bits ^ 0xA5A5A5A5u;\n"
-            "}\n";
+            "}\n");
 
         FRHIComputeShaderRef Shader;
         FRHIComputePipelineStateRef Pipeline = CreateComputePipeline(Source, Shader);
@@ -2219,17 +2219,17 @@ static bool ProbeDefaultResourcesAndClears()
         TEST_EXPECT_EQ(Value, 0xA5A5A5A5u);
     }
 
-    TEST_SECTION("An anisotropic sampler filters linearly between mips");
+    TEST_SECTION(TEXT("An anisotropic sampler filters linearly between mips"));
     {
         static const CHAR_T Source[] =
-            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "Texture2D<float4> MipTexture : register(t0);\n"
             "SamplerState AnisotropicSampler : register(s0);\n"
             "[numthreads(1, 1, 1)]\n"
             "void Main()\n"
             "{\n"
             "    OutBuffer[0] = (uint)(MipTexture.SampleLevel(AnisotropicSampler, float2(0.5, 0.5), 0.5).x * 255.0 + 0.5);\n"
-            "}\n";
+            "}\n");
 
         FRHIComputeShaderRef Shader;
         FRHIComputePipelineStateRef Pipeline = CreateComputePipeline(Source, Shader);
@@ -2272,10 +2272,10 @@ static bool ProbeDefaultResourcesAndClears()
         }
     }
 
-    TEST_SECTION("A UAV clear of a 2D array texture covers every slice");
+    TEST_SECTION(TEXT("A UAV clear of a 2D array texture covers every slice"));
     {
         static const CHAR_T Source[] =
-            "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+            TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
             "Texture2DArray<uint> ClearedTexture : register(t0);\n"
             "[numthreads(1, 1, 1)]\n"
             "void Main()\n"
@@ -2284,7 +2284,7 @@ static bool ProbeDefaultResourcesAndClears()
             "    {\n"
             "        OutBuffer[Slice] = ClearedTexture.Load(int4(3, 3, Slice, 0));\n"
             "    }\n"
-            "}\n";
+            "}\n");
 
         FRHIComputeShaderRef Shader;
         FRHIComputePipelineStateRef Pipeline = CreateComputePipeline(Source, Shader);
@@ -2349,7 +2349,7 @@ static bool ProbeDefaultResourcesAndClears()
 
     const FRHITextureDesc RenderTargetDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource);
 
-    TEST_SECTION("A render target clear with no pass after it still reaches the texture");
+    TEST_SECTION(TEXT("A render target clear with no pass after it still reaches the texture"));
     {
         FRHITextureRef RenderTarget = RHI::CreateTexture(RenderTargetDesc);
         TEST_EXPECT(RenderTarget != nullptr && RenderTarget->GetRenderTargetView() != nullptr);
@@ -2370,7 +2370,7 @@ static bool ProbeDefaultResourcesAndClears()
         }
     }
 
-    TEST_SECTION("A render target clear folds into the load action of the next pass");
+    TEST_SECTION(TEXT("A render target clear folds into the load action of the next pass"));
     {
         FRHITextureRef RenderTarget = RHI::CreateTexture(RenderTargetDesc);
         TEST_EXPECT(RenderTarget != nullptr && RenderTarget->GetRenderTargetView() != nullptr);
@@ -2420,7 +2420,7 @@ static constexpr float GProbeBarycentricU = 0.3125f;
 static constexpr float GProbeBarycentricV = 0.375f;
 
 static const CHAR_T GRayQueryProbeSource[] =
-    "RWStructuredBuffer<uint4> OutBuffer : register(u0);\n"
+    TEXT("RWStructuredBuffer<uint4> OutBuffer : register(u0);\n"
     "cbuffer Params : register(b0) { float4 RayOrigin; float4 RayDirection; uint4 SceneIndex; };\n"
     "#if !PROBE_BINDLESS_SCENE\n"
     "RaytracingAccelerationStructure Scene : register(t0);\n"
@@ -2448,7 +2448,7 @@ static const CHAR_T GRayQueryProbeSource[] =
     "    }\n"
     "    OutBuffer[0] = Hit;\n"
     "    OutBuffer[1] = Barycentrics;\n"
-    "}\n";
+    "}\n");
 
 struct FRayQueryProbeHit
 {
@@ -2477,10 +2477,10 @@ struct FRayTracingProbeGeometry
 
 static FRHIComputePipelineStateRef CreateRayQueryPipeline(bool bBindlessScene, FRHIComputeShaderRef& OutShader)
 {
-    FShaderDefine Defines[] = { FShaderDefine("PROBE_BINDLESS_SCENE", bBindlessScene ? "1" : "0") };
+    FShaderDefine Defines[] = { FShaderDefine(TEXT("PROBE_BINDLESS_SCENE"), bBindlessScene ? TEXT("1") : TEXT("0")) };
 
     TArray<uint8> ByteCode;
-    const FShaderCompileInfo CompileInfo("Main", bBindlessScene ? EShaderModel::SM_6_6 : EShaderModel::SM_6_5, EShaderStage::Compute, RHI::GetShaderOutputLanguage(), TArrayView<FShaderDefine>(Defines));
+    const FShaderCompileInfo CompileInfo(TEXT("Main"), bBindlessScene ? EShaderModel::SM_6_6 : EShaderModel::SM_6_5, EShaderStage::Compute, RHI::GetShaderOutputLanguage(), TArrayView<FShaderDefine>(Defines));
     if (!FShaderCompiler::Get().CompileFromSource(GRayQueryProbeSource, CompileInfo, ByteCode))
     {
         return nullptr;
@@ -2725,7 +2725,7 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
 
     const EAccelerationStructureBuildFlags GeometryFlags = EAccelerationStructureBuildFlags::AllowUpdate | EAccelerationStructureBuildFlags::AllowCompaction;
 
-    TEST_SECTION("Indexed and non-indexed geometry and a scene over both build at creation and again on a command list");
+    TEST_SECTION(TEXT("Indexed and non-indexed geometry and a scene over both build at creation and again on a command list"));
     {
         FRayTracingProbeGeometry Indexed;
         FRayTracingProbeGeometry NonIndexed;
@@ -2787,7 +2787,7 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
     }
 
-    TEST_SECTION("A scene traced straight after creation, with no wait between, hits");
+    TEST_SECTION(TEXT("A scene traced straight after creation, with no wait between, hits"));
     if (bTrace)
     {
         FRayTracingProbeGeometry Geometry;
@@ -2806,7 +2806,7 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
     }
 
-    TEST_SECTION("The compacted size reads back nonzero and no larger than the original");
+    TEST_SECTION(TEXT("The compacted size reads back nonzero and no larger than the original"));
     {
         FRayTracingProbeGeometry Geometry;
         TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::AllowCompaction, Geometry));
@@ -2825,7 +2825,7 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
 #endif
 
-        TEST_SECTION("Compacting in place, then rebuilding the scene over the compacted geometry, still hits");
+        TEST_SECTION(TEXT("Compacting in place, then rebuilding the scene over the compacted geometry, still hits"));
         if (Geometry.Geometry && CompactedSize > 0)
         {
             const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Geometry.Get(), 5, 0.0f) };
@@ -2876,7 +2876,7 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
     }
 
-    TEST_SECTION("Moving the vertices and refitting moves the hit");
+    TEST_SECTION(TEXT("Moving the vertices and refitting moves the hit"));
     if (bTrace)
     {
         FRayTracingProbeGeometry Geometry;
@@ -2928,7 +2928,7 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
     }
 
-    TEST_SECTION("RayQuery reports a miss, and the instance, primitive and barycentrics of a hit, through the discrete and the bindless scene");
+    TEST_SECTION(TEXT("RayQuery reports a miss, and the instance, primitive and barycentrics of a hit, through the discrete and the bindless scene"));
     if (bTrace)
     {
         FRayTracingProbeGeometry Geometry;
@@ -2968,7 +2968,7 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
     }
 
-    TEST_SECTION("Releasing geometry and scenes while their builds are in flight");
+    TEST_SECTION(TEXT("Releasing geometry and scenes while their builds are in flight"));
     {
         for (uint32 Iteration = 0; Iteration < 8; ++Iteration)
         {
@@ -3012,21 +3012,21 @@ static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Acceleration structures are reported exactly when pipeline or inline ray tracing is");
+    TEST_SECTION(TEXT("Acceleration structures are reported exactly when pipeline or inline ray tracing is"));
     TEST_EXPECT(RHI::bSupportsRayTracing == (RHI::bSupportsRayTracingPipeline || RHI::bSupportsInlineRayTracing));
 
     if (ExpectedType == ERHIType::Metal)
     {
 #if PLATFORM_MACOS
-        TEST_SECTION("Metal reports inline ray tracing wherever the device supports ray tracing, and no pipeline until TraceRay is lowered");
+        TEST_SECTION(TEXT("Metal reports inline ray tracing wherever the device supports ray tracing, and no pipeline until TraceRay is lowered"));
         TEST_EXPECT(RHI::bSupportsInlineRayTracing == GMetalFeatures.bRayTracing);
         TEST_EXPECT(RHI::bSupportsRayTracingPipeline == false);
 #endif
 
-        TEST_SECTION("Metal reports timestamp queries when the device has a timestamp counter set");
+        TEST_SECTION(TEXT("Metal reports timestamp queries when the device has a timestamp counter set"));
         TEST_EXPECT(RHI::bSupportsTimestampQueries);
 
-        TEST_SECTION("Metal reports draw and dispatch indirect as supported; mesh-indirect follows the family flag; count stays off");
+        TEST_SECTION(TEXT("Metal reports draw and dispatch indirect as supported; mesh-indirect follows the family flag; count stays off"));
         TEST_EXPECT(RHI::bSupportsDrawIndirect);
         TEST_EXPECT(RHI::bSupportsDispatchIndirect);
         TEST_EXPECT(RHI::bSupportsDrawIndirectCount == false);
@@ -3046,14 +3046,14 @@ static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
         TEST_EXPECT(RHI::bSupportsDispatchMeshIndirect == false);
 #endif
 
-        TEST_SECTION("Metal overwrites Null leftover capability flags");
+        TEST_SECTION(TEXT("Metal overwrites Null leftover capability flags"));
         TEST_EXPECT(RHI::bSupportsGeometryShaders == false);
         TEST_EXPECT(RHI::bSupportsVRS == false);
         TEST_EXPECT(RHI::MaxShaderModel == EShaderModel::SM_6_6);
         TEST_EXPECT(RHI::bSupportRenderTargetArrayIndexFromVertexShader);
         TEST_EXPECT(RHI::bSupportsDynamicDepthBias);
 
-        TEST_SECTION("Metal sample counts and sample positions match the device");
+        TEST_SECTION(TEXT("Metal sample counts and sample positions match the device"));
         {
             uint32 SampleCounts = 0;
             TEST_EXPECT(RHI::Device->QuerySupportedSampleCounts(EFormat::B8G8R8A8_Unorm, SampleCounts));
@@ -3079,7 +3079,7 @@ static bool ProbeCapabilityHonesty(ERHIType ExpectedType)
             TEST_EXPECT(CompressedSampleCounts == 0);
         }
 
-        TEST_SECTION("Metal reports only what the backend implements");
+        TEST_SECTION(TEXT("Metal reports only what the backend implements"));
         TEST_EXPECT(RHI::bSupportsViewInstancing == false);
         TEST_EXPECT(RHI::MaxViewInstanceCount == 1);
         TEST_EXPECT(RHI::MaxTexture3DWidth == 2048);
@@ -3256,7 +3256,7 @@ static bool DispatchAndReadFirstUint(FRHIComputePipelineState* Pipeline, FRHICom
 static FRHIComputePipelineStateRef CreateMemoryProbePipeline(const CHAR_T* Source, EShaderModel ShaderModel, FRHIComputeShaderRef& OutShader)
 {
     TArray<uint8> ByteCode;
-    const FShaderCompileInfo CompileInfo("Main", ShaderModel, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo CompileInfo(TEXT("Main"), ShaderModel, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
     if (!FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ByteCode))
     {
         return nullptr;
@@ -3378,33 +3378,33 @@ static bool ProbeMemoryDefragAndResidency()
     const bool       bBindless    = RHI::bSupportsBindless;
 
     static const CHAR_T BindlessBufferSource[] =
-        "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+        TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
         "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
         "[numthreads(1,1,1)]\n"
         "void Main()\n"
         "{\n"
         "    StructuredBuffer<uint> Source = ResourceDescriptorHeap[ResourceIndex];\n"
         "    OutBuffer[0] = Source[3];\n"
-        "}\n";
+        "}\n");
 
     static const CHAR_T BindlessTextureSource[] =
-        "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+        TEXT("RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
         "cbuffer Params : register(b0) { uint ResourceIndex; uint Pad0; uint Pad1; uint Pad2; };\n"
         "[numthreads(1,1,1)]\n"
         "void Main()\n"
         "{\n"
         "    Texture2D<float4> Source = ResourceDescriptorHeap[ResourceIndex];\n"
         "    OutBuffer[0] = (uint)(Source.Load(int3(0, 0, 0)).x * 255.0f + 0.5f);\n"
-        "}\n";
+        "}\n");
 
     static const CHAR_T DirectBufferSource[] =
-        "StructuredBuffer<uint> Source : register(t0);\n"
+        TEXT("StructuredBuffer<uint> Source : register(t0);\n"
         "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
         "[numthreads(1,1,1)]\n"
         "void Main()\n"
         "{\n"
         "    OutBuffer[0] = Source[3];\n"
-        "}\n";
+        "}\n");
 
     FRHIComputeShaderRef        BindlessBufferShader;
     FRHIComputePipelineStateRef BindlessBufferPipeline = bBindless ? CreateMemoryProbePipeline(BindlessBufferSource, EShaderModel::SM_6_6, BindlessBufferShader) : nullptr;
@@ -3415,10 +3415,10 @@ static bool ProbeMemoryDefragAndResidency()
     TEST_EXPECT(!bBindless || (BindlessBufferPipeline != nullptr && BindlessTexturePipeline != nullptr));
     TEST_EXPECT(DirectBufferPipeline != nullptr);
 
-    SetConsoleVariable("MetalRHI.MaxDefragMovesPerFrame", "4");
-    SetConsoleVariable("MetalRHI.DefragEligibilityDelay", "0");
+    SetConsoleVariable(TEXT("MetalRHI.MaxDefragMovesPerFrame"), TEXT("4"));
+    SetConsoleVariable(TEXT("MetalRHI.DefragEligibilityDelay"), TEXT("0"));
 
-    TEST_SECTION("A defrag move keeps buffer contents, views and bindless slots");
+    TEST_SECTION(TEXT("A defrag move keeps buffer contents, views and bindless slots"));
     {
         TArray<FMemoryProbeBuffer> Survivors = CreateFragmentedHeapBuffers(24, BufferSize, bBindless);
         TEST_EXPECT(!Survivors.IsEmpty());
@@ -3452,7 +3452,7 @@ static bool ProbeMemoryDefragAndResidency()
         TEST_EXPECT(NumMoved > 0);
     }
 
-    TEST_SECTION("A defrag move keeps texture mips, render targets and bindless slots");
+    TEST_SECTION(TEXT("A defrag move keeps texture mips, render targets and bindless slots"));
     {
         constexpr uint32 NumTextures = 24;
         constexpr uint32 Extent      = 1024;
@@ -3589,7 +3589,7 @@ static bool ProbeMemoryDefragAndResidency()
         TEST_EXPECT(NumMoved > 0);
     }
 
-    TEST_SECTION("Destroying a resource while its move is pending cancels the move");
+    TEST_SECTION(TEXT("Destroying a resource while its move is pending cancels the move"));
     {
         TArray<FMemoryProbeBuffer> Survivors = CreateFragmentedHeapBuffers(24, BufferSize, bBindless);
         TEST_EXPECT(!Survivors.IsEmpty());
@@ -3633,7 +3633,7 @@ static bool ProbeMemoryDefragAndResidency()
         }
     }
 
-    TEST_SECTION("A small residency budget evicts idle allocations and keeps pinned ones");
+    TEST_SECTION(TEXT("A small residency budget evicts idle allocations and keeps pinned ones"));
     {
         constexpr uint64 StandaloneSize = 65ull * 1024ull * 1024ull;
         const FRHIBufferDesc Desc(EBufferFlags::Default | EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopySource | EBufferFlags::CopyDest, sizeof(uint32), StandaloneSize);
@@ -3654,7 +3654,7 @@ static bool ProbeMemoryDefragAndResidency()
             FRHIShaderResourceViewRef PinnedSRV = RHI::CreateShaderResourceView(Pinned.Get(), FRHIShaderResourceViewDesc::CreateBuffer(0, GMemoryPatternWords));
             const FRHIDescriptorHandle PinnedHandle = (bBindless && PinnedSRV) ? PinnedSRV->GetBindlessHandle() : FRHIDescriptorHandle();
 
-            SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "1");
+            SetConsoleVariable(TEXT("MetalRHI.ResidencyBudgetMB"), TEXT("1"));
             RunMemoryFrames(5);
 
             FMetalResidencyManager& ResidencyManager = MetalDevice->GetResidencyManager();
@@ -3679,7 +3679,7 @@ static bool ProbeMemoryDefragAndResidency()
                 TEST_EXPECT_EQ(Value, GetMemoryPatternWord(41, 3));
             }
 
-            SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "0");
+            SetConsoleVariable(TEXT("MetalRHI.ResidencyBudgetMB"), TEXT("0"));
             RunMemoryFrames(1);
         }
     }
@@ -3688,7 +3688,7 @@ static bool ProbeMemoryDefragAndResidency()
     const bool bTraceStructures = RHI::bSupportsInlineRayTracing && CreateRayQueryProbe(RayQueryProbe);
     TEST_EXPECT(!RHI::bSupportsInlineRayTracing || bTraceStructures);
 
-    TEST_SECTION("A defrag pass moves buffers around acceleration structures but never the structures themselves");
+    TEST_SECTION(TEXT("A defrag pass moves buffers around acceleration structures but never the structures themselves"));
     if (bTraceStructures)
     {
         FRayTracingProbeGeometry Geometry;
@@ -3736,7 +3736,7 @@ static bool ProbeMemoryDefragAndResidency()
         }
     }
 
-    TEST_SECTION("A small residency budget evicts filler allocations but no acceleration structure");
+    TEST_SECTION(TEXT("A small residency budget evicts filler allocations but no acceleration structure"));
     if (bTraceStructures)
     {
         constexpr uint64 StandaloneSize = 65ull * 1024ull * 1024ull;
@@ -3766,7 +3766,7 @@ static bool ProbeMemoryDefragAndResidency()
             FMetalResidencyManager& ResidencyManager = MetalDevice->GetResidencyManager();
             const uint64 EvictedBefore = ResidencyManager.GetEvictedBytes();
 
-            SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "1");
+            SetConsoleVariable(TEXT("MetalRHI.ResidencyBudgetMB"), TEXT("1"));
             RunMemoryFrames(5);
 
             TEST_EXPECT(ResidencyManager.GetEvictedBytes() > EvictedBefore);
@@ -3778,14 +3778,14 @@ static bool ProbeMemoryDefragAndResidency()
             TEST_EXPECT(TraceProbeRay(RayQueryProbe, Scene.Get(), bBindless, 0.0f, Hit));
             TEST_EXPECT(IsExpectedProbeHit(Hit, 32, 0, 5.0f));
 
-            SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "0");
+            SetConsoleVariable(TEXT("MetalRHI.ResidencyBudgetMB"), TEXT("0"));
             RunMemoryFrames(1);
         }
     }
 
-    TEST_SECTION("Creating and releasing resources across frames with defrag and eviction on");
+    TEST_SECTION(TEXT("Creating and releasing resources across frames with defrag and eviction on"));
     {
-        SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "32");
+        SetConsoleVariable(TEXT("MetalRHI.ResidencyBudgetMB"), TEXT("32"));
 
         for (uint32 Iteration = 0; Iteration < 12; ++Iteration)
         {
@@ -3810,10 +3810,10 @@ static bool ProbeMemoryDefragAndResidency()
         }
 
         RunMemoryFrames(2);
-        SetConsoleVariable("MetalRHI.ResidencyBudgetMB", "0");
+        SetConsoleVariable(TEXT("MetalRHI.ResidencyBudgetMB"), TEXT("0"));
     }
 
-    SetConsoleVariable("MetalRHI.DefragEligibilityDelay", "1");
+    SetConsoleVariable(TEXT("MetalRHI.DefragEligibilityDelay"), TEXT("1"));
     RunMemoryFrames(1);
 
     FShaderCompiler::Destroy();
@@ -3838,20 +3838,20 @@ static bool ProbePipelinePersistence()
         TEST_END();
     }
 
-    TEST_SECTION("Shaders compiled from the same bytecode share one function");
+    TEST_SECTION(TEXT("Shaders compiled from the same bytecode share one function"));
 
     const FString ComputeSource(
-        "SamplerState LinearSampler : register(s0);\n"
+        TEXT("SamplerState LinearSampler : register(s0);\n"
         "Texture2D<float4> SourceTex : register(t0);\n"
         "RWTexture2D<float4> DestTex : register(u0);\n"
         "[numthreads(1, 1, 1)]\n"
         "void Main(uint3 DispatchThreadID : SV_DispatchThreadID)\n"
         "{\n"
         "    DestTex[DispatchThreadID.xy] = SourceTex.SampleLevel(LinearSampler, float2(0.5, 0.5), 0);\n"
-        "}\n");
+        "}\n"));
 
     TArray<uint8> ComputeByteCode;
-    const FShaderCompileInfo ComputeCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo ComputeCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, RHI::GetShaderOutputLanguage());
     const bool bComputeCompiled = FShaderCompiler::Get().CompileFromSource(ComputeSource, ComputeCompileInfo, ComputeByteCode);
     TEST_EXPECT(bComputeCompiled);
 
@@ -3879,7 +3879,7 @@ static bool ProbePipelinePersistence()
 #endif
     }
 
-    TEST_SECTION("Compute PSOs that differ only in a static sampler share one pipeline");
+    TEST_SECTION(TEXT("Compute PSOs that differ only in a static sampler share one pipeline"));
 
     if (ComputeShader)
     {
@@ -3912,28 +3912,28 @@ static bool ProbePipelinePersistence()
         }
     }
 
-    TEST_SECTION("Graphics PSOs that differ only in cull and depth state share one pipeline");
+    TEST_SECTION(TEXT("Graphics PSOs that differ only in cull and depth state share one pipeline"));
 
     const FString VertexSource(
-        "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
+        TEXT("float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
         "{\n"
         "    float2 Positions[3];\n"
         "    Positions[0] = float2(-1.0, -1.0);\n"
         "    Positions[1] = float2( 3.0, -1.0);\n"
         "    Positions[2] = float2(-1.0,  3.0);\n"
         "    return float4(Positions[VertexID], 0.0, 1.0);\n"
-        "}\n");
+        "}\n"));
 
     const FString PixelSource(
-        "float4 Main() : SV_Target\n"
+        TEXT("float4 Main() : SV_Target\n"
         "{\n"
         "    return float4(1.0, 0.0, 0.0, 1.0);\n"
-        "}\n");
+        "}\n"));
 
     TArray<uint8> VertexByteCode;
     TArray<uint8> PixelByteCode;
-    const FShaderCompileInfo VertexCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
-    const FShaderCompileInfo PixelCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo VertexCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Vertex, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo PixelCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Pixel, RHI::GetShaderOutputLanguage());
     const bool bVertexCompiled = FShaderCompiler::Get().CompileFromSource(VertexSource, VertexCompileInfo, VertexByteCode);
     const bool bPixelCompiled  = FShaderCompiler::Get().CompileFromSource(PixelSource, PixelCompileInfo, PixelByteCode);
     TEST_EXPECT(bVertexCompiled);
@@ -4005,8 +4005,8 @@ static bool ProbePipelinePersistence()
 #endif
     }
 
-    const FString ArchivePath = Paths::GetAssetDir() + "/RHIBootTests_Probe.metalarchive";
-    const FString SidecarPath = ArchivePath + ".version";
+    const FString ArchivePath = Paths::GetAssetDir() + TEXT("/RHIBootTests_Probe.metalarchive");
+    const FString SidecarPath = ArchivePath + TEXT(".version");
     FPlatformFile::DeleteFile(*ArchivePath);
     FPlatformFile::DeleteFile(*SidecarPath);
 
@@ -4022,7 +4022,7 @@ static bool ProbePipelinePersistence()
             return Descriptor;
         };
 
-        TEST_SECTION("An archive written in Create mode is hit in Use mode");
+        TEST_SECTION(TEXT("An archive written in Create mode is hit in Use mode"));
 
         {
             FMetalBinaryArchive CreateArchive(MetalDevice);
@@ -4052,7 +4052,7 @@ static bool ProbePipelinePersistence()
 #endif
         }
 
-        TEST_SECTION("A sidecar from another OS build is rejected and the pipeline still compiles");
+        TEST_SECTION(TEXT("A sidecar from another OS build is rejected and the pipeline still compiles"));
 
         FMetalBinaryArchiveHeader Header;
         bool bHeaderRead = false;
@@ -4064,7 +4064,7 @@ static bool ProbePipelinePersistence()
         TEST_EXPECT(bHeaderRead);
         if (bHeaderRead)
         {
-            const CHAR_T TamperedBuild[] = "0TAMPER0";
+            const CHAR_T TamperedBuild[] = TEXT("0TAMPER0");
             Memory::Memcpy(Header.OSBuild, TamperedBuild, sizeof(TamperedBuild));
 
             bool bHeaderWritten = false;
@@ -4077,7 +4077,7 @@ static bool ProbePipelinePersistence()
 
             FMetalBinaryArchive RejectingArchive(MetalDevice);
             TEST_EXPECT(RejectingArchive.Initialize(EMetalBinaryArchiveMode::Use, ArchivePath));
-            TEST_EXPECT(RejectingArchive.GetRejectionReason().Find("OS build") != FString::InvalidIndex);
+            TEST_EXPECT(RejectingArchive.GetRejectionReason().Find(TEXT("OS build")) != FString::InvalidIndex);
             TEST_EXPECT(RejectingArchive.CreateComputePipeline(MakeDescriptor()) != nullptr);
         }
     }
@@ -4088,7 +4088,7 @@ static bool ProbePipelinePersistence()
     {
         SCOPED_AUTORELEASE_POOL();
 
-        TEST_SECTION("Append mode saves repeatedly while new pipelines share functions with the loaded archive");
+        TEST_SECTION(TEXT("Append mode saves repeatedly while new pipelines share functions with the loaded archive"));
 
         FPlatformFile::DeleteFile(*ArchivePath);
         FPlatformFile::DeleteFile(*SidecarPath);
@@ -4219,7 +4219,7 @@ static bool BootReadPixel(FRHITexture* Texture, ERHIResourceState State, uint32 
 
 static bool BootCompileShader(const CHAR_T* Source, EShaderStage Stage, TArray<uint8>& OutByteCode)
 {
-    const FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, Stage, RHI::GetShaderOutputLanguage());
+    const FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_2, Stage, RHI::GetShaderOutputLanguage());
     return FShaderCompiler::Get().CompileFromSource(FString(Source), CompileInfo, OutByteCode);
 }
 
@@ -4286,7 +4286,7 @@ static bool ProbeMetalParityGaps()
     TEST_BEGIN();
 
 #if STATS_ENABLED
-    TEST_SECTION("Shared memory stats follow creation and release");
+    TEST_SECTION(TEXT("Shared memory stats follow creation and release"));
     {
         BootDrainDeletions();
 
@@ -4313,7 +4313,7 @@ static bool ProbeMetalParityGaps()
 
     if (!GMetalFeatures.bUnifiedMemory)
     {
-        TEST_SECTION("On a discrete GPU, Shared memory is non-local and Managed memory is both");
+        TEST_SECTION(TEXT("On a discrete GPU, Shared memory is non-local and Managed memory is both"));
 
         constexpr int64 AllocationSize = 64ll * 1024ll * 1024ll;
         constexpr int64 Tolerance      = 4ll * 1024ll * 1024ll;
@@ -4357,22 +4357,22 @@ static bool ProbeMetalParityGaps()
     }
 
     const CHAR_T* FullscreenVertexSource =
-        "float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
+        TEXT("float4 Main(uint VertexID : SV_VertexID) : SV_Position\n"
         "{\n"
         "    float2 Positions[3];\n"
         "    Positions[0] = float2(-1.0, -1.0);\n"
         "    Positions[1] = float2( 3.0, -1.0);\n"
         "    Positions[2] = float2(-1.0,  3.0);\n"
         "    return float4(Positions[VertexID % 3], 0.5, 1.0);\n"
-        "}\n";
+        "}\n");
 
     TArray<uint8> VertexByteCode;
     TArray<uint8> GreenByteCode;
     TArray<uint8> WhiteByteCode;
     const bool bShadersCompiled =
         BootCompileShader(FullscreenVertexSource, EShaderStage::Vertex, VertexByteCode) &&
-        BootCompileShader("float4 Main() : SV_Target { return float4(0.0, 1.0, 0.0, 1.0); }\n", EShaderStage::Pixel, GreenByteCode) &&
-        BootCompileShader("float4 Main() : SV_Target { return float4(1.0, 1.0, 1.0, 1.0); }\n", EShaderStage::Pixel, WhiteByteCode);
+        BootCompileShader(TEXT("float4 Main() : SV_Target { return float4(0.0, 1.0, 0.0, 1.0); }\n"), EShaderStage::Pixel, GreenByteCode) &&
+        BootCompileShader(TEXT("float4 Main() : SV_Target { return float4(1.0, 1.0, 1.0, 1.0); }\n"), EShaderStage::Pixel, WhiteByteCode);
     TEST_EXPECT(bShadersCompiled);
 
     FRHIVertexShaderRef VertexShader = bShadersCompiled ? RHI::CreateVertexShader(VertexByteCode) : nullptr;
@@ -4386,7 +4386,7 @@ static bool ProbeMetalParityGaps()
         && WhitePipeline.Initialize(VertexShader.Get(), WhiteShader.Get(), EFormat::Unknown, false);
     TEST_EXPECT(bPipelinesCreated);
 
-    TEST_SECTION("A sampler wraps U and clamps V on the right axes");
+    TEST_SECTION(TEXT("A sampler wraps U and clamps V on the right axes"));
     {
         const uint8 Pixels[2 * 2 * 4] =
         {
@@ -4405,11 +4405,11 @@ static bool ProbeMetalParityGaps()
 
         TArray<uint8> ComputeByteCode;
         const bool bCompiled = BootCompileShader(
-            "SamplerState Samp : register(s0);\n"
+            TEXT("SamplerState Samp : register(s0);\n"
             "Texture2D<float4> Tex : register(t0);\n"
             "RWTexture2D<float4> Dest : register(u0);\n"
             "[numthreads(1, 1, 1)]\n"
-            "void Main() { Dest[uint2(0, 0)] = Tex.SampleLevel(Samp, float2(1.25, 1.25), 0); }\n",
+            "void Main() { Dest[uint2(0, 0)] = Tex.SampleLevel(Samp, float2(1.25, 1.25), 0); }\n"),
             EShaderStage::Compute, ComputeByteCode);
         TEST_EXPECT(bCompiled);
 
@@ -4448,13 +4448,13 @@ static bool ProbeMetalParityGaps()
 
     if (RHI::bSupportsPipelineStatisticsQueries && bPipelinesCreated)
     {
-        TEST_SECTION("Pipeline statistics sum across encoders and read zero when empty");
+        TEST_SECTION(TEXT("Pipeline statistics sum across encoders and read zero when empty"));
 
         TArray<uint8> ComputeByteCode;
         const bool bCompiled = BootCompileShader(
-            "RWBuffer<uint> Output : register(u0);\n"
+            TEXT("RWBuffer<uint> Output : register(u0);\n"
             "[numthreads(64, 1, 1)]\n"
-            "void Main(uint3 ThreadID : SV_DispatchThreadID) { Output[ThreadID.x] = ThreadID.x; }\n",
+            "void Main(uint3 ThreadID : SV_DispatchThreadID) { Output[ThreadID.x] = ThreadID.x; }\n"),
             EShaderStage::Compute, ComputeByteCode);
         TEST_EXPECT(bCompiled);
 
@@ -4512,7 +4512,7 @@ static bool ProbeMetalParityGaps()
 
     if (bPipelinesCreated)
     {
-        TEST_SECTION("DiscardContents is used up by the next pass and loses to a later clear");
+        TEST_SECTION(TEXT("DiscardContents is used up by the next pass and loses to a later clear"));
 
         FRHITextureRef RenderTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
             EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource));
@@ -4557,7 +4557,7 @@ static bool ProbeMetalParityGaps()
         }
     }
 
-    TEST_SECTION("Raw and structured buffer UAV clears write the first value to every word");
+    TEST_SECTION(TEXT("Raw and structured buffer UAV clears write the first value to every word"));
     {
         constexpr uint32 NumWords = 64;
         constexpr uint64 ByteSize = NumWords * sizeof(uint32);
@@ -4618,7 +4618,7 @@ static bool ProbeMetalParityGaps()
         }
     }
 
-    TEST_SECTION("A cube texture has a default UAV that clears every face");
+    TEST_SECTION(TEXT("A cube texture has a default UAV that clears every face"));
     {
         FRHITextureRef Cube = RHI::CreateTexture(FRHITextureDesc::CreateTextureCube(
             EFormat::R8G8B8A8_Unorm, 4, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::CopySource));
@@ -4640,7 +4640,7 @@ static bool ProbeMetalParityGaps()
 
     if (GMetalSupportsSamplerLODBias && VertexShader)
     {
-        TEST_SECTION("A sampler MipLODBias of 1 samples the second mip");
+        TEST_SECTION(TEXT("A sampler MipLODBias of 1 samples the second mip"));
 
         uint8 Mip0[4 * 4 * 4];
         uint8 Mip1[2 * 2 * 4];
@@ -4662,9 +4662,9 @@ static bool ProbeMetalParityGaps()
 
         TArray<uint8> SampleByteCode;
         const bool bCompiled = BootCompileShader(
-            "Texture2D<float4> Tex : register(t0);\n"
+            TEXT("Texture2D<float4> Tex : register(t0);\n"
             "SamplerState Samp : register(s0);\n"
-            "float4 Main(float4 Position : SV_Position) : SV_Target { return Tex.Sample(Samp, Position.xy / 4.0); }\n",
+            "float4 Main(float4 Position : SV_Position) : SV_Target { return Tex.Sample(Samp, Position.xy / 4.0); }\n"),
             EShaderStage::Pixel, SampleByteCode);
         FRHIPixelShaderRef SampleShader = bCompiled ? RHI::CreatePixelShader(SampleByteCode) : nullptr;
         TEST_EXPECT(Texture != nullptr && RenderTarget != nullptr && SampleShader != nullptr);
@@ -4714,7 +4714,7 @@ static bool ProbeMetalParityGaps()
 
     if (RHI::bSupportsDepthBoundsTest && VertexShader && WhiteShader)
     {
-        TEST_SECTION("The depth bounds test discards against the stored depth and only with the pipeline flag");
+        TEST_SECTION(TEXT("The depth bounds test discards against the stored depth and only with the pipeline flag"));
 
         FRHITextureRef RenderTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
             EFormat::R8G8B8A8_Unorm, 4, 4, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::CopySource));
@@ -4785,16 +4785,16 @@ static bool BootRHI(ERHIType ExpectedType)
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Initialize");
+    TEST_SECTION(TEXT("Initialize"));
 
-    SetConsoleVariable("RHI.Type", ToString(ExpectedType));
-    SetConsoleVariable("RHI.EnableValidation", true);
-    SetConsoleVariable("RHI.EnableValidationDebugBreak", false);
-    SetConsoleVariable("TaskGraph.EnableRHIThread", false);
+    SetConsoleVariable(TEXT("RHI.Type"), ToString(ExpectedType));
+    SetConsoleVariable(TEXT("RHI.EnableValidation"), true);
+    SetConsoleVariable(TEXT("RHI.EnableValidationDebugBreak"), false);
+    SetConsoleVariable(TEXT("TaskGraph.EnableRHIThread"), false);
     if (ExpectedType == ERHIType::Metal)
     {
-        SetConsoleVariable("RHI.EnableDebugLayer", true);
-        SetConsoleVariable("MetalRHI.BinaryArchiveFileName", "RHIBootTests.metalarchive");
+        SetConsoleVariable(TEXT("RHI.EnableDebugLayer"), true);
+        SetConsoleVariable(TEXT("MetalRHI.BinaryArchiveFileName"), TEXT("RHIBootTests.metalarchive"));
 #if PLATFORM_MACOS
         FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
         MetalResetValidationErrors();
@@ -4813,7 +4813,7 @@ static bool BootRHI(ERHIType ExpectedType)
 
         const bool bCanMap = (ExpectedType != ERHIType::Null);
 
-        TEST_SECTION("Resources");
+        TEST_SECTION(TEXT("Resources"));
         TEST_EXPECT(ProbeBuffers(bCanMap));
         TEST_EXPECT(ProbeTextures());
         TEST_EXPECT(ProbeCreateAndDestroy());
@@ -4871,9 +4871,9 @@ bool RHIBoot_Metal_Test()
 
 bool RHIBoot_MetalResidencyFallback_Test()
 {
-    SetConsoleVariable("MetalRHI.ForceResidencyFallback", true);
+    SetConsoleVariable(TEXT("MetalRHI.ForceResidencyFallback"), true);
     const bool bResult = BootRHI(ERHIType::Metal);
-    SetConsoleVariable("MetalRHI.ForceResidencyFallback", false);
+    SetConsoleVariable(TEXT("MetalRHI.ForceResidencyFallback"), false);
     return bResult;
 }
 

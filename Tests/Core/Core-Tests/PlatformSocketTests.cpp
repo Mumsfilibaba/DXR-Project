@@ -24,21 +24,21 @@ static bool WaitUntilReadable(IPlatformSocket* Socket, uint32 TimeoutMillisecond
     return (FPlatformSocket::WaitForRead(Sockets, 1, &bReadable, TimeoutMilliseconds) == 1) && bReadable;
 }
 
-static FString ReceiveText(IPlatformSocket* Socket)
+static FAnsiString ReceiveText(IPlatformSocket* Socket)
 {
-    CHAR_T Buffer[GReceiveBufferSize];
+    ANSICHAR Buffer[GReceiveBufferSize];
     int32 BytesRead = 0;
     if (!WaitUntilReadable(Socket, GWaitMilliseconds) || (Socket->Recv(Buffer, sizeof(Buffer), BytesRead) != ESocketResult::Success))
     {
-        return FString();
+        return FAnsiString();
     }
 
-    return FString(Buffer, BytesRead);
+    return FAnsiString(Buffer, BytesRead);
 }
 
-static bool SendText(IPlatformSocket* Socket, const CHAR_T* Text)
+static bool SendText(IPlatformSocket* Socket, const ANSICHAR* Text)
 {
-    const int32 Length = CString::Strlen(Text);
+    const int32 Length = TCString<ANSICHAR>::Strlen(Text);
     int32 BytesSent = 0;
     return (Socket->Send(Text, Length, BytesSent) == ESocketResult::Success) && (BytesSent == Length);
 }
@@ -82,7 +82,7 @@ bool PlatformSocket_Test()
         LOG_WARNING("[PlatformSocket] IPv6 is not available, skipping the IPv6 sections");
     }
 
-    TEST_SECTION("A listener bound to port 0 reports the port the OS picked");
+    TEST_SECTION(TEXT("A listener bound to port 0 reports the port the OS picked"));
     TUniquePtr<IPlatformSocket> Listener(CreateListener(ESocketFamily::IPv4, FSocketAddress::LoopbackIPv4(GAnyPort)));
     TEST_CHECK(Listener.IsValid());
     TEST_EXPECT_EQ(Listener->GetType(), ESocketType::TCP);
@@ -91,13 +91,13 @@ bool PlatformSocket_Test()
     const uint16 Port = GetLocalPort(Listener.Get());
     TEST_CHECK(Port != GAnyPort);
 
-    TEST_SECTION("Accept returns nothing while no connection is pending");
+    TEST_SECTION(TEXT("Accept returns nothing while no connection is pending"));
     {
         TUniquePtr<IPlatformSocket> Nothing(Listener->Accept());
         TEST_EXPECT(!Nothing.IsValid());
     }
 
-    TEST_SECTION("A loopback client connects and is accepted as a loopback peer");
+    TEST_SECTION(TEXT("A loopback client connects and is accepted as a loopback peer"));
     TUniquePtr<IPlatformSocket> Client(FPlatformSocket::Create(ESocketType::TCP, ESocketFamily::IPv4));
     TEST_CHECK(Client.IsValid());
     TEST_CHECK(Client->Connect(FSocketAddress::LoopbackIPv4(Port), GWaitMilliseconds));
@@ -111,20 +111,20 @@ bool PlatformSocket_Test()
         TEST_EXPECT(Server->GetPeerAddress(ServerPeer));
         TEST_EXPECT(ServerPeer.IsIPv4());
         TEST_EXPECT(ServerPeer.IsLoopback());
-        TEST_EXPECT(ServerPeer.ToString().StartsWith("127.0.0.1:"));
+        TEST_EXPECT(ServerPeer.ToString().StartsWith(TEXT("127.0.0.1:")));
 
         FSocketAddress ClientPeer;
         TEST_EXPECT(Client->GetPeerAddress(ClientPeer));
         TEST_EXPECT(ClientPeer == FSocketAddress::LoopbackIPv4(Port));
     }
 
-    TEST_SECTION("Data travels in both directions");
+    TEST_SECTION(TEXT("Data travels in both directions"));
     TEST_EXPECT(SendText(Client.Get(), "ping\n"));
     TEST_EXPECT(ReceiveText(Server.Get()) == "ping\n");
     TEST_EXPECT(SendText(Server.Get(), "pong\n"));
     TEST_EXPECT(ReceiveText(Client.Get()) == "pong\n");
 
-    TEST_SECTION("Waiting on a socket with nothing pending times out");
+    TEST_SECTION(TEXT("Waiting on a socket with nothing pending times out"));
     {
         IPlatformSocket* Sockets[] = { Server.Get() };
         bool bReadable = true;
@@ -132,7 +132,7 @@ bool PlatformSocket_Test()
         TEST_EXPECT(!bReadable);
     }
 
-    TEST_SECTION("A null entry passed to WaitForRead is never readable");
+    TEST_SECTION(TEXT("A null entry passed to WaitForRead is never readable"));
     {
         TEST_EXPECT(SendText(Client.Get(), "x"));
 
@@ -144,25 +144,25 @@ bool PlatformSocket_Test()
         TEST_EXPECT(ReceiveText(Server.Get()) == "x");
     }
 
-    TEST_SECTION("A non-blocking receive with nothing pending would block");
+    TEST_SECTION(TEXT("A non-blocking receive with nothing pending would block"));
     {
-        CHAR_T Buffer[GSmallBufferSize];
+        ANSICHAR Buffer[GSmallBufferSize];
         int32 BytesRead = 0;
         TEST_EXPECT_EQ(Server->Recv(Buffer, sizeof(Buffer), BytesRead), ESocketResult::WouldBlock);
         TEST_EXPECT_EQ(BytesRead, 0);
     }
 
-    TEST_SECTION("Closing one end is reported as Closed on the other");
+    TEST_SECTION(TEXT("Closing one end is reported as Closed on the other"));
     Client->Close();
     TEST_EXPECT(!Client->IsValid());
     TEST_EXPECT(WaitUntilReadable(Server.Get(), GWaitMilliseconds));
     {
-        CHAR_T Buffer[GSmallBufferSize];
+        ANSICHAR Buffer[GSmallBufferSize];
         int32 BytesRead = 0;
         TEST_EXPECT_EQ(Server->Recv(Buffer, sizeof(Buffer), BytesRead), ESocketResult::Closed);
     }
 
-    TEST_SECTION("A socket refuses addresses its family cannot use");
+    TEST_SECTION(TEXT("A socket refuses addresses its family cannot use"));
     {
         TUniquePtr<IPlatformSocket> IPv4Socket(FPlatformSocket::Create(ESocketType::TCP, ESocketFamily::IPv4));
         TEST_CHECK(IPv4Socket.IsValid());
@@ -184,14 +184,14 @@ bool PlatformSocket_Test()
 
     if (bHasIPv6)
     {
-        TEST_SECTION("A strict IPv6 listener on :: refuses IPv4 clients");
+        TEST_SECTION(TEXT("A strict IPv6 listener on :: refuses IPv4 clients"));
         {
             TUniquePtr<IPlatformSocket> StrictListener(CreateListener(ESocketFamily::IPv6, FSocketAddress::AnyIPv6(GAnyPort)));
             TEST_CHECK(StrictListener.IsValid());
             TEST_EXPECT(!ConnectIPv4Loopback(GetLocalPort(StrictListener.Get())));
         }
 
-        TEST_SECTION("A dual-stack listener on :: accepts IPv4 clients and reports them as IPv4");
+        TEST_SECTION(TEXT("A dual-stack listener on :: accepts IPv4 clients and reports them as IPv4"));
         {
             TUniquePtr<IPlatformSocket> DualStackListener(CreateListener(ESocketFamily::DualStack, FSocketAddress::AnyIPv6(GAnyPort)));
             TEST_CHECK(DualStackListener.IsValid());
@@ -210,10 +210,10 @@ bool PlatformSocket_Test()
             TEST_EXPECT(Accepted->GetPeerAddress(Peer));
             TEST_EXPECT(Peer.IsIPv4());
             TEST_EXPECT(Peer.IsLoopback());
-            TEST_EXPECT(Peer.ToString().StartsWith("127.0.0.1:"));
+            TEST_EXPECT(Peer.ToString().StartsWith(TEXT("127.0.0.1:")));
         }
 
-        TEST_SECTION("IPv6 loopback connects, accepts and carries data");
+        TEST_SECTION(TEXT("IPv6 loopback connects, accepts and carries data"));
         {
             TUniquePtr<IPlatformSocket> IPv6Listener(CreateListener(ESocketFamily::IPv6, FSocketAddress::LoopbackIPv6(GAnyPort)));
             TEST_CHECK(IPv6Listener.IsValid());
@@ -231,14 +231,14 @@ bool PlatformSocket_Test()
             TEST_EXPECT(Accepted->GetPeerAddress(Peer));
             TEST_EXPECT(!Peer.IsIPv4());
             TEST_EXPECT(Peer.IsLoopback());
-            TEST_EXPECT(Peer.ToString().StartsWith("[::1]:"));
+            TEST_EXPECT(Peer.ToString().StartsWith(TEXT("[::1]:")));
 
             TEST_EXPECT(SendText(IPv6Client.Get(), "six"));
             TEST_EXPECT(ReceiveText(Accepted.Get()) == "six");
         }
     }
 
-    TEST_SECTION("A UDP datagram reaches a bound socket through a connected one");
+    TEST_SECTION(TEXT("A UDP datagram reaches a bound socket through a connected one"));
     {
         TUniquePtr<IPlatformSocket> Receiver(FPlatformSocket::Create(ESocketType::UDP, ESocketFamily::IPv4));
         TEST_CHECK(Receiver.IsValid());
@@ -256,7 +256,7 @@ bool PlatformSocket_Test()
         TEST_EXPECT(ReceiveText(Receiver.Get()) == "datagram");
     }
 
-    TEST_SECTION("RecvFrom reports who sent the datagram");
+    TEST_SECTION(TEXT("RecvFrom reports who sent the datagram"));
     {
         TUniquePtr<IPlatformSocket> Receiver(FPlatformSocket::Create(ESocketType::UDP, ESocketFamily::IPv4));
         TEST_CHECK(Receiver.IsValid());
@@ -273,17 +273,17 @@ bool PlatformSocket_Test()
         TEST_EXPECT_EQ(BytesSent, 5);
 
         TEST_CHECK(WaitUntilReadable(Receiver.Get(), GWaitMilliseconds));
-        CHAR_T Buffer[GSmallBufferSize];
+        ANSICHAR Buffer[GSmallBufferSize];
         int32 BytesRead = 0;
         FSocketAddress From;
         TEST_EXPECT_EQ(Receiver->RecvFrom(Buffer, sizeof(Buffer), BytesRead, From), ESocketResult::Success);
-        TEST_EXPECT(FString(Buffer, BytesRead) == "hello");
+        TEST_EXPECT(FAnsiString(Buffer, BytesRead) == "hello");
         TEST_EXPECT(From == FSocketAddress::LoopbackIPv4(SenderPort));
     }
 
     if (bHasIPv6)
     {
-        TEST_SECTION("A dual-stack UDP socket receives from IPv4 senders and reports them as IPv4");
+        TEST_SECTION(TEXT("A dual-stack UDP socket receives from IPv4 senders and reports them as IPv4"));
         {
             TUniquePtr<IPlatformSocket> Receiver(FPlatformSocket::Create(ESocketType::UDP, ESocketFamily::DualStack));
             TEST_CHECK(Receiver.IsValid());
@@ -297,17 +297,17 @@ bool PlatformSocket_Test()
             TEST_EXPECT_EQ(Sender->SendTo("four", 4, FSocketAddress::LoopbackIPv4(ReceiverPort), BytesSent), ESocketResult::Success);
 
             TEST_CHECK(WaitUntilReadable(Receiver.Get(), GWaitMilliseconds));
-            CHAR_T Buffer[GSmallBufferSize];
+            ANSICHAR Buffer[GSmallBufferSize];
             int32 BytesRead = 0;
             FSocketAddress From;
             TEST_EXPECT_EQ(Receiver->RecvFrom(Buffer, sizeof(Buffer), BytesRead, From), ESocketResult::Success);
-            TEST_EXPECT(FString(Buffer, BytesRead) == "four");
+            TEST_EXPECT(FAnsiString(Buffer, BytesRead) == "four");
             TEST_EXPECT(From.IsIPv4());
             TEST_EXPECT(From.IsLoopback());
         }
     }
 
-    TEST_SECTION("An IPv4 UDP socket cannot send to an IPv6 address");
+    TEST_SECTION(TEXT("An IPv4 UDP socket cannot send to an IPv6 address"));
     {
         TUniquePtr<IPlatformSocket> Sender(FPlatformSocket::Create(ESocketType::UDP, ESocketFamily::IPv4));
         TEST_CHECK(Sender.IsValid());
@@ -317,7 +317,7 @@ bool PlatformSocket_Test()
         TEST_EXPECT_EQ(BytesSent, 0);
     }
 
-    TEST_SECTION("A datagram longer than the buffer is cut to fit, and an empty one is a Success");
+    TEST_SECTION(TEXT("A datagram longer than the buffer is cut to fit, and an empty one is a Success"));
     {
         TUniquePtr<IPlatformSocket> Receiver(FPlatformSocket::Create(ESocketType::UDP, ESocketFamily::IPv4));
         TEST_CHECK(Receiver.IsValid());
@@ -327,22 +327,22 @@ bool PlatformSocket_Test()
         TUniquePtr<IPlatformSocket> Sender(FPlatformSocket::Create(ESocketType::UDP, ESocketFamily::IPv4));
         TEST_CHECK(Sender.IsValid());
 
-        CHAR_T Large[GLargeDatagramSize];
+        ANSICHAR Large[GLargeDatagramSize];
         for (int32 Index = 0; Index < GLargeDatagramSize; ++Index)
         {
-            Large[Index] = static_cast<CHAR_T>('a' + (Index % 26));
+            Large[Index] = static_cast<ANSICHAR>('a' + (Index % 26));
         }
 
         int32 BytesSent = 0;
         TEST_EXPECT_EQ(Sender->SendTo(Large, GLargeDatagramSize, ReceiverAddress, BytesSent), ESocketResult::Success);
         TEST_CHECK(WaitUntilReadable(Receiver.Get(), GWaitMilliseconds));
 
-        CHAR_T Small[GTruncatedReadSize];
+        ANSICHAR Small[GTruncatedReadSize];
         int32 BytesRead = 0;
         FSocketAddress From;
         TEST_EXPECT_EQ(Receiver->RecvFrom(Small, GTruncatedReadSize, BytesRead, From), ESocketResult::Success);
         TEST_EXPECT_EQ(BytesRead, GTruncatedReadSize);
-        TEST_EXPECT(FString(Small, BytesRead) == FString(Large, GTruncatedReadSize));
+        TEST_EXPECT(FAnsiString(Small, BytesRead) == FAnsiString(Large, GTruncatedReadSize));
 
         TEST_EXPECT_EQ(Sender->SendTo(Large, 0, ReceiverAddress, BytesSent), ESocketResult::Success);
         TEST_CHECK(WaitUntilReadable(Receiver.Get(), GWaitMilliseconds));
@@ -352,7 +352,7 @@ bool PlatformSocket_Test()
         TEST_EXPECT_EQ(BytesRead, 0);
     }
 
-    TEST_SECTION("Binding to a port another listener holds fails");
+    TEST_SECTION(TEXT("Binding to a port another listener holds fails"));
     {
         TUniquePtr<IPlatformSocket> Second(FPlatformSocket::Create(ESocketType::TCP, ESocketFamily::IPv4));
         TEST_CHECK(Second.IsValid());

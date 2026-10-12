@@ -99,7 +99,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("std::unordered_map", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("std::unordered_map"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
 
         {
@@ -116,7 +116,7 @@ void TMap_Benchmark()
                 Last = Move(Map);
             }
 
-            Benchmark::Report("TMap", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("TMap"), Clock.GetTotalDuration() / TestCount, Iterations);
             LOG_INFO("TMap allocated               :%llu bytes (last run)", static_cast<unsigned long long>(Last.GetAllocatedSize()));
         }
     }
@@ -145,7 +145,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("std::unordered_map find", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("std::unordered_map find"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
 
         {
@@ -160,7 +160,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("TMap find", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("TMap find"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
     }
 
@@ -183,7 +183,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("std::unordered_map erase", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("std::unordered_map erase"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
 
         {
@@ -203,7 +203,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("TMap erase", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("TMap erase"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
     }
 
@@ -229,7 +229,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("std::unordered_map iter", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("std::unordered_map iter"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
 
         {
@@ -244,7 +244,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("TMap iter", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("TMap iter"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
     }
 
@@ -262,7 +262,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("std::unordered_set", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("std::unordered_set"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
 
         {
@@ -279,7 +279,7 @@ void TMap_Benchmark()
                 Last = Move(Set);
             }
 
-            Benchmark::Report("TSet", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("TSet"), Clock.GetTotalDuration() / TestCount, Iterations);
             LOG_INFO("TSet allocated               :%llu bytes (last run)", static_cast<unsigned long long>(Last.GetAllocatedSize()));
         }
     }
@@ -298,7 +298,7 @@ void TMap_Benchmark()
                 }
             }
 
-            Benchmark::Report("std::unordered_multimap", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("std::unordered_multimap"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
 
         {
@@ -315,13 +315,13 @@ void TMap_Benchmark()
                 Last = Move(Map);
             }
 
-            Benchmark::Report("TMultiMap", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("TMultiMap"), Clock.GetTotalDuration() / TestCount, Iterations);
             LOG_INFO("TMultiMap allocated          :%llu bytes (last run)", static_cast<unsigned long long>(Last.GetAllocatedSize()));
         }
     }
 
     {
-        LOG_INFO("\nInsert String keys");
+        LOG_INFO("\nInsert FString keys");
         {
             FClock Clock;
             for (uint32 i = 0; i < TestCount; ++i)
@@ -330,11 +330,11 @@ void TMap_Benchmark()
                 FScopedClock ScopedClock(Clock);
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Map.emplace(FString::Printf("%u", j), static_cast<int32>(j));
+                    Map.emplace(FString::Printf(TEXT("%u"), j), static_cast<int32>(j));
                 }
             }
 
-            Benchmark::Report("std map String", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("std map FString"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
 
         {
@@ -345,11 +345,11 @@ void TMap_Benchmark()
                 FScopedClock ScopedClock(Clock);
                 for (uint32 j = 0; j < Iterations; ++j)
                 {
-                    Map.Add(FString::Printf("%u", j), static_cast<int32>(j));
+                    Map.Add(FString::Printf(TEXT("%u"), j), static_cast<int32>(j));
                 }
             }
 
-            Benchmark::Report("TMap String", Clock.GetTotalDuration() / TestCount, Iterations);
+            Benchmark::Report(TEXT("TMap FString"), Clock.GetTotalDuration() / TestCount, Iterations);
         }
     }
 

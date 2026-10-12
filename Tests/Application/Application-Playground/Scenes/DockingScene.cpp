@@ -17,7 +17,7 @@
 constexpr int32 DOCKING_AREA_HEIGHT = 420;
 
 // Where the scene keeps the layout it saves, next to the playground's working directory
-constexpr const CHAR_T* DOCKING_LAYOUT_FILE = "PlaygroundLayout.ini";
+constexpr const CHAR_T* DOCKING_LAYOUT_FILE = TEXT("PlaygroundLayout.ini");
 
 static TSharedPtr<FDockingArea> GDockingArea;
 static TSharedPtr<FTextBlock>   GLayoutReadout;
@@ -53,7 +53,7 @@ static void DescribeNode(const FDockNode& Node, FString& OutText)
     {
         if (Node.TabIds.IsEmpty())
         {
-            OutText.Append("(empty)");
+            OutText.Append(TEXT("(empty)"));
             return;
         }
 
@@ -75,7 +75,7 @@ static void DescribeNode(const FDockNode& Node, FString& OutText)
         return;
     }
 
-    OutText.Append(Node.Orientation == EDockSplitOrientation::Horizontal ? "row[" : "col[");
+    OutText.Append(Node.Orientation == EDockSplitOrientation::Horizontal ? TEXT("row[") : TEXT("col["));
 
     for (int32 Index = 0; Index < Node.Children.Size(); ++Index)
     {
@@ -86,7 +86,7 @@ static void DescribeNode(const FDockNode& Node, FString& OutText)
 
         const float Share = Index < Node.ChildFractions.Size() ? Node.ChildFractions[Index] : 0.0f;
 
-        OutText.Append(FString::Printf("%.0f%%:", Share * 100.0f));
+        OutText.Append(FString::Printf(TEXT("%.0f%%:"), Share * 100.0f));
         DescribeNode(Node.Children[Index], OutText);
     }
 
@@ -108,10 +108,10 @@ static void RefreshReadout()
 
 static void ApplyDefaultLayout()
 {
-    FDockNode Details = FDockNode::CreateTabs({ "Details", "Materials" });
-    FDockNode Right   = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Details, FDockNode::CreateTabs({ "Output" }));
+    FDockNode Details = FDockNode::CreateTabs({ TEXT("Details"), TEXT("Materials") });
+    FDockNode Right   = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Details, FDockNode::CreateTabs({ TEXT("Output") }));
 
-    GDockingArea->RestoreLayout(FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateTabs({ "Outliner" }), Right));
+    GDockingArea->RestoreLayout(FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateTabs({ TEXT("Outliner") }), Right));
     RefreshReadout();
 }
 
@@ -132,10 +132,10 @@ static TSharedPtr<FVisualElement> MakeDockingArea(const FPlaygroundFonts& Fonts)
 
     GDockingArea = FDockingArea::Create(Desc);
 
-    GDockingArea->RegisterPanel("Outliner", "Outliner", MakePanelBody(Fonts, "Outliner", "Drag a tab sideways to reorder it. Drag it clear of the strip and an indicator shows where it would land."));
-    GDockingArea->RegisterPanel("Details", "Details", MakePanelBody(Fonts, "Details", "The edges of a panel are drop zones. The middle stacks the dragged panel as another tab."));
-    GDockingArea->RegisterPanel("Materials", "Materials", MakePanelBody(Fonts, "Materials", "This one starts stacked behind Details, so the strip has two tabs to reorder."));
-    GDockingArea->RegisterPanel("Output", "Output", MakePanelBody(Fonts, "Output", "Drag the bar between the panels to resize them. Neither side goes below its minimum."));
+    GDockingArea->RegisterPanel(TEXT("Outliner"), TEXT("Outliner"), MakePanelBody(Fonts, TEXT("Outliner"), TEXT("Drag a tab sideways to reorder it. Drag it clear of the strip and an indicator shows where it would land.")));
+    GDockingArea->RegisterPanel(TEXT("Details"), TEXT("Details"), MakePanelBody(Fonts, TEXT("Details"), TEXT("The edges of a panel are drop zones. The middle stacks the dragged panel as another tab.")));
+    GDockingArea->RegisterPanel(TEXT("Materials"), TEXT("Materials"), MakePanelBody(Fonts, TEXT("Materials"), TEXT("This one starts stacked behind Details, so the strip has two tabs to reorder.")));
+    GDockingArea->RegisterPanel(TEXT("Output"), TEXT("Output"), MakePanelBody(Fonts, TEXT("Output"), TEXT("Drag the bar between the panels to resize them. Neither side goes below its minimum.")));
 
     ApplyDefaultLayout();
 
@@ -154,7 +154,7 @@ static TSharedPtr<FVisualElement> MakeDockingArea(const FPlaygroundFonts& Fonts)
 static TSharedPtr<FVisualElement> MakeLayoutControls(const FPlaygroundFonts& Fonts)
 {
     FTextBlock::FDesc ReadoutDesc;
-    ReadoutDesc.Text            = "";
+    ReadoutDesc.Text            = TEXT("");
     ReadoutDesc.Font            = Fonts.Monospace;
     ReadoutDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
 
@@ -162,7 +162,7 @@ static TSharedPtr<FVisualElement> MakeLayoutControls(const FPlaygroundFonts& Fon
     RefreshReadout();
 
     FButton::FDesc SaveDesc;
-    SaveDesc.SetText("Save the layout").SetFont(Fonts.Body);
+    SaveDesc.SetText(TEXT("Save the layout")).SetFont(Fonts.Body);
     SaveDesc.SetOnClicked(FOnClicked::CreateLambda([]()
     {
         GDockingArea->SaveLayoutToFile(DOCKING_LAYOUT_FILE);
@@ -170,7 +170,7 @@ static TSharedPtr<FVisualElement> MakeLayoutControls(const FPlaygroundFonts& Fon
     }));
 
     FButton::FDesc RestoreDesc;
-    RestoreDesc.SetText("Restore it").SetFont(Fonts.Body);
+    RestoreDesc.SetText(TEXT("Restore it")).SetFont(Fonts.Body);
     RestoreDesc.SetOnClicked(FOnClicked::CreateLambda([]()
     {
         GDockingArea->RestoreLayoutFromFile(DOCKING_LAYOUT_FILE);
@@ -178,14 +178,14 @@ static TSharedPtr<FVisualElement> MakeLayoutControls(const FPlaygroundFonts& Fon
     }));
 
     FButton::FDesc ResetDesc;
-    ResetDesc.SetText("Back to the default").SetFont(Fonts.Body);
+    ResetDesc.SetText(TEXT("Back to the default")).SetFont(Fonts.Body);
     ResetDesc.SetOnClicked(FOnClicked::CreateLambda([]()
     {
         ApplyDefaultLayout();
     }));
 
     FButton::FDesc ReadDesc;
-    ReadDesc.SetText("Re-read the tree").SetFont(Fonts.Body);
+    ReadDesc.SetText(TEXT("Re-read the tree")).SetFont(Fonts.Body);
     ReadDesc.SetOnClicked(FOnClicked::CreateLambda([]()
     {
         RefreshReadout();
@@ -210,8 +210,8 @@ FPlaygroundScene CreateDockingScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Docked panels";
-        Desc.Description = "Splitters, tab strips and drop zones over one tree. Every gesture edits the tree and the elements are rebuilt from it.";
+        Desc.Title       = TEXT("Docked panels");
+        Desc.Description = TEXT("Splitters, tab strips and drop zones over one tree. Every gesture edits the tree and the elements are rebuilt from it.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeDockingArea(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -219,12 +219,12 @@ FPlaygroundScene CreateDockingScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "The tree underneath";
-        Desc.Description = "The same layout written out, with each split's shares. Saving writes it to an ini file that survives the run.";
+        Desc.Title       = TEXT("The tree underneath");
+        Desc.Description = TEXT("The same layout written out, with each split's shares. Saving writes it to an ini file that survives the run.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeLayoutControls(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Docking", MakeSceneColumn("Docking", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Docking"), MakeSceneColumn(TEXT("Docking"), Fonts, Panels));
 }

@@ -23,27 +23,27 @@ bool VertexDeclaration_Test()
 
     const FVertexDeclaration& Standard = FVertexDeclaration::GetStandardStaticMesh();
 
-    TEST_SECTION("FVertexDeclaration::GetOrCreate (interning)");
+    TEST_SECTION(TEXT("FVertexDeclaration::GetOrCreate (interning)"));
     TEST_EXPECT(&FVertexDeclaration::GetOrCreate(EVertexAttributeFlags::Position) == &FVertexDeclaration::GetOrCreate(EVertexAttributeFlags::Position));
     TEST_EXPECT(&FVertexDeclaration::GetByID(Standard.GetID()) == &Standard);
     TEST_EXPECT(FVertexDeclaration::GetOrCreate(EVertexAttributeFlags::None).GetNumStreams() == 0);
 
-    TEST_SECTION("FVertexDeclaration::GetID (distinct per attribute set)");
+    TEST_SECTION(TEXT("FVertexDeclaration::GetID (distinct per attribute set)"));
     TEST_EXPECT(FVertexDeclaration::GetOrCreate(EVertexAttributeFlags::Position).GetID() != Standard.GetID());
     TEST_EXPECT(FVertexDeclaration::GetOrCreate(EVertexAttributeFlags::Position | EVertexAttributeFlags::TexCoord0).GetID() != Standard.GetID());
 
-    TEST_SECTION("FVertexDeclaration::HasAttributes");
+    TEST_SECTION(TEXT("FVertexDeclaration::HasAttributes"));
     TEST_EXPECT(Standard.HasAttributes(EVertexAttributeFlags::Position));
     TEST_EXPECT(Standard.HasAttributes(EVertexAttributeFlags::Position | EVertexAttributeFlags::TangentBasis | EVertexAttributeFlags::TexCoord0));
     TEST_EXPECT(!Standard.HasAttributes(EVertexAttributeFlags::Color));
 
-    TEST_SECTION("FVertexDeclaration::GetStreamStride");
+    TEST_SECTION(TEXT("FVertexDeclaration::GetStreamStride"));
     TEST_EXPECT(Standard.GetStreamStride(EVertexStreamIndex::Position) == 12);
     TEST_EXPECT(Standard.GetStreamStride(EVertexStreamIndex::Attributes) == 24);
     TEST_EXPECT(Standard.GetStreamStride(EVertexStreamIndex::Color) == 0);
     TEST_EXPECT(Standard.GetStreamStride(VERTEX_MAX_STREAMS) == 0);
 
-    TEST_SECTION("FVertexDeclaration::GetAttributes (offsets follow the present elements)");
+    TEST_SECTION(TEXT("FVertexDeclaration::GetAttributes (offsets follow the present elements)"));
     {
         const FVertexDeclaration& NoTangents = FVertexDeclaration::GetOrCreate(EVertexAttributeFlags::Position | EVertexAttributeFlags::TexCoord0);
 
@@ -56,13 +56,13 @@ bool VertexDeclaration_Test()
         TEST_EXPECT(NoTangents.GetStreamStride(EVertexStreamIndex::Attributes) == 8);
     }
 
-    TEST_SECTION("FVertexDeclaration::GetAttributes (stream assignment)");
+    TEST_SECTION(TEXT("FVertexDeclaration::GetAttributes (stream assignment)"));
     TEST_EXPECT(FindElement(Standard, EVertexElement::Position)->StreamIndex == EVertexStreamIndex::Position);
     TEST_EXPECT(FindElement(Standard, EVertexElement::Normal)->StreamIndex == EVertexStreamIndex::Attributes);
     TEST_EXPECT(FindElement(Standard, EVertexElement::Tangent)->StreamIndex == EVertexStreamIndex::Attributes);
     TEST_EXPECT(FindElement(Standard, EVertexElement::TexCoord0)->StreamIndex == EVertexStreamIndex::Attributes);
 
-    TEST_SECTION("FVertexDeclaration::operator== / operator!=");
+    TEST_SECTION(TEXT("FVertexDeclaration::operator== / operator!="));
     TEST_EXPECT(Standard == FVertexDeclaration::GetStandardStaticMesh());
     TEST_EXPECT(Standard != FVertexDeclaration::GetOrCreate(EVertexAttributeFlags::Position));
 

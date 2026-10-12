@@ -114,7 +114,7 @@ public:
 
         if (Font)
         {
-            const FString Caption = FString::Printf("yaw %.0f  pitch %.0f  distance %.1f", YawDegrees, PitchDegrees, Distance);
+            const FString Caption = FString::Printf(TEXT("yaw %.0f  pitch %.0f  distance %.1f"), YawDegrees, PitchDegrees, Distance);
 
             FRectangle CaptionBounds = Bounds.Deflate(FMargin(10, 10, 10, 10));
             CaptionBounds.Height     = Font->GetLineHeight();
@@ -399,25 +399,25 @@ static const CHAR_T* GetHandleName(EGizmoHandle Handle)
 {
     switch (Handle)
     {
-        case EGizmoHandle::TranslateX:      return "Translate X";
-        case EGizmoHandle::TranslateY:      return "Translate Y";
-        case EGizmoHandle::TranslateZ:      return "Translate Z";
-        case EGizmoHandle::TranslateYZ:     return "Translate YZ";
-        case EGizmoHandle::TranslateZX:     return "Translate ZX";
-        case EGizmoHandle::TranslateXY:     return "Translate XY";
-        case EGizmoHandle::TranslateScreen: return "Translate screen";
-        case EGizmoHandle::RotateX:         return "Rotate X";
-        case EGizmoHandle::RotateY:         return "Rotate Y";
-        case EGizmoHandle::RotateZ:         return "Rotate Z";
-        case EGizmoHandle::RotateScreen:    return "Rotate screen";
-        case EGizmoHandle::ScaleX:          return "Scale X";
-        case EGizmoHandle::ScaleY:          return "Scale Y";
-        case EGizmoHandle::ScaleZ:          return "Scale Z";
-        case EGizmoHandle::ScaleYZ:         return "Scale YZ";
-        case EGizmoHandle::ScaleZX:         return "Scale ZX";
-        case EGizmoHandle::ScaleXY:         return "Scale XY";
-        case EGizmoHandle::ScaleUniform:    return "Scale uniform";
-        default:                            return "nothing";
+        case EGizmoHandle::TranslateX:      return TEXT("Translate X");
+        case EGizmoHandle::TranslateY:      return TEXT("Translate Y");
+        case EGizmoHandle::TranslateZ:      return TEXT("Translate Z");
+        case EGizmoHandle::TranslateYZ:     return TEXT("Translate YZ");
+        case EGizmoHandle::TranslateZX:     return TEXT("Translate ZX");
+        case EGizmoHandle::TranslateXY:     return TEXT("Translate XY");
+        case EGizmoHandle::TranslateScreen: return TEXT("Translate screen");
+        case EGizmoHandle::RotateX:         return TEXT("Rotate X");
+        case EGizmoHandle::RotateY:         return TEXT("Rotate Y");
+        case EGizmoHandle::RotateZ:         return TEXT("Rotate Z");
+        case EGizmoHandle::RotateScreen:    return TEXT("Rotate screen");
+        case EGizmoHandle::ScaleX:          return TEXT("Scale X");
+        case EGizmoHandle::ScaleY:          return TEXT("Scale Y");
+        case EGizmoHandle::ScaleZ:          return TEXT("Scale Z");
+        case EGizmoHandle::ScaleYZ:         return TEXT("Scale YZ");
+        case EGizmoHandle::ScaleZX:         return TEXT("Scale ZX");
+        case EGizmoHandle::ScaleXY:         return TEXT("Scale XY");
+        case EGizmoHandle::ScaleUniform:    return TEXT("Scale uniform");
+        default:                            return TEXT("nothing");
     }
 }
 
@@ -445,12 +445,12 @@ static void RefreshGizmoReadout()
     const EGizmoHandle Handle = GGizmo->IsDragging() ? GGizmo->GetActiveHandle() : GGizmo->GetHoveredHandle();
 
     GGizmoReadout->SetText(FString::Printf(
-        "position  %7.2f %7.2f %7.2f\n"
+        TEXT("position  %7.2f %7.2f %7.2f\n"
         "scale     %7.2f %7.2f %7.2f\n"
-        "%-9s %s",
+        "%-9s %s"),
         Translation.X, Translation.Y, Translation.Z,
         Scale.X, Scale.Y, Scale.Z,
-        GGizmo->IsDragging() ? "dragging" : "over", GetHandleName(Handle)));
+        GGizmo->IsDragging() ? TEXT("dragging") : TEXT("over"), GetHandleName(Handle)));
 }
 
 static void SetOperation(EGizmoOperation Operation)
@@ -522,7 +522,7 @@ static TSharedPtr<FVisualElement> MakeGizmoViewport(const FPlaygroundFonts& Font
 static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Fonts)
 {
     FTextBlock::FDesc ReadoutDesc;
-    ReadoutDesc.Text            = "";
+    ReadoutDesc.Text            = TEXT("");
     ReadoutDesc.Font            = Fonts.Monospace;
     ReadoutDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
 
@@ -543,10 +543,10 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
 
     const FOperationEntry Operations[] =
     {
-        { "Translate", "Arrows, plane quads and the sphere at the pivot",   EGizmoOperation::Translate },
-        { "Rotate",    "Three rings and the outer one facing the camera",   EGizmoOperation::Rotate    },
-        { "Scale",     "A knob per axis, plane quads and the one at the pivot for all", EGizmoOperation::Scale },
-        { "Universal", "Every knob scales all three axes together",         EGizmoOperation::UniversalScale },
+        { TEXT("Translate"), TEXT("Arrows, plane quads and the sphere at the pivot"),   EGizmoOperation::Translate },
+        { TEXT("Rotate"),    TEXT("Three rings and the outer one facing the camera"),   EGizmoOperation::Rotate    },
+        { TEXT("Scale"),     TEXT("A knob per axis, plane quads and the one at the pivot for all"), EGizmoOperation::Scale },
+        { TEXT("Universal"), TEXT("Every knob scales all three axes together"),         EGizmoOperation::UniversalScale },
     };
 
     for (const FOperationEntry& Entry : Operations)
@@ -574,8 +574,8 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
 
     const FModeEntry Modes[] =
     {
-        { "Local", "Handles follow the transform's own axes", EGizmoMode::Local },
-        { "World", "Handles stay on the world axes",          EGizmoMode::World },
+        { TEXT("Local"), TEXT("Handles follow the transform's own axes"), EGizmoMode::Local },
+        { TEXT("World"), TEXT("Handles stay on the world axes"),          EGizmoMode::World },
     };
 
     for (const FModeEntry& Entry : Modes)
@@ -595,7 +595,7 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
     ToolBar->AddSeparator();
 
     ToolBar->AddToggle(
-        FToolBarItemDesc().SetLabel("Snap").SetToolTipText("Quarter units, fifteen degrees and quarter steps of scale"),
+        FToolBarItemDesc().SetLabel(TEXT("Snap")).SetToolTipText(TEXT("Quarter units, fifteen degrees and quarter steps of scale")),
         ECheckBoxState::Unchecked,
         FOnCheckStateChanged::CreateLambda([](ECheckBoxState NewState)
         {
@@ -613,7 +613,7 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
     ToolBar->AddSeparator();
 
     ToolBar->AddButton(
-        FToolBarItemDesc().SetLabel("Reset cube").SetToolTipText("Back to the identity, at the origin"),
+        FToolBarItemDesc().SetLabel(TEXT("Reset cube")).SetToolTipText(TEXT("Back to the identity, at the origin")),
         FOnClicked::CreateLambda([]()
         {
             GViewport->SetTransform(FMatrix4::Identity());
@@ -621,7 +621,7 @@ static TSharedPtr<FVisualElement> MakeGizmoControls(const FPlaygroundFonts& Font
         }));
 
     ToolBar->AddButton(
-        FToolBarItemDesc().SetLabel("Frame").SetToolTipText("Back to the camera the page opened with"),
+        FToolBarItemDesc().SetLabel(TEXT("Frame")).SetToolTipText(TEXT("Back to the camera the page opened with")),
         FOnClicked::CreateLambda([]()
         {
             GViewport->ResetCamera();
@@ -648,8 +648,8 @@ FPlaygroundScene CreateGizmoScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Transform gizmo";
-        Desc.Description = "There is no renderer behind this: the ground and the cube are world points run through the same projection the gizmo picks with, drawn as lines. Drag a handle to edit the cube, drag the background to orbit, hold Shift or the middle button to slide the camera, and use the wheel to come in and out.";
+        Desc.Title       = TEXT("Transform gizmo");
+        Desc.Description = TEXT("There is no renderer behind this: the ground and the cube are world points run through the same projection the gizmo picks with, drawn as lines. Drag a handle to edit the cube, drag the background to orbit, hold Shift or the middle button to slide the camera, and use the wheel to come in and out.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeGizmoViewport(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -657,12 +657,12 @@ FPlaygroundScene CreateGizmoScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "What the gizmo is showing";
-        Desc.Description = "The operation decides which handles appear, and the mode decides whether they follow the cube or the world. Scale ignores the mode and always runs along the cube's own axes, because scaling a turned transform along a world axis shears it into something no scale could have produced.";
+        Desc.Title       = TEXT("What the gizmo is showing");
+        Desc.Description = TEXT("The operation decides which handles appear, and the mode decides whether they follow the cube or the world. Scale ignores the mode and always runs along the cube's own axes, because scaling a turned transform along a world axis shears it into something no scale could have produced.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeGizmoControls(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Gizmo", MakeSceneColumn("Gizmo", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Gizmo"), MakeSceneColumn(TEXT("Gizmo"), Fonts, Panels));
 }

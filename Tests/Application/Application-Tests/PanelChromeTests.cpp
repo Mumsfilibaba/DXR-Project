@@ -40,16 +40,16 @@ static TSharedPtr<FDockingArea> BuildShellArea(const TSharedPtr<IFontFace>& Font
 
     TSharedPtr<FDockingArea> Area = FDockingArea::Create(Desc);
 
-    Area->RegisterPanel("Hierarchy", "Scene Hierarchy", MakePanelBody("Hierarchy", Font));
-    Area->RegisterPanel("Viewport", "Viewport", MakePanelBody("Viewport", Font));
-    Area->RegisterPanel("Details", "Details", MakePanelBody("Details", Font));
-    Area->RegisterPanel("Output", "Output Log", MakePanelBody("Output Log", Font));
-    Area->RegisterPanel("Content", "Content Browser", MakePanelBody("Content Browser", Font));
+    Area->RegisterPanel(TEXT("Hierarchy"), TEXT("Scene Hierarchy"), MakePanelBody(TEXT("Hierarchy"), Font));
+    Area->RegisterPanel(TEXT("Viewport"), TEXT("Viewport"), MakePanelBody(TEXT("Viewport"), Font));
+    Area->RegisterPanel(TEXT("Details"), TEXT("Details"), MakePanelBody(TEXT("Details"), Font));
+    Area->RegisterPanel(TEXT("Output"), TEXT("Output Log"), MakePanelBody(TEXT("Output Log"), Font));
+    Area->RegisterPanel(TEXT("Content"), TEXT("Content Browser"), MakePanelBody(TEXT("Content Browser"), Font));
 
-    const FDockNode Hierarchy = FDockNode::CreateTabs({ FString("Hierarchy") });
-    const FDockNode Viewport  = FDockNode::CreateTabs({ FString("Viewport") });
-    const FDockNode Details   = FDockNode::CreateTabs({ FString("Details") });
-    const FDockNode Bottom    = FDockNode::CreateTabs({ FString("Output"), FString("Content") });
+    const FDockNode Hierarchy = FDockNode::CreateTabs({ FString(TEXT("Hierarchy")) });
+    const FDockNode Viewport  = FDockNode::CreateTabs({ FString(TEXT("Viewport")) });
+    const FDockNode Details   = FDockNode::CreateTabs({ FString(TEXT("Details")) });
+    const FDockNode Bottom    = FDockNode::CreateTabs({ FString(TEXT("Output")), FString(TEXT("Content")) });
 
     const FDockNode Centre = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Viewport, Bottom);
     const FDockNode Left   = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Hierarchy, Centre);
@@ -65,13 +65,13 @@ static TSharedPtr<FDockingArea> BuildPairArea(const TSharedPtr<IFontFace>& Font)
     Desc.Font = Font;
 
     TSharedPtr<FDockingArea> Area = FDockingArea::Create(Desc);
-    Area->RegisterPanel("Left", "Left Panel", MakePanelBody("Left", Font));
-    Area->RegisterPanel("Right", "Right Panel", MakePanelBody("Right", Font));
+    Area->RegisterPanel(TEXT("Left"), TEXT("Left Panel"), MakePanelBody(TEXT("Left"), Font));
+    Area->RegisterPanel(TEXT("Right"), TEXT("Right Panel"), MakePanelBody(TEXT("Right"), Font));
 
     Area->RestoreLayout(FDockNode::CreateSplit(
         EDockSplitOrientation::Horizontal,
-        FDockNode::CreateTabs({ FString("Left") }),
-        FDockNode::CreateTabs({ FString("Right") })));
+        FDockNode::CreateTabs({ FString(TEXT("Left")) }),
+        FDockNode::CreateTabs({ FString(TEXT("Right")) })));
 
     return Area;
 }
@@ -152,7 +152,7 @@ bool PanelChromeGeometry_Test()
     FDrawCommandList CommandList;
     DrawElement(Area, CommandList);
 
-    TEST_SECTION("Every leaf carries one rounded fill and one thin outline, so a panel reads as its own card");
+    TEST_SECTION(TEXT("Every leaf carries one rounded fill and one thin outline, so a panel reads as its own card"));
 
     int32 RoundedFills = 0;
     int32 Outlines     = 0;
@@ -174,7 +174,7 @@ bool PanelChromeGeometry_Test()
     TEST_EXPECT_EQ(RoundedFills, 2);
     TEST_EXPECT_EQ(Outlines, 2);
 
-    TEST_SECTION("The radius the chrome uses is the one the style names, on the body's bottom corners at least");
+    TEST_SECTION(TEXT("The radius the chrome uses is the one the style names, on the body's bottom corners at least"));
 
     for (const FDrawCommand& Command : CommandList.GetCommands())
     {
@@ -202,7 +202,7 @@ bool PanelChromeGap_Test()
     FDrawCommandList CommandList;
     DrawElement(Area, CommandList);
 
-    TEST_SECTION("The backdrop is painted once across the whole area and nothing else covers it edge to edge");
+    TEST_SECTION(TEXT("The backdrop is painted once across the whole area and nothing else covers it edge to edge"));
 
     const FDrawCommand* Backdrop = FindCommand(CommandList, EDrawCommandType::Box, Area->GetContentRectangle());
     TEST_EXPECT(Backdrop != nullptr);
@@ -212,7 +212,7 @@ bool PanelChromeGap_Test()
         TEST_EXPECT(Backdrop->CornerRadius.IsZero());
     }
 
-    TEST_SECTION("The gutter between two leaves is as wide as the style's gap, so the backdrop shows between the cards");
+    TEST_SECTION(TEXT("The gutter between two leaves is as wide as the style's gap, so the backdrop shows between the cards"));
 
     TSharedPtr<FSplitter> Splitter = FindSplitter(Area);
     TEST_EXPECT(Splitter != nullptr);
@@ -223,7 +223,7 @@ bool PanelChromeGap_Test()
         TEST_EXPECT_EQ(Handle.Width, Style.Panel.Gap);
         TEST_EXPECT(Handle.Height == Bounds.Height - (2 * Style.Panel.Gap));
 
-        TEST_SECTION("Neither card reaches into that gutter");
+        TEST_SECTION(TEXT("Neither card reaches into that gutter"));
 
         TArray<TSharedPtr<FVisualElement>> Children;
         Splitter->GetChildren(Children);
@@ -258,7 +258,7 @@ bool SplitterHintThickness_Test()
         TEST_END();
     }
 
-    TEST_SECTION("A splitter at rest paints no hint at all, so the gutter reads as plain backdrop");
+    TEST_SECTION(TEXT("A splitter at rest paints no hint at all, so the gutter reads as plain backdrop"));
 
     {
         FDrawCommandList CommandList;
@@ -271,10 +271,10 @@ bool SplitterHintThickness_Test()
         FDrawCommandList HoveredList;
         DrawElement(Area, HoveredList);
 
-        TEST_SECTION("Hovering adds exactly one hint");
+        TEST_SECTION(TEXT("Hovering adds exactly one hint"));
         TEST_EXPECT_EQ(CountCommands(HoveredList, EDrawCommandType::Box), HintCount + 1);
 
-        TEST_SECTION("That hint is a thin line centered in the gutter rather than the whole gutter");
+        TEST_SECTION(TEXT("That hint is a thin line centered in the gutter rather than the whole gutter"));
 
         const FRectangle Handle = Splitter->GetHandleRectangle(0);
 
@@ -308,10 +308,10 @@ bool TabStripBlendsIntoPanel_Test()
 
     const FUIStyle& Style = FUIStyle::GetDefault();
 
-    TEST_SECTION("The strip fill is transparent, so the panel's own rounded fill shows through its top corners");
+    TEST_SECTION(TEXT("The strip fill is transparent, so the panel's own rounded fill shows through its top corners"));
     TEST_EXPECT(Style.Tab.StripFill.A == 0.0f);
 
-    TEST_SECTION("A strip therefore paints no opaque box of its own across the top of a card");
+    TEST_SECTION(TEXT("A strip therefore paints no opaque box of its own across the top of a card"));
 
     const TSharedPtr<IFontFace> Font = CreateFont();
 
@@ -320,8 +320,8 @@ bool TabStripBlendsIntoPanel_Test()
     StripDesc.Style = Style.Tab;
 
     TSharedPtr<FTabStrip> Strip = FTabStrip::Create(StripDesc);
-    Strip->AddTab("One", "One", true);
-    Strip->SetActiveTab("One");
+    Strip->AddTab(TEXT("One"), TEXT("One"), true);
+    Strip->SetActiveTab(TEXT("One"));
 
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), 400, Style.Tab.StripHeight));
 
@@ -346,10 +346,10 @@ bool PanelChromeFocusStroke_Test()
 
     const FUIStyle& Style = FUIStyle::GetDefault();
 
-    TEST_SECTION("The focused stroke is a colour of its own, so a focused card can be told apart at all");
+    TEST_SECTION(TEXT("The focused stroke is a colour of its own, so a focused card can be told apart at all"));
     TEST_EXPECT(!(Style.Panel.BorderFocused == Style.Panel.Border));
 
-    TEST_SECTION("With focus nowhere near the area, every card carries the resting stroke");
+    TEST_SECTION(TEXT("With focus nowhere near the area, every card carries the resting stroke"));
 
     const TSharedPtr<IFontFace> Font = CreateFont();
 
@@ -390,26 +390,26 @@ bool PanelChromeSnapshots_Test()
     TEST_BEGIN();
 
     const TSharedPtr<IFontFace> Font      = CreateFont();
-    const FString               Directory = GetSnapshotDirectory("Current");
+    const FString               Directory = GetSnapshotDirectory(TEXT("Current"));
 
-    TEST_SECTION("The snapshot directory can be created");
+    TEST_SECTION(TEXT("The snapshot directory can be created"));
     TEST_EXPECT(EnsureSnapshotDirectory(Directory));
 
     const uint32 ClearColor = BackdropClearColor();
 
-    TEST_SECTION("The editor-shaped shell rasterizes and writes");
+    TEST_SECTION(TEXT("The editor-shaped shell rasterizes and writes"));
     {
         TSharedPtr<FDockingArea> Area = BuildShellArea(Font);
-        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(SHELL_WIDTH, SHELL_HEIGHT), ClearColor, Directory + "/Shell.png"));
+        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(SHELL_WIDTH, SHELL_HEIGHT), ClearColor, Directory + TEXT("/Shell.png")));
     }
 
-    TEST_SECTION("A single splitter between two leaves rasterizes and writes");
+    TEST_SECTION(TEXT("A single splitter between two leaves rasterizes and writes"));
     {
         TSharedPtr<FDockingArea> Area = BuildPairArea(Font);
-        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 400), ClearColor, Directory + "/Pair.png"));
+        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 400), ClearColor, Directory + TEXT("/Pair.png")));
     }
 
-    TEST_SECTION("A hovered splitter rasterizes and writes");
+    TEST_SECTION(TEXT("A hovered splitter rasterizes and writes"));
     {
         TSharedPtr<FDockingArea> Area = BuildPairArea(Font);
         LayoutElement(Area, FRectangle(FIntVector2(0, 0), 800, 400));
@@ -419,21 +419,21 @@ bool PanelChromeSnapshots_Test()
             Splitter->OnMouseMove(FCursorEvent(EInputEventType::MouseMoved, Splitter->GetHandleRectangle(0).GetCenter(), FIntVector2(0, 0), FModifierKeyState()));
         }
 
-        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 400), ClearColor, Directory + "/SplitterHover.png"));
+        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 400), ClearColor, Directory + TEXT("/SplitterHover.png")));
     }
 
-    TEST_SECTION("A stack of tabs rasterizes and writes");
+    TEST_SECTION(TEXT("A stack of tabs rasterizes and writes"));
     {
         FDockingArea::FDesc Desc;
         Desc.Font = Font;
 
         TSharedPtr<FDockingArea> Area = FDockingArea::Create(Desc);
-        Area->RegisterPanel("Output", "Output Log", MakePanelBody("Output Log", Font));
-        Area->RegisterPanel("Content", "Content Browser", MakePanelBody("Content Browser", Font));
-        Area->RegisterPanel("Console", "Console", MakePanelBody("Console", Font));
-        Area->RestoreLayout(FDockNode::CreateTabs({ FString("Output"), FString("Content"), FString("Console") }));
+        Area->RegisterPanel(TEXT("Output"), TEXT("Output Log"), MakePanelBody(TEXT("Output Log"), Font));
+        Area->RegisterPanel(TEXT("Content"), TEXT("Content Browser"), MakePanelBody(TEXT("Content Browser"), Font));
+        Area->RegisterPanel(TEXT("Console"), TEXT("Console"), MakePanelBody(TEXT("Console"), Font));
+        Area->RestoreLayout(FDockNode::CreateTabs({ FString(TEXT("Output")), FString(TEXT("Content")), FString(TEXT("Console")) }));
 
-        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 300), ClearColor, Directory + "/Tabs.png"));
+        TEST_EXPECT(SnapshotElementToPng(Area, FIntVector2(800, 300), ClearColor, Directory + TEXT("/Tabs.png")));
     }
 
     TEST_END();

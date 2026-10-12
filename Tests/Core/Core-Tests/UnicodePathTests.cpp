@@ -58,7 +58,7 @@ bool UnicodePath_Test()
     File::DeleteDirectoryTree(Root);
     TEST_EXPECT(File::CreateDirectoryTree(Directory));
 
-    TEST_SECTION("Directories and files with non-ASCII names are created, found, read and listed");
+    TEST_SECTION(TEXT("Directories and files with non-ASCII names are created, found, read and listed"));
     {
         TEST_EXPECT(FPlatformFile::IsDirectory(*Directory));
         TEST_EXPECT(WriteText(Filename, TEXT("Innehåll 日本語")));
@@ -79,7 +79,7 @@ bool UnicodePath_Test()
         TEST_EXPECT(RootEntries.Size() == 1 && RootEntries[0].Name.Equals(TEXT("Åäö 日本語 😀")) && RootEntries[0].bIsDirectory);
     }
 
-    TEST_SECTION("Text files hold UTF-8, and a byte-order mark at the start is not part of the text");
+    TEST_SECTION(TEXT("Text files hold UTF-8, and a byte-order mark at the start is not part of the text"));
     {
         const FString BomFile = Directory + TEXT("/Bom.txt");
         {
@@ -109,7 +109,7 @@ bool UnicodePath_Test()
         TEST_EXPECT(FPlatformFile::DeleteFile(*BomFile));
     }
 
-    TEST_SECTION("Files and directories with non-ASCII names are copied, moved and deleted");
+    TEST_SECTION(TEXT("Files and directories with non-ASCII names are copied, moved and deleted"));
     {
         const FString Copied = Directory + TEXT("/Kopia ä.txt");
         TEST_EXPECT(FPlatformFile::CopyFile(*Filename, *Copied));
@@ -129,7 +129,7 @@ bool UnicodePath_Test()
         TEST_EXPECT(!FPlatformFile::IsPathRelative(*Directory));
     }
 
-    TEST_SECTION("A process starts in a working directory with a non-ASCII name");
+    TEST_SECTION(TEXT("A process starts in a working directory with a non-ASCII name"));
     {
         FProcessDesc Desc;
     #if PLATFORM_WINDOWS
@@ -156,14 +156,14 @@ bool UnicodePath_Test()
     }
 
 #if PLATFORM_WINDOWS
-    TEST_SECTION("A library is loaded and its symbols found by name");
+    TEST_SECTION(TEXT("A library is loaded and its symbols found by name"));
     {
         void* Kernel = FPlatformLibrary::GetLoadedHandle(TEXT("kernel32"));
         TEST_EXPECT(Kernel != nullptr);
         TEST_EXPECT(FPlatformLibrary::LoadSymbol(TEXT("GetTickCount64"), Kernel) != nullptr);
     }
 
-    TEST_SECTION("System error messages arrive as valid UTF-8 in any system language");
+    TEST_SECTION(TEXT("System error messages arrive as valid UTF-8 in any system language"));
     {
         TEST_EXPECT(FPlatformFile::OpenForRead(Directory + TEXT("/Saknas ö.txt")) == nullptr);
 
@@ -174,7 +174,7 @@ bool UnicodePath_Test()
     }
 #endif
 
-    TEST_SECTION("The executable path and working directory are valid UTF-8");
+    TEST_SECTION(TEXT("The executable path and working directory are valid UTF-8"));
     {
         TEST_EXPECT(!ContainsReplacementCharacter(FString(FPlatformFile::GetExecutablePath())));
         TEST_EXPECT(!ContainsReplacementCharacter(FPlatformFile::GetCurrentWorkingDirectory()));

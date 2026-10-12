@@ -12,61 +12,61 @@ bool StaticString_Suite()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Construction (cstr / substring / view / copy / move)");
+    TEST_SECTION(TEXT("Construction (cstr / substring / view / copy / move)"));
     {
         FStaticString<64> Empty;
         TEST_EXPECT(Empty.IsEmpty());
         TEST_EXPECT_EQ(Empty.Length(), 0);
         TEST_EXPECT_EQ(Empty.LastIndex(), FStaticString<64>::InvalidIndex);
 
-        FStaticString<64> Hello = "Hello";
+        FStaticString<64> Hello = TEXT("Hello");
         TEST_EXPECT_EQ(Hello.Length(), 5);
         TEST_EXPECT_EQ(Hello[0], 'H');
         TEST_EXPECT_EQ(Hello.LastIndex(), 4);
 
-        FStaticString<64> Sub = FStaticString<64>("Hello World", 5);
-        TEST_EXPECT(Sub.Equals("Hello"));
+        FStaticString<64> Sub = FStaticString<64>(TEXT("Hello World"), 5);
+        TEST_EXPECT(Sub.Equals(TEXT("Hello")));
 
-        FStringView View("Hello StringView");
+        FStringView View(TEXT("Hello StringView"));
         FStaticString<64> FromView = FStaticString<64>(View);
-        TEST_EXPECT(FromView.Equals("Hello StringView"));
+        TEST_EXPECT(FromView.Equals(TEXT("Hello StringView")));
 
         FStaticString<64> Copy = Hello;
-        TEST_EXPECT(Copy.Equals("Hello"));
+        TEST_EXPECT(Copy.Equals(TEXT("Hello")));
 
         FStaticString<64> Moved = ::Move(Copy);
-        TEST_EXPECT(Moved.Equals("Hello"));
+        TEST_EXPECT(Moved.Equals(TEXT("Hello")));
     }
 
-    TEST_SECTION("Append (cstr / char)");
+    TEST_SECTION(TEXT("Append (cstr / char)"));
     {
-        FStaticString<64> Str = "Hello";
-        Str.Append(", World");
+        FStaticString<64> Str = TEXT("Hello");
+        Str.Append(TEXT(", World"));
         
         TEST_EXPECT_EQ(Str.Length(), 12);
-        TEST_EXPECT(Str.Equals("Hello, World"));
+        TEST_EXPECT(Str.Equals(TEXT("Hello, World")));
 
         Str.Append('!');
         TEST_EXPECT_EQ(Str.Length(), 13);
-        TEST_EXPECT(Str.Equals("Hello, World!"));
+        TEST_EXPECT(Str.Equals(TEXT("Hello, World!")));
     }
 
-    TEST_SECTION("InlinePrintf / AppendPrintf / ToLower / ToUpper");
+    TEST_SECTION(TEXT("InlinePrintf / AppendPrintf / ToLower / ToUpper"));
     {
         FStaticString<64> Str;
         
-        Str.InlinePrintf("Formatted String=%.4f", 0.004f);
-        TEST_EXPECT(Str.Equals("Formatted String=0.0040"));
+        Str.InlinePrintf(TEXT("Formatted String=%.4f"), 0.004f);
+        TEST_EXPECT(Str.Equals(TEXT("Formatted String=0.0040")));
 
-        Str.AppendPrintf("=%.4f", 0.0077f);
-        TEST_EXPECT(Str.Equals("Formatted String=0.0040=0.0077"));
+        Str.AppendPrintf(TEXT("=%.4f"), 0.0077f);
+        TEST_EXPECT(Str.Equals(TEXT("Formatted String=0.0040=0.0077")));
 
-        FStaticString<64> Mixed = "MixedCase";
-        TEST_EXPECT(Mixed.ToLower().Equals("mixedcase"));
-        TEST_EXPECT(Mixed.ToUpper().Equals("MIXEDCASE"));
+        FStaticString<64> Mixed = TEXT("MixedCase");
+        TEST_EXPECT(Mixed.ToLower().Equals(TEXT("mixedcase")));
+        TEST_EXPECT(Mixed.ToUpper().Equals(TEXT("MIXEDCASE")));
     }
 
-    TEST_SECTION("Printf that does not fit is cut off, narrow and wide");
+    TEST_SECTION(TEXT("Printf that does not fit is cut off, narrow and wide"));
     {
         TStaticString<ANSICHAR, 8> Narrow;
         Narrow.InlinePrintf("%s", "0123456789");
@@ -91,81 +91,81 @@ bool StaticString_Suite()
         TEST_EXPECT(Wide.Equals(L"Åäö!12"));
     }
 
-    TEST_SECTION("Reset / Trim / Reverse");
+    TEST_SECTION(TEXT("Reset / Trim / Reverse"));
     {
-        FStaticString<64> Str = "  Trimmable String  ";
-        TEST_EXPECT(Str.Trim().Equals("Trimmable String"));
+        FStaticString<64> Str = TEXT("  Trimmable String  ");
+        TEST_EXPECT(Str.Trim().Equals(TEXT("Trimmable String")));
 
         Str.Reset();
         TEST_EXPECT(Str.IsEmpty());
 
-        Str.Append("123456789");
-        TEST_EXPECT(Str.Reverse().Equals("987654321"));
+        Str.Append(TEXT("123456789"));
+        TEST_EXPECT(Str.Reverse().Equals(TEXT("987654321")));
     }
 
-    TEST_SECTION("Find / Contains / StartsWith / EndsWith / predicates");
+    TEST_SECTION(TEXT("Find / Contains / StartsWith / EndsWith / predicates"));
     {
-        FStaticString<64> Search = "0123MeSearch89Me89";
-        TEST_EXPECT_EQ(Search.Find("Me"), 4);
+        FStaticString<64> Search = TEXT("0123MeSearch89Me89");
+        TEST_EXPECT_EQ(Search.Find(TEXT("Me")), 4);
         TEST_EXPECT_EQ(Search.FindChar('M'), 4);
-        TEST_EXPECT(Search.Contains("Me"));
-        TEST_EXPECT(Search.StartsWith("0123ME", EStringCaseType::NoCase));
-        TEST_EXPECT(Search.EndsWith("ME89", EStringCaseType::NoCase));
+        TEST_EXPECT(Search.Contains(TEXT("Me")));
+        TEST_EXPECT(Search.StartsWith(TEXT("0123ME"), EStringCaseType::NoCase));
+        TEST_EXPECT(Search.EndsWith(TEXT("ME89"), EStringCaseType::NoCase));
         
         TEST_EXPECT_EQ(Search.FindCharWithPredicate([](CHAR_T Ch)
         {
             return (Ch == 'e') || (Ch == 'c');
         }), 5);
 
-        TEST_EXPECT_EQ(Search.FindLast("Me"), 14);
+        TEST_EXPECT_EQ(Search.FindLast(TEXT("Me")), 14);
         TEST_EXPECT_EQ(Search.FindLastChar('M'), 14);
     }
 
-    TEST_SECTION("Compare / Resize / CopyToBuffer");
+    TEST_SECTION(TEXT("Compare / Resize / CopyToBuffer"));
     {
-        FStaticString<64> Upper = "COMPARE";
-        FStaticString<64> Lower = "compare";
+        FStaticString<64> Upper = TEXT("COMPARE");
+        FStaticString<64> Lower = TEXT("compare");
         TEST_EXPECT(Upper.Compare(Lower) != 0);
         TEST_EXPECT_EQ(Upper.Compare(Lower, EStringCaseType::NoCase), 0);
 
         Lower.Resize(7);
-        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Lower.Data(), "compare") == 0);
+        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Lower.Data(), TEXT("compare")) == 0);
 
         CHAR_T Buffer[6];
         Buffer[5] = 0;
         Lower.CopyToBuffer(Buffer, 6, 2);
-        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Buffer, "mpare") == 0);
+        TEST_EXPECT(TCString<CHAR_T>::Strcmp(Buffer, TEXT("mpare")) == 0);
     }
 
-    TEST_SECTION("Insert / Replace / operator+ / comparison operators");
+    TEST_SECTION(TEXT("Insert / Replace / operator+ / comparison operators"));
     {
-        FStaticString<64> Str = "COMPARE";
+        FStaticString<64> Str = TEXT("COMPARE");
         
-        Str.Insert("lower", 4);
-        TEST_EXPECT(Str.Equals("COMPlowerARE"));
+        Str.Insert(TEXT("lower"), 4);
+        TEST_EXPECT(Str.Equals(TEXT("COMPlowerARE")));
         
-        Str.Replace("upper", 4);
-        TEST_EXPECT(Str.Equals("COMPupperARE"));
+        Str.Replace(TEXT("upper"), 4);
+        TEST_EXPECT(Str.Equals(TEXT("COMPupperARE")));
 
         Str.Replace('X', 0);
-        TEST_EXPECT(Str.Equals("XOMPupperARE"));
+        TEST_EXPECT(Str.Equals(TEXT("XOMPupperARE")));
 
-        FStaticString<64> Test = "Test";
+        FStaticString<64> Test = TEXT("Test");
         FStaticString<64> Plus = Test + '5';
-        TEST_EXPECT(Plus.Equals("Test5"));
+        TEST_EXPECT(Plus.Equals(TEXT("Test5")));
 
         FStaticString<64> PrePlus = '5' + Test;
-        TEST_EXPECT(PrePlus.Equals("5Test"));
+        TEST_EXPECT(PrePlus.Equals(TEXT("5Test")));
 
-        TEST_EXPECT(("Test" == Test));
-        TEST_EXPECT(!("Test" != Test));
-        TEST_EXPECT(("Test" <= Test));
-        TEST_EXPECT(!("Test" < Test));
-        TEST_EXPECT(("Test" >= Test));
-        TEST_EXPECT(!("Test" > Test));
+        TEST_EXPECT((TEXT("Test") == Test));
+        TEST_EXPECT(!(TEXT("Test") != Test));
+        TEST_EXPECT((TEXT("Test") <= Test));
+        TEST_EXPECT(!(TEXT("Test") < Test));
+        TEST_EXPECT((TEXT("Test") >= Test));
+        TEST_EXPECT(!(TEXT("Test") > Test));
     }
 
-    TEST_SECTION("WStaticString core + conversions");
+    TEST_SECTION(TEXT("FWideStaticString core + conversions"));
     {
         FWideStaticString<64> Wide = L"Hello String";
         TEST_EXPECT_EQ(Wide.Length(), 12);
@@ -173,12 +173,12 @@ bool StaticString_Suite()
 
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(Wide.Data(), L"Hello String!") == 0);
 
-        FStaticString<64>     Narrow = "Round Trip";
+        FStaticString<64>     Narrow = TEXT("Round Trip");
         FWideStaticString<64> ToWide = StringCast<WIDECHAR>(Narrow).Get();
         TEST_EXPECT(TCString<WIDECHAR>::Strcmp(ToWide.Data(), L"Round Trip") == 0);
 
         FStaticString<64> Back = StringCast<CHAR_T>(ToWide).Get();
-        TEST_EXPECT(Back.Equals("Round Trip"));
+        TEST_EXPECT(Back.Equals(TEXT("Round Trip")));
     }
 
     TEST_END();

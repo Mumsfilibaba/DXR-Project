@@ -19,26 +19,26 @@ bool RenderGraphViewSlice_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Per-slice SRV and UAV use graph view handles");
+    TEST_SECTION(TEXT("Per-slice SRV and UAV use graph view handles"));
 
     ResetPool();
     RHIValidation::ResetErrorCount();
 
     FRHICommandList     CommandList;
-    FRenderGraphBuilder GraphBuilder("ViewSlice");
+    FRenderGraphBuilder GraphBuilder(TEXT("ViewSlice"));
 
-    FRenderGraphTexture* TextureArray = GraphBuilder.CreateTexture( FRenderGraphTextureDesc::CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, ViewTestExtent, ViewTestExtent, 2, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture), "TextureArray");
+    FRenderGraphTexture* TextureArray = GraphBuilder.CreateTexture( FRenderGraphTextureDesc::CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, ViewTestExtent, ViewTestExtent, 2, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture), TEXT("TextureArray"));
 
     const FRHIShaderResourceViewDesc SliceSRVDesc = FRHIShaderResourceViewDesc::CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, 0, 1, 1, 1);
     const FRHIUnorderedAccessViewDesc SliceUAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, 0, 1, 1);
 
-    FRenderGraphShaderResourceView*  SliceSRV = GraphBuilder.CreateSRV(TextureArray, SliceSRVDesc, "SliceSRV");
-    FRenderGraphUnorderedAccessView* SliceUAV = GraphBuilder.CreateUAV(TextureArray, SliceUAVDesc, "SliceUAV");
+    FRenderGraphShaderResourceView*  SliceSRV = GraphBuilder.CreateSRV(TextureArray, SliceSRVDesc, TEXT("SliceSRV"));
+    FRenderGraphUnorderedAccessView* SliceUAV = GraphBuilder.CreateUAV(TextureArray, SliceUAVDesc, TEXT("SliceUAV"));
 
     bool bWriteRan = false;
     bool bReadRan  = false;
 
-    GraphBuilder.AddPass("WriteSlice", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [SliceUAV](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("WriteSlice"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [SliceUAV](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.Write(SliceUAV);
         },
@@ -50,7 +50,7 @@ bool RenderGraphViewSlice_Test()
             bWriteRan = true;
         });
 
-    GraphBuilder.AddPass("ReadSlice", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [SliceSRV](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("ReadSlice"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [SliceSRV](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.Read(SliceSRV);
         },
@@ -75,21 +75,21 @@ bool RenderGraphViewUndeclared_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Undeclared views are not resolved");
+    TEST_SECTION(TEXT("Undeclared views are not resolved"));
 
     ResetPool();
     RHIValidation::ResetErrorCount();
 
     FRHICommandList     CommandList;
-    FRenderGraphBuilder GraphBuilder("UndeclaredView");
+    FRenderGraphBuilder GraphBuilder(TEXT("UndeclaredView"));
 
-    FRenderGraphTexture* Texture = GraphBuilder.CreateTexture( FRenderGraphTextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, ViewTestExtent, ViewTestExtent, 1, 1, ETextureUsageFlags::ShaderResourceTexture), "Texture");
+    FRenderGraphTexture* Texture = GraphBuilder.CreateTexture( FRenderGraphTextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, ViewTestExtent, ViewTestExtent, 1, 1, ETextureUsageFlags::ShaderResourceTexture), TEXT("Texture"));
 
-    FRenderGraphShaderResourceView* SliceSRV = GraphBuilder.CreateSRV(Texture, FRHIShaderResourceViewDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 0, 1), "SliceSRV");
+    FRenderGraphShaderResourceView* SliceSRV = GraphBuilder.CreateSRV(Texture, FRHIShaderResourceViewDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, 0, 1), TEXT("SliceSRV"));
 
     bool bUndeclaredViewNull = false;
 
-    GraphBuilder.AddPass("Empty", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [](FRenderGraphPassBuilder&)
+    GraphBuilder.AddPass(TEXT("Empty"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [](FRenderGraphPassBuilder&)
         {
         },
         [&bUndeclaredViewNull, SliceSRV](FRHICommandList&, const FRenderGraphPassResources& Resources)
@@ -110,20 +110,20 @@ bool RenderGraphViewBufferRange_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Buffer SRV and UAV views declare element ranges");
+    TEST_SECTION(TEXT("Buffer SRV and UAV views declare element ranges"));
 
     ResetPool();
     RHIValidation::ResetErrorCount();
 
     FRHICommandList     CommandList;
-    FRenderGraphBuilder GraphBuilder("BufferView");
+    FRenderGraphBuilder GraphBuilder(TEXT("BufferView"));
 
-    FRenderGraphBuffer* Buffer = GraphBuilder.CreateBuffer( FRenderGraphBufferDesc::CreateStructuredBuffer(sizeof(uint32), 16, EBufferFlags::UnorderedAccessBuffer), "StructuredBuffer");
+    FRenderGraphBuffer* Buffer = GraphBuilder.CreateBuffer( FRenderGraphBufferDesc::CreateStructuredBuffer(sizeof(uint32), 16, EBufferFlags::UnorderedAccessBuffer), TEXT("StructuredBuffer"));
 
-    FRenderGraphUnorderedAccessView* BufferUAV = GraphBuilder.CreateUAV(Buffer, FRHIUnorderedAccessViewDesc::CreateBuffer(0, 8), "BufferUAV");
-    FRenderGraphShaderResourceView* BufferSRV = GraphBuilder.CreateSRV(Buffer, FRHIShaderResourceViewDesc::CreateBuffer(0, 8), "BufferSRV");
+    FRenderGraphUnorderedAccessView* BufferUAV = GraphBuilder.CreateUAV(Buffer, FRHIUnorderedAccessViewDesc::CreateBuffer(0, 8), TEXT("BufferUAV"));
+    FRenderGraphShaderResourceView* BufferSRV = GraphBuilder.CreateSRV(Buffer, FRHIShaderResourceViewDesc::CreateBuffer(0, 8), TEXT("BufferSRV"));
 
-    GraphBuilder.AddPass("WriteBuffer", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [BufferUAV](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("WriteBuffer"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [BufferUAV](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.Write(BufferUAV);
         },
@@ -134,7 +134,7 @@ bool RenderGraphViewBufferRange_Test()
             PassCommandList.ClearUnorderedAccessViewUint(Resources.Get(BufferUAV), ClearValues);
         });
 
-    GraphBuilder.AddPass("ReadBuffer", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [BufferSRV](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("ReadBuffer"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [BufferSRV](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.Read(BufferSRV);
         },
@@ -156,15 +156,15 @@ bool RenderGraphViewValidation_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Invalid view creation marks the graph as having errors");
+    TEST_SECTION(TEXT("Invalid view creation marks the graph as having errors"));
 
     ResetPool();
 
-    FRenderGraphBuilder GraphBuilder("InvalidView");
+    FRenderGraphBuilder GraphBuilder(TEXT("InvalidView"));
 
-    FRenderGraphTexture* Texture = GraphBuilder.CreateTexture( FRenderGraphTextureDesc::CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, ViewTestExtent, ViewTestExtent, 2, 1, 1, ETextureUsageFlags::ShaderResourceTexture), "TextureArray");
+    FRenderGraphTexture* Texture = GraphBuilder.CreateTexture( FRenderGraphTextureDesc::CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, ViewTestExtent, ViewTestExtent, 2, 1, 1, ETextureUsageFlags::ShaderResourceTexture), TEXT("TextureArray"));
 
-    GraphBuilder.CreateSRV(Texture, FRHIShaderResourceViewDesc::CreateTexture2DArray( EFormat::R8G8B8A8_Unorm, 0, 1, 4, 1), "OutOfBoundsSRV");
+    GraphBuilder.CreateSRV(Texture, FRHIShaderResourceViewDesc::CreateTexture2DArray( EFormat::R8G8B8A8_Unorm, 0, 1, 4, 1), TEXT("OutOfBoundsSRV"));
 
     TEST_EXPECT(GraphBuilder.HasErrors());
 
@@ -175,18 +175,18 @@ bool RenderGraphViewTypelessFormat_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Typeless storage accepts typed SRV and UAV views");
+    TEST_SECTION(TEXT("Typeless storage accepts typed SRV and UAV views"));
 
     ResetPool();
     RHIValidation::ResetErrorCount();
 
     FRHICommandList     CommandList;
-    FRenderGraphBuilder GraphBuilder("TypelessFormat");
+    FRenderGraphBuilder GraphBuilder(TEXT("TypelessFormat"));
 
-    FRenderGraphTexture* Texture = GraphBuilder.CreateTexture( FRenderGraphTextureDesc::CreateTexture2D(EFormat::R32_Typeless, ViewTestExtent, ViewTestExtent, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture), "TypelessR32");
+    FRenderGraphTexture* Texture = GraphBuilder.CreateTexture( FRenderGraphTextureDesc::CreateTexture2D(EFormat::R32_Typeless, ViewTestExtent, ViewTestExtent, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture), TEXT("TypelessR32"));
 
-    FRenderGraphShaderResourceView* FloatSRV = GraphBuilder.CreateSRV(Texture, FRHIShaderResourceViewDesc::CreateTexture2D(EFormat::R32_Float, 0, 1), "R32FloatSRV");
-    FRenderGraphUnorderedAccessView* UintUAV = GraphBuilder.CreateUAV(Texture, FRHIUnorderedAccessViewDesc::CreateTexture2D(EFormat::R32_Uint, 0), "R32UintUAV");
+    FRenderGraphShaderResourceView* FloatSRV = GraphBuilder.CreateSRV(Texture, FRHIShaderResourceViewDesc::CreateTexture2D(EFormat::R32_Float, 0, 1), TEXT("R32FloatSRV"));
+    FRenderGraphUnorderedAccessView* UintUAV = GraphBuilder.CreateUAV(Texture, FRHIUnorderedAccessViewDesc::CreateTexture2D(EFormat::R32_Uint, 0), TEXT("R32UintUAV"));
 
     TEST_CHECK(FloatSRV != nullptr);
     TEST_CHECK(UintUAV != nullptr);
@@ -195,7 +195,7 @@ bool RenderGraphViewTypelessFormat_Test()
     bool bWriteRan = false;
     bool bReadRan  = false;
 
-    GraphBuilder.AddPass("WriteTypedUAV", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [UintUAV](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("WriteTypedUAV"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [UintUAV](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.Write(UintUAV);
         },
@@ -207,7 +207,7 @@ bool RenderGraphViewTypelessFormat_Test()
             bWriteRan = true;
         });
 
-    GraphBuilder.AddPass("ReadTypedSRV", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [FloatSRV](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("ReadTypedSRV"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [FloatSRV](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.Read(FloatSRV);
         },
@@ -231,26 +231,26 @@ bool RenderGraphViewHybridUsage_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Texture with render-target, unordered-access, and shader-resource views compiles and executes");
+    TEST_SECTION(TEXT("Texture with render-target, unordered-access, and shader-resource views compiles and executes"));
 
     ResetPool();
     RHIValidation::ResetErrorCount();
 
     FRHICommandList     CommandList;
-    FRenderGraphBuilder GraphBuilder("HybridUsage");
+    FRenderGraphBuilder GraphBuilder(TEXT("HybridUsage"));
 
-    FRenderGraphTexture* Texture = GraphBuilder.CreateTexture(FRenderGraphTextureDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, ViewTestExtent, ViewTestExtent, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture), "HybridTarget");
+    FRenderGraphTexture* Texture = GraphBuilder.CreateTexture(FRenderGraphTextureDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, ViewTestExtent, ViewTestExtent, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture), TEXT("HybridTarget"));
 
-    FRenderGraphUnorderedAccessView* UnorderedAccessView = GraphBuilder.CreateUAV(Texture, FRHIUnorderedAccessViewDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, 0), "HybridUnorderedAccessView");
-    FRenderGraphRenderTargetView* RenderTargetView = GraphBuilder.CreateRTV(Texture, FRHIRenderTargetViewDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, 0), "HybridRenderTargetView");
-    FRenderGraphShaderResourceView* ShaderResourceView = GraphBuilder.CreateSRV(Texture, FRHIShaderResourceViewDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, 0, 1), "HybridShaderResourceView");
+    FRenderGraphUnorderedAccessView* UnorderedAccessView = GraphBuilder.CreateUAV(Texture, FRHIUnorderedAccessViewDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, 0), TEXT("HybridUnorderedAccessView"));
+    FRenderGraphRenderTargetView* RenderTargetView = GraphBuilder.CreateRTV(Texture, FRHIRenderTargetViewDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, 0), TEXT("HybridRenderTargetView"));
+    FRenderGraphShaderResourceView* ShaderResourceView = GraphBuilder.CreateSRV(Texture, FRHIShaderResourceViewDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, 0, 1), TEXT("HybridShaderResourceView"));
 
     TEST_CHECK(UnorderedAccessView != nullptr);
     TEST_CHECK(RenderTargetView != nullptr);
     TEST_CHECK(ShaderResourceView != nullptr);
     TEST_CHECK(!GraphBuilder.HasErrors());
 
-    GraphBuilder.AddPass("Write", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [UnorderedAccessView](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("Write"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [UnorderedAccessView](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.Write(UnorderedAccessView);
         },
@@ -260,7 +260,7 @@ bool RenderGraphViewHybridUsage_Test()
             PassCommandList.ClearUnorderedAccessViewFloat(Resources.Get(UnorderedAccessView), FVector4(1.0f, 0.0f, 0.0f, 1.0f));
         });
 
-    GraphBuilder.AddPass("Draw", ERenderGraphPassFlags::Raster | ERenderGraphPassFlags::NeverCull, [RenderTargetView](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("Draw"), ERenderGraphPassFlags::Raster | ERenderGraphPassFlags::NeverCull, [RenderTargetView](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.SetRenderTarget(0, RenderTargetView, EAttachmentLoadAction::Load);
         },
@@ -268,7 +268,7 @@ bool RenderGraphViewHybridUsage_Test()
         {
         });
 
-    GraphBuilder.AddPass("Read", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [ShaderResourceView](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("Read"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [ShaderResourceView](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.Read(ShaderResourceView);
         },
@@ -290,7 +290,7 @@ bool RenderGraphSubresourceRejoin_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Reading a whole texture after per-slice writes transitions every slice");
+    TEST_SECTION(TEXT("Reading a whole texture after per-slice writes transitions every slice"));
 
     ResetPool();
     RHIValidation::ResetErrorCount();
@@ -302,23 +302,23 @@ bool RenderGraphSubresourceRejoin_Test()
     TEST_CHECK(AtlasTexture.IsValid());
 
     FRHICommandList     CommandList;
-    FRenderGraphBuilder GraphBuilder("SubresourceRejoin");
+    FRenderGraphBuilder GraphBuilder(TEXT("SubresourceRejoin"));
 
-    FRenderGraphTexture* Atlas = GraphBuilder.RegisterExternalTexture(AtlasTexture.Get(), "Atlas", ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+    FRenderGraphTexture* Atlas = GraphBuilder.RegisterExternalTexture(AtlasTexture.Get(), TEXT("Atlas"), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::NonPixelShaderResource);
 
     TEST_CHECK(Atlas != nullptr);
 
     FRenderGraphUnorderedAccessView* SliceViews[NumAtlasSlices] = { };
     for (uint32 SliceIndex = 0; SliceIndex < NumAtlasSlices; ++SliceIndex)
     {
-        SliceViews[SliceIndex] = GraphBuilder.CreateUAV(Atlas, FRHIUnorderedAccessViewDesc::CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, 0, static_cast<uint16>(SliceIndex), 1), "AtlasSliceUnorderedAccessView");
+        SliceViews[SliceIndex] = GraphBuilder.CreateUAV(Atlas, FRHIUnorderedAccessViewDesc::CreateTexture2DArray(EFormat::R8G8B8A8_Unorm, 0, static_cast<uint16>(SliceIndex), 1), TEXT("AtlasSliceUnorderedAccessView"));
 
         TEST_CHECK(SliceViews[SliceIndex] != nullptr);
     }
 
     bool bReadRan = false;
 
-    GraphBuilder.AddPass("WriteSlices", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [&SliceViews](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("WriteSlices"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [&SliceViews](FRenderGraphPassBuilder& PassBuilder)
         {
             for (FRenderGraphUnorderedAccessView* SliceView : SliceViews)
             {
@@ -335,7 +335,7 @@ bool RenderGraphSubresourceRejoin_Test()
             }
         });
 
-    GraphBuilder.AddPass("ReadWhole", ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [Atlas](FRenderGraphPassBuilder& PassBuilder)
+    GraphBuilder.AddPass(TEXT("ReadWhole"), ERenderGraphPassFlags::Compute | ERenderGraphPassFlags::NeverCull, [Atlas](FRenderGraphPassBuilder& PassBuilder)
         {
             PassBuilder.ReadTexture(Atlas, ERHIResourceState::NonPixelShaderResource);
         },

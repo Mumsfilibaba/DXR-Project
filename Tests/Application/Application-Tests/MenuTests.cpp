@@ -159,8 +159,8 @@ bool MenuStackPlacement_Test()
 
     const FRectangle ClientArea = GetClientArea(Window);
 
-    TEST_SECTION("A drop-down sits under the anchor with their left edges flush");
-    TSharedPtr<FMenu> Menu     = CreateMenu(Font, { "New", "Open", "Save" });
+    TEST_SECTION(TEXT("A drop-down sits under the anchor with their left edges flush"));
+    TSharedPtr<FMenu> Menu     = CreateMenu(Font, { TEXT("New"), TEXT("Open"), TEXT("Save") });
     FMenuHandle       DropDown = Stack.PushMenu(Window, FRectangle(FIntVector2(140, 130), 60, 24), EMenuPlacement::BelowLeftAligned, Menu);
 
     TEST_EXPECT(DropDown != nullptr);
@@ -168,7 +168,7 @@ bool MenuStackPlacement_Test()
     TEST_EXPECT_EQ(DropDown->ScreenBounds.Position, FIntVector2(140, 154));
     TEST_EXPECT_EQ(DropDown->ScreenBounds.GetSize(), MenuSize);
 
-    TEST_SECTION("One that fits is drawn inside its host, so it needs no window and no transparent surface");
+    TEST_SECTION(TEXT("One that fits is drawn inside its host, so it needs no window and no transparent surface"));
     TEST_EXPECT(DropDown->bIsInline);
     TEST_EXPECT(DropDown->MenuWindow == nullptr);
     TEST_EXPECT_EQ(DropDown->HostWindow, Window);
@@ -178,24 +178,24 @@ bool MenuStackPlacement_Test()
     Stack.DismissAll();
     TEST_EXPECT(Window->GetMenuHost()->IsEmpty());
 
-    TEST_SECTION("With no room below, the drop-down goes above the anchor instead");
+    TEST_SECTION(TEXT("With no room below, the drop-down goes above the anchor instead"));
     DropDown = Stack.PushMenu(Window, FRectangle(FIntVector2(140, 690), 60, 24), EMenuPlacement::BelowLeftAligned, Menu);
     TEST_EXPECT_EQ(DropDown->ScreenBounds.Position, FIntVector2(140, 690 - MenuSize.Y));
     Stack.DismissAll();
 
-    TEST_SECTION("A submenu opens beside its anchor, lifted by its padding so its first row rather than its outline is flush");
+    TEST_SECTION(TEXT("A submenu opens beside its anchor, lifted by its padding so its first row rather than its outline is flush"));
     const int32 MenuTopInset = Menu->GetContentTopInset();
 
     DropDown = Stack.PushMenu(Window, FRectangle(FIntVector2(140, 130), 60, 24), EMenuPlacement::RightOfTopAligned, Menu);
     TEST_EXPECT_EQ(DropDown->ScreenBounds.Position, FIntVector2(200, 130 - MenuTopInset));
     Stack.DismissAll();
 
-    TEST_SECTION("With no room to the right, the submenu goes to the left of its anchor and keeps that lift");
+    TEST_SECTION(TEXT("With no room to the right, the submenu goes to the left of its anchor and keeps that lift"));
     DropDown = Stack.PushMenu(Window, FRectangle(FIntVector2(860, 130), 20, 24), EMenuPlacement::RightOfTopAligned, Menu);
     TEST_EXPECT_EQ(DropDown->ScreenBounds.Position, FIntVector2(860 - MenuSize.X, 130 - MenuTopInset));
     Stack.DismissAll();
 
-    TEST_SECTION("A context menu opens at the cursor, and in the window's corner it opens back towards it");
+    TEST_SECTION(TEXT("A context menu opens at the cursor, and in the window's corner it opens back towards it"));
     DropDown = Stack.PushMenu(Window, FRectangle(FIntVector2(400, 300), 0, 0), EMenuPlacement::AtCursor, Menu);
     TEST_EXPECT_EQ(DropDown->ScreenBounds.Position, FIntVector2(400, 300));
     Stack.DismissAll();
@@ -204,7 +204,7 @@ bool MenuStackPlacement_Test()
     TEST_EXPECT_EQ(DropDown->ScreenBounds.Position, FIntVector2(880 - MenuSize.X, 680 - MenuSize.Y));
     Stack.DismissAll();
 
-    TEST_SECTION("One with nowhere left to flip to is pulled back inside the window rather than past its edge");
+    TEST_SECTION(TEXT("One with nowhere left to flip to is pulled back inside the window rather than past its edge"));
 
     TSharedPtr<FWindow> ShortWindow = Application.CreateWindow(FIntVector2(400, MenuSize.Y + 20), FIntVector2(1000, 100));
     const FRectangle    ShortArea   = GetClientArea(ShortWindow);
@@ -215,11 +215,11 @@ bool MenuStackPlacement_Test()
     TEST_EXPECT_EQ(DropDown->ScreenBounds.Position.Y, ShortArea.GetBottom() - MenuSize.Y);
     Stack.DismissAll();
 
-    TEST_SECTION("A menu too tall for its host falls back to a popup window, clamped to the monitor instead");
+    TEST_SECTION(TEXT("A menu too tall for its host falls back to a popup window, clamped to the monitor instead"));
     TArray<FString> ManyLabels;
     for (int32 Index = 0; Index < 80; ++Index)
     {
-        ManyLabels.Add("Row");
+        ManyLabels.Add(TEXT("Row"));
     }
 
     TSharedPtr<FMenu> LongMenu = CreateMenu(Font, ManyLabels);
@@ -231,7 +231,7 @@ bool MenuStackPlacement_Test()
     TEST_EXPECT_EQ(LongDrop->ScreenBounds.Position.Y, 0);
     TEST_EXPECT_EQ(LongDrop->MenuWindow->GetPosition(), LongDrop->ScreenBounds.Position);
 
-    TEST_SECTION("That popup is borderless, on top and out of the task bar");
+    TEST_SECTION(TEXT("That popup is borderless, on top and out of the task bar"));
     const EWindowStyleFlags StyleFlags = LongDrop->MenuWindow->GetPlatformWindow()->GetStyle();
     TEST_EXPECT((StyleFlags & EWindowStyleFlags::TopMost) == EWindowStyleFlags::TopMost);
     TEST_EXPECT((StyleFlags & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::NoTaskBarIcon);
@@ -253,18 +253,18 @@ bool MenuStackDepth_Test()
 
     FMenuStack& Stack = FMenuStack::Get();
 
-    TSharedPtr<FMenu> FileMenu = CreateMenu(Font, { "New", "Open" });
-    TSharedPtr<FMenu> Recent   = CreateMenu(Font, { "One", "Two" });
-    TSharedPtr<FMenu> Deeper   = CreateMenu(Font, { "Left", "Right" });
+    TSharedPtr<FMenu> FileMenu = CreateMenu(Font, { TEXT("New"), TEXT("Open") });
+    TSharedPtr<FMenu> Recent   = CreateMenu(Font, { TEXT("One"), TEXT("Two") });
+    TSharedPtr<FMenu> Deeper   = CreateMenu(Font, { TEXT("Left"), TEXT("Right") });
 
-    TEST_SECTION("Opening from a window is the outermost level");
+    TEST_SECTION(TEXT("Opening from a window is the outermost level"));
     FMenuHandle FileHandle = Stack.PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, FileMenu);
     TEST_EXPECT(Stack.IsOpen());
     TEST_EXPECT_EQ(Stack.GetDepth(), 1);
     TEST_EXPECT_EQ(Stack.GetMenuDepth(FileHandle), 1);
     TEST_EXPECT_EQ(Stack.GetOwningMenuDepth(Window), 0);
 
-    TEST_SECTION("Opening from a row makes the new one that row's child, even though both share a host window");
+    TEST_SECTION(TEXT("Opening from a row makes the new one that row's child, even though both share a host window"));
     const TSharedPtr<FMenuItem>& FileRow = FileMenu->GetItems()[0];
     TEST_EXPECT_EQ(Stack.GetOwningMenuDepth(FileRow), 1);
 
@@ -274,25 +274,25 @@ bool MenuStackDepth_Test()
     TEST_EXPECT(Stack.IsMenuOpen(FileHandle));
     TEST_EXPECT_EQ(RecentHandle->HostWindow, FileHandle->HostWindow);
 
-    TEST_SECTION("Opening from the same row again replaces the sibling rather than stacking on it");
+    TEST_SECTION(TEXT("Opening from the same row again replaces the sibling rather than stacking on it"));
     FMenuHandle DeeperHandle = Stack.PushMenu(FileRow, FRectangle(FIntVector2(60, 70), 40, 24), EMenuPlacement::RightOfTopAligned, Deeper);
     TEST_EXPECT_EQ(Stack.GetDepth(), 2);
     TEST_EXPECT(!Stack.IsMenuOpen(RecentHandle));
     TEST_EXPECT(Stack.IsMenuOpen(DeeperHandle));
 
-    TEST_SECTION("A click inside an open menu leaves the stack alone, whether or not it has a window of its own");
+    TEST_SECTION(TEXT("A click inside an open menu leaves the stack alone, whether or not it has a window of its own"));
     TEST_EXPECT(!Stack.DismissOnClickOutside(DeeperHandle->ScreenBounds.Position + FIntVector2(2, 2)));
     TEST_EXPECT_EQ(Stack.GetDepth(), 2);
 
     TEST_EXPECT(!Stack.DismissOnClickOutside(FileHandle->ScreenBounds.Position + FIntVector2(2, 2)));
     TEST_EXPECT_EQ(Stack.GetDepth(), 2);
 
-    TEST_SECTION("A click outside every menu closes the lot");
+    TEST_SECTION(TEXT("A click outside every menu closes the lot"));
     TEST_EXPECT(Stack.DismissOnClickOutside(FIntVector2(700, 500)));
     TEST_EXPECT_EQ(Stack.GetDepth(), 0);
     TEST_EXPECT(!Stack.IsOpen());
 
-    TEST_SECTION("Opening from the window again starts over rather than nesting");
+    TEST_SECTION(TEXT("Opening from the window again starts over rather than nesting"));
     FileHandle   = Stack.PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, FileMenu);
     RecentHandle = Stack.PushMenu(FileRow, FRectangle(FIntVector2(60, 40), 40, 24), EMenuPlacement::RightOfTopAligned, Recent);
     TEST_EXPECT_EQ(Stack.GetDepth(), 2);
@@ -300,7 +300,7 @@ bool MenuStackDepth_Test()
     Stack.PushMenu(Window, FRectangle(FIntVector2(60, 10), 40, 24), EMenuPlacement::BelowLeftAligned, Deeper);
     TEST_EXPECT_EQ(Stack.GetDepth(), 1);
 
-    TEST_SECTION("Dismissing the top leaves its parent open");
+    TEST_SECTION(TEXT("Dismissing the top leaves its parent open"));
     Stack.PushMenu(Deeper->GetItems()[0], FRectangle(FIntVector2(60, 40), 40, 24), EMenuPlacement::RightOfTopAligned, Recent);
     TEST_EXPECT_EQ(Stack.GetDepth(), 2);
 
@@ -321,9 +321,9 @@ bool MenuItemLayout_Test()
     const FUIStyle&             Style = FUIStyle::GetDefault();
     const TSharedPtr<IFontFace> Font  = CreateFont();
 
-    TEST_SECTION("A plain row reserves the check gutter beside its label");
+    TEST_SECTION(TEXT("A plain row reserves the check gutter beside its label"));
     FMenuItem::FDesc PlainDesc;
-    PlainDesc.SetLabel("Open").SetFont(Font);
+    PlainDesc.SetLabel(TEXT("Open")).SetFont(Font);
 
     TSharedPtr<FMenuItem> Plain = FMenuItem::Create(PlainDesc);
     Plain->PrepareDesiredSize();
@@ -332,34 +332,34 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().X, 28 + FMenuItem::GutterWidth + LabelWidth);
     TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().Y, FUIStyle::GetDefault().Menu.RowHeight);
 
-    TEST_SECTION("A shortcut hint widens the row by the gap and its own width");
+    TEST_SECTION(TEXT("A shortcut hint widens the row by the gap and its own width"));
     FMenuItem::FDesc ShortcutDesc;
-    ShortcutDesc.SetLabel("Open").SetFont(Font);
-    ShortcutDesc.ShortcutText = "Ctrl+O";
+    ShortcutDesc.SetLabel(TEXT("Open")).SetFont(Font);
+    ShortcutDesc.ShortcutText = TEXT("Ctrl+O");
 
     TSharedPtr<FMenuItem> WithShortcut = FMenuItem::Create(ShortcutDesc);
     WithShortcut->PrepareDesiredSize();
     TEST_EXPECT_EQ(WithShortcut->GetCachedDesiredSize().X, Plain->GetCachedDesiredSize().X + FMenuItem::ShortcutGap + (6 * 8));
 
-    TEST_SECTION("The hint is drawn upper case, whatever case the accelerator was named in");
+    TEST_SECTION(TEXT("The hint is drawn upper case, whatever case the accelerator was named in"));
     WithShortcut->Arrange(FRectangle(FIntVector2(0, 0), 200, 26));
 
     FDrawCommandList ShortcutCommands;
     DrawElement(WithShortcut, ShortcutCommands);
     TEST_EXPECT_EQ(CountCommands(ShortcutCommands, EDrawCommandType::Text), 2);
-    TEST_EXPECT(ShortcutCommands.GetCommandText(ShortcutCommands.GetCommands()[1]) == FStringView("CTRL+O"));
+    TEST_EXPECT(ShortcutCommands.GetCommandText(ShortcutCommands.GetCommands()[1]) == FStringView(TEXT("CTRL+O")));
 
-    TEST_SECTION("A submenu widens the row by the arrow it has to draw");
+    TEST_SECTION(TEXT("A submenu widens the row by the arrow it has to draw"));
     FMenuItem::FDesc SubMenuDesc;
-    SubMenuDesc.SetLabel("Open").SetFont(Font);
-    SubMenuDesc.SubMenu = CreateMenu(Font, { "One" });
+    SubMenuDesc.SetLabel(TEXT("Open")).SetFont(Font);
+    SubMenuDesc.SubMenu = CreateMenu(Font, { TEXT("One") });
 
     TSharedPtr<FMenuItem> WithSubMenu = FMenuItem::Create(SubMenuDesc);
     WithSubMenu->PrepareDesiredSize();
     TEST_EXPECT(WithSubMenu->HasSubMenu());
     TEST_EXPECT_EQ(WithSubMenu->GetCachedDesiredSize().X, Plain->GetCachedDesiredSize().X + FMenuItem::ShortcutGap + FMenuItem::ArrowWidth);
 
-    TEST_SECTION("A row draws its label and nothing behind it until it is highlighted");
+    TEST_SECTION(TEXT("A row draws its label and nothing behind it until it is highlighted"));
     Plain->Arrange(FRectangle(FIntVector2(0, 0), 160, 24));
 
     FDrawCommandList Commands;
@@ -367,7 +367,7 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(CountCommands(Commands, EDrawCommandType::Box), 0);
     TEST_EXPECT_EQ(CountCommands(Commands, EDrawCommandType::Text), 1);
 
-    TEST_SECTION("Keyboard navigation lights a row the same way hovering does");
+    TEST_SECTION(TEXT("Keyboard navigation lights a row the same way hovering does"));
     Plain->SetHighlighted(true);
 
     FDrawCommandList HighlightedCommands;
@@ -375,9 +375,9 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(CountCommands(HighlightedCommands, EDrawCommandType::Box), 1);
     Plain->SetHighlighted(false);
 
-    TEST_SECTION("A checked row draws a tick, and an undetermined one a dash");
+    TEST_SECTION(TEXT("A checked row draws a tick, and an undetermined one a dash"));
     FMenuItem::FDesc CheckDesc;
-    CheckDesc.SetLabel("Grid").SetFont(Font);
+    CheckDesc.SetLabel(TEXT("Grid")).SetFont(Font);
     CheckDesc.bIsCheckable = true;
     CheckDesc.CheckState   = ECheckBoxState::Checked;
 
@@ -402,14 +402,14 @@ bool MenuItemLayout_Test()
     DrawElement(Checkable, UncheckedCommands);
     TEST_EXPECT_EQ(CountCommands(UncheckedCommands, EDrawCommandType::Box), 0);
 
-    TEST_SECTION("A row with a submenu draws the arrow that says so");
+    TEST_SECTION(TEXT("A row with a submenu draws the arrow that says so"));
     WithSubMenu->Arrange(FRectangle(FIntVector2(0, 0), 200, 24));
 
     FDrawCommandList ArrowCommands;
     DrawElement(WithSubMenu, ArrowCommands);
     TEST_EXPECT_EQ(CountCommands(ArrowCommands, EDrawCommandType::Polyline), 1);
 
-    TEST_SECTION("A separator is a rule across the middle of its own row");
+    TEST_SECTION(TEXT("A separator is a rule across the middle of its own row"));
     TSharedPtr<FMenuSeparator> Separator = FMenuSeparator::Create();
     Separator->PrepareDesiredSize();
     TEST_EXPECT_EQ(Separator->GetCachedDesiredSize().Y, Style.Metrics.MenuSeparatorThickness + 8);
@@ -422,13 +422,13 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(SeparatorCommands.GetCommands()[0].Bounds.Height, Style.Metrics.MenuSeparatorThickness);
     TEST_EXPECT_EQ(SeparatorCommands.GetCommands()[0].Bounds.Width, 160 - (FMenuSeparator::InsetX * 2));
 
-    TEST_SECTION("A section header takes the taller of its caption and the rule, plus the same padding");
-    TSharedPtr<FMenuSectionHeader> Header = FMenuSectionHeader::Create("Open", Font);
+    TEST_SECTION(TEXT("A section header takes the taller of its caption and the rule, plus the same padding"));
+    TSharedPtr<FMenuSectionHeader> Header = FMenuSectionHeader::Create(TEXT("Open"), Font);
     Header->PrepareDesiredSize();
     TEST_EXPECT_EQ(Header->GetCachedDesiredSize().Y, Math::Max(Font->GetLineHeight(), Style.Metrics.MenuSeparatorThickness) + 8);
 
-    TEST_SECTION("It draws its caption upper case, whatever case it was given");
-    TEST_EXPECT_EQ(Header->GetLabel(), FString("OPEN"));
+    TEST_SECTION(TEXT("It draws its caption upper case, whatever case it was given"));
+    TEST_EXPECT_EQ(Header->GetLabel(), FString(TEXT("OPEN")));
 
     const int32 HeaderHeight = Header->GetCachedDesiredSize().Y;
     Header->Arrange(FRectangle(FIntVector2(0, 0), 160, HeaderHeight));
@@ -438,21 +438,21 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(CountCommands(HeaderCommands, EDrawCommandType::Text), 1);
     TEST_EXPECT_EQ(CountCommands(HeaderCommands, EDrawCommandType::Box), 1);
 
-    TEST_SECTION("The caption sits at the same inset the rule is held back by");
+    TEST_SECTION(TEXT("The caption sits at the same inset the rule is held back by"));
     const FDrawCommand& CaptionCommand = HeaderCommands.GetCommands()[0];
     TEST_EXPECT_EQ(CaptionCommand.Type, EDrawCommandType::Text);
     TEST_EXPECT_EQ(CaptionCommand.Bounds.Position.X, FMenuSectionHeader::InsetX);
 
-    TEST_SECTION("The rule runs to the right of the caption only, and stops at the far inset");
-    const int32         CaptionWidth = Font->MeasureWidth(FStringView("OPEN", 4));
+    TEST_SECTION(TEXT("The rule runs to the right of the caption only, and stops at the far inset"));
+    const int32         CaptionWidth = Font->MeasureWidth(FStringView(TEXT("OPEN"), 4));
     const FDrawCommand& RuleCommand  = HeaderCommands.GetCommands()[1];
     TEST_EXPECT_EQ(RuleCommand.Type, EDrawCommandType::Box);
     TEST_EXPECT_EQ(RuleCommand.Bounds.Position.X, FMenuSectionHeader::InsetX + CaptionWidth + FMenuSectionHeader::LabelGap);
     TEST_EXPECT_EQ(RuleCommand.Bounds.GetRight(), 160 - FMenuSectionHeader::InsetX);
     TEST_EXPECT_EQ(RuleCommand.Bounds.Height, Style.Metrics.MenuSeparatorThickness);
 
-    TEST_SECTION("A menu is a fill behind a single ring, with no bevel inside it");
-    TSharedPtr<FMenu> Chrome = CreateMenu(Font, { "Open" });
+    TEST_SECTION(TEXT("A menu is a fill behind a single ring, with no bevel inside it"));
+    TSharedPtr<FMenu> Chrome = CreateMenu(Font, { TEXT("Open") });
     Chrome->PrepareDesiredSize();
     Chrome->Arrange(FRectangle(FIntVector2(0, 0), 160, 80));
 
@@ -465,7 +465,7 @@ bool MenuItemLayout_Test()
     TEST_EXPECT_EQ(Ring.Bounds, FRectangle(FIntVector2(0, 0), 160, 80));
     TEST_EXPECT(Ring.HasTint(Style.Menu.Border));
 
-    TEST_SECTION("The fill behind it comes from the menu style");
+    TEST_SECTION(TEXT("The fill behind it comes from the menu style"));
     const FDrawCommand& Fill = ChromeCommands.GetCommands()[0];
     TEST_EXPECT_EQ(Fill.Type, EDrawCommandType::Box);
     TEST_EXPECT(Fill.HasTint(Style.Menu.Background));
@@ -491,15 +491,15 @@ bool MenuStyle_Test()
     MenuStyle.ItemCornerRadius   = 7.0f;
     MenuStyle.CornerRadius       = 13.0f;
 
-    TSharedPtr<FMenu> Menu = CreateMenu(Font, { "Open" });
+    TSharedPtr<FMenu> Menu = CreateMenu(Font, { TEXT("Open") });
     Menu->AddSeparator();
-    Menu->AddSection("Recent", Font);
+    Menu->AddSection(TEXT("Recent"), Font);
     Menu->SetStyle(MenuStyle);
 
     Menu->PrepareDesiredSize();
     Menu->Arrange(FRectangle(FIntVector2(0, 0), 160, 110));
 
-    TEST_SECTION("The menu's own fill and ring come from the style it was given, both rounded to its radius");
+    TEST_SECTION(TEXT("The menu's own fill and ring come from the style it was given, both rounded to its radius"));
     FDrawCommandList Commands;
     DrawElement(Menu, Commands);
 
@@ -510,7 +510,7 @@ bool MenuStyle_Test()
     TEST_EXPECT(Commands.GetCommands()[1].HasTint(MenuStyle.Border));
     TEST_EXPECT_EQ(Commands.GetCommands()[1].CornerRadius.TopLeft, MenuStyle.CornerRadius);
 
-    TEST_SECTION("The rule and the heading it already held take it too, not only the rows");
+    TEST_SECTION(TEXT("The rule and the heading it already held take it too, not only the rows"));
     TArray<TSharedPtr<FVisualElement>> Panels;
     Menu->GetChildren(Panels);
     TEST_EXPECT_EQ(Panels.Size(), 1);
@@ -536,7 +536,7 @@ bool MenuStyle_Test()
     TEST_EXPECT(bFoundSeparatorFill);
     TEST_EXPECT(bFoundSectionText);
 
-    TEST_SECTION("The style reaches the rows the menu already held, rather than only the ones added after");
+    TEST_SECTION(TEXT("The style reaches the rows the menu already held, rather than only the ones added after"));
     TSharedPtr<FMenuItem> Item = Menu->GetItems()[0];
     Item->SetHighlighted(true);
 
@@ -552,9 +552,9 @@ bool MenuStyle_Test()
 
     Item->SetHighlighted(false);
 
-    TEST_SECTION("A row added afterwards is styled the same way without a second call");
+    TEST_SECTION(TEXT("A row added afterwards is styled the same way without a second call"));
     FMenuItem::FDesc LateDesc;
-    LateDesc.SetLabel("Close").SetFont(Font);
+    LateDesc.SetLabel(TEXT("Close")).SetFont(Font);
 
     TSharedPtr<FMenuItem> Late = FMenuItem::Create(LateDesc);
     Menu->AddItem(Late);
@@ -567,8 +567,8 @@ bool MenuStyle_Test()
     DrawElement(Late, LateCommands);
     TEST_EXPECT(LateCommands.GetCommands()[0].HasTint(MenuStyle.ItemHovered));
 
-    TEST_SECTION("A menu left alone still draws in the shipped colours, so the override stayed with the one menu");
-    TSharedPtr<FMenu> Plain = CreateMenu(Font, { "Open" });
+    TEST_SECTION(TEXT("A menu left alone still draws in the shipped colours, so the override stayed with the one menu"));
+    TSharedPtr<FMenu> Plain = CreateMenu(Font, { TEXT("Open") });
     Plain->PrepareDesiredSize();
     Plain->Arrange(FRectangle(FIntVector2(0, 0), 160, 80));
 
@@ -591,30 +591,30 @@ bool MenuMinimumWidth_Test()
     const TSharedPtr<IFontFace> Font     = CreateFont();
     const int32                 MinWidth = FUIStyle::GetDefault().Menu.MinWidth;
 
-    TEST_SECTION("A menu of narrow rows is still held out to the style's floor");
-    TSharedPtr<FMenu> Narrow = CreateMenu(Font, { "On", "Off" });
+    TEST_SECTION(TEXT("A menu of narrow rows is still held out to the style's floor"));
+    TSharedPtr<FMenu> Narrow = CreateMenu(Font, { TEXT("On"), TEXT("Off") });
     Narrow->PrepareDesiredSize();
 
     TEST_EXPECT_EQ(Narrow->GetCachedDesiredSize().X, MinWidth);
 
-    TEST_SECTION("A row wider than the floor takes the menu out past it");
-    TSharedPtr<FMenu> Wide = CreateMenu(Font, { "A menu entry whose label runs well past the floor" });
+    TEST_SECTION(TEXT("A row wider than the floor takes the menu out past it"));
+    TSharedPtr<FMenu> Wide = CreateMenu(Font, { TEXT("A menu entry whose label runs well past the floor") });
     Wide->PrepareDesiredSize();
 
     TEST_EXPECT(Wide->GetCachedDesiredSize().X > MinWidth);
 
-    TEST_SECTION("An explicit width wins even asking for less, which is how a combo box matches its button");
-    TSharedPtr<FMenu> Combo = CreateMenu(Font, { "On", "Off" });
+    TEST_SECTION(TEXT("An explicit width wins even asking for less, which is how a combo box matches its button"));
+    TSharedPtr<FMenu> Combo = CreateMenu(Font, { TEXT("On"), TEXT("Off") });
     Combo->SetMinDesiredWidth(0);
     Combo->PrepareDesiredSize();
 
     TEST_EXPECT(Combo->GetCachedDesiredSize().X < MinWidth);
 
-    TEST_SECTION("A menu dressed in its own style takes that style's floor rather than the shipped one");
+    TEST_SECTION(TEXT("A menu dressed in its own style takes that style's floor rather than the shipped one"));
     FUIMenuStyle WideStyle;
     WideStyle.MinWidth = MinWidth + 94;
 
-    TSharedPtr<FMenu> Styled = CreateMenu(Font, { "On", "Off" });
+    TSharedPtr<FMenu> Styled = CreateMenu(Font, { TEXT("On"), TEXT("Off") });
     Styled->SetStyle(WideStyle);
     Styled->PrepareDesiredSize();
 
@@ -638,14 +638,14 @@ bool MenuItemActivation_Test()
     int32 ActivationCount = 0;
 
     FMenuItem::FDesc SaveDesc;
-    SaveDesc.SetLabel("Save").SetFont(Font);
+    SaveDesc.SetLabel(TEXT("Save")).SetFont(Font);
     SaveDesc.OnActivated = FOnMenuItemActivated::CreateLambda([&ActivationCount]() { ActivationCount++; });
 
     TSharedPtr<FMenuItem> Save   = FMenuItem::Create(SaveDesc);
-    TSharedPtr<FMenu>     Recent = CreateMenu(Font, { "One", "Two" });
+    TSharedPtr<FMenu>     Recent = CreateMenu(Font, { TEXT("One"), TEXT("Two") });
 
     FMenuItem::FDesc RecentDesc;
-    RecentDesc.SetLabel("Recent").SetFont(Font);
+    RecentDesc.SetLabel(TEXT("Recent")).SetFont(Font);
     RecentDesc.SubMenu = Recent;
 
     TSharedPtr<FMenuItem> RecentRow = FMenuItem::Create(RecentDesc);
@@ -658,12 +658,12 @@ bool MenuItemActivation_Test()
     Stack.PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, FileMenu);
     TEST_EXPECT_EQ(Stack.GetDepth(), 1);
 
-    TEST_SECTION("Choosing a row closes every menu before it runs what it was bound to");
+    TEST_SECTION(TEXT("Choosing a row closes every menu before it runs what it was bound to"));
     Save->Activate();
     TEST_EXPECT_EQ(ActivationCount, 1);
     TEST_EXPECT_EQ(Stack.GetDepth(), 0);
 
-    TEST_SECTION("A row with a submenu opens it on hover, once the cursor has rested");
+    TEST_SECTION(TEXT("A row with a submenu opens it on hover, once the cursor has rested"));
     Stack.PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, FileMenu);
 
     RecentRow->OnMouseEntered(MakeMoveEvent(FIntVector2(4, 4)));
@@ -677,7 +677,7 @@ bool MenuItemActivation_Test()
     TEST_EXPECT_EQ(Stack.GetDepth(), 2);
     TEST_EXPECT(!Stack.HasScheduledSubMenu());
 
-    TEST_SECTION("The submenu is placed beside the row that owns it, far enough up that its own first row lines up with that one");
+    TEST_SECTION(TEXT("The submenu is placed beside the row that owns it, far enough up that its own first row lines up with that one"));
     const FRectangle RowBounds = FMenuStack::GetScreenBounds(RecentRow);
     TEST_EXPECT_EQ(GetTopMenuBounds().Position,
         FIntVector2(RowBounds.GetRight(), RowBounds.Position.Y - Recent->GetContentTopInset()));
@@ -685,11 +685,11 @@ bool MenuItemActivation_Test()
     TEST_EXPECT(Recent->GetContentTopInset() > 0);
     TEST_EXPECT_EQ(FMenuStack::GetScreenBounds(Recent->GetItems()[0]).Position.Y, RowBounds.Position.Y);
 
-    TEST_SECTION("Moving onto a plain row in the parent closes the branch the neighbour opened");
+    TEST_SECTION(TEXT("Moving onto a plain row in the parent closes the branch the neighbour opened"));
     Save->OnMouseEntered(MakeMoveEvent(FIntVector2(4, 4)));
     TEST_EXPECT_EQ(Stack.GetDepth(), 1);
 
-    TEST_SECTION("Leaving a row before it opens drops what it had scheduled");
+    TEST_SECTION(TEXT("Leaving a row before it opens drops what it had scheduled"));
     RecentRow->OnMouseEntered(MakeMoveEvent(FIntVector2(4, 4)));
     TEST_EXPECT(Stack.HasScheduledSubMenu());
 
@@ -699,20 +699,20 @@ bool MenuItemActivation_Test()
     Stack.Tick(1.0f);
     TEST_EXPECT_EQ(Stack.GetDepth(), 1);
 
-    TEST_SECTION("Clicking a row with a submenu opens it at once rather than waiting");
+    TEST_SECTION(TEXT("Clicking a row with a submenu opens it at once rather than waiting"));
     ClickElement(RecentRow);
     TEST_EXPECT_EQ(Stack.GetDepth(), 2);
 
-    TEST_SECTION("Choosing a row in the submenu closes the whole branch");
+    TEST_SECTION(TEXT("Choosing a row in the submenu closes the whole branch"));
     GetTopMenu()->SetHighlightedIndex(0);
     GetTopMenu()->ActivateHighlighted();
     TEST_EXPECT_EQ(Stack.GetDepth(), 0);
 
-    TEST_SECTION("A window activating mid-click does not swallow the click, because the press is still held");
+    TEST_SECTION(TEXT("A window activating mid-click does not swallow the click, because the press is still held"));
     int32 ExitCount = 0;
 
     FMenuItem::FDesc ExitDesc;
-    ExitDesc.SetLabel("Exit").SetFont(Font);
+    ExitDesc.SetLabel(TEXT("Exit")).SetFont(Font);
     ExitDesc.OnActivated = FOnMenuItemActivated::CreateLambda([&ExitCount]() { ExitCount++; });
 
     TSharedPtr<FMenuItem> ExitRow  = FMenuItem::Create(ExitDesc);
@@ -733,7 +733,7 @@ bool MenuItemActivation_Test()
     TEST_EXPECT_EQ(ExitCount, 1);
     TEST_EXPECT_EQ(Stack.GetDepth(), 0);
 
-    TEST_SECTION("A hovered row puts the hand under the cursor, and a greyed one leaves the arrow");
+    TEST_SECTION(TEXT("A hovered row puts the hand under the cursor, and a greyed one leaves the arrow"));
     ECursor Cursor = ECursor::Arrow;
 
     ExitRow->OnMouseEntered(MakeMoveEvent(ExitCenter));
@@ -743,11 +743,11 @@ bool MenuItemActivation_Test()
     ExitRow->SetEnabled(false);
     TEST_EXPECT(!ExitRow->GetCursor(Cursor));
 
-    TEST_SECTION("The menu behind the rows has no opinion, so the padding around them keeps the arrow");
+    TEST_SECTION(TEXT("The menu behind the rows has no opinion, so the padding around them keeps the arrow"));
     TEST_EXPECT(!ExitMenu->GetCursor(Cursor));
 
-    TEST_SECTION("A press the capture has moved off is still cancelled, which is what focus loss is there for");
-    TSharedPtr<FMenu> PairMenu = CreateMenu(Font, { "First", "Second" });
+    TEST_SECTION(TEXT("A press the capture has moved off is still cancelled, which is what focus loss is there for"));
+    TSharedPtr<FMenu> PairMenu = CreateMenu(Font, { TEXT("First"), TEXT("Second") });
     Stack.PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, PairMenu);
 
     const TSharedPtr<FMenuItem>& First  = PairMenu->GetItems()[0];
@@ -780,23 +780,23 @@ bool MenuKeyboard_Test()
     int32 ActivationCount = 0;
 
     // The third row is disabled, so the navigation has something it has to step over
-    TSharedPtr<FMenu> Menu = CreateMenu(Font, { "New", "Open", "Import", "Quit" });
+    TSharedPtr<FMenu> Menu = CreateMenu(Font, { TEXT("New"), TEXT("Open"), TEXT("Import"), TEXT("Quit") });
     Menu->GetItems()[2]->SetEnabled(false);
 
     TSharedPtr<FMenu> WithDelegate = FMenu::Create();
     for (int32 Index = 0; Index < 3; ++Index)
     {
         FMenuItem::FDesc Desc;
-        Desc.SetLabel("Row").SetFont(Font);
+        Desc.SetLabel(TEXT("Row")).SetFont(Font);
         Desc.OnActivated = FOnMenuItemActivated::CreateLambda([&ActivationCount]() { ActivationCount++; });
 
         WithDelegate->AddItem(FMenuItem::Create(Desc));
     }
 
-    TEST_SECTION("Nothing is highlighted until a key arrives");
+    TEST_SECTION(TEXT("Nothing is highlighted until a key arrives"));
     TEST_EXPECT_EQ(Menu->GetHighlightedIndex(), -1);
 
-    TEST_SECTION("Down walks the rows and steps over the ones that cannot be chosen");
+    TEST_SECTION(TEXT("Down walks the rows and steps over the ones that cannot be chosen"));
     Menu->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Menu->GetHighlightedIndex(), 0);
 
@@ -806,40 +806,40 @@ bool MenuKeyboard_Test()
     Menu->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Menu->GetHighlightedIndex(), 3);
 
-    TEST_SECTION("It wraps at either end");
+    TEST_SECTION(TEXT("It wraps at either end"));
     Menu->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Menu->GetHighlightedIndex(), 0);
 
     Menu->OnKeyDown(MakeKeyEvent(Keys::Up));
     TEST_EXPECT_EQ(Menu->GetHighlightedIndex(), 3);
 
-    TEST_SECTION("Home and End go to the first and last rows that can be chosen");
+    TEST_SECTION(TEXT("Home and End go to the first and last rows that can be chosen"));
     Menu->OnKeyDown(MakeKeyEvent(Keys::Home));
     TEST_EXPECT_EQ(Menu->GetHighlightedIndex(), 0);
 
     Menu->OnKeyDown(MakeKeyEvent(Keys::End));
     TEST_EXPECT_EQ(Menu->GetHighlightedIndex(), 3);
 
-    TEST_SECTION("Only the highlighted row draws lit");
+    TEST_SECTION(TEXT("Only the highlighted row draws lit"));
     TEST_EXPECT(Menu->GetItems()[3]->IsHighlighted());
     TEST_EXPECT(!Menu->GetItems()[0]->IsHighlighted());
 
-    TEST_SECTION("Enter chooses the highlighted row");
+    TEST_SECTION(TEXT("Enter chooses the highlighted row"));
     Stack.PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, WithDelegate);
     WithDelegate->OnKeyDown(MakeKeyEvent(Keys::Down));
     WithDelegate->OnKeyDown(MakeKeyEvent(Keys::Enter));
     TEST_EXPECT_EQ(ActivationCount, 1);
     TEST_EXPECT_EQ(Stack.GetDepth(), 0);
 
-    TEST_SECTION("The stack routes keys to the deepest menu, because a menu never holds focus");
+    TEST_SECTION(TEXT("The stack routes keys to the deepest menu, because a menu never holds focus"));
     Stack.PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, Menu);
     Menu->SetHighlightedIndex(-1);
 
     TEST_EXPECT(Stack.HandleKeyDown(MakeKeyEvent(Keys::Down)));
     TEST_EXPECT_EQ(Menu->GetHighlightedIndex(), 0);
 
-    TEST_SECTION("Escape closes one level at a time");
-    TSharedPtr<FMenu> SubMenu = CreateMenu(Font, { "One", "Two" });
+    TEST_SECTION(TEXT("Escape closes one level at a time"));
+    TSharedPtr<FMenu> SubMenu = CreateMenu(Font, { TEXT("One"), TEXT("Two") });
     Stack.PushMenu(Menu->GetItems()[0], FRectangle(FIntVector2(60, 40), 40, 24), EMenuPlacement::RightOfTopAligned, SubMenu);
     TEST_EXPECT_EQ(Stack.GetDepth(), 2);
 
@@ -849,34 +849,34 @@ bool MenuKeyboard_Test()
     TEST_EXPECT(Stack.HandleKeyDown(MakeKeyEvent(Keys::Escape)));
     TEST_EXPECT_EQ(Stack.GetDepth(), 0);
 
-    TEST_SECTION("A section header is chrome, so it is neither a row nor somewhere the highlight can land");
+    TEST_SECTION(TEXT("A section header is chrome, so it is neither a row nor somewhere the highlight can land"));
     TSharedPtr<FMenu> Sectioned = FMenu::Create();
-    Sectioned->AddSection("Open", Font);
+    Sectioned->AddSection(TEXT("Open"), Font);
 
     FMenuItem::FDesc FirstRow;
-    FirstRow.SetLabel("New Level").SetFont(Font);
+    FirstRow.SetLabel(TEXT("New Level")).SetFont(Font);
     Sectioned->AddItem(FMenuItem::Create(FirstRow));
 
-    Sectioned->AddSection("Exit", Font);
+    Sectioned->AddSection(TEXT("Exit"), Font);
 
     FMenuItem::FDesc SecondRow;
-    SecondRow.SetLabel("Exit").SetFont(Font);
+    SecondRow.SetLabel(TEXT("Exit")).SetFont(Font);
     Sectioned->AddItem(FMenuItem::Create(SecondRow));
 
     TEST_EXPECT_EQ(Sectioned->GetItems().Size(), 2);
 
     Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 0);
-    TEST_EXPECT_EQ(Sectioned->GetItems()[0]->GetLabel(), FString("New Level"));
+    TEST_EXPECT_EQ(Sectioned->GetItems()[0]->GetLabel(), FString(TEXT("New Level")));
 
     Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 1);
-    TEST_EXPECT_EQ(Sectioned->GetItems()[1]->GetLabel(), FString("Exit"));
+    TEST_EXPECT_EQ(Sectioned->GetItems()[1]->GetLabel(), FString(TEXT("Exit")));
 
     Sectioned->OnKeyDown(MakeKeyEvent(Keys::Down));
     TEST_EXPECT_EQ(Sectioned->GetHighlightedIndex(), 0);
 
-    TEST_SECTION("With nothing open the stack leaves the key for whoever else wants it");
+    TEST_SECTION(TEXT("With nothing open the stack leaves the key for whoever else wants it"));
     TEST_EXPECT(!Stack.HandleKeyDown(MakeKeyEvent(Keys::Escape)));
 
     TEST_END();
@@ -893,8 +893,8 @@ bool MenuBarSwitching_Test()
     TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0));
 
     TSharedPtr<FMenuBar> MenuBar = FMenuBar::Create();
-    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu("File", Font, CreateMenu(Font, { "New", "Open" }));
-    TSharedPtr<FMenuAnchor> EditAnchor = MenuBar->AddMenu("Edit", Font, CreateMenu(Font, { "Undo", "Redo" }));
+    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu(TEXT("File"), Font, CreateMenu(Font, { TEXT("New"), TEXT("Open") }));
+    TSharedPtr<FMenuAnchor> EditAnchor = MenuBar->AddMenu(TEXT("Edit"), Font, CreateMenu(Font, { TEXT("Undo"), TEXT("Redo") }));
 
     Window->SetContent(MenuBar);
     FApplication::LayoutWindow(Window);
@@ -902,35 +902,35 @@ bool MenuBarSwitching_Test()
     TSharedPtr<FMenuBarButton> FileButton = StaticCastSharedPtr<FMenuBarButton>(FileAnchor->GetContent());
     TSharedPtr<FMenuBarButton> EditButton = StaticCastSharedPtr<FMenuBarButton>(EditAnchor->GetContent());
 
-    TEST_SECTION("The buttons sit side by side across the top, held apart by the style's item spacing");
+    TEST_SECTION(TEXT("The buttons sit side by side across the top, held apart by the style's item spacing"));
     TEST_EXPECT_EQ(FileButton->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(EditButton->GetContentRectangle().Position.X, FileButton->GetContentRectangle().Width + FUIStyle::GetDefault().MenuBar.ItemSpacing);
     TEST_EXPECT(!MenuBar->IsAnyMenuOpen());
 
-    TEST_SECTION("Hovering does nothing until the bar is in menu mode");
+    TEST_SECTION(TEXT("Hovering does nothing until the bar is in menu mode"));
     EditButton->OnMouseEntered(MakeMoveEvent(FIntVector2(50, 8)));
     TEST_EXPECT(!MenuBar->IsAnyMenuOpen());
     EditButton->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
 
-    TEST_SECTION("Clicking a button opens its drop-down flush against the highlight rather than the strip's edge");
+    TEST_SECTION(TEXT("Clicking a button opens its drop-down flush against the highlight rather than the strip's edge"));
     ClickElement(FileButton);
     TEST_EXPECT(FileAnchor->IsOpen());
     TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 1);
     TEST_EXPECT_EQ(FileAnchor->GetMenu()->ScreenBounds.Position,
         FIntVector2(0, FileButton->GetContentRectangle().GetBottom()));
 
-    TEST_SECTION("With one open, hovering a sibling switches to it");
+    TEST_SECTION(TEXT("With one open, hovering a sibling switches to it"));
     EditButton->OnMouseEntered(MakeMoveEvent(FIntVector2(50, 8)));
     TEST_EXPECT(!FileAnchor->IsOpen());
     TEST_EXPECT(EditAnchor->IsOpen());
     TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 1);
 
-    TEST_SECTION("Clicking the open button closes it again");
+    TEST_SECTION(TEXT("Clicking the open button closes it again"));
     ClickElement(EditButton);
     TEST_EXPECT(!EditAnchor->IsOpen());
     TEST_EXPECT(!MenuBar->IsAnyMenuOpen());
 
-    TEST_SECTION("An anchor notices its menu was closed from underneath it");
+    TEST_SECTION(TEXT("An anchor notices its menu was closed from underneath it"));
     FileAnchor->Open();
     TEST_EXPECT(FileAnchor->IsOpen());
 
@@ -950,7 +950,7 @@ bool MenuBlocksHoverBehindIt_Test()
     const TSharedPtr<IFontFace> Font   = CreateFont();
     TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0));
 
-    TSharedPtr<FMenu>    Behind = CreateMenu(Font, { "Row one", "Row two", "Row three", "Row four", "Row five", "Row six" });
+    TSharedPtr<FMenu>    Behind = CreateMenu(Font, { TEXT("Row one"), TEXT("Row two"), TEXT("Row three"), TEXT("Row four"), TEXT("Row five"), TEXT("Row six") });
     TSharedPtr<FOverlay> Root   = FOverlay::Create();
     Root->AddSlot(Behind).SetHorizontalAlignment(EHorizontalAlignment::Left).SetVerticalAlignment(EVerticalAlignment::Top);
 
@@ -959,7 +959,7 @@ bool MenuBlocksHoverBehindIt_Test()
 
     const FRectangle BehindBounds = Behind->GetContentRectangle();
 
-    TSharedPtr<FMenu> Menu     = CreateMenu(Font, { "New", "Open" });
+    TSharedPtr<FMenu> Menu     = CreateMenu(Font, { TEXT("New"), TEXT("Open") });
     FMenuHandle       DropDown = FMenuStack::Get().PushMenu(Window, FRectangle(BehindBounds.Position, 0, 0), EMenuPlacement::AtCursor, Menu);
 
     TEST_EXPECT(DropDown != nullptr);
@@ -969,25 +969,25 @@ bool MenuBlocksHoverBehindIt_Test()
     const FIntVector2 InsideMenu = MenuBounds.GetCenter();
     const FIntVector2 BelowMenu(BehindBounds.Position.X + 2, BehindBounds.GetBottom() - 2);
 
-    TEST_SECTION("The drop-down covers the top of the content and leaves its lower rows clear");
+    TEST_SECTION(TEXT("The drop-down covers the top of the content and leaves its lower rows clear"));
     TEST_EXPECT(BehindBounds.EncapsulatesPoint(InsideMenu));
     TEST_EXPECT(BehindBounds.EncapsulatesPoint(BelowMenu));
     TEST_EXPECT(!MenuBounds.EncapsulatesPoint(BelowMenu));
 
-    TEST_SECTION("Over the menu, only the menu is in the path, so the row behind it cannot hover along");
+    TEST_SECTION(TEXT("Over the menu, only the menu is in the path, so the row behind it cannot hover along"));
     FElementPath CoveredPath;
     Window->HitTest(InsideMenu, CoveredPath);
     TEST_EXPECT(CoveredPath.Contains(Menu));
     TEST_EXPECT(!CoveredPath.Contains(Behind));
     TEST_EXPECT(!CoveredPath.Contains(Root));
 
-    TEST_SECTION("Clear of the menu the content is reached as before");
+    TEST_SECTION(TEXT("Clear of the menu the content is reached as before"));
     FElementPath UncoveredPath;
     Window->HitTest(BelowMenu, UncoveredPath);
     TEST_EXPECT(!UncoveredPath.Contains(Menu));
     TEST_EXPECT(UncoveredPath.Contains(Behind));
 
-    TEST_SECTION("Dismissing it hands the content back");
+    TEST_SECTION(TEXT("Dismissing it hands the content back"));
     FMenuStack::Get().DismissAll();
 
     FElementPath RestoredPath;
@@ -1012,23 +1012,23 @@ bool MenuBarHighlight_Test()
     TSharedPtr<FWindow> Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0));
 
     TSharedPtr<FMenuBar>    MenuBar    = FMenuBar::Create();
-    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu("File", Font, CreateMenu(Font, { "New" }));
+    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu(TEXT("File"), Font, CreateMenu(Font, { TEXT("New") }));
 
     Window->SetContent(MenuBar);
     FApplication::LayoutWindow(Window);
 
     TSharedPtr<FMenuBarButton> FileButton = StaticCastSharedPtr<FMenuBarButton>(FileAnchor->GetContent());
 
-    TEST_SECTION("The strip is never shorter than the style asks for, however small its labels measure");
+    TEST_SECTION(TEXT("The strip is never shorter than the style asks for, however small its labels measure"));
     TEST_EXPECT_EQ(MenuBar->GetCachedDesiredSize().Y, BarStyle.Height);
     TEST_EXPECT(BarStyle.Height > Font->GetLineHeight() + BarStyle.ItemPadding.GetTotalVertical());
 
-    TEST_SECTION("An untouched entry paints nothing behind its label");
+    TEST_SECTION(TEXT("An untouched entry paints nothing behind its label"));
     FDrawCommandList IdleCommands;
     DrawElement(FileButton, IdleCommands);
     TEST_EXPECT_EQ(CountCommands(IdleCommands, EDrawCommandType::Box), 0);
 
-    TEST_SECTION("Hovering it lays a rounded pill, which is the entry itself rather than a shape inside it");
+    TEST_SECTION(TEXT("Hovering it lays a rounded pill, which is the entry itself rather than a shape inside it"));
     FileButton->OnMouseEntered(MakeMoveEvent(FileButton->GetContentRectangle().GetCenter()));
 
     FDrawCommandList HoveredCommands;
@@ -1045,11 +1045,11 @@ bool MenuBarHighlight_Test()
     TEST_EXPECT_EQ(Pill.Bounds.GetBottom(), ButtonBounds.GetBottom());
     TEST_EXPECT_EQ(ButtonBounds.Height, BarStyle.Height - (2 * BarStyle.ItemInset));
 
-    TEST_SECTION("It covers the entry exactly, so what responds to the cursor is what is painted");
+    TEST_SECTION(TEXT("It covers the entry exactly, so what responds to the cursor is what is painted"));
     TEST_EXPECT_EQ(Pill.Bounds.Position.X, ButtonBounds.Position.X);
     TEST_EXPECT_EQ(Pill.Bounds.Width, ButtonBounds.Width);
 
-    TEST_SECTION("Opening its menu swaps the pill for the active fill without changing its shape");
+    TEST_SECTION(TEXT("Opening its menu swaps the pill for the active fill without changing its shape"));
     FileButton->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
     FileAnchor->Open();
 
@@ -1059,13 +1059,13 @@ bool MenuBarHighlight_Test()
     TEST_EXPECT(OpenCommands.GetCommands()[0].HasTint(BarStyle.ItemActive));
     TEST_EXPECT_EQ(OpenCommands.GetCommands()[0].Bounds, Pill.Bounds);
 
-    TEST_SECTION("The anchor holds no inset of its own now, and the menu still meets the pill with no gap under it");
+    TEST_SECTION(TEXT("The anchor holds no inset of its own now, and the menu still meets the pill with no gap under it"));
     TEST_EXPECT_EQ(FileAnchor->GetAnchorInset(), FMargin(0));
     TEST_EXPECT_EQ(FileAnchor->GetMenu()->ScreenBounds.Position.Y, Pill.Bounds.GetBottom());
 
     FMenuStack::Get().DismissAll();
 
-    TEST_SECTION("A bar given its own style hands it to the entries it already holds");
+    TEST_SECTION(TEXT("A bar given its own style hands it to the entries it already holds"));
     FUIMenuBarStyle CustomStyle;
     CustomStyle.ItemHovered      = FFloatColor(0.90f, 0.10f, 0.10f, 1.0f);
     CustomStyle.Height           = 64;
@@ -1085,11 +1085,11 @@ bool MenuBarHighlight_Test()
     TEST_EXPECT(CustomPill.CornerRadius == FCornerRadii(2.0f));
     TEST_EXPECT_EQ(CustomPill.Bounds.Position.Y, FileButton->GetContentRectangle().Position.Y);
 
-    TEST_SECTION("Its entries take the new height, so the pill follows the style rather than the strip");
+    TEST_SECTION(TEXT("Its entries take the new height, so the pill follows the style rather than the strip"));
     TEST_EXPECT(CustomStyle.Height - (2 * CustomStyle.ItemInset) > Font->GetLineHeight() + CustomStyle.ItemPadding.GetTotalVertical());
     TEST_EXPECT_EQ(FileButton->GetContentRectangle().Height, CustomStyle.Height - (2 * CustomStyle.ItemInset));
 
-    TEST_SECTION("Wherever the pill is painted the hand follows it, and the strip around it keeps the arrow");
+    TEST_SECTION(TEXT("Wherever the pill is painted the hand follows it, and the strip around it keeps the arrow"));
     ECursor Cursor = ECursor::Arrow;
     TEST_EXPECT(FileButton->GetCursor(Cursor));
     TEST_EXPECT(Cursor == ECursor::Hand);
@@ -1118,7 +1118,7 @@ bool MenuBarTallStrip_Test()
     TSharedPtr<FWindow> Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(0, 0));
 
     TSharedPtr<FMenuBar>    MenuBar    = FMenuBar::Create();
-    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu("File", Font, CreateMenu(Font, { "New" }));
+    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu(TEXT("File"), Font, CreateMenu(Font, { TEXT("New") }));
 
     MenuBar->SetStyle(TallStyle);
     Window->SetContent(MenuBar);
@@ -1126,16 +1126,16 @@ bool MenuBarTallStrip_Test()
 
     TSharedPtr<FMenuBarButton> FileButton = StaticCastSharedPtr<FMenuBarButton>(FileAnchor->GetContent());
 
-    TEST_SECTION("A strip made taller than its entries need leaves the pill at the height the style asks for");
+    TEST_SECTION(TEXT("A strip made taller than its entries need leaves the pill at the height the style asks for"));
     TEST_EXPECT_EQ(MenuBar->GetCachedDesiredSize().Y, TallStyle.Height);
     TEST_EXPECT_EQ(FileButton->GetContentRectangle().Height, TallStyle.Height - (2 * TallStyle.ItemInset));
 
-    TEST_SECTION("And centres it, so the same gap is left above and below");
+    TEST_SECTION(TEXT("And centres it, so the same gap is left above and below"));
     const FRectangle& BarBounds    = MenuBar->GetContentRectangle();
     const FRectangle& ButtonBounds = FileButton->GetContentRectangle();
     TEST_EXPECT_EQ(ButtonBounds.Position.Y - BarBounds.Position.Y, BarBounds.GetBottom() - ButtonBounds.GetBottom());
 
-    TEST_SECTION("What it paints is the rectangle it responds to, whatever the strip does around it");
+    TEST_SECTION(TEXT("What it paints is the rectangle it responds to, whatever the strip does around it"));
     FileButton->OnMouseEntered(MakeMoveEvent(ButtonBounds.GetCenter()));
 
     FDrawCommandList HoveredCommands;
@@ -1163,11 +1163,11 @@ bool MenuBarInTitleBar_Test()
     static_cast<FStubPlatformWindow&>(*Window->GetPlatformWindow()).SetTitleBarMetrics(Metrics);
 
     TSharedPtr<FMenuBar>    MenuBar    = FMenuBar::Create();
-    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu("File", Font, CreateMenu(Font, { "Exit" }));
-    TSharedPtr<FMenuAnchor> EditAnchor = MenuBar->AddMenu("Edit", Font, CreateMenu(Font, { "Undo", "Redo" }));
+    TSharedPtr<FMenuAnchor> FileAnchor = MenuBar->AddMenu(TEXT("File"), Font, CreateMenu(Font, { TEXT("Exit") }));
+    TSharedPtr<FMenuAnchor> EditAnchor = MenuBar->AddMenu(TEXT("Edit"), Font, CreateMenu(Font, { TEXT("Undo"), TEXT("Redo") }));
 
     FTitleBar::FDesc Desc;
-    Desc.SetTitle("DXR Engine").SetFont(Font).SetContent(MenuBar);
+    Desc.SetTitle(TEXT("DXR Engine")).SetFont(Font).SetContent(MenuBar);
 
     TSharedPtr<FTitleBar> TitleBar = FTitleBar::Create(Desc);
     Window->SetContent(TitleBar);
@@ -1176,22 +1176,22 @@ bool MenuBarInTitleBar_Test()
     TSharedPtr<FMenuBarButton> FileButton = StaticCastSharedPtr<FMenuBarButton>(FileAnchor->GetContent());
     TSharedPtr<FMenuBarButton> EditButton = StaticCastSharedPtr<FMenuBarButton>(EditAnchor->GetContent());
 
-    TEST_SECTION("The row starts after the inset the platform reserved for its own buttons");
+    TEST_SECTION(TEXT("The row starts after the inset the platform reserved for its own buttons"));
     TEST_EXPECT_EQ(FileButton->GetContentRectangle().Position.X, 78);
 
     const FWindowTitleBarRegions& Published = static_cast<FStubPlatformWindow&>(*Window->GetPlatformWindow()).GetTitleBarRegions();
 
-    TEST_SECTION("Both entries are published as clickable, or the platform drags the window instead of pressing them");
+    TEST_SECTION(TEXT("Both entries are published as clickable, or the platform drags the window instead of pressing them"));
     TEST_EXPECT_EQ(Published.InteractiveRects.Size(), 2);
     TEST_EXPECT(IsPointInteractive(Published, FileButton->GetContentRectangle().GetCenter()));
     TEST_EXPECT(IsPointInteractive(Published, EditButton->GetContentRectangle().GetCenter()));
 
-    TEST_SECTION("Every point an entry covers is clickable, not just its middle");
+    TEST_SECTION(TEXT("Every point an entry covers is clickable, not just its middle"));
     const FRectangle FileBounds = FileButton->GetContentRectangle();
     TEST_EXPECT(IsPointInteractive(Published, FileBounds.Position));
     TEST_EXPECT(IsPointInteractive(Published, FIntVector2(FileBounds.GetRight() - 1, FileBounds.GetBottom() - 1)));
 
-    TEST_SECTION("The inset the platform owns is left to it, and the gap after the row drags the window");
+    TEST_SECTION(TEXT("The inset the platform owns is left to it, and the gap after the row drags the window"));
     TEST_EXPECT(!IsPointInteractive(Published, FIntVector2(40, 14)));
     TEST_EXPECT(Published.CaptionRect.Contains(FIntVector2(600, 14)));
     TEST_EXPECT(!IsPointInteractive(Published, FIntVector2(600, 14)));
@@ -1209,7 +1209,7 @@ bool ToolTipService_Test()
     const TSharedPtr<IFontFace> Font   = CreateFont();
     TSharedPtr<FWindow>         Window = Application.CreateWindow(FIntVector2(800, 600), FIntVector2(100, 50));
 
-    TSharedPtr<FMenu>    Owner = CreateMenu(Font, { "Hover me" });
+    TSharedPtr<FMenu>    Owner = CreateMenu(Font, { TEXT("Hover me") });
     TSharedPtr<FOverlay> Root  = FOverlay::Create();
     Root->AddSlot(Owner).SetHorizontalAlignment(EHorizontalAlignment::Left).SetVerticalAlignment(EVerticalAlignment::Top);
 
@@ -1220,9 +1220,9 @@ bool ToolTipService_Test()
 
     FToolTipService& ToolTips = FToolTipService::Get();
 
-    TEST_SECTION("A tip waits for the cursor to rest before it appears");
+    TEST_SECTION(TEXT("A tip waits for the cursor to rest before it appears"));
     ToolTips.NotifyCursorMoved(FIntVector2(300, 200));
-    ToolTips.RequestTextToolTip(Owner, "Opens the file", Font, EToolTipPlacement::FollowCursor, 0.5f);
+    ToolTips.RequestTextToolTip(Owner, TEXT("Opens the file"), Font, EToolTipPlacement::FollowCursor, 0.5f);
     TEST_EXPECT(ToolTips.IsPending());
     TEST_EXPECT(!ToolTips.IsShowing());
 
@@ -1233,33 +1233,33 @@ bool ToolTipService_Test()
     TEST_EXPECT(ToolTips.IsShowing());
     TEST_EXPECT(!ToolTips.IsPending());
 
-    TEST_SECTION("A following tip sits below and right of the cursor");
+    TEST_SECTION(TEXT("A following tip sits below and right of the cursor"));
     TEST_EXPECT_EQ(ToolTips.GetToolTipBounds().Position,
         FIntVector2(300 + FToolTipService::CursorOffset, 200 + FToolTipService::CursorOffset));
 
-    TEST_SECTION("One that fits is drawn in the window it describes rather than in a window of its own");
+    TEST_SECTION(TEXT("One that fits is drawn in the window it describes rather than in a window of its own"));
     TEST_EXPECT(ToolTips.GetToolTipWindow() == nullptr);
     TEST_EXPECT(Window->GetMenuHost() != nullptr);
     TEST_EXPECT(!Window->GetMenuHost()->IsEmpty());
 
-    TEST_SECTION("A tip takes no input, so it cannot steal the hover keeping it up");
+    TEST_SECTION(TEXT("A tip takes no input, so it cannot steal the hover keeping it up"));
     FElementPath HoverPath;
     Window->HitTest(ToolTips.GetToolTipBounds().GetCenter() - Window->GetPosition(), HoverPath);
     TEST_EXPECT(!HoverPath.Contains(Window->GetMenuHost()));
 
-    TEST_SECTION("It follows the cursor rather than being torn down and built again");
+    TEST_SECTION(TEXT("It follows the cursor rather than being torn down and built again"));
     ToolTips.NotifyCursorMoved(FIntVector2(340, 260));
     TEST_EXPECT(ToolTips.IsShowing());
     TEST_EXPECT_EQ(ToolTips.GetToolTipBounds().Position,
         FIntVector2(340 + FToolTipService::CursorOffset, 260 + FToolTipService::CursorOffset));
 
-    TEST_SECTION("Repeating the same text request keeps the one hosted tip rather than orphaning it");
-    ToolTips.RequestTextToolTip(Owner, "Opens the file", Font, EToolTipPlacement::FollowCursor, 0.5f);
+    TEST_SECTION(TEXT("Repeating the same text request keeps the one hosted tip rather than orphaning it"));
+    ToolTips.RequestTextToolTip(Owner, TEXT("Opens the file"), Font, EToolTipPlacement::FollowCursor, 0.5f);
     TEST_EXPECT(ToolTips.IsShowing());
     TEST_EXPECT(!Window->GetMenuHost()->IsEmpty());
 
-    TEST_SECTION("Changing a shown request removes its old content before the replacement waits");
-    ToolTips.RequestTextToolTip(Owner, "Opens another file", Font, EToolTipPlacement::FollowCursor, 0.5f);
+    TEST_SECTION(TEXT("Changing a shown request removes its old content before the replacement waits"));
+    ToolTips.RequestTextToolTip(Owner, TEXT("Opens another file"), Font, EToolTipPlacement::FollowCursor, 0.5f);
     TEST_EXPECT(!ToolTips.IsShowing());
     TEST_EXPECT(ToolTips.IsPending());
     TEST_EXPECT(Window->GetMenuHost()->IsEmpty());
@@ -1267,14 +1267,14 @@ bool ToolTipService_Test()
     ToolTips.Tick(0.6f);
     TEST_EXPECT(ToolTips.IsShowing());
 
-    TEST_SECTION("Leaving the element it describes takes it down");
+    TEST_SECTION(TEXT("Leaving the element it describes takes it down"));
     ToolTips.CancelToolTip(Owner);
     TEST_EXPECT(!ToolTips.IsShowing());
     TEST_EXPECT(ToolTips.GetOwner() == nullptr);
     TEST_EXPECT(Window->GetMenuHost()->IsEmpty());
 
-    TEST_SECTION("Moving while a tip is pending starts the rest over");
-    ToolTips.RequestTextToolTip(Owner, "Opens the file", Font, EToolTipPlacement::FollowCursor, 0.5f);
+    TEST_SECTION(TEXT("Moving while a tip is pending starts the rest over"));
+    ToolTips.RequestTextToolTip(Owner, TEXT("Opens the file"), Font, EToolTipPlacement::FollowCursor, 0.5f);
     ToolTips.Tick(0.4f);
     ToolTips.NotifyCursorMoved(FIntVector2(500, 300));
     ToolTips.Tick(0.4f);
@@ -1284,26 +1284,26 @@ bool ToolTipService_Test()
     TEST_EXPECT(ToolTips.IsShowing());
     ToolTips.DismissToolTip();
 
-    TEST_SECTION("An anchored tip sits under the element instead of at the cursor");
-    ToolTips.RequestTextToolTip(Owner, "Opens the file", Font, EToolTipPlacement::BelowAnchor, 0.0f);
+    TEST_SECTION(TEXT("An anchored tip sits under the element instead of at the cursor"));
+    ToolTips.RequestTextToolTip(Owner, TEXT("Opens the file"), Font, EToolTipPlacement::BelowAnchor, 0.0f);
     ToolTips.Tick(0.1f);
     TEST_EXPECT(ToolTips.IsShowing());
 
     const FRectangle OwnerBounds = FMenuStack::GetScreenBounds(Owner);
     TEST_EXPECT_EQ(ToolTips.GetToolTipBounds().Position, FIntVector2(OwnerBounds.Position.X, OwnerBounds.GetBottom() + 2));
 
-    TEST_SECTION("A tip placed to the side sits right of the element with their top edges flush");
+    TEST_SECTION(TEXT("A tip placed to the side sits right of the element with their top edges flush"));
     ToolTips.DismissToolTip();
-    ToolTips.RequestTextToolTip(Owner, "Opens the file", Font, EToolTipPlacement::RightOfAnchor, 0.0f);
+    ToolTips.RequestTextToolTip(Owner, TEXT("Opens the file"), Font, EToolTipPlacement::RightOfAnchor, 0.0f);
     ToolTips.Tick(0.1f);
     TEST_EXPECT(ToolTips.IsShowing());
 
     TEST_EXPECT_EQ(ToolTips.GetToolTipBounds().Position,
         FIntVector2(OwnerBounds.GetRight() + FToolTipService::AnchorGap, OwnerBounds.Position.Y));
 
-    TEST_SECTION("With no room on that side it flips to the other, rather than sliding back over the element");
+    TEST_SECTION(TEXT("With no room on that side it flips to the other, rather than sliding back over the element"));
     TSharedPtr<FWindow>  EdgeWindow = Application.CreateWindow(FIntVector2(400, 200), FIntVector2(200, 700));
-    TSharedPtr<FMenu>    EdgeOwner  = CreateMenu(Font, { "Hover me" });
+    TSharedPtr<FMenu>    EdgeOwner  = CreateMenu(Font, { TEXT("Hover me") });
     TSharedPtr<FOverlay> EdgeRoot   = FOverlay::Create();
 
     EdgeRoot->AddSlot(EdgeOwner).SetHorizontalAlignment(EHorizontalAlignment::Right).SetVerticalAlignment(EVerticalAlignment::Top);
@@ -1312,7 +1312,7 @@ bool ToolTipService_Test()
     FApplication::LayoutWindow(EdgeWindow);
 
     ToolTips.DismissToolTip();
-    ToolTips.RequestTextToolTip(EdgeOwner, "Opens the file", Font, EToolTipPlacement::RightOfAnchor, 0.0f);
+    ToolTips.RequestTextToolTip(EdgeOwner, TEXT("Opens the file"), Font, EToolTipPlacement::RightOfAnchor, 0.0f);
     ToolTips.Tick(0.1f);
     TEST_EXPECT(ToolTips.IsShowing());
 
@@ -1322,21 +1322,21 @@ bool ToolTipService_Test()
     TEST_EXPECT_EQ(EdgeTip.Position,
         FIntVector2(EdgeBounds.Position.X - FToolTipService::AnchorGap - EdgeTip.Width, EdgeBounds.Position.Y));
 
-    TEST_SECTION("In the window's corner it is pulled back inside rather than hanging over the edge");
+    TEST_SECTION(TEXT("In the window's corner it is pulled back inside rather than hanging over the edge"));
     ToolTips.DismissToolTip();
     ToolTips.NotifyCursorMoved(FIntVector2(895, 645));
-    ToolTips.RequestTextToolTip(Owner, "Opens the file", Font, EToolTipPlacement::FollowCursor, 0.0f);
+    ToolTips.RequestTextToolTip(Owner, TEXT("Opens the file"), Font, EToolTipPlacement::FollowCursor, 0.0f);
     ToolTips.Tick(0.1f);
 
     const FRectangle CornerTip = ToolTips.GetToolTipBounds();
     TEST_EXPECT_EQ(CornerTip.Position,
         FIntVector2(ClientArea.GetRight() - CornerTip.Width, ClientArea.GetBottom() - CornerTip.Height));
 
-    TEST_SECTION("A tip too large for the window it describes still gets one of its own");
+    TEST_SECTION(TEXT("A tip too large for the window it describes still gets one of its own"));
     ToolTips.DismissToolTip();
 
     TSharedPtr<FWindow>  TinyWindow = Application.CreateWindow(FIntVector2(60, 40), FIntVector2(400, 400));
-    TSharedPtr<FMenu>    TinyOwner  = CreateMenu(Font, { "?" });
+    TSharedPtr<FMenu>    TinyOwner  = CreateMenu(Font, { TEXT("?") });
     TSharedPtr<FOverlay> TinyRoot   = FOverlay::Create();
 
     TinyRoot->AddSlot(TinyOwner).SetHorizontalAlignment(EHorizontalAlignment::Left).SetVerticalAlignment(EVerticalAlignment::Top);
@@ -1344,7 +1344,7 @@ bool ToolTipService_Test()
     TinyWindow->SetContent(TinyRoot);
     FApplication::LayoutWindow(TinyWindow);
 
-    ToolTips.RequestTextToolTip(TinyOwner, "A tip far too wide for this window", Font, EToolTipPlacement::BelowAnchor, 0.0f);
+    ToolTips.RequestTextToolTip(TinyOwner, TEXT("A tip far too wide for this window"), Font, EToolTipPlacement::BelowAnchor, 0.0f);
     ToolTips.Tick(0.1f);
     TEST_EXPECT(ToolTips.IsShowing());
     TEST_EXPECT(ToolTips.GetToolTipWindow() != nullptr);
@@ -1352,18 +1352,18 @@ bool ToolTipService_Test()
 
     ToolTips.DismissToolTip();
 
-    TEST_SECTION("A tip breaks at its newlines, so a row of columns can be explained one line each");
-    TSharedPtr<FToolTip> OneLine    = FToolTip::Create("Incl ms", Font);
-    TSharedPtr<FToolTip> ThreeLines = FToolTip::Create("Calls\nIncl ms\nExcl ms of the scope", Font);
+    TEST_SECTION(TEXT("A tip breaks at its newlines, so a row of columns can be explained one line each"));
+    TSharedPtr<FToolTip> OneLine    = FToolTip::Create(TEXT("Incl ms"), Font);
+    TSharedPtr<FToolTip> ThreeLines = FToolTip::Create(TEXT("Calls\nIncl ms\nExcl ms of the scope"), Font);
 
     TEST_EXPECT_EQ(OneLine->GetLines().Size(), 1);
     TEST_EXPECT_EQ(ThreeLines->GetLines().Size(), 3);
 
-    TEST_SECTION("It grows a line at a time rather than running off the side of the screen");
+    TEST_SECTION(TEXT("It grows a line at a time rather than running off the side of the screen"));
     TEST_EXPECT_EQ(ThreeLines->ComputeDesiredSize().Y - OneLine->ComputeDesiredSize().Y, 2 * Font->GetLineHeight());
 
-    TEST_SECTION("Its width is that of the widest line rather than of the whole run of text");
-    TSharedPtr<FToolTip> WidestLine = FToolTip::Create("Excl ms of the scope", Font);
+    TEST_SECTION(TEXT("Its width is that of the widest line rather than of the whole run of text"));
+    TSharedPtr<FToolTip> WidestLine = FToolTip::Create(TEXT("Excl ms of the scope"), Font);
     TEST_EXPECT_EQ(ThreeLines->ComputeDesiredSize().X, WidestLine->ComputeDesiredSize().X);
 
     TEST_END();
@@ -1383,8 +1383,8 @@ bool ComboBoxControl_Test()
     int32 LastSelectedIndex     = -1;
 
     FComboBox::FDesc Desc;
-    Desc.SetOptions({ "Low", "Medium", "High" }).SetFont(Font);
-    Desc.PlaceholderText    = "None";
+    Desc.SetOptions({ TEXT("Low"), TEXT("Medium"), TEXT("High") }).SetFont(Font);
+    Desc.PlaceholderText    = TEXT("None");
     Desc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([&](int32 Index)
     {
         SelectionChangedCount++;
@@ -1395,25 +1395,25 @@ bool ComboBoxControl_Test()
     Window->SetContent(ComboBox);
     FApplication::LayoutWindow(Window);
 
-    TEST_SECTION("With nothing selected it shows the placeholder");
+    TEST_SECTION(TEXT("With nothing selected it shows the placeholder"));
     TEST_EXPECT_EQ(ComboBox->GetSelectedIndex(), -1);
-    TEST_EXPECT(ComboBox->GetSelectedText() == FString("None"));
+    TEST_EXPECT(ComboBox->GetSelectedText() == FString(TEXT("None")));
 
-    TEST_SECTION("It is wide enough for the longest option, so it does not resize as the choice changes");
+    TEST_SECTION(TEXT("It is wide enough for the longest option, so it does not resize as the choice changes"));
     ComboBox->PrepareDesiredSize();
     const int32 WidestOption = 6 * 8;
     TEST_EXPECT(ComboBox->GetCachedDesiredSize().X >= WidestOption);
 
-    TEST_SECTION("Selecting reports the new index once");
+    TEST_SECTION(TEXT("Selecting reports the new index once"));
     ComboBox->SetSelectedIndex(1);
     TEST_EXPECT_EQ(SelectionChangedCount, 1);
     TEST_EXPECT_EQ(LastSelectedIndex, 1);
-    TEST_EXPECT(ComboBox->GetSelectedText() == FString("Medium"));
+    TEST_EXPECT(ComboBox->GetSelectedText() == FString(TEXT("Medium")));
 
     ComboBox->SetSelectedIndex(1);
     TEST_EXPECT_EQ(SelectionChangedCount, 1);
 
-    TEST_SECTION("Opening lists every option with the selected one ticked");
+    TEST_SECTION(TEXT("Opening lists every option with the selected one ticked"));
     ComboBox->OpenMenu();
     TEST_EXPECT(ComboBox->IsMenuOpen());
     TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 1);
@@ -1425,20 +1425,20 @@ bool ComboBoxControl_Test()
     TEST_EXPECT_EQ(OptionsMenu->GetItems()[0]->GetCheckState(), ECheckBoxState::Unchecked);
     TEST_EXPECT_EQ(OptionsMenu->GetHighlightedIndex(), 1);
 
-    TEST_SECTION("The list is at least as wide as the button it dropped from");
+    TEST_SECTION(TEXT("The list is at least as wide as the button it dropped from"));
     TEST_EXPECT(GetTopMenuBounds().Width >= ComboBox->GetContentRectangle().Width);
 
-    TEST_SECTION("Choosing an option selects it and closes the list");
+    TEST_SECTION(TEXT("Choosing an option selects it and closes the list"));
     OptionsMenu->GetItems()[2]->Activate();
     TEST_EXPECT_EQ(ComboBox->GetSelectedIndex(), 2);
     TEST_EXPECT_EQ(LastSelectedIndex, 2);
     TEST_EXPECT(!ComboBox->IsMenuOpen());
     TEST_EXPECT_EQ(FMenuStack::Get().GetDepth(), 0);
 
-    TEST_SECTION("Replacing the options clears the selection");
-    ComboBox->SetOptions({ "One", "Two" });
+    TEST_SECTION(TEXT("Replacing the options clears the selection"));
+    ComboBox->SetOptions({ TEXT("One"), TEXT("Two") });
     TEST_EXPECT_EQ(ComboBox->GetSelectedIndex(), -1);
-    TEST_EXPECT(ComboBox->GetSelectedText() == FString("None"));
+    TEST_EXPECT(ComboBox->GetSelectedText() == FString(TEXT("None")));
 
     TEST_END();
 }
@@ -1469,26 +1469,26 @@ bool DragDropService_Test()
     }));
 
     FDragDropPayload AssetPayload;
-    AssetPayload.TypeId      = "Asset";
-    AssetPayload.DisplayText = "Rock.mesh";
+    AssetPayload.TypeId      = TEXT("Asset");
+    AssetPayload.DisplayText = TEXT("Rock.mesh");
 
-    TEST_SECTION("A payload naming no type is not a drag, so beginning one is ignored");
+    TEST_SECTION(TEXT("A payload naming no type is not a drag, so beginning one is ignored"));
     FDragDropPayload Anonymous;
-    Anonymous.DisplayText = "Something";
+    Anonymous.DisplayText = TEXT("Something");
 
     DragDrop.BeginDrag(Anonymous, FIntVector2(150, 150));
     TEST_EXPECT(!DragDrop.IsDragging());
     TEST_EXPECT(!DragDrop.HasTarget());
 
-    TEST_SECTION("A payload naming one starts the drag and is remembered with where the cursor was");
+    TEST_SECTION(TEXT("A payload naming one starts the drag and is remembered with where the cursor was"));
     DragDrop.BeginDrag(AssetPayload, FIntVector2(150, 150));
     TEST_EXPECT(DragDrop.IsDragging());
-    TEST_EXPECT(DragDrop.GetPayload().TypeId == FString("Asset"));
-    TEST_EXPECT(DragDrop.GetPayload().DisplayText == FString("Rock.mesh"));
+    TEST_EXPECT(DragDrop.GetPayload().TypeId == FString(TEXT("Asset")));
+    TEST_EXPECT(DragDrop.GetPayload().DisplayText == FString(TEXT("Rock.mesh")));
     TEST_EXPECT_EQ(DragDrop.GetScreenPosition(), FIntVector2(150, 150));
     TEST_EXPECT(DragDrop.HasTarget());
 
-    TEST_SECTION("Moving the drag re-resolves the target as the cursor passes over one");
+    TEST_SECTION(TEXT("Moving the drag re-resolves the target as the cursor passes over one"));
     DragDrop.UpdateDrag(FIntVector2(700, 400));
     TEST_EXPECT_EQ(DragDrop.GetScreenPosition(), FIntVector2(700, 400));
     TEST_EXPECT(!DragDrop.HasTarget());
@@ -1496,25 +1496,25 @@ bool DragDropService_Test()
     DragDrop.UpdateDrag(FIntVector2(200, 150));
     TEST_EXPECT(DragDrop.HasTarget());
 
-    TEST_SECTION("A target that will not take the payload is passed over rather than picked");
+    TEST_SECTION(TEXT("A target that will not take the payload is passed over rather than picked"));
     DragDrop.UpdateDrag(FIntVector2(500, 150));
     TEST_EXPECT(!DragDrop.HasTarget());
 
-    TEST_SECTION("Ending the drag hands the payload and the release point to the target under the cursor");
+    TEST_SECTION(TEXT("Ending the drag hands the payload and the release point to the target under the cursor"));
     DragDrop.EndDrag(FIntVector2(220, 160));
     TEST_EXPECT_EQ(DropCount, 1);
-    TEST_EXPECT(DroppedType == FString("Asset"));
+    TEST_EXPECT(DroppedType == FString(TEXT("Asset")));
     TEST_EXPECT_EQ(DropPosition, FIntVector2(220, 160));
     TEST_EXPECT(!DragDrop.IsDragging());
     TEST_EXPECT(!DragDrop.HasTarget());
 
-    TEST_SECTION("Ending it over nothing drops nothing and still ends the drag");
+    TEST_SECTION(TEXT("Ending it over nothing drops nothing and still ends the drag"));
     DragDrop.BeginDrag(AssetPayload, FIntVector2(150, 150));
     DragDrop.EndDrag(FIntVector2(900, 900));
     TEST_EXPECT_EQ(DropCount, 1);
     TEST_EXPECT(!DragDrop.IsDragging());
 
-    TEST_SECTION("Cancelling ends the drag without firing anything");
+    TEST_SECTION(TEXT("Cancelling ends the drag without firing anything"));
     DragDrop.BeginDrag(AssetPayload, FIntVector2(150, 150));
     TEST_EXPECT(DragDrop.IsDragging());
 
@@ -1523,7 +1523,7 @@ bool DragDropService_Test()
     TEST_EXPECT(!DragDrop.HasTarget());
     TEST_EXPECT_EQ(DropCount, 1);
 
-    TEST_SECTION("A target that has been forgotten is no longer found under the cursor");
+    TEST_SECTION(TEXT("A target that has been forgotten is no longer found under the cursor"));
     DragDrop.UnregisterTarget(Accepting);
     DragDrop.BeginDrag(AssetPayload, FIntVector2(150, 150));
     TEST_EXPECT(!DragDrop.HasTarget());
@@ -1531,7 +1531,7 @@ bool DragDropService_Test()
     DragDrop.EndDrag(FIntVector2(150, 150));
     TEST_EXPECT_EQ(DropCount, 1);
 
-    TEST_SECTION("A target that has since been destroyed is skipped rather than followed");
+    TEST_SECTION(TEXT("A target that has since been destroyed is skipped rather than followed"));
     int32 SurvivorDropCount = 0;
 
     TSharedPtr<FVisualElement> Survivor = CreateDropTarget(FRectangle(FIntVector2(100, 100), 200, 100));
@@ -1551,7 +1551,7 @@ bool DragDropService_Test()
     DragDrop.EndDrag(FIntVector2(150, 150));
     TEST_EXPECT_EQ(SurvivorDropCount, 1);
 
-    TEST_SECTION("The ghost is drawn only while a drag is in flight, and offset from the cursor");
+    TEST_SECTION(TEXT("The ghost is drawn only while a drag is in flight, and offset from the cursor"));
     FDrawCommandList IdleCommands;
     DragDrop.DrawDragVisual(IdleCommands, 0);
     TEST_EXPECT(IdleCommands.IsEmpty());
@@ -1569,10 +1569,10 @@ bool DragDropService_Test()
         TEST_EXPECT_EQ(DragCommands[0].Bounds.Position, FIntVector2(150, 150) + FIntVector2(FDragDropService::DragVisualCursorOffset, FDragDropService::DragVisualCursorOffset));
     }
 
-    TEST_SECTION("A forbidden preview adds a status line without moving the ghost");
-    DragDrop.SetPreview(EDragDropPreviewState::Forbidden, "Cannot move Rock.mesh");
+    TEST_SECTION(TEXT("A forbidden preview adds a status line without moving the ghost"));
+    DragDrop.SetPreview(EDragDropPreviewState::Forbidden, TEXT("Cannot move Rock.mesh"));
     TEST_EXPECT_EQ(DragDrop.GetPayload().PreviewState, EDragDropPreviewState::Forbidden);
-    TEST_EXPECT(DragDrop.GetPayload().StatusText == FString("Cannot move Rock.mesh"));
+    TEST_EXPECT(DragDrop.GetPayload().StatusText == FString(TEXT("Cannot move Rock.mesh")));
 
     FDrawCommandList ForbiddenCommands;
     DragDrop.DrawDragVisual(ForbiddenCommands, 0);

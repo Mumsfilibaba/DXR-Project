@@ -26,17 +26,17 @@ static TSharedPtr<FTextBlock>   GShaderReadout;
 
 static FFloatColor GetTypeTint(const FString& TypeTag)
 {
-    if (TypeTag == "Float")
+    if (TypeTag == TEXT("Float"))
     {
         return FFloatColor(0.55f, 0.78f, 0.45f, 1.0f);
     }
 
-    if (TypeTag == "Vector")
+    if (TypeTag == TEXT("Vector"))
     {
         return FFloatColor(0.42f, 0.65f, 0.92f, 1.0f);
     }
 
-    if (TypeTag == "Texture")
+    if (TypeTag == TEXT("Texture"))
     {
         return FFloatColor(0.78f, 0.52f, 0.86f, 1.0f);
     }
@@ -62,7 +62,7 @@ static FGraphNode MakeNode(const CHAR_T* Title, const FVector2& Position, const 
 static TSharedPtr<FVisualElement> MakeValueBody(const FPlaygroundFonts& Fonts, float StartingValue)
 {
     FTextBlock::FDesc ValueDesc;
-    ValueDesc.Text            = FString::Printf("%.2f", StartingValue);
+    ValueDesc.Text            = FString::Printf(TEXT("%.2f"), StartingValue);
     ValueDesc.Font            = Fonts.Monospace;
     ValueDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
 
@@ -72,7 +72,7 @@ static TSharedPtr<FVisualElement> MakeValueBody(const FPlaygroundFonts& Fonts, f
     SliderDesc.SetRange(0.0f, 1.0f).SetValue(StartingValue);
     SliderDesc.OnValueChanged = FOnSliderValueChanged::CreateLambda([ValueText](float NewValue)
     {
-        ValueText->SetText(FString::Printf("%.2f", NewValue));
+        ValueText->SetText(FString::Printf(TEXT("%.2f"), NewValue));
     });
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
@@ -87,27 +87,27 @@ static void BuildShaderGraph(const FPlaygroundFonts& Fonts)
 
     const FUIStyle& Style = FUIStyle::GetDefault();
 
-    FGraphNode Texture = MakeNode("Base Color", FVector2(40.0f, 60.0f), Style.Colors.ControlNormal);
-    Texture.Pins.Add(MakePin(EGraphPinDirection::Input, "UV", "Vector"));
-    Texture.Pins.Add(MakePin(EGraphPinDirection::Output, "RGB", "Vector"));
-    Texture.Pins.Add(MakePin(EGraphPinDirection::Output, "Alpha", "Float"));
+    FGraphNode Texture = MakeNode(TEXT("Base Color"), FVector2(40.0f, 60.0f), Style.Colors.ControlNormal);
+    Texture.Pins.Add(MakePin(EGraphPinDirection::Input, TEXT("UV"), TEXT("Vector")));
+    Texture.Pins.Add(MakePin(EGraphPinDirection::Output, TEXT("RGB"), TEXT("Vector")));
+    Texture.Pins.Add(MakePin(EGraphPinDirection::Output, TEXT("Alpha"), TEXT("Float")));
 
-    FGraphNode Coordinates = MakeNode("Texture Coordinate", FVector2(40.0f, 240.0f), Style.Colors.ControlNormal);
-    Coordinates.Pins.Add(MakePin(EGraphPinDirection::Output, "UV", "Vector"));
+    FGraphNode Coordinates = MakeNode(TEXT("Texture Coordinate"), FVector2(40.0f, 240.0f), Style.Colors.ControlNormal);
+    Coordinates.Pins.Add(MakePin(EGraphPinDirection::Output, TEXT("UV"), TEXT("Vector")));
 
-    FGraphNode Roughness = MakeNode("Roughness", FVector2(40.0f, 350.0f), Style.Colors.ControlNormal);
-    Roughness.Pins.Add(MakePin(EGraphPinDirection::Output, "Value", "Float"));
+    FGraphNode Roughness = MakeNode(TEXT("Roughness"), FVector2(40.0f, 350.0f), Style.Colors.ControlNormal);
+    Roughness.Pins.Add(MakePin(EGraphPinDirection::Output, TEXT("Value"), TEXT("Float")));
     Roughness.Content = MakeValueBody(Fonts, 0.35f);
 
-    FGraphNode Multiply = MakeNode("Multiply", FVector2(320.0f, 120.0f), Style.Colors.ControlNormal);
-    Multiply.Pins.Add(MakePin(EGraphPinDirection::Input, "A", "Vector"));
-    Multiply.Pins.Add(MakePin(EGraphPinDirection::Input, "B", "Vector"));
-    Multiply.Pins.Add(MakePin(EGraphPinDirection::Output, "Result", "Vector"));
+    FGraphNode Multiply = MakeNode(TEXT("Multiply"), FVector2(320.0f, 120.0f), Style.Colors.ControlNormal);
+    Multiply.Pins.Add(MakePin(EGraphPinDirection::Input, TEXT("A"), TEXT("Vector")));
+    Multiply.Pins.Add(MakePin(EGraphPinDirection::Input, TEXT("B"), TEXT("Vector")));
+    Multiply.Pins.Add(MakePin(EGraphPinDirection::Output, TEXT("Result"), TEXT("Vector")));
 
-    FGraphNode Output = MakeNode("Surface", FVector2(600.0f, 160.0f), Style.Colors.Accent);
-    Output.Pins.Add(MakePin(EGraphPinDirection::Input, "Base Color", "Vector"));
-    Output.Pins.Add(MakePin(EGraphPinDirection::Input, "Roughness", "Float"));
-    Output.Pins.Add(MakePin(EGraphPinDirection::Input, "Normal", "Vector"));
+    FGraphNode Output = MakeNode(TEXT("Surface"), FVector2(600.0f, 160.0f), Style.Colors.Accent);
+    Output.Pins.Add(MakePin(EGraphPinDirection::Input, TEXT("Base Color"), TEXT("Vector")));
+    Output.Pins.Add(MakePin(EGraphPinDirection::Input, TEXT("Roughness"), TEXT("Float")));
+    Output.Pins.Add(MakePin(EGraphPinDirection::Input, TEXT("Normal"), TEXT("Vector")));
 
     const int32 TextureId     = GShaderModel->AddNode(Texture);
     const int32 CoordinatesId = GShaderModel->AddNode(Coordinates);
@@ -131,27 +131,27 @@ static void RefreshShaderReadout()
     const int32 NumSelected = GShaderCanvas->GetSelectedNodes().Size();
 
     FString Description = FString::Printf(
-        "%d nodes, %d links, zoom %.2fx, ",
+        TEXT("%d nodes, %d links, zoom %.2fx, "),
         GShaderModel->GetNodes().Size(),
         GShaderModel->GetLinks().Size(),
         GShaderCanvas->GetZoom());
 
     if (GShaderCanvas->GetSelectedLink() >= 0)
     {
-        Description.Append("a link selected");
+        Description.Append(TEXT("a link selected"));
     }
     else if (NumSelected == 1)
     {
         const FGraphNode* Node = GShaderModel->FindNode(GShaderCanvas->GetSelectedNodes()[0]);
-        Description.Append(Node ? FString::Printf("%s selected", Node->Title.Data()) : FString("nothing selected"));
+        Description.Append(Node ? FString::Printf(TEXT("%s selected"), Node->Title.Data()) : FString(TEXT("nothing selected")));
     }
     else if (NumSelected > 1)
     {
-        Description.Append(FString::Printf("%d nodes selected", NumSelected));
+        Description.Append(FString::Printf(TEXT("%d nodes selected"), NumSelected));
     }
     else
     {
-        Description.Append("nothing selected");
+        Description.Append(TEXT("nothing selected"));
     }
 
     GShaderReadout->SetText(Description);
@@ -160,9 +160,9 @@ static void RefreshShaderReadout()
 static void AddNodeAt(const CHAR_T* Title, const CHAR_T* TypeTag, const FVector2& GraphPosition)
 {
     FGraphNode Node = MakeNode(Title, GraphPosition, FUIStyle::GetDefault().Colors.ControlNormal);
-    Node.Pins.Add(MakePin(EGraphPinDirection::Input, "A", TypeTag));
-    Node.Pins.Add(MakePin(EGraphPinDirection::Input, "B", TypeTag));
-    Node.Pins.Add(MakePin(EGraphPinDirection::Output, "Result", TypeTag));
+    Node.Pins.Add(MakePin(EGraphPinDirection::Input, TEXT("A"), TypeTag));
+    Node.Pins.Add(MakePin(EGraphPinDirection::Input, TEXT("B"), TypeTag));
+    Node.Pins.Add(MakePin(EGraphPinDirection::Output, TEXT("Result"), TypeTag));
 
     GShaderModel->AddNode(Node);
     RefreshShaderReadout();
@@ -178,10 +178,10 @@ static TSharedPtr<FVisualElement> MakeContextMenu(const FPlaygroundFonts& Fonts,
 
     const FEntry Entries[] =
     {
-        { "Add", "Vector" },
-        { "Multiply", "Vector" },
-        { "Lerp", "Vector" },
-        { "Saturate", "Float" },
+        { TEXT("Add"), TEXT("Vector") },
+        { TEXT("Multiply"), TEXT("Vector") },
+        { TEXT("Lerp"), TEXT("Vector") },
+        { TEXT("Saturate"), TEXT("Float") },
     };
 
     TSharedPtr<FMenu> Menu = FMenu::Create();
@@ -236,7 +236,7 @@ static TSharedPtr<FVisualElement> MakeShaderGraph(const FPlaygroundFonts& Fonts)
 static TSharedPtr<FVisualElement> MakeGraphControls(const FPlaygroundFonts& Fonts)
 {
     FTextBlock::FDesc ReadoutDesc;
-    ReadoutDesc.Text            = "";
+    ReadoutDesc.Text            = TEXT("");
     ReadoutDesc.Font            = Fonts.Monospace;
     ReadoutDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
 
@@ -249,7 +249,7 @@ static TSharedPtr<FVisualElement> MakeGraphControls(const FPlaygroundFonts& Font
     TSharedPtr<FToolBar> ToolBar = FToolBar::Create(ToolBarDesc);
 
     ToolBar->AddButton(
-        FToolBarItemDesc().SetLabel("Auto layout").SetToolTipText("Rank the nodes and space the columns out"),
+        FToolBarItemDesc().SetLabel(TEXT("Auto layout")).SetToolTipText(TEXT("Rank the nodes and space the columns out")),
         FOnClicked::CreateLambda([]()
         {
             GShaderCanvas->AutoLayout();
@@ -258,7 +258,7 @@ static TSharedPtr<FVisualElement> MakeGraphControls(const FPlaygroundFonts& Font
         }));
 
     ToolBar->AddButton(
-        FToolBarItemDesc().SetLabel("Fit").SetToolTipText("Pan and zoom until every node is in view"),
+        FToolBarItemDesc().SetLabel(TEXT("Fit")).SetToolTipText(TEXT("Pan and zoom until every node is in view")),
         FOnClicked::CreateLambda([]()
         {
             GShaderCanvas->FitToNodes();
@@ -266,7 +266,7 @@ static TSharedPtr<FVisualElement> MakeGraphControls(const FPlaygroundFonts& Font
         }));
 
     ToolBar->AddButton(
-        FToolBarItemDesc().SetLabel("Reset view").SetToolTipText("Back to one-to-one, at the origin"),
+        FToolBarItemDesc().SetLabel(TEXT("Reset view")).SetToolTipText(TEXT("Back to one-to-one, at the origin")),
         FOnClicked::CreateLambda([]()
         {
             GShaderCanvas->SetZoom(1.0f);
@@ -277,7 +277,7 @@ static TSharedPtr<FVisualElement> MakeGraphControls(const FPlaygroundFonts& Font
     ToolBar->AddSeparator();
 
     ToolBar->AddButton(
-        FToolBarItemDesc().SetLabel("Delete selection").SetToolTipText("The same thing the Delete key does"),
+        FToolBarItemDesc().SetLabel(TEXT("Delete selection")).SetToolTipText(TEXT("The same thing the Delete key does")),
         FOnClicked::CreateLambda([]()
         {
             GShaderCanvas->DeleteSelection();
@@ -285,7 +285,7 @@ static TSharedPtr<FVisualElement> MakeGraphControls(const FPlaygroundFonts& Font
         }));
 
     ToolBar->AddButton(
-        FToolBarItemDesc().SetLabel("Rebuild the graph").SetToolTipText("Throw the edits away and start over"),
+        FToolBarItemDesc().SetLabel(TEXT("Rebuild the graph")).SetToolTipText(TEXT("Throw the edits away and start over")),
         FOnClicked::CreateLambda([Fonts]()
         {
             GShaderCanvas->ClearSelection();
@@ -324,11 +324,11 @@ static TSharedPtr<FVisualElement> MakeRenderGraphView(const FPlaygroundFonts& Fo
 
     const FPass Passes[] =
     {
-        { "Depth Prepass", nullptr, "Depth", false },
-        { "Shadow Maps", nullptr, "Shadows", false },
-        { "Base Pass", "Depth", "Scene Color", false },
-        { "Screen Space AO", "Depth", "AO", true },
-        { "Tone Map", "Scene Color", "Back Buffer", false },
+        { TEXT("Depth Prepass"), nullptr, TEXT("Depth"), false },
+        { TEXT("Shadow Maps"), nullptr, TEXT("Shadows"), false },
+        { TEXT("Base Pass"), TEXT("Depth"), TEXT("Scene Color"), false },
+        { TEXT("Screen Space AO"), TEXT("Depth"), TEXT("AO"), true },
+        { TEXT("Tone Map"), TEXT("Scene Color"), TEXT("Back Buffer"), false },
     };
 
     TArray<int32> PassIds;
@@ -339,10 +339,10 @@ static TSharedPtr<FVisualElement> MakeRenderGraphView(const FPlaygroundFonts& Fo
 
         if (Pass.Input)
         {
-            Node.Pins.Add(MakePin(EGraphPinDirection::Input, Pass.Input, "Texture"));
+            Node.Pins.Add(MakePin(EGraphPinDirection::Input, Pass.Input, TEXT("Texture")));
         }
 
-        Node.Pins.Add(MakePin(EGraphPinDirection::Output, Pass.Output, "Texture"));
+        Node.Pins.Add(MakePin(EGraphPinDirection::Output, Pass.Output, TEXT("Texture")));
         PassIds.Add(Model->AddNode(Node));
     }
 
@@ -393,8 +393,8 @@ FPlaygroundScene CreateNodeGraphScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Node graph";
-        Desc.Description = "Drag a node by its title, sweep a marquee over empty canvas, and pull a link out of one pin onto another. The wheel zooms about the cursor, the middle button pans, and the right button opens a menu that drops a node where it was pressed. A pin only takes a link from a pin of its own type.";
+        Desc.Title       = TEXT("Node graph");
+        Desc.Description = TEXT("Drag a node by its title, sweep a marquee over empty canvas, and pull a link out of one pin onto another. The wheel zooms about the cursor, the middle button pans, and the right button opens a menu that drops a node where it was pressed. A pin only takes a link from a pin of its own type.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeShaderGraph(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -402,8 +402,8 @@ FPlaygroundScene CreateNodeGraphScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "The graph underneath";
-        Desc.Description = "The same model, driven from outside the canvas. Laying out ranks the nodes by their longest path from a source, and the canvas notices the edit and rebuilds.";
+        Desc.Title       = TEXT("The graph underneath");
+        Desc.Description = TEXT("The same model, driven from outside the canvas. Laying out ranks the nodes by their longest path from a source, and the canvas notices the edit and rebuilds.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeGraphControls(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -411,12 +411,12 @@ FPlaygroundScene CreateNodeGraphScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "A read-only view";
-        Desc.Description = "The shape a render graph debug view takes: passes laid out by rank, resources as pins, and a culled pass drawn dimmed. The model is read-only, so it pans, zooms and selects but nothing moves or connects.";
+        Desc.Title       = TEXT("A read-only view");
+        Desc.Description = TEXT("The shape a render graph debug view takes: passes laid out by rank, resources as pins, and a culled pass drawn dimmed. The model is read-only, so it pans, zooms and selects but nothing moves or connects.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeRenderGraphView(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Node graph", MakeSceneColumn("Node graph", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Node graph"), MakeSceneColumn(TEXT("Node graph"), Fonts, Panels));
 }

@@ -32,16 +32,16 @@ bool UniformGrid2D_Test()
     FUniformGrid2D Grid;
     Grid.Build(FRectangle(FIntVector2(0, 0), 200, 200), 32, ItemBounds);
 
-    TEST_SECTION("A point lists every item overlapping its cell, in increasing order");
+    TEST_SECTION(TEXT("A point lists every item overlapping its cell, in increasing order"));
     const TArray<int32> Corner = CollectCell(Grid, FIntVector2(2, 2));
     TEST_EXPECT(Corner == TArray<int32>({ 0, 2 }));
 
-    TEST_SECTION("An item spanning several cells is found from each of them");
+    TEST_SECTION(TEXT("An item spanning several cells is found from each of them"));
     TEST_EXPECT(CollectCell(Grid, FIntVector2(140, 60)).Contains(1));
     TEST_EXPECT(CollectCell(Grid, FIntVector2(52, 52)).Contains(1));
     TEST_EXPECT(CollectCell(Grid, FIntVector2(52, 52)).Contains(2));
 
-    TEST_SECTION("An empty item is never listed");
+    TEST_SECTION(TEXT("An empty item is never listed"));
     for (int32 Y = 0; Y < 200; Y += 16)
     {
         for (int32 X = 0; X < 200; X += 16)
@@ -50,19 +50,19 @@ bool UniformGrid2D_Test()
         }
     }
 
-    TEST_SECTION("A point outside the indexed area finds nothing");
+    TEST_SECTION(TEXT("A point outside the indexed area finds nothing"));
     TEST_EXPECT(CollectCell(Grid, FIntVector2(-1, 10)).IsEmpty());
     TEST_EXPECT(CollectCell(Grid, FIntVector2(200, 10)).IsEmpty());
 
-    TEST_SECTION("A cell with nothing in it finds nothing");
+    TEST_SECTION(TEXT("A cell with nothing in it finds nothing"));
     TEST_EXPECT(CollectCell(Grid, FIntVector2(190, 190)).IsEmpty());
 
-    TEST_SECTION("A huge area is cut into no more than the cell limit along either axis");
+    TEST_SECTION(TEXT("A huge area is cut into no more than the cell limit along either axis"));
     FUniformGrid2D HugeGrid;
     HugeGrid.Build(FRectangle(FIntVector2(0, 0), 100000, 10), 1, TArrayView<const FRectangle>(ItemBounds.Data(), 1));
     TEST_EXPECT(CollectCell(HugeGrid, FIntVector2(3, 3)).Contains(0));
 
-    TEST_SECTION("Reset empties the grid");
+    TEST_SECTION(TEXT("Reset empties the grid"));
     Grid.Reset();
     TEST_EXPECT(Grid.IsEmpty());
     TEST_EXPECT(CollectCell(Grid, FIntVector2(2, 2)).IsEmpty());

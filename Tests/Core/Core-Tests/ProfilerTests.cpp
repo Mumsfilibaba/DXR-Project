@@ -47,16 +47,16 @@ bool Profiler_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Nested CPU scopes produce parent/depth and exclusive time");
+    TEST_SECTION(TEXT("Nested CPU scopes produce parent/depth and exclusive time"));
     {
         ResetProfilers();
         FFrameProfiler::Get().Enable();
 
         {
-            TRACE_SCOPE("Parent");
+            TRACE_SCOPE(TEXT("Parent"));
             BusyWait();
             {
-                TRACE_SCOPE("Child");
+                TRACE_SCOPE(TEXT("Child"));
                 BusyWait();
             }
         }
@@ -70,8 +70,8 @@ bool Profiler_Test()
         if (Frame && !Frame->Threads.IsEmpty())
         {
             const TArray<FProfilerInterval>& Intervals = Frame->Threads[0].Intervals;
-            const FProfilerInterval* Parent = FindIntervalByName(Intervals, "Parent");
-            const FProfilerInterval* Child  = FindIntervalByName(Intervals, "Child");
+            const FProfilerInterval* Parent = FindIntervalByName(Intervals, TEXT("Parent"));
+            const FProfilerInterval* Child  = FindIntervalByName(Intervals, TEXT("Child"));
             TEST_EXPECT(Parent != nullptr);
             TEST_EXPECT(Child != nullptr);
             if (Parent && Child)
@@ -87,14 +87,14 @@ bool Profiler_Test()
         }
     }
 
-    TEST_SECTION("Native stack addresses are stored only when capture is on");
+    TEST_SECTION(TEXT("Native stack addresses are stored only when capture is on"));
     {
         ResetProfilers();
         FFrameProfiler::Get().Enable();
         FFrameProfiler::Get().SetCaptureNativeStacks(false);
 
         {
-            TRACE_SCOPE("NoStack");
+            TRACE_SCOPE(TEXT("NoStack"));
             BusyWait();
         }
 
@@ -104,7 +104,7 @@ bool Profiler_Test()
         TEST_EXPECT(OffFrame != nullptr);
         if (OffFrame && !OffFrame->Threads.IsEmpty())
         {
-            const FProfilerInterval* Interval = FindIntervalByName(OffFrame->Threads[0].Intervals, "NoStack");
+            const FProfilerInterval* Interval = FindIntervalByName(OffFrame->Threads[0].Intervals, TEXT("NoStack"));
             TEST_EXPECT(Interval != nullptr);
             if (Interval)
             {
@@ -114,7 +114,7 @@ bool Profiler_Test()
 
         FFrameProfiler::Get().SetCaptureNativeStacks(true);
         {
-            TRACE_SCOPE("WithStack");
+            TRACE_SCOPE(TEXT("WithStack"));
             BusyWait();
         }
 
@@ -124,7 +124,7 @@ bool Profiler_Test()
         TEST_EXPECT(OnFrame != nullptr);
         if (OnFrame && !OnFrame->Threads.IsEmpty())
         {
-            const FProfilerInterval* Interval = FindIntervalByName(OnFrame->Threads[0].Intervals, "WithStack");
+            const FProfilerInterval* Interval = FindIntervalByName(OnFrame->Threads[0].Intervals, TEXT("WithStack"));
             TEST_EXPECT(Interval != nullptr);
             if (Interval)
             {
@@ -134,13 +134,13 @@ bool Profiler_Test()
         }
     }
 
-    TEST_SECTION("Boot samples never appear in FFrameProfiler aggregates");
+    TEST_SECTION(TEXT("Boot samples never appear in FFrameProfiler aggregates"));
     {
         ResetProfilers();
         FBootProfiler::Get().Enable();
 
         {
-            TRACE_BOOT_SCOPE("BootOnly");
+            TRACE_BOOT_SCOPE(TEXT("BootOnly"));
             BusyWait();
         }
 
@@ -148,7 +148,7 @@ bool Profiler_Test()
 
         FFrameProfiler::Get().Enable();
         {
-            TRACE_SCOPE("FrameOnly");
+            TRACE_SCOPE(TEXT("FrameOnly"));
             BusyWait();
         }
         FFrameProfiler::Get().Tick();
@@ -162,11 +162,11 @@ bool Profiler_Test()
         {
             for (const FProfilerScopeAggregate& Scope : ThreadInfo.Scopes)
             {
-                if (Scope.Name == FString("FrameOnly"))
+                if (Scope.Name == FString(TEXT("FrameOnly")))
                 {
                     bHasFrameOnly = true;
                 }
-                if (Scope.Name == FString("BootOnly"))
+                if (Scope.Name == FString(TEXT("BootOnly")))
                 {
                     bHasBootOnly = true;
                 }
@@ -180,22 +180,22 @@ bool Profiler_Test()
         TEST_EXPECT(!Boot.Threads.IsEmpty());
         if (!Boot.Threads.IsEmpty())
         {
-            TEST_EXPECT(FindIntervalByName(Boot.Threads[0].Intervals, "BootOnly") != nullptr);
+            TEST_EXPECT(FindIntervalByName(Boot.Threads[0].Intervals, TEXT("BootOnly")) != nullptr);
         }
     }
 
-    TEST_SECTION("GPU nested parent chain exclusive time");
+    TEST_SECTION(TEXT("GPU nested parent chain exclusive time"));
     {
         TArray<FProfilerInterval> Intervals;
         FProfilerInterval Parent;
-        Parent.Name = "Pass";
+        Parent.Name = TEXT("Pass");
         Parent.ParentIndex = -1;
         Parent.Depth = 0;
         Parent.InclusiveNanoseconds = 100;
         Intervals.Add(Parent);
 
         FProfilerInterval Child;
-        Child.Name = "Subpass";
+        Child.Name = TEXT("Subpass");
         Child.ParentIndex = 0;
         Child.Depth = 1;
         Child.InclusiveNanoseconds = 40;
@@ -214,40 +214,40 @@ bool Profiler_Test()
         }
     }
 
-    TEST_SECTION("Dump writer emits boot and a frame section");
+    TEST_SECTION(TEXT("Dump writer emits boot and a frame section"));
     {
         ResetProfilers();
         FBootProfiler::Get().Enable();
         {
-            TRACE_BOOT_SCOPE("DumpBoot");
+            TRACE_BOOT_SCOPE(TEXT("DumpBoot"));
             BusyWait();
         }
         FBootProfiler::Get().Finish();
 
         FFrameProfiler::Get().Enable();
         {
-            TRACE_SCOPE("DumpFrame");
+            TRACE_SCOPE(TEXT("DumpFrame"));
             BusyWait();
         }
         FFrameProfiler::Get().Tick();
 
         const FString Text = FProfilerReport::BuildCpuAndBootText();
-        TEST_EXPECT(Text.Contains("DXR Profile Run"));
-        TEST_EXPECT(Text.Contains("== BOOT =="));
-        TEST_EXPECT(Text.Contains("DumpBoot"));
-        TEST_EXPECT(Text.Contains("== WORST FRAMES =="));
-        TEST_EXPECT(Text.Contains("DumpFrame"));
-        TEST_EXPECT(Text.Contains("== CPU HOT SPOTS =="));
-        TEST_EXPECT(Text.Contains("== PER THREAD =="));
+        TEST_EXPECT(Text.Contains(TEXT("DXR Profile Run")));
+        TEST_EXPECT(Text.Contains(TEXT("== BOOT ==")));
+        TEST_EXPECT(Text.Contains(TEXT("DumpBoot")));
+        TEST_EXPECT(Text.Contains(TEXT("== WORST FRAMES ==")));
+        TEST_EXPECT(Text.Contains(TEXT("DumpFrame")));
+        TEST_EXPECT(Text.Contains(TEXT("== CPU HOT SPOTS ==")));
+        TEST_EXPECT(Text.Contains(TEXT("== PER THREAD ==")));
     }
 
-    TEST_SECTION("Stored frame ring wraps, retain-all keeps history, FindFrame looks up by index");
+    TEST_SECTION(TEXT("Stored frame ring wraps, retain-all keeps history, FindFrame looks up by index"));
     {
         ResetProfilers();
         FFrameProfiler::Get().Enable();
         for (int32 Index = 0; Index < NUM_LIVE_PROFILER_FRAMES + 3; ++Index)
         {
-            TRACE_SCOPE("RingFrame");
+            TRACE_SCOPE(TEXT("RingFrame"));
             FFrameProfiler::Get().Tick();
         }
 
@@ -267,7 +267,7 @@ bool Profiler_Test()
         TEST_EXPECT(FFrameProfiler::Get().FindFrame(0) != nullptr);
     }
 
-    TEST_SECTION("TProfilerFrameRing FindIf matches tagged GPU-style frames");
+    TEST_SECTION(TEXT("TProfilerFrameRing FindIf matches tagged GPU-style frames"));
     {
         TProfilerFrameRing<FProfilerFrame> Ring;
         FProfilerFrame First;
@@ -291,13 +291,13 @@ bool Profiler_Test()
         UNREFERENCED_VARIABLE(Worst);
     }
 
-    TEST_SECTION("TRACE_EVENT is stored as a zero-duration child");
+    TEST_SECTION(TEXT("TRACE_EVENT is stored as a zero-duration child"));
     {
         ResetProfilers();
         FFrameProfiler::Get().Enable();
         {
-            TRACE_SCOPE("Parent");
-            TRACE_EVENT("LoadMesh");
+            TRACE_SCOPE(TEXT("Parent"));
+            TRACE_EVENT(TEXT("LoadMesh"));
         }
         FFrameProfiler::Get().Tick();
 
@@ -305,8 +305,8 @@ bool Profiler_Test()
         TEST_EXPECT(Frame != nullptr);
         if (Frame && !Frame->Threads.IsEmpty())
         {
-            const FProfilerInterval* Parent = FindIntervalByName(Frame->Threads[0].Intervals, "Parent");
-            const FProfilerInterval* Event  = FindIntervalByName(Frame->Threads[0].Intervals, "LoadMesh");
+            const FProfilerInterval* Parent = FindIntervalByName(Frame->Threads[0].Intervals, TEXT("Parent"));
+            const FProfilerInterval* Event  = FindIntervalByName(Frame->Threads[0].Intervals, TEXT("LoadMesh"));
             TEST_EXPECT(Parent != nullptr);
             TEST_EXPECT(Event != nullptr);
             if (Parent && Event)
@@ -322,17 +322,17 @@ bool Profiler_Test()
         }
     }
 
-    TEST_SECTION("Optimization targets order by self time");
+    TEST_SECTION(TEXT("Optimization targets order by self time"));
     {
         ResetProfilers();
         FFrameProfiler::Get().Enable();
         {
-            TRACE_SCOPE("HotSelf");
+            TRACE_SCOPE(TEXT("HotSelf"));
             BusyWait();
             BusyWait();
         }
         {
-            TRACE_SCOPE("CoolSelf");
+            TRACE_SCOPE(TEXT("CoolSelf"));
         }
         FFrameProfiler::Get().Tick();
 
@@ -347,7 +347,7 @@ bool Profiler_Test()
         TEST_EXPECT(!Worst.IsEmpty());
     }
 
-    TEST_SECTION("Worst frames are returned slowest first");
+    TEST_SECTION(TEXT("Worst frames are returned slowest first"));
     {
         ResetProfilers();
         FFrameProfiler::Get().Enable();
@@ -368,29 +368,29 @@ bool Profiler_Test()
         }
     }
 
-    TEST_SECTION("Chrome JSON emits complete and instant events and escapes quotes");
+    TEST_SECTION(TEXT("Chrome JSON emits complete and instant events and escapes quotes"));
     {
         ResetProfilers();
         FFrameProfiler::Get().Enable();
         {
-            TRACE_SCOPE("Quoted\"Name");
-            TRACE_EVENT("Instant");
+            TRACE_SCOPE(TEXT("Quoted\"Name"));
+            TRACE_EVENT(TEXT("Instant"));
         }
         FFrameProfiler::Get().Tick();
 
         const FString Json = FProfilerReport::BuildChromeCpuJson();
-        TEST_EXPECT(Json.Contains("\"ph\":\"X\""));
-        TEST_EXPECT(Json.Contains("\"ph\":\"i\""));
-        TEST_EXPECT(Json.Contains("Quoted\\\"Name") || Json.Contains("Quoted"));
-        TEST_EXPECT(Json.Contains("\"dur\":"));
+        TEST_EXPECT(Json.Contains(TEXT("\"ph\":\"X\"")));
+        TEST_EXPECT(Json.Contains(TEXT("\"ph\":\"i\"")));
+        TEST_EXPECT(Json.Contains(TEXT("Quoted\\\"Name")) || Json.Contains(TEXT("Quoted")));
+        TEST_EXPECT(Json.Contains(TEXT("\"dur\":")));
     }
 
-    TEST_SECTION("Frame-relative GPU timestamps share the CPU Chrome timebase");
+    TEST_SECTION(TEXT("Frame-relative GPU timestamps share the CPU Chrome timebase"));
     {
         ResetProfilers();
         FFrameProfiler::Get().Enable();
         {
-            TRACE_SCOPE("CorrelatedCpuFrame");
+            TRACE_SCOPE(TEXT("CorrelatedCpuFrame"));
             BusyWait();
         }
         FFrameProfiler::Get().Tick();
@@ -415,7 +415,7 @@ bool Profiler_Test()
         TEST_EXPECT_EQ(MissingTimestampUs, 0.0);
     }
 
-    TEST_SECTION("Thread lanes come out in one order whichever thread reached the frame first");
+    TEST_SECTION(TEXT("Thread lanes come out in one order whichever thread reached the frame first"));
     {
         const TArray<void*> Handles =
         {
@@ -471,7 +471,7 @@ bool ProfilerGPUTraceSentinel_Test()
         return InvalidScopeIndex;
     };
 
-    TEST_SECTION("A disabled inner begin is a sentinel, so its end does not steal the outer parent");
+    TEST_SECTION(TEXT("A disabled inner begin is a sentinel, so its end does not steal the outer parent"));
     OpenTraceStack.Add(0);
     TEST_EXPECT_EQ(ParentOf(), 0);
 

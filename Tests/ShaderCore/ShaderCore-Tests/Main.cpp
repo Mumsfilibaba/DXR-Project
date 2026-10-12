@@ -18,20 +18,20 @@ IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 
 static int32 RunShaderCoreTests()
 {
-    TestHarness::Initialize("TestResults_ShaderCore.log");
+    TestHarness::Initialize(TEXT("TestResults_ShaderCore.log"));
     LOG_INFO("=== ShaderCore Tests ===");
 
-    RUN_TEST("ShaderCodeRoundTrip", ShaderCodeRoundTrip_Test());
-    RUN_TEST("ShaderCodeLanguageBlocks", ShaderCodeLanguageBlocks_Test());
-    RUN_TEST("ShaderCodeDebugInfo", ShaderCodeDebugInfo_Test());
-    RUN_TEST("ShaderCodeVertexInputs", ShaderCodeVertexInputs_Test());
-    RUN_TEST("ShaderCodeReaderRejects", ShaderCodeReaderRejects_Test());
-    RUN_TEST("ShaderCodeWriterRejects", ShaderCodeWriterRejects_Test());
-    RUN_TEST("ShaderSemanticHash", ShaderSemanticHash_Test());
+    RUN_TEST(TEXT("ShaderCodeRoundTrip"), ShaderCodeRoundTrip_Test());
+    RUN_TEST(TEXT("ShaderCodeLanguageBlocks"), ShaderCodeLanguageBlocks_Test());
+    RUN_TEST(TEXT("ShaderCodeDebugInfo"), ShaderCodeDebugInfo_Test());
+    RUN_TEST(TEXT("ShaderCodeVertexInputs"), ShaderCodeVertexInputs_Test());
+    RUN_TEST(TEXT("ShaderCodeReaderRejects"), ShaderCodeReaderRejects_Test());
+    RUN_TEST(TEXT("ShaderCodeWriterRejects"), ShaderCodeWriterRejects_Test());
+    RUN_TEST(TEXT("ShaderSemanticHash"), ShaderSemanticHash_Test());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();
     return ExitCode;
 }
 
-IMPLEMENT_PROGRAM_MAIN("ShaderCore-Tests", RunShaderCoreTests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("ShaderCore-Tests"), RunShaderCoreTests);

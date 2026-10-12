@@ -4,10 +4,10 @@
 
 #include "TestCommon/TestMacros.h"
 
-class FTestBoolA : SHADER_PERMUTATION_BOOL("TEST_BOOL_A");
-class FTestBoolB : SHADER_PERMUTATION_BOOL("TEST_BOOL_B");
-class FTestCount : SHADER_PERMUTATION_INT("TEST_COUNT", 3);
-class FTestRange : SHADER_PERMUTATION_RANGE_INT("TEST_RANGE", 2, 4);
+class FTestBoolA : SHADER_PERMUTATION_BOOL(TEXT("TEST_BOOL_A"));
+class FTestBoolB : SHADER_PERMUTATION_BOOL(TEXT("TEST_BOOL_B"));
+class FTestCount : SHADER_PERMUTATION_INT(TEXT("TEST_COUNT"), 3);
+class FTestRange : SHADER_PERMUTATION_RANGE_INT(TEXT("TEST_RANGE"), 2, 4);
 
 enum class ETestMode : uint8
 {
@@ -17,12 +17,12 @@ enum class ETestMode : uint8
     Count,
 };
 
-class FTestMode : SHADER_PERMUTATION_ENUM("TEST_MODE", ETestMode);
+class FTestMode : SHADER_PERMUTATION_ENUM(TEXT("TEST_MODE"), ETestMode);
 
 /** @brief A dimension that raises the shader model itself, the FBindless shape. */
 class FTestRaisesModel : public FShaderPermutationBool
 {
-    SHADER_PERMUTATION_DEFINE("TEST_RAISES_MODEL");
+    SHADER_PERMUTATION_DEFINE(TEXT("TEST_RAISES_MODEL"));
 
 public:
     static void ModifyCompilationEnvironment(Type Value, FShaderCompilationEnvironment& Environment)
@@ -54,7 +54,7 @@ bool ShaderPermutation_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("PermutationCount (product of the dimensions)");
+    TEST_SECTION(TEXT("PermutationCount (product of the dimensions)"));
     static_assert(TShaderPermutation<>::PermutationCount == 1);
     static_assert(TShaderPermutation<FTestBoolA>::PermutationCount == 2);
     static_assert(TShaderPermutation<FTestBoolA, FTestBoolB>::PermutationCount == 4);
@@ -64,7 +64,7 @@ bool ShaderPermutation_Test()
     static_assert(FOuterPermutation::PermutationCount == 4 * 3 * 2);
     TEST_EXPECT(FOuterPermutation::PermutationCount == 24);
 
-    TEST_SECTION("Encode / decode round-trip is bijective");
+    TEST_SECTION(TEXT("Encode / decode round-trip is bijective"));
     {
         bool bAllIDsRoundTripped = true;
         for (int32 ID = 0; ID < FOuterPermutation::PermutationCount; ++ID)
@@ -79,10 +79,10 @@ bool ShaderPermutation_Test()
         TEST_EXPECT(bAllIDsRoundTripped);
     }
 
-    TEST_SECTION("A default permutation is ID zero");
+    TEST_SECTION(TEXT("A default permutation is ID zero"));
     TEST_EXPECT(FOuterPermutation().GetPermutationID() == 0);
 
-    TEST_SECTION("Set / Get on a flat permutation");
+    TEST_SECTION(TEXT("Set / Get on a flat permutation"));
     {
         TShaderPermutation<FTestBoolA, FTestCount, FTestRange, FTestMode> Permutation;
         Permutation.Set<FTestBoolA>(true);
@@ -103,7 +103,7 @@ bool ShaderPermutation_Test()
         TEST_EXPECT(RangeOnly.GetPermutationID() == 3);
     }
 
-    TEST_SECTION("Set / Get search nested permutations recursively");
+    TEST_SECTION(TEXT("Set / Get search nested permutations recursively"));
     {
         FOuterPermutation Permutation;
         Permutation.Set<FTestBoolB>(true);
@@ -125,7 +125,7 @@ bool ShaderPermutation_Test()
         TEST_EXPECT(Permutation.Get<FTestBoolB>() == false);
     }
 
-    TEST_SECTION("A nested permutation round-trips through its outer ID");
+    TEST_SECTION(TEXT("A nested permutation round-trips through its outer ID"));
     {
         FOuterPermutation Permutation;
         Permutation.Set<FTestBoolA>(true);
@@ -141,7 +141,7 @@ bool ShaderPermutation_Test()
         TEST_EXPECT(Decoded.Get<FTestRaisesModel>() == true);
     }
 
-    TEST_SECTION("ModifyCompilationEnvironment emits one define per leaf dimension");
+    TEST_SECTION(TEXT("ModifyCompilationEnvironment emits one define per leaf dimension"));
     {
         FOuterPermutation Permutation;
         Permutation.Set<FTestBoolA>(true);
@@ -152,17 +152,17 @@ bool ShaderPermutation_Test()
 
         // A nested permutation contributes its children's defines rather than one of its own
         TEST_EXPECT(Environment.Defines.Size() == 4);
-        TEST_EXPECT(FindDefine(Environment, "TEST_BOOL_A") != nullptr);
-        TEST_EXPECT(FindDefine(Environment, "TEST_BOOL_B") != nullptr);
-        TEST_EXPECT(FindDefine(Environment, "TEST_COUNT") != nullptr);
-        TEST_EXPECT(FindDefine(Environment, "TEST_RAISES_MODEL") != nullptr);
+        TEST_EXPECT(FindDefine(Environment, TEXT("TEST_BOOL_A")) != nullptr);
+        TEST_EXPECT(FindDefine(Environment, TEXT("TEST_BOOL_B")) != nullptr);
+        TEST_EXPECT(FindDefine(Environment, TEXT("TEST_COUNT")) != nullptr);
+        TEST_EXPECT(FindDefine(Environment, TEXT("TEST_RAISES_MODEL")) != nullptr);
 
-        TEST_EXPECT(FindDefine(Environment, "TEST_BOOL_A")->Value == "(1)");
-        TEST_EXPECT(FindDefine(Environment, "TEST_BOOL_B")->Value == "(0)");
-        TEST_EXPECT(FindDefine(Environment, "TEST_COUNT")->Value == "2");
+        TEST_EXPECT(FindDefine(Environment, TEXT("TEST_BOOL_A"))->Value == TEXT("(1)"));
+        TEST_EXPECT(FindDefine(Environment, TEXT("TEST_BOOL_B"))->Value == TEXT("(0)"));
+        TEST_EXPECT(FindDefine(Environment, TEXT("TEST_COUNT"))->Value == TEXT("2"));
     }
 
-    TEST_SECTION("A dimension may raise the shader model, and RequireShaderModel only raises");
+    TEST_SECTION(TEXT("A dimension may raise the shader model, and RequireShaderModel only raises"));
     {
         FShaderCompilationEnvironment Environment;
         Environment.ShaderModel = EShaderModel::SM_6_2;
@@ -184,7 +184,7 @@ bool ShaderPermutation_Test()
         TEST_EXPECT(Environment.ShaderModel == EShaderModel::SM_6_9);
     }
 
-    TEST_SECTION("Dimension counting underpins the unambiguous-access assert");
+    TEST_SECTION(TEXT("Dimension counting underpins the unambiguous-access assert"));
     static_assert(TShaderPermutationDimensionCount<FTestBoolA, FOuterPermutation>::Value == 1);
     static_assert(TShaderPermutationDimensionCount<FInnerPermutation, FOuterPermutation>::Value == 1);
     static_assert(TShaderPermutationDimensionCount<FTestRange, FOuterPermutation>::Value == 0);

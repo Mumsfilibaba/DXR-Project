@@ -23,7 +23,7 @@ void TaskGraph_Benchmark()
     const uint64 Frequency = FPlatformTime::QueryPerformanceFrequency();
     const uint64 Start     = FPlatformTime::QueryPerformanceCounter();
 
-    FTaskHandle Root = Tasks::Launch("BenchRoot", [&]()
+    FTaskHandle Root = Tasks::Launch(TEXT("BenchRoot"), [&]()
     {
         for (int32 Index = 0; Index < NumTasks; ++Index)
         {

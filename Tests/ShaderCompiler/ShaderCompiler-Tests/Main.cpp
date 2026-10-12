@@ -24,20 +24,20 @@ IMPLEMENT_NEW_AND_DELETE_OPERATORS();
 
 static int32 RunShaderCompilerTests()
 {
-    TestHarness::Initialize("TestResults_ShaderCompiler.log");
+    TestHarness::Initialize(TEXT("TestResults_ShaderCompiler.log"));
     LOG_INFO("=== ShaderCompiler Tests ===");
 
-    RUN_TEST("PreprocessorMacros", ShaderPreprocessorMacros_Test());
-    RUN_TEST("PreprocessorConditionals", ShaderPreprocessorConditionals_Test());
-    RUN_TEST("PreprocessorIncludes", ShaderPreprocessorIncludes_Test());
-    RUN_TEST("PreprocessorErrors", ShaderPreprocessorErrors_Test());
-    RUN_TEST("PreprocessorGenerateSource", ShaderPreprocessorGenerateSource_Test());
-    RUN_TEST("FXCShaderTranslator", FXCShaderTranslator_Test());
-    RUN_TEST("ShaderSourceHashLineEndings", ShaderSourceHashLineEndings_Test());
-    RUN_TEST("ShaderCompileJobJsonRoundTrip", ShaderCompileJobJsonRoundTrip_Test());
-    RUN_TEST("ShaderJobFileMerge", ShaderJobFileMerge_Test());
-    RUN_TEST("RemoteProtocolFraming", RemoteProtocolFraming_Test());
-    RUN_TEST("RemoteProtocolSourcePaths", RemoteProtocolSourcePaths_Test());
+    RUN_TEST(TEXT("PreprocessorMacros"), ShaderPreprocessorMacros_Test());
+    RUN_TEST(TEXT("PreprocessorConditionals"), ShaderPreprocessorConditionals_Test());
+    RUN_TEST(TEXT("PreprocessorIncludes"), ShaderPreprocessorIncludes_Test());
+    RUN_TEST(TEXT("PreprocessorErrors"), ShaderPreprocessorErrors_Test());
+    RUN_TEST(TEXT("PreprocessorGenerateSource"), ShaderPreprocessorGenerateSource_Test());
+    RUN_TEST(TEXT("FXCShaderTranslator"), FXCShaderTranslator_Test());
+    RUN_TEST(TEXT("ShaderSourceHashLineEndings"), ShaderSourceHashLineEndings_Test());
+    RUN_TEST(TEXT("ShaderCompileJobJsonRoundTrip"), ShaderCompileJobJsonRoundTrip_Test());
+    RUN_TEST(TEXT("ShaderJobFileMerge"), ShaderJobFileMerge_Test());
+    RUN_TEST(TEXT("RemoteProtocolFraming"), RemoteProtocolFraming_Test());
+    RUN_TEST(TEXT("RemoteProtocolSourcePaths"), RemoteProtocolSourcePaths_Test());
 
     if (!FThreadManager::Initialize() || !FTaskGraph::Initialize())
     {
@@ -46,25 +46,25 @@ static int32 RunShaderCompilerTests()
     }
     else if (FShaderCompiler::Initialize(Paths::GetAssetDir()))
     {
-        RUN_TEST("OutputLanguages", ShaderCompilerOutputLanguages_Test());
-        RUN_TEST("CompileFromFile", ShaderCompilerCompileFromFile_Test());
-        RUN_TEST("CompileFromSource", ShaderCompilerCompileFromSource_Test());
-        RUN_TEST("CompileFailure", ShaderCompilerCompileFailure_Test());
-        RUN_TEST("DXBCConstantsSlot", ShaderCompilerDXBCConstantsSlot_Test());
-        RUN_TEST("CompileHash", ShaderCompilerCompileHash_Test());
-        RUN_TEST("ReleaseOutput", ShaderCompilerReleaseOutput_Test());
-        RUN_TEST("VertexInputs", ShaderCompilerVertexInputs_Test());
-        RUN_TEST("RayTracing", ShaderCompilerRayTracing_Test());
-        RUN_TEST("MSL", ShaderCompilerMSL_Test());
-        RUN_TEST("PreprocessorMemoryProvider", ShaderPreprocessorMemoryProvider_Test());
-        RUN_TEST("CompileJobParity", ShaderCompilerCompileJobParity_Test());
-        RUN_TEST("ReadEmbedded", ShaderCodeReadEmbedded_Test());
-        RUN_TEST("InternalClearBufferUAVReflection", InternalClearBufferUAVReflection_Test());
-        RUN_TEST("InternalClearUAVMSLReflection", InternalClearUAVMSLReflection_Test());
-        RUN_TEST("ShaderCompilerIncludeDirs", ShaderCompilerIncludeDirs_Test());
-        RUN_TEST("RemoteShaderCompilerLoopback", RemoteShaderCompilerLoopback_Test());
-        RUN_TEST("RemoteShaderCompilerSendsFilesOnce", RemoteShaderCompilerSendsFilesOnce_Test());
-        RUN_TEST("HashIgnoresAssetPath", ShaderCompilerHashIgnoresAssetPath_Test());
+        RUN_TEST(TEXT("OutputLanguages"), ShaderCompilerOutputLanguages_Test());
+        RUN_TEST(TEXT("CompileFromFile"), ShaderCompilerCompileFromFile_Test());
+        RUN_TEST(TEXT("CompileFromSource"), ShaderCompilerCompileFromSource_Test());
+        RUN_TEST(TEXT("CompileFailure"), ShaderCompilerCompileFailure_Test());
+        RUN_TEST(TEXT("DXBCConstantsSlot"), ShaderCompilerDXBCConstantsSlot_Test());
+        RUN_TEST(TEXT("CompileHash"), ShaderCompilerCompileHash_Test());
+        RUN_TEST(TEXT("ReleaseOutput"), ShaderCompilerReleaseOutput_Test());
+        RUN_TEST(TEXT("VertexInputs"), ShaderCompilerVertexInputs_Test());
+        RUN_TEST(TEXT("RayTracing"), ShaderCompilerRayTracing_Test());
+        RUN_TEST(TEXT("MSL"), ShaderCompilerMSL_Test());
+        RUN_TEST(TEXT("PreprocessorMemoryProvider"), ShaderPreprocessorMemoryProvider_Test());
+        RUN_TEST(TEXT("CompileJobParity"), ShaderCompilerCompileJobParity_Test());
+        RUN_TEST(TEXT("ReadEmbedded"), ShaderCodeReadEmbedded_Test());
+        RUN_TEST(TEXT("InternalClearBufferUAVReflection"), InternalClearBufferUAVReflection_Test());
+        RUN_TEST(TEXT("InternalClearUAVMSLReflection"), InternalClearUAVMSLReflection_Test());
+        RUN_TEST(TEXT("ShaderCompilerIncludeDirs"), ShaderCompilerIncludeDirs_Test());
+        RUN_TEST(TEXT("RemoteShaderCompilerLoopback"), RemoteShaderCompilerLoopback_Test());
+        RUN_TEST(TEXT("RemoteShaderCompilerSendsFilesOnce"), RemoteShaderCompilerSendsFilesOnce_Test());
+        RUN_TEST(TEXT("HashIgnoresAssetPath"), ShaderCompilerHashIgnoresAssetPath_Test());
 
         FShaderCompiler::Destroy();
     }
@@ -82,4 +82,4 @@ static int32 RunShaderCompilerTests()
     return ExitCode;
 }
 
-IMPLEMENT_PROGRAM_MAIN("ShaderCompiler-Tests", RunShaderCompilerTests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("ShaderCompiler-Tests"), RunShaderCompilerTests);

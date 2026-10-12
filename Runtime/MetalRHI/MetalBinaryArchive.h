@@ -21,18 +21,18 @@ struct FMetalBinaryArchiveHeader
     static constexpr uint32 ExpectedMagic   = 0x4D544C41;
     static constexpr uint32 ExpectedVersion = 1;
 
-    uint32 Magic;
-    uint32 Version;
-    uint32 ShaderFormatVersion;
-    uint32 PipelineFormatVersion;
-    uint64 RegistryID;
-    uint64 ArchiveSize;
-    int64  HighestFamily;
-    int32  OSMajor;
-    int32  OSMinor;
-    int32  OSPatch;
-    CHAR_T OSBuild[32];
-    CHAR_T DeviceName[128];
+    uint32   Magic;
+    uint32   Version;
+    uint32   ShaderFormatVersion;
+    uint32   PipelineFormatVersion;
+    uint64   RegistryID;
+    uint64   ArchiveSize;
+    int64    HighestFamily;
+    int32    OSMajor;
+    int32    OSMinor;
+    int32    OSPatch;
+    ANSICHAR OSBuild[32];
+    ANSICHAR DeviceName[128];
 };
 
 class FMetalBinaryArchive

@@ -39,91 +39,91 @@ bool ConsoleManagerCommandLine_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Every variable type is settable at registration");
+    TEST_SECTION(TEXT("Every variable type is settable at registration"));
     {
-        InitializeFromLine("-Test.Bool=true -Test.Int=42 -Test.Float=0.25 -Test.String=Vulkan");
+        InitializeFromLine(TEXT("-Test.Bool=true -Test.Int=42 -Test.Float=0.25 -Test.String=Vulkan"));
 
-        TAutoConsoleVariable<bool>    CVarBool("Test.Bool", "", false);
-        TAutoConsoleVariable<int32>   CVarInt("Test.Int", "", 0);
-        TAutoConsoleVariable<float>   CVarFloat("Test.Float", "", 0.0f);
-        TAutoConsoleVariable<FString> CVarString("Test.String", "", "Unknown");
+        TAutoConsoleVariable<bool>    CVarBool(TEXT("Test.Bool"), TEXT(""), false);
+        TAutoConsoleVariable<int32>   CVarInt(TEXT("Test.Int"), TEXT(""), 0);
+        TAutoConsoleVariable<float>   CVarFloat(TEXT("Test.Float"), TEXT(""), 0.0f);
+        TAutoConsoleVariable<FString> CVarString(TEXT("Test.String"), TEXT(""), TEXT("Unknown"));
 
         TEST_EXPECT_EQ(CVarBool.GetValue(), true);
         TEST_EXPECT_EQ(CVarInt.GetValue(), 42);
         TEST_EXPECT_EQ(CVarFloat.GetValue(), 0.25f);
-        TEST_EXPECT(CVarString.GetValue().Equals("Vulkan"));
+        TEST_EXPECT(CVarString.GetValue().Equals(TEXT("Vulkan")));
     }
 
-    TEST_SECTION("A command-line set is tagged SetByCommandLine");
+    TEST_SECTION(TEXT("A command-line set is tagged SetByCommandLine"));
     {
-        InitializeFromLine("-Test.String=Vulkan");
+        InitializeFromLine(TEXT("-Test.String=Vulkan"));
 
-        TAutoConsoleVariable<FString> CVarString("Test.String", "", "Unknown");
+        TAutoConsoleVariable<FString> CVarString(TEXT("Test.String"), TEXT(""), TEXT("Unknown"));
         TEST_EXPECT_EQ(GetSetByFlag(CVarString.operator->()), EConsoleVariableFlags::SetByCommandLine);
 
         // A variable with no matching option keeps its constructor tag
-        TAutoConsoleVariable<FString> CVarUntouched("Test.NotOnCommandLine", "", "Unknown");
+        TAutoConsoleVariable<FString> CVarUntouched(TEXT("Test.NotOnCommandLine"), TEXT(""), TEXT("Unknown"));
         TEST_EXPECT(GetSetByFlag(CVarUntouched.operator->()) != EConsoleVariableFlags::SetByCommandLine);
     }
 
-    TEST_SECTION("Numeric values accept the forms the console accepts");
+    TEST_SECTION(TEXT("Numeric values accept the forms the console accepts"));
     {
-        InitializeFromLine("-Test.Bool=1 -Test.Int=-7 -Test.Float=-1.5");
+        InitializeFromLine(TEXT("-Test.Bool=1 -Test.Int=-7 -Test.Float=-1.5"));
 
-        TAutoConsoleVariable<bool>  CVarBool("Test.Bool", "", false);
-        TAutoConsoleVariable<int32> CVarInt("Test.Int", "", 0);
-        TAutoConsoleVariable<float> CVarFloat("Test.Float", "", 0.0f);
+        TAutoConsoleVariable<bool>  CVarBool(TEXT("Test.Bool"), TEXT(""), false);
+        TAutoConsoleVariable<int32> CVarInt(TEXT("Test.Int"), TEXT(""), 0);
+        TAutoConsoleVariable<float> CVarFloat(TEXT("Test.Float"), TEXT(""), 0.0f);
 
         TEST_EXPECT_EQ(CVarBool.GetValue(), true);
         TEST_EXPECT_EQ(CVarInt.GetValue(), -7);
         TEST_EXPECT_EQ(CVarFloat.GetValue(), -1.5f);
     }
 
-    TEST_SECTION("A bare switch turns every variable type on");
+    TEST_SECTION(TEXT("A bare switch turns every variable type on"));
     {
-        InitializeFromLine("-Test.Bool -Test.Int -Test.Float -Test.String");
+        InitializeFromLine(TEXT("-Test.Bool -Test.Int -Test.Float -Test.String"));
 
-        TAutoConsoleVariable<bool>    CVarBool("Test.Bool", "", false);
-        TAutoConsoleVariable<int32>   CVarInt("Test.Int", "", 0);
-        TAutoConsoleVariable<float>   CVarFloat("Test.Float", "", 0.0f);
-        TAutoConsoleVariable<FString> CVarString("Test.String", "", "Unknown");
+        TAutoConsoleVariable<bool>    CVarBool(TEXT("Test.Bool"), TEXT(""), false);
+        TAutoConsoleVariable<int32>   CVarInt(TEXT("Test.Int"), TEXT(""), 0);
+        TAutoConsoleVariable<float>   CVarFloat(TEXT("Test.Float"), TEXT(""), 0.0f);
+        TAutoConsoleVariable<FString> CVarString(TEXT("Test.String"), TEXT(""), TEXT("Unknown"));
 
         TEST_EXPECT_EQ(CVarBool.GetValue(), true);
         TEST_EXPECT_EQ(CVarInt.GetValue(), 1);
         TEST_EXPECT_EQ(CVarFloat.GetValue(), 1.0f);
-        TEST_EXPECT(CVarString.GetValue().Equals("true"));
+        TEST_EXPECT(CVarString.GetValue().Equals(TEXT("true")));
     }
 
-    TEST_SECTION("Clamp ranges still apply to command-line values");
+    TEST_SECTION(TEXT("Clamp ranges still apply to command-line values"));
     {
-        InitializeFromLine("-Test.Int=1000 -Test.Float=-1000.0");
+        InitializeFromLine(TEXT("-Test.Int=1000 -Test.Float=-1000.0"));
 
-        TAutoConsoleVariable<int32> CVarInt("Test.Int", "", 0, 0, 16);
-        TAutoConsoleVariable<float> CVarFloat("Test.Float", "", 0.0f, -1.0f, 1.0f);
+        TAutoConsoleVariable<int32> CVarInt(TEXT("Test.Int"), TEXT(""), 0, 0, 16);
+        TAutoConsoleVariable<float> CVarFloat(TEXT("Test.Float"), TEXT(""), 0.0f, -1.0f, 1.0f);
 
         TEST_EXPECT_EQ(CVarInt.GetValue(), 16);
         TEST_EXPECT_EQ(CVarFloat.GetValue(), -1.0f);
     }
 
-    TEST_SECTION("A ReadOnly variable is not changed by the command line");
+    TEST_SECTION(TEXT("A ReadOnly variable is not changed by the command line"));
     {
-        InitializeFromLine("-Test.ReadOnly=99 -Test.ReadOnly.Switch");
+        InitializeFromLine(TEXT("-Test.ReadOnly=99 -Test.ReadOnly.Switch"));
 
-        TAutoConsoleVariable<int32> CVarReadOnly("Test.ReadOnly", "", 5, EConsoleVariableFlags::ReadOnly);
+        TAutoConsoleVariable<int32> CVarReadOnly(TEXT("Test.ReadOnly"), TEXT(""), 5, EConsoleVariableFlags::ReadOnly);
         TEST_EXPECT_EQ(CVarReadOnly.GetValue(), 5);
 
         // The bare-switch path goes through SetAsBool, which must respect ReadOnly too
-        TAutoConsoleVariable<bool> CVarReadOnlySwitch("Test.ReadOnly.Switch", "", false, EConsoleVariableFlags::ReadOnly);
+        TAutoConsoleVariable<bool> CVarReadOnlySwitch(TEXT("Test.ReadOnly.Switch"), TEXT(""), false, EConsoleVariableFlags::ReadOnly);
         TEST_EXPECT_EQ(CVarReadOnlySwitch.GetValue(), false);
     }
 
-    TEST_SECTION("The command line outranks the config file");
+    TEST_SECTION(TEXT("The command line outranks the config file"));
     {
         // Stand in a config of our own so the assertion does not depend on Engine.ini
         FIniFile TestConfig;
-        FIniSection& Section = TestConfig.Sections.FindOrAdd("");
-        Section.Values.Add("Test.Contested", FIniValue(FString("FromConfig")));
-        Section.Values.Add("Test.ConfigOnly", FIniValue(FString("FromConfig")));
+        FIniSection& Section = TestConfig.Sections.FindOrAdd(TEXT(""));
+        Section.Values.Add(TEXT("Test.Contested"), FIniValue(FString(TEXT("FromConfig"))));
+        Section.Values.Add(TEXT("Test.ConfigOnly"), FIniValue(FString(TEXT("FromConfig"))));
 
         FConfig TestStack;
         TestStack.SetFile(EConfigFile::Engine, &TestConfig);
@@ -132,28 +132,28 @@ bool ConsoleManagerCommandLine_Test()
         GConfig = &TestStack;
 
         {
-            InitializeFromLine("-Test.Contested=FromCommandLine");
+            InitializeFromLine(TEXT("-Test.Contested=FromCommandLine"));
 
-            TAutoConsoleVariable<FString> CVarContested("Test.Contested", "", "Default");
-            TEST_EXPECT(CVarContested.GetValue().Equals("FromCommandLine"));
+            TAutoConsoleVariable<FString> CVarContested(TEXT("Test.Contested"), TEXT(""), TEXT("Default"));
+            TEST_EXPECT(CVarContested.GetValue().Equals(TEXT("FromCommandLine")));
             TEST_EXPECT_EQ(GetSetByFlag(CVarContested.operator->()), EConsoleVariableFlags::SetByCommandLine);
 
             // Without a matching option the config file is still applied
-            TAutoConsoleVariable<FString> CVarConfigOnly("Test.ConfigOnly", "", "Default");
-            TEST_EXPECT(CVarConfigOnly.GetValue().Equals("FromConfig"));
+            TAutoConsoleVariable<FString> CVarConfigOnly(TEXT("Test.ConfigOnly"), TEXT(""), TEXT("Default"));
+            TEST_EXPECT(CVarConfigOnly.GetValue().Equals(TEXT("FromConfig")));
             TEST_EXPECT_EQ(GetSetByFlag(CVarConfigOnly.operator->()), EConsoleVariableFlags::SetByConfigFile);
         }
 
         GConfig = PreviousConfig;
     }
 
-    TEST_SECTION("The command line outranks every layer, not just the lowest one");
+    TEST_SECTION(TEXT("The command line outranks every layer, not just the lowest one"));
     {
         FIniFile EngineFile;
-        EngineFile.Sections.FindOrAdd("").Values.Add("Test.Layered", FIniValue(FString("FromEngine")));
+        EngineFile.Sections.FindOrAdd(TEXT("")).Values.Add(TEXT("Test.Layered"), FIniValue(FString(TEXT("FromEngine"))));
 
         FIniFile EditorFile;
-        EditorFile.Sections.FindOrAdd("").Values.Add("Test.Layered", FIniValue(FString("FromEditor")));
+        EditorFile.Sections.FindOrAdd(TEXT("")).Values.Add(TEXT("Test.Layered"), FIniValue(FString(TEXT("FromEditor"))));
 
         FConfig TestStack;
         TestStack.SetFile(EConfigFile::Engine, &EngineFile);
@@ -163,21 +163,21 @@ bool ConsoleManagerCommandLine_Test()
         GConfig = &TestStack;
 
         {
-            InitializeFromLine("-Test.Layered=FromCommandLine");
+            InitializeFromLine(TEXT("-Test.Layered=FromCommandLine"));
 
-            TAutoConsoleVariable<FString> CVarLayered("Test.Layered", "", "Default");
-            TEST_EXPECT(CVarLayered.GetValue().Equals("FromCommandLine"));
+            TAutoConsoleVariable<FString> CVarLayered(TEXT("Test.Layered"), TEXT(""), TEXT("Default"));
+            TEST_EXPECT(CVarLayered.GetValue().Equals(TEXT("FromCommandLine")));
             TEST_EXPECT_EQ(GetSetByFlag(CVarLayered.operator->()), EConsoleVariableFlags::SetByCommandLine);
         }
 
         GConfig = PreviousConfig;
     }
 
-    TEST_SECTION("A partial name match does not suppress the config file");
+    TEST_SECTION(TEXT("A partial name match does not suppress the config file"));
     {
         FIniFile TestConfig;
-        FIniSection& Section = TestConfig.Sections.FindOrAdd("");
-        Section.Values.Add("Test.Type", FIniValue(FString("FromConfig")));
+        FIniSection& Section = TestConfig.Sections.FindOrAdd(TEXT(""));
+        Section.Values.Add(TEXT("Test.Type"), FIniValue(FString(TEXT("FromConfig"))));
 
         FConfig TestStack;
         TestStack.SetFile(EConfigFile::Engine, &TestConfig);
@@ -187,98 +187,98 @@ bool ConsoleManagerCommandLine_Test()
 
         {
             // 'Test.TypeExtra' must not be mistaken for 'Test.Type'
-            InitializeFromLine("-Test.TypeExtra=FromCommandLine");
+            InitializeFromLine(TEXT("-Test.TypeExtra=FromCommandLine"));
 
-            TAutoConsoleVariable<FString> CVarType("Test.Type", "", "Default");
-            TEST_EXPECT(CVarType.GetValue().Equals("FromConfig"));
+            TAutoConsoleVariable<FString> CVarType(TEXT("Test.Type"), TEXT(""), TEXT("Default"));
+            TEST_EXPECT(CVarType.GetValue().Equals(TEXT("FromConfig")));
         }
 
         GConfig = PreviousConfig;
     }
 
-    TEST_SECTION("Variables registered before the command line is parsed still pick it up");
+    TEST_SECTION(TEXT("Variables registered before the command line is parsed still pick it up"));
     {
-        InitializeFromLine("");
+        InitializeFromLine(TEXT(""));
 
-        TAutoConsoleVariable<bool>    CVarBool("Test.Deferred.Bool", "", false);
-        TAutoConsoleVariable<int32>   CVarInt("Test.Deferred.Int", "", 0);
-        TAutoConsoleVariable<float>   CVarFloat("Test.Deferred.Float", "", 0.0f);
-        TAutoConsoleVariable<FString> CVarString("Test.Deferred.String", "", "Unknown");
+        TAutoConsoleVariable<bool>    CVarBool(TEXT("Test.Deferred.Bool"), TEXT(""), false);
+        TAutoConsoleVariable<int32>   CVarInt(TEXT("Test.Deferred.Int"), TEXT(""), 0);
+        TAutoConsoleVariable<float>   CVarFloat(TEXT("Test.Deferred.Float"), TEXT(""), 0.0f);
+        TAutoConsoleVariable<FString> CVarString(TEXT("Test.Deferred.String"), TEXT(""), TEXT("Unknown"));
 
         // Nothing was on the command line at registration time
-        TEST_EXPECT_EQ(CVarString.GetValue(), FString("Unknown"));
+        TEST_EXPECT_EQ(CVarString.GetValue(), FString(TEXT("Unknown")));
 
         InitializeFromLine(
-            "-Test.Deferred.Bool=true -Test.Deferred.Int=42 "
-            "-Test.Deferred.Float=0.25 -Test.Deferred.String=Vulkan");
+            TEXT("-Test.Deferred.Bool=true -Test.Deferred.Int=42 "
+            "-Test.Deferred.Float=0.25 -Test.Deferred.String=Vulkan"));
 
         FConsoleManager::Get().LoadFromCommandLine();
 
         TEST_EXPECT_EQ(CVarBool.GetValue(), true);
         TEST_EXPECT_EQ(CVarInt.GetValue(), 42);
         TEST_EXPECT_EQ(CVarFloat.GetValue(), 0.25f);
-        TEST_EXPECT(CVarString.GetValue().Equals("Vulkan"));
+        TEST_EXPECT(CVarString.GetValue().Equals(TEXT("Vulkan")));
 
         TEST_EXPECT_EQ(GetSetByFlag(CVarString.operator->()), EConsoleVariableFlags::SetByCommandLine);
     }
 
-    TEST_SECTION("The deferred pass honours bare switches and clamp ranges");
+    TEST_SECTION(TEXT("The deferred pass honours bare switches and clamp ranges"));
     {
-        InitializeFromLine("");
+        InitializeFromLine(TEXT(""));
 
-        TAutoConsoleVariable<bool>  CVarSwitch("Test.Deferred.Switch", "", false);
-        TAutoConsoleVariable<int32> CVarClamped("Test.Deferred.Clamped", "", 0, 0, 16);
+        TAutoConsoleVariable<bool>  CVarSwitch(TEXT("Test.Deferred.Switch"), TEXT(""), false);
+        TAutoConsoleVariable<int32> CVarClamped(TEXT("Test.Deferred.Clamped"), TEXT(""), 0, 0, 16);
 
-        InitializeFromLine("-Test.Deferred.Switch -Test.Deferred.Clamped=1000");
+        InitializeFromLine(TEXT("-Test.Deferred.Switch -Test.Deferred.Clamped=1000"));
         FConsoleManager::Get().LoadFromCommandLine();
 
         TEST_EXPECT_EQ(CVarSwitch.GetValue(), true);
         TEST_EXPECT_EQ(CVarClamped.GetValue(), 16);
     }
 
-    TEST_SECTION("The deferred pass leaves unmatched variables alone");
+    TEST_SECTION(TEXT("The deferred pass leaves unmatched variables alone"));
     {
-        InitializeFromLine("");
+        InitializeFromLine(TEXT(""));
 
-        TAutoConsoleVariable<FString> CVarUntouched("Test.Deferred.Untouched", "", "Default");
+        TAutoConsoleVariable<FString> CVarUntouched(TEXT("Test.Deferred.Untouched"), TEXT(""), TEXT("Default"));
 
-        InitializeFromLine("-Test.Deferred.SomethingElse=Value");
+        InitializeFromLine(TEXT("-Test.Deferred.SomethingElse=Value"));
         FConsoleManager::Get().LoadFromCommandLine();
 
-        TEST_EXPECT(CVarUntouched.GetValue().Equals("Default"));
+        TEST_EXPECT(CVarUntouched.GetValue().Equals(TEXT("Default")));
         TEST_EXPECT(GetSetByFlag(CVarUntouched.operator->()) != EConsoleVariableFlags::SetByCommandLine);
     }
 
-    TEST_SECTION("ExecuteCommand reports whether the line did anything");
+    TEST_SECTION(TEXT("ExecuteCommand reports whether the line did anything"));
     {
-        InitializeFromLine("");
+        InitializeFromLine(TEXT(""));
 
         int32 NumCalls = 0;
-        FAutoConsoleCommand CCmdCounter("Test.Execute.Counter", "", FConsoleCommandDelegate::CreateLambda([&NumCalls](FStringView)
+        FAutoConsoleCommand CCmdCounter(TEXT("Test.Execute.Counter"), TEXT(""), FConsoleCommandDelegate::CreateLambda([&NumCalls](FStringView)
         {
             ++NumCalls;
         }));
 
-        TAutoConsoleVariable<int32> CVarInt("Test.Execute.Int", "", 0);
+        TAutoConsoleVariable<int32> CVarInt(TEXT("Test.Execute.Int"), TEXT(""), 0);
 
         FCountingOutputDevice OutputDevice;
-        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Counter"));
-        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Counter with arguments"));
+        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, TEXT("Test.Execute.Counter")));
+        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, TEXT("Test.Execute.Counter with arguments")));
         TEST_EXPECT_EQ(NumCalls, 2);
 
-        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Int 7"));
+        TEST_EXPECT(FConsoleManager::Get().ExecuteCommand(OutputDevice, TEXT("Test.Execute.Int 7")));
         TEST_EXPECT_EQ(CVarInt.GetValue(), 7);
         TEST_EXPECT_EQ(OutputDevice.NumErrors, 0);
 
-        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Missing"));
-        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Missing 1"));
-        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, "Test.Execute.Int NotANumber"));
+        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, TEXT("Test.Execute.Missing")));
+        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, TEXT("Test.Execute.Missing 1")));
+        TEST_EXPECT(!FConsoleManager::Get().ExecuteCommand(OutputDevice, TEXT("Test.Execute.Int NotANumber")));
         TEST_EXPECT_EQ(CVarInt.GetValue(), 7);
         TEST_EXPECT_EQ(OutputDevice.NumErrors, 3);
     }
 
     // Leave the command line empty so later suites start from a clean slate
-    InitializeFromLine("");
+    InitializeFromLine(TEXT(""));
 
     TEST_END();
 }

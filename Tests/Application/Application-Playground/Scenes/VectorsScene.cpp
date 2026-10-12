@@ -235,8 +235,8 @@ FPlaygroundScene CreateVectorsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Lines at every angle";
-        Desc.Description = "A half-turn of spokes at one pixel, then the same at three. Watch for thinning off-axis.";
+        Desc.Title       = TEXT("Lines at every angle");
+        Desc.Description = TEXT("A half-turn of spokes at one pixel, then the same at three. Watch for thinning off-axis.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(130, FOnCanvasDraw::CreateStatic(&DrawAngleFan));
         Panels.Add(FScenePanel::Create(Desc));
@@ -244,8 +244,8 @@ FPlaygroundScene CreateVectorsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Thickness";
-        Desc.Description = "One to eight pixels, horizontal and diagonal, where a wrong half-width is obvious.";
+        Desc.Title       = TEXT("Thickness");
+        Desc.Description = TEXT("One to eight pixels, horizontal and diagonal, where a wrong half-width is obvious.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(126, FOnCanvasDraw::CreateStatic(&DrawThicknessRamp));
         Panels.Add(FScenePanel::Create(Desc));
@@ -253,8 +253,8 @@ FPlaygroundScene CreateVectorsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Polylines and joins";
-        Desc.Description = "A tightening zigzag against the miter limit, a closed ring, and a star with sharp inner points.";
+        Desc.Title       = TEXT("Polylines and joins");
+        Desc.Description = TEXT("A tightening zigzag against the miter limit, a closed ring, and a star with sharp inner points.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(100, FOnCanvasDraw::CreateStatic(&DrawPolylines));
         Panels.Add(FScenePanel::Create(Desc));
@@ -262,8 +262,8 @@ FPlaygroundScene CreateVectorsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Circles and arcs";
-        Desc.Description = "Radii an octave apart at one pixel, filled wedges, and nested arcs at growing thickness.";
+        Desc.Title       = TEXT("Circles and arcs");
+        Desc.Description = TEXT("Radii an octave apart at one pixel, filled wedges, and nested arcs at growing thickness.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(140, FOnCanvasDraw::CreateStatic(&DrawCirclesAndArcs));
         Panels.Add(FScenePanel::Create(Desc));
@@ -271,8 +271,8 @@ FPlaygroundScene CreateVectorsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Filled polygons";
-        Desc.Description = "A triangle, then a fan for every side count from three to eight.";
+        Desc.Title       = TEXT("Filled polygons");
+        Desc.Description = TEXT("A triangle, then a fan for every side count from three to eight.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(90, FOnCanvasDraw::CreateStatic(&DrawFilledPolygons));
         Panels.Add(FScenePanel::Create(Desc));
@@ -280,12 +280,12 @@ FPlaygroundScene CreateVectorsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Beziers";
-        Desc.Description = "Graph links at four thicknesses, a near-cusp, and a long shallow sweep.";
+        Desc.Title       = TEXT("Beziers");
+        Desc.Description = TEXT("Graph links at four thicknesses, a near-cusp, and a long shallow sweep.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCanvas(140, FOnCanvasDraw::CreateStatic(&DrawBeziers));
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Vectors", MakeSceneColumn("Vectors", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Vectors"), MakeSceneColumn(TEXT("Vectors"), Fonts, Panels));
 }

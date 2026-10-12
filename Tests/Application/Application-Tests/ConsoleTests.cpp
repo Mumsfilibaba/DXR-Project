@@ -112,32 +112,32 @@ bool ConsoleToggle_Test()
 
     TSharedPtr<FConsole> Console = CreateConsole();
 
-    TEST_SECTION("A new console starts closed");
+    TEST_SECTION(TEXT("A new console starts closed"));
     TEST_EXPECT(!Console->IsOpen());
 
-    TEST_SECTION("The grave accent and World1 both toggle");
+    TEST_SECTION(TEXT("The grave accent and World1 both toggle"));
     TEST_EXPECT(FConsole::IsToggleKey(Keys::GraveAccent));
     TEST_EXPECT(FConsole::IsToggleKey(Keys::World1));
     TEST_EXPECT(!FConsole::IsToggleKey(Keys::A));
 
-    TEST_SECTION("The toggle key opens a closed console");
+    TEST_SECTION(TEXT("The toggle key opens a closed console"));
     TEST_EXPECT(Console->OnKeyDown(CreateKeyDownEvent(Keys::GraveAccent)).IsEventHandled());
     TEST_EXPECT(Console->IsOpen());
     TEST_EXPECT(Console->GetVisibility() == EVisibility::Visible);
 
-    TEST_SECTION("The input line intercepts the toggle key and closes it again");
+    TEST_SECTION(TEXT("The input line intercepts the toggle key and closes it again"));
     TEST_EXPECT(Console->GetInput()->OnKeyDown(CreateKeyDownEvent(Keys::GraveAccent)).IsEventHandled());
     TEST_EXPECT(!Console->IsOpen());
     TEST_EXPECT(Console->GetVisibility() == EVisibility::Hidden);
 
-    TEST_SECTION("A repeat does not toggle");
+    TEST_SECTION(TEXT("A repeat does not toggle"));
     Console->SetIsOpen(true);
     Console->OnKeyDown(FKeyEvent(EInputEventType::KeyDown, Keys::GraveAccent, FModifierKeyState(), true, true));
     TEST_EXPECT(Console->IsOpen());
 
-    TEST_SECTION("Toggling drops the candidate list and the history walk");
+    TEST_SECTION(TEXT("Toggling drops the candidate list and the history walk"));
     RegisterConsoleTestVariables();
-    TypeText(Console, "Test.Console.");
+    TypeText(Console, TEXT("Test.Console."));
     Console->GetCommandLine().MoveSelectionUp();
 
     TEST_EXPECT(Console->GetCommandLine().HasCandidates());
@@ -158,26 +158,26 @@ bool ConsoleLayout_Test()
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
-    Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
+    Console->GetLogBuffer().Log(ELogSeverity::Info, TEXT("A line of log"));
 
     Console->PrepareDesiredSize();
     Console->Arrange(FRectangle(FIntVector2(0, 0), 1280, 720));
 
-    TEST_SECTION("The console takes the full width but only the text-area height");
+    TEST_SECTION(TEXT("The console takes the full width but only the text-area height"));
     TEST_EXPECT_EQ(Console->GetContentRectangle().Width, 1280);
     TEST_EXPECT_EQ(Console->GetContentRectangle().Height, 384);
 
-    TEST_SECTION("The input line sits at the bottom of the console");
+    TEST_SECTION(TEXT("The input line sits at the bottom of the console"));
     const FRectangle InputBounds = Console->GetInput()->GetContentRectangle();
     TEST_EXPECT(InputBounds.GetBottom() <= Console->GetContentRectangle().GetBottom());
     TEST_EXPECT(InputBounds.Position.Y > Console->GetScrollBox()->GetContentRectangle().Position.Y);
 
-    TEST_SECTION("The scrolled area is above the input line and takes the rest");
+    TEST_SECTION(TEXT("The scrolled area is above the input line and takes the rest"));
     const FRectangle ScrollBounds = Console->GetScrollBox()->GetContentRectangle();
     TEST_EXPECT(ScrollBounds.GetBottom() <= InputBounds.Position.Y);
     TEST_EXPECT(ScrollBounds.Height > 0);
 
-    TEST_SECTION("A console shorter than the text area is clamped to what it was given");
+    TEST_SECTION(TEXT("A console shorter than the text area is clamped to what it was given"));
     TSharedPtr<FConsole> SmallConsole = CreateConsole();
     SmallConsole->SetIsOpen(true);
     SmallConsole->PrepareDesiredSize();
@@ -195,26 +195,26 @@ bool ConsoleLogDraw_Test()
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
-    Console->GetLogBuffer().Log(ELogSeverity::Info, "Info line");
-    Console->GetLogBuffer().Log(ELogSeverity::Warning, "Warning line");
-    Console->GetLogBuffer().Log(ELogSeverity::Error, "Error line");
+    Console->GetLogBuffer().Log(ELogSeverity::Info, TEXT("Info line"));
+    Console->GetLogBuffer().Log(ELogSeverity::Warning, TEXT("Warning line"));
+    Console->GetLogBuffer().Log(ELogSeverity::Error, TEXT("Error line"));
 
     FDrawCommandList CommandList;
     LayOutAndDraw(Console, CommandList);
 
-    TEST_SECTION("Every log line turns up as text, inside a balanced clip stack");
+    TEST_SECTION(TEXT("Every log line turns up as text, inside a balanced clip stack"));
     TEST_EXPECT(!CommandList.IsEmpty());
     TEST_EXPECT(CommandList.IsClipStackBalanced());
 
-    const int32 InfoIndex    = CommandList.FindTextCommand("Info line");
-    const int32 WarningIndex = CommandList.FindTextCommand("Warning line");
-    const int32 ErrorIndex   = CommandList.FindTextCommand("Error line");
+    const int32 InfoIndex    = CommandList.FindTextCommand(TEXT("Info line"));
+    const int32 WarningIndex = CommandList.FindTextCommand(TEXT("Warning line"));
+    const int32 ErrorIndex   = CommandList.FindTextCommand(TEXT("Error line"));
 
     TEST_EXPECT(InfoIndex != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(WarningIndex != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(ErrorIndex != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("Each line is drawn in the color of its severity");
+    TEST_SECTION(TEXT("Each line is drawn in the color of its severity"));
     if (InfoIndex != FDrawCommandList::InvalidIndex && WarningIndex != FDrawCommandList::InvalidIndex && ErrorIndex != FDrawCommandList::InvalidIndex)
     {
         TEST_EXPECT(CommandList[InfoIndex].HasTint(FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Info)));
@@ -222,24 +222,24 @@ bool ConsoleLogDraw_Test()
         TEST_EXPECT(CommandList[ErrorIndex].HasTint(FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error)));
     }
 
-    TEST_SECTION("The lines are stacked in the order they were logged");
+    TEST_SECTION(TEXT("The lines are stacked in the order they were logged"));
     if (InfoIndex != FDrawCommandList::InvalidIndex && ErrorIndex != FDrawCommandList::InvalidIndex)
     {
         TEST_EXPECT(CommandList[InfoIndex].Bounds.Position.Y < CommandList[ErrorIndex].Bounds.Position.Y);
     }
 
-    TEST_SECTION("A closed console draws nothing at all");
+    TEST_SECTION(TEXT("A closed console draws nothing at all"));
     Console->SetIsOpen(false);
     LayOutAndDraw(Console, CommandList);
     TEST_EXPECT(CommandList.IsEmpty());
 
-    TEST_SECTION("The newest line is in view once the log overflows");
+    TEST_SECTION(TEXT("The newest line is in view once the log overflows"));
     TSharedPtr<FConsole> LongConsole = CreateConsole();
     LongConsole->SetIsOpen(true);
 
     for (int32 Index = 0; Index < 200; ++Index)
     {
-        LongConsole->GetLogBuffer().Log(ELogSeverity::Info, FString::Printf("Line %d", Index));
+        LongConsole->GetLogBuffer().Log(ELogSeverity::Info, FString::Printf(TEXT("Line %d"), Index));
     }
 
     TEST_EXPECT_EQ(LongConsole->GetLogBuffer().GetNumLines(), FConsoleLogBuffer::DefaultMaxLines);
@@ -247,8 +247,8 @@ bool ConsoleLogDraw_Test()
     LayOutAndDraw(LongConsole, CommandList);
 
     TEST_EXPECT(LongConsole->GetScrollBox()->IsScrolledToEnd());
-    TEST_EXPECT(CommandList.FindTextCommand("Line 199") != FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(CommandList.FindTextCommand("Line 0") == FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("Line 199")) != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("Line 0")) == FDrawCommandList::InvalidIndex);
 
     TEST_END();
 }
@@ -262,29 +262,29 @@ bool ConsoleCandidateDraw_Test()
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
-    Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
+    Console->GetLogBuffer().Log(ELogSeverity::Info, TEXT("A line of log"));
 
     FDrawCommandList CommandList;
     LayOutAndDraw(Console, CommandList);
 
-    TEST_SECTION("The log is showing before anything is typed");
-    TEST_EXPECT(CommandList.FindTextCommand("A line of log") != FDrawCommandList::InvalidIndex);
+    TEST_SECTION(TEXT("The log is showing before anything is typed"));
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("A line of log")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("Candidates replace the log once the line matches something");
-    TypeText(Console, "Test.Console.");
+    TEST_SECTION(TEXT("Candidates replace the log once the line matches something"));
+    TypeText(Console, TEXT("Test.Console."));
     TEST_EXPECT(Console->GetCommandLine().HasCandidates());
 
     LayOutAndDraw(Console, CommandList);
 
-    TEST_EXPECT(CommandList.FindTextCommand("A line of log") == FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(CommandList.FindTextCommand("Test.Console.Int") != FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(CommandList.FindTextCommand("Test.Console.Bool") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("A line of log")) == FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("Test.Console.Int")) != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("Test.Console.Bool")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("A candidate row carries the value and the type");
-    TEST_EXPECT(CommandList.FindTextCommand("[Int]") != FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(CommandList.FindTextCommand("[Bool]") != FDrawCommandList::InvalidIndex);
+    TEST_SECTION(TEXT("A candidate row carries the value and the type"));
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("[Int]")) != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("[Bool]")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("No row is filled in until a selection is made");
+    TEST_SECTION(TEXT("No row is filled in until a selection is made"));
     const int32 NumBoxesWithoutSelection = CommandList.CountCommandsOfType(EDrawCommandType::Box);
 
     TSharedPtr<FEditableText> Input = Console->GetInput();
@@ -295,21 +295,21 @@ bool ConsoleCandidateDraw_Test()
     LayOutAndDraw(Console, CommandList);
     TEST_EXPECT(CommandList.CountCommandsOfType(EDrawCommandType::Box) > NumBoxesWithoutSelection);
 
-    TEST_SECTION("Tab completes the line and the log comes back");
+    TEST_SECTION(TEXT("Tab completes the line and the log comes back"));
     Input->OnKeyDown(CreateKeyDownEvent(Keys::Tab));
     TEST_EXPECT(!Console->GetCommandLine().HasCandidates());
 
     LayOutAndDraw(Console, CommandList);
-    TEST_EXPECT(CommandList.FindTextCommand("A line of log") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("A line of log")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("Clearing the line brings the log back too");
+    TEST_SECTION(TEXT("Clearing the line brings the log back too"));
     Input->ClearText();
 
     TEST_EXPECT(Console->GetCommandLine().GetText().IsEmpty());
     TEST_EXPECT(!Console->GetCommandLine().HasCandidates());
 
     LayOutAndDraw(Console, CommandList);
-    TEST_EXPECT(CommandList.FindTextCommand("A line of log") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("A line of log")) != FDrawCommandList::InvalidIndex);
 
     TEST_END();
 }
@@ -323,7 +323,7 @@ bool ConsoleCandidateHighlight_Test()
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
-    TypeText(Console, "Test.Console.");
+    TypeText(Console, TEXT("Test.Console."));
     Console->GetInput()->OnKeyDown(CreateKeyDownEvent(Keys::Up));
 
     TEST_EXPECT(Console->GetCommandLine().GetSelectedCandidateIndex() != FConsoleCommandLine::InvalidIndex);
@@ -345,7 +345,7 @@ bool ConsoleCandidateHighlight_Test()
         }
     }
 
-    TEST_SECTION("Exactly one row is filled in, the selected one");
+    TEST_SECTION(TEXT("Exactly one row is filled in, the selected one"));
     TEST_EXPECT_EQ(NumHighlights, 1);
 
     if (HighlightIndex == FDrawCommandList::InvalidIndex)
@@ -353,15 +353,15 @@ bool ConsoleCandidateHighlight_Test()
         TEST_END();
     }
 
-    TEST_SECTION("The fill spans the console from edge to edge");
+    TEST_SECTION(TEXT("The fill spans the console from edge to edge"));
     const FRectangle ConsoleBounds   = Console->GetContentRectangle();
     const FRectangle HighlightBounds = CommandList[HighlightIndex].Bounds;
 
     TEST_EXPECT_EQ(HighlightBounds.Position.X, ConsoleBounds.Position.X);
     TEST_EXPECT_EQ(HighlightBounds.Width, ConsoleBounds.Width);
 
-    TEST_SECTION("The row text still carries the inset the fill does not");
-    const int32 NameIndex = CommandList.FindTextCommand("Test.Console.Int");
+    TEST_SECTION(TEXT("The row text still carries the inset the fill does not"));
+    const int32 NameIndex = CommandList.FindTextCommand(TEXT("Test.Console.Int"));
     TEST_EXPECT(NameIndex != FDrawCommandList::InvalidIndex);
 
     if (NameIndex != FDrawCommandList::InvalidIndex)
@@ -369,13 +369,13 @@ bool ConsoleCandidateHighlight_Test()
         TEST_EXPECT_EQ(CommandList[NameIndex].Bounds.Position.X, ConsoleBounds.Position.X + GExpectedRowInset);
     }
 
-    TEST_SECTION("A log line lines up with a candidate row");
+    TEST_SECTION(TEXT("A log line lines up with a candidate row"));
     Console->GetInput()->ClearText();
-    Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
+    Console->GetLogBuffer().Log(ELogSeverity::Info, TEXT("A line of log"));
 
     LayOutAndDraw(Console, CommandList);
 
-    const int32 LogIndex = CommandList.FindTextCommand("A line of log");
+    const int32 LogIndex = CommandList.FindTextCommand(TEXT("A line of log"));
     TEST_EXPECT(LogIndex != FDrawCommandList::InvalidIndex);
 
     if (LogIndex != FDrawCommandList::InvalidIndex)
@@ -383,7 +383,7 @@ bool ConsoleCandidateHighlight_Test()
         TEST_EXPECT_EQ(CommandList[LogIndex].Bounds.Position.X, ConsoleBounds.Position.X + GExpectedRowInset);
     }
 
-    TEST_SECTION("The input field keeps the inset too, and is rounded");
+    TEST_SECTION(TEXT("The input field keeps the inset too, and is rounded"));
     const FRectangle InputBounds = Console->GetInput()->GetContentRectangle();
     TEST_EXPECT(InputBounds.Position.X >= ConsoleBounds.Position.X + GExpectedRowInset);
 
@@ -407,7 +407,7 @@ bool ConsoleCandidateHighlight_Test()
         TEST_EXPECT_EQ(CommandList[InputFillIndex].Bounds.Position.X, ConsoleBounds.Position.X + GExpectedRowInset);
     }
 
-    TEST_SECTION("The console background is lighter than the field sunk into it");
+    TEST_SECTION(TEXT("The console background is lighter than the field sunk into it"));
     const FConsole::FDesc DefaultDesc;
     TEST_EXPECT(DefaultDesc.BackgroundColor.R > DefaultDesc.InputBackgroundColor.R);
 
@@ -423,7 +423,7 @@ bool ConsoleCandidateColumns_Test()
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
 
-    TypeText(Console, "Test.Console.");
+    TypeText(Console, TEXT("Test.Console."));
     Console->GetInput()->OnKeyDown(CreateKeyDownEvent(Keys::Up));
 
     FDrawCommandList CommandList;
@@ -431,10 +431,10 @@ bool ConsoleCandidateColumns_Test()
 
     static const CHAR_T* RowNames[] =
     {
-        "Test.Console.Int",
-        "Test.Console.Float",
-        "Test.Console.Bool",
-        "Test.Console.String",
+        TEXT("Test.Console.Int"),
+        TEXT("Test.Console.Float"),
+        TEXT("Test.Console.Bool"),
+        TEXT("Test.Console.String"),
     };
 
     TArray<TArray<int32>> Rows;
@@ -447,7 +447,7 @@ bool ConsoleCandidateColumns_Test()
         }
     }
 
-    TEST_SECTION("Every candidate is drawn as a row of five cells");
+    TEST_SECTION(TEXT("Every candidate is drawn as a row of five cells"));
     TEST_EXPECT_EQ(Rows.Size(), static_cast<int32>(ARRAY_COUNT(RowNames)));
 
     for (const TArray<int32>& Row : Rows)
@@ -455,7 +455,7 @@ bool ConsoleCandidateColumns_Test()
         TEST_EXPECT_EQ(Row.Size(), 5);
     }
 
-    TEST_SECTION("And every column starts at the same offset, whatever the name in front of it is");
+    TEST_SECTION(TEXT("And every column starts at the same offset, whatever the name in front of it is"));
     for (int32 RowIndex = 1; RowIndex < Rows.Size(); ++RowIndex)
     {
         if (Rows[RowIndex].Size() != Rows[0].Size())
@@ -469,7 +469,7 @@ bool ConsoleCandidateColumns_Test()
         }
     }
 
-    TEST_SECTION("The columns are in the order the ImGui rows had them");
+    TEST_SECTION(TEXT("The columns are in the order the ImGui rows had them"));
     if (!Rows.IsEmpty() && Rows[0].Size() == 5)
     {
         for (int32 CellIndex = 1; CellIndex < Rows[0].Size(); ++CellIndex)
@@ -478,13 +478,13 @@ bool ConsoleCandidateColumns_Test()
         }
     }
 
-    TEST_SECTION("The set-by flag has a column of its own rather than riding along with the help");
-    TEST_EXPECT(CommandList.FindTextCommand("[Int]") != FDrawCommandList::InvalidIndex);
-    const FString SetByText = FString::Printf("[%s]", SetByFlagToString(EConsoleVariableFlags::SetByConstructor));
+    TEST_SECTION(TEXT("The set-by flag has a column of its own rather than riding along with the help"));
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("[Int]")) != FDrawCommandList::InvalidIndex);
+    const FString SetByText = FString::Printf(TEXT("[%s]"), SetByFlagToString(EConsoleVariableFlags::SetByConstructor));
     TEST_EXPECT(CommandList.FindTextCommand(FStringView(SetByText.Data(), SetByText.Length())) != FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(CommandList.FindTextCommand("[Help: An int variable for the console tests]") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("[Help: An int variable for the console tests]")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("A row is as tall as the selectable the ImGui console used, so its text can centre");
+    TEST_SECTION(TEXT("A row is as tall as the selectable the ImGui console used, so its text can centre"));
     const int32 HighlightIndex = FindBoxCommand(CommandList, FConsole::FDesc().SelectedCandidateColor);
     TEST_EXPECT(HighlightIndex != FDrawCommandList::InvalidIndex);
 
@@ -495,7 +495,7 @@ bool ConsoleCandidateColumns_Test()
 
     TEST_EXPECT_EQ(CommandList[HighlightIndex].Bounds.Height, GExpectedRowHeight);
 
-    TEST_SECTION("The text of the selected row fills that height rather than sitting on top of it");
+    TEST_SECTION(TEXT("The text of the selected row fills that height rather than sitting on top of it"));
     const int32    SelectedIndex = Console->GetCommandLine().GetSelectedCandidateIndex();
     const FString& SelectedName  = Console->GetCommandLine().GetCandidates()[SelectedIndex].Second;
 
@@ -508,7 +508,7 @@ bool ConsoleCandidateColumns_Test()
         TEST_EXPECT_EQ(CommandList[SelectedNameIndex].Bounds.Height, GExpectedRowHeight);
     }
 
-    TEST_SECTION("Every row is that tall, so the list steps by one row height");
+    TEST_SECTION(TEXT("Every row is that tall, so the list steps by one row height"));
     if (Rows.Size() >= 2)
     {
         const int32 FirstRowTop  = CommandList[CommandList.FindTextCommand(RowNames[0])].Bounds.Position.Y;
@@ -525,7 +525,7 @@ bool ConsoleInputChrome_Test()
 
     TSharedPtr<FConsole> Console = CreateConsole();
     Console->SetIsOpen(true);
-    Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
+    Console->GetLogBuffer().Log(ELogSeverity::Info, TEXT("A line of log"));
     Console->GetInput()->OnFocusGained();
 
     FDrawCommandList CommandList;
@@ -542,10 +542,10 @@ bool ConsoleInputChrome_Test()
     const FRectangle InputBounds   = CommandList[InputBoxIndex].Bounds;
     const FRectangle ConsoleBounds = Console->GetContentRectangle();
 
-    TEST_SECTION("The field is the height an ImGui InputText framed its text at");
+    TEST_SECTION(TEXT("The field is the height an ImGui InputText framed its text at"));
     TEST_EXPECT_EQ(InputBounds.Height, GExpectedInputHeight);
 
-    TEST_SECTION("The text cursor sits in the middle of it rather than against either edge");
+    TEST_SECTION(TEXT("The text cursor sits in the middle of it rather than against either edge"));
     int32 TextCursorIndex = FDrawCommandList::InvalidIndex;
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
@@ -568,18 +568,18 @@ bool ConsoleInputChrome_Test()
         TEST_EXPECT_EQ(TextCursorBounds.Position.Y - InputBounds.Position.Y, InputBounds.GetBottom() - TextCursorBounds.GetBottom());
     }
 
-    TEST_SECTION("The field clears the bottom of the console rather than sitting flush against it");
+    TEST_SECTION(TEXT("The field clears the bottom of the console rather than sitting flush against it"));
     TEST_EXPECT_EQ(ConsoleBounds.GetBottom() - InputBounds.GetBottom(), GExpectedInputPadding);
 
-    TEST_SECTION("It keeps the inset the rows above it carry, on both edges");
+    TEST_SECTION(TEXT("It keeps the inset the rows above it carry, on both edges"));
     TEST_EXPECT_EQ(InputBounds.Position.X, ConsoleBounds.Position.X + GExpectedRowInset);
     TEST_EXPECT_EQ(ConsoleBounds.GetRight() - InputBounds.GetRight(), GExpectedRowInset);
 
-    TEST_SECTION("The corners are rounded far enough to be seen, and not so far it becomes a capsule");
+    TEST_SECTION(TEXT("The corners are rounded far enough to be seen, and not so far it becomes a capsule"));
     TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() >= 8.0f);
     TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() <= static_cast<float>(InputBounds.Height) * 0.5f);
 
-    TEST_SECTION("The scrolled area stops above the padding, so a log line never runs into the field");
+    TEST_SECTION(TEXT("The scrolled area stops above the padding, so a log line never runs into the field"));
     TEST_EXPECT(Console->GetScrollBox()->GetContentRectangle().GetBottom() <= InputBounds.Position.Y - GExpectedInputPadding);
 
     TEST_END();
@@ -594,13 +594,13 @@ bool ConsoleCursorShape_Test()
     Console->PrepareDesiredSize();
     Console->Arrange(FRectangle(FIntVector2(0, 0), 1280, 720));
 
-    TEST_SECTION("An element has no opinion on the shape unless it says so");
+    TEST_SECTION(TEXT("An element has no opinion on the shape unless it says so"));
     ECursor ElementCursor = ECursor::None;
     TEST_EXPECT(!Console->GetCursor(ElementCursor));
     TEST_EXPECT(Console->GetInput()->GetCursor(ElementCursor));
     TEST_EXPECT(ElementCursor == ECursor::TextInput);
 
-    TEST_SECTION("A path with nothing to say leaves the arrow alone");
+    TEST_SECTION(TEXT("A path with nothing to say leaves the arrow alone"));
     FElementPath EmptyPath;
     TEST_EXPECT(FApplication::ResolveCursor(EmptyPath) == ECursor::Arrow);
 
@@ -608,13 +608,13 @@ bool ConsoleCursorShape_Test()
     ConsolePath.Add(EVisibility::Visible, Console);
     TEST_EXPECT(FApplication::ResolveCursor(ConsolePath) == ECursor::Arrow);
 
-    TEST_SECTION("A path ending in the input field asks for the I-beam");
+    TEST_SECTION(TEXT("A path ending in the input field asks for the I-beam"));
     FElementPath FieldPath;
     FieldPath.Add(EVisibility::Visible, Console);
     FieldPath.Add(EVisibility::Visible, Console->GetInput());
     TEST_EXPECT(FApplication::ResolveCursor(FieldPath) == ECursor::TextInput);
 
-    TEST_SECTION("So does the padding ring around it, which has no element of its own");
+    TEST_SECTION(TEXT("So does the padding ring around it, which has no element of its own"));
     const FRectangle TextBounds = Console->GetInput()->GetContentRectangle();
     const FIntVector2 RingPoint(TextBounds.Position.X - 5, TextBounds.Position.Y + 2);
 
@@ -625,14 +625,14 @@ bool ConsoleCursorShape_Test()
     TEST_EXPECT(!RingPath.Contains(Console->GetInput()));
     TEST_EXPECT(FApplication::ResolveCursor(RingPath) == ECursor::TextInput);
 
-    TEST_SECTION("The area above it leaves the arrow, since nothing on that path edits text");
+    TEST_SECTION(TEXT("The area above it leaves the arrow, since nothing on that path edits text"));
     FElementPath LogPath;
     Console->HitTest(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
 
     TEST_EXPECT(!LogPath.IsEmpty());
     TEST_EXPECT(FApplication::ResolveCursor(LogPath) == ECursor::Arrow);
 
-    TEST_SECTION("The leaf has the last word, so a field inside a panel still wins");
+    TEST_SECTION(TEXT("The leaf has the last word, so a field inside a panel still wins"));
     FBorder::FDesc PanelDesc;
     PanelDesc.SetCursor(ECursor::Hand);
 
@@ -657,7 +657,7 @@ bool ConsoleInputFieldSurvives_Test()
 
     RegisterConsoleCrowdVariables();
 
-    TSharedPtr<FTrueTypeFontFace> Font = FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + "/Editor/Fonts/consola.ttf", 16);
+    TSharedPtr<FTrueTypeFontFace> Font = FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + TEXT("/Editor/Fonts/consola.ttf"), 16);
     TEST_EXPECT(Font != nullptr);
 
     if (!Font)
@@ -675,10 +675,10 @@ bool ConsoleInputFieldSurvives_Test()
 
     for (int32 Index = 0; Index < FConsoleLogBuffer::DefaultMaxLines; ++Index)
     {
-        Console->GetLogBuffer().Log(ELogSeverity::Info, FString::Printf("[FRenderer]: Frame %d finished in 16.7ms with 428 draw calls", Index));
+        Console->GetLogBuffer().Log(ELogSeverity::Info, FString::Printf(TEXT("[FRenderer]: Frame %d finished in 16.7ms with 428 draw calls"), Index));
     }
 
-    TEST_SECTION("One typed character brings up a candidate list longer than the console");
+    TEST_SECTION(TEXT("One typed character brings up a candidate list longer than the console"));
     const CHAR_T FirstCharacter[2] = { GConsoleCrowdPrefix[0], 0 };
     TypeText(Console, FirstCharacter);
     TEST_EXPECT(Console->GetCommandLine().GetCandidates().Size() >= GNumConsoleCrowdVariables);
@@ -689,7 +689,7 @@ bool ConsoleInputFieldSurvives_Test()
     const FFloatColor InputColor    = Desc.InputBackgroundColor;
     const int32       InputBoxIndex = FindBoxCommand(CommandList, InputColor);
 
-    TEST_SECTION("The field is still drawn, at the rectangle it was arranged into");
+    TEST_SECTION(TEXT("The field is still drawn, at the rectangle it was arranged into"));
     TEST_EXPECT(InputBoxIndex != FDrawCommandList::InvalidIndex);
 
     if (InputBoxIndex == FDrawCommandList::InvalidIndex)
@@ -704,16 +704,16 @@ bool ConsoleInputFieldSurvives_Test()
     TEST_EXPECT(InputBoxBounds.Intersect(TextBounds) == TextBounds);
     TEST_EXPECT(InputBoxBounds.GetBottom() <= Console->GetContentRectangle().GetBottom());
 
-    TEST_SECTION("It is drawn above every clip region the rows are drawn inside");
+    TEST_SECTION(TEXT("It is drawn above every clip region the rows are drawn inside"));
     TEST_EXPECT(CommandList[InputBoxIndex].LayerId > FindHighestClippedLayer(CommandList));
 
     FUIDrawData DrawData;
     DrawData.BuildFromCommandList(CommandList);
 
-    TEST_SECTION("The whole frame fits the vertex budget, so nothing was truncated away");
+    TEST_SECTION(TEXT("The whole frame fits the vertex budget, so nothing was truncated away"));
     TEST_EXPECT(DrawData.GetVertices().Size() < FUIDrawData::MaxVertexCount);
 
-    TEST_SECTION("Its geometry survives the translation into triangles");
+    TEST_SECTION(TEXT("Its geometry survives the translation into triangles"));
     TEST_EXPECT(CommandList[InputBoxIndex].CornerRadius.GetLargest() > 0.0f);
     TEST_EXPECT(!GetShapeVertices(DrawData).IsEmpty());
 
@@ -727,10 +727,10 @@ bool ConsoleInputFieldSurvives_Test()
         }
     }
 
-    TEST_SECTION("And the batch carrying it draws, unclipped");
+    TEST_SECTION(TEXT("And the batch carrying it draws, unclipped"));
     TEST_EXPECT(bFoundUnclippedShape);
 
-    TEST_SECTION("The text cursor is drawn over the field rather than under the rows");
+    TEST_SECTION(TEXT("The text cursor is drawn over the field rather than under the rows"));
     int32 TextCursorLayer = -1;
     for (int32 Index = 0; Index < CommandList.Size(); ++Index)
     {
@@ -742,7 +742,7 @@ bool ConsoleInputFieldSurvives_Test()
 
     TEST_EXPECT(TextCursorLayer >= CommandList[InputBoxIndex].LayerId);
 
-    TEST_SECTION("Every further character keeps the field on screen");
+    TEST_SECTION(TEXT("Every further character keeps the field on screen"));
     for (int32 Index = 1; GConsoleCrowdPrefix[Index] != 0; ++Index)
     {
         const CHAR_T NextCharacter[2] = { GConsoleCrowdPrefix[Index], 0 };
@@ -762,7 +762,7 @@ bool ConsoleModalInput_Test()
     TEST_BEGIN();
 
     FWindow::FDesc WindowDesc;
-    WindowDesc.Title = "Console Host";
+    WindowDesc.Title = TEXT("Console Host");
     WindowDesc.Size  = FIntVector2(1280, 720);
 
     TSharedPtr<FWindow> Window = FWindow::Create(WindowDesc);
@@ -778,33 +778,33 @@ bool ConsoleModalInput_Test()
 
     FApplication::LayoutWindow(Window);
 
-    TEST_SECTION("A closed console leaves the input alone");
+    TEST_SECTION(TEXT("A closed console leaves the input alone"));
     TEST_EXPECT(!Console->CapturesAllInput());
 
     FElementPath ClosedPath;
     Window->HitTest(FIntVector2(640, 600), ClosedPath);
     TEST_EXPECT(ClosedPath.Contains(Content));
 
-    TEST_SECTION("An open console reports that it takes everything");
+    TEST_SECTION(TEXT("An open console reports that it takes everything"));
     Console->SetIsOpen(true);
     FApplication::LayoutWindow(Window);
     TEST_EXPECT(Console->CapturesAllInput());
 
-    TEST_SECTION("A click below the console never reaches the content underneath it");
+    TEST_SECTION(TEXT("A click below the console never reaches the content underneath it"));
     FElementPath BelowConsolePath;
     Window->HitTest(FIntVector2(640, 600), BelowConsolePath);
 
     TEST_EXPECT(!BelowConsolePath.Contains(Content));
     TEST_EXPECT(!BelowConsolePath.IsEmpty());
 
-    TEST_SECTION("A click on the console still reaches the console");
+    TEST_SECTION(TEXT("A click on the console still reaches the console"));
     FElementPath OnConsolePath;
     Window->HitTest(FIntVector2(640, 40), OnConsolePath);
 
     TEST_EXPECT(OnConsolePath.Contains(Console));
     TEST_EXPECT(!OnConsolePath.Contains(Content));
 
-    TEST_SECTION("Closing the console hands the window back");
+    TEST_SECTION(TEXT("Closing the console hands the window back"));
     Console->SetIsOpen(false);
     FApplication::LayoutWindow(Window);
 
@@ -822,7 +822,7 @@ bool ConsoleClickFocus_Test()
     TSharedPtr<FApplication> Application = CreateStubApplication();
 
     FWindow::FDesc WindowDesc;
-    WindowDesc.Title = "Console Host";
+    WindowDesc.Title = TEXT("Console Host");
     WindowDesc.Size  = FIntVector2(1280, 720);
 
     TSharedPtr<FWindow> Window = FWindow::Create(WindowDesc);
@@ -841,11 +841,11 @@ bool ConsoleClickFocus_Test()
 
     TSharedPtr<FEditableText> Input = Console->GetInput();
 
-    TEST_SECTION("Opening the console hands the keyboard to the input line rather than to the shell around it");
+    TEST_SECTION(TEXT("Opening the console hands the keyboard to the input line rather than to the shell around it"));
     Application->SetFocusElement(Console->GetFocusTarget());
     TEST_EXPECT(Input->HasKeyboardFocus());
 
-    TEST_SECTION("Clicking the log leaves it there, since nothing along that path reads a keyboard");
+    TEST_SECTION(TEXT("Clicking the log leaves it there, since nothing along that path reads a keyboard"));
     FElementPath LogPath;
     Window->HitTest(Console->GetScrollBox()->GetContentRectangle().Position, LogPath);
 
@@ -855,7 +855,7 @@ bool ConsoleClickFocus_Test()
     Application->SetFocusFromCursorPath(LogPath);
     TEST_EXPECT(Input->HasKeyboardFocus());
 
-    TEST_SECTION("So does clicking below the console, where the window is all there is under the cursor");
+    TEST_SECTION(TEXT("So does clicking below the console, where the window is all there is under the cursor"));
     FElementPath BelowPath;
     Window->HitTest(FIntVector2(640, 600), BelowPath);
 
@@ -864,14 +864,14 @@ bool ConsoleClickFocus_Test()
     Application->SetFocusFromCursorPath(BelowPath);
     TEST_EXPECT(Input->HasKeyboardFocus());
 
-    TEST_SECTION("A path with nothing focusable on it never takes the keyboard from something that has it");
+    TEST_SECTION(TEXT("A path with nothing focusable on it never takes the keyboard from something that has it"));
     FElementPath BorderPath;
     BorderPath.Add(EVisibility::Visible, FBorder::Create(ContentDesc));
 
     Application->SetFocusFromCursorPath(BorderPath);
     TEST_EXPECT(Input->HasKeyboardFocus());
 
-    TEST_SECTION("Clicking the field itself keeps it focused");
+    TEST_SECTION(TEXT("Clicking the field itself keeps it focused"));
     FElementPath FieldPath;
     Window->HitTest(Input->GetContentRectangle().Position, FieldPath);
 
@@ -880,7 +880,7 @@ bool ConsoleClickFocus_Test()
     Application->SetFocusFromCursorPath(FieldPath);
     TEST_EXPECT(Input->HasKeyboardFocus());
 
-    TEST_SECTION("Another field does take it, so the rule is not simply refusing to move focus");
+    TEST_SECTION(TEXT("Another field does take it, so the rule is not simply refusing to move focus"));
     FEditableText::FDesc FieldDesc;
     FieldDesc.Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
 
@@ -905,7 +905,7 @@ bool ConsoleInWindow_Test()
     RegisterConsoleTestVariables();
 
     FWindow::FDesc WindowDesc;
-    WindowDesc.Title    = "Console Host";
+    WindowDesc.Title    = TEXT("Console Host");
     WindowDesc.Size     = FIntVector2(1280, 720);
     WindowDesc.Position = FIntVector2(220, 140);
 
@@ -914,25 +914,25 @@ bool ConsoleInWindow_Test()
 
     Window->SetOverlay(Console);
     Console->SetIsOpen(true);
-    Console->GetLogBuffer().Log(ELogSeverity::Info, "A line of log");
+    Console->GetLogBuffer().Log(ELogSeverity::Info, TEXT("A line of log"));
 
     TSharedPtr<FEditableText> Input = Console->GetInput();
     Input->OnFocusGained();
 
     FApplication::LayoutWindow(Window);
 
-    TEST_SECTION("The console hangs from the top of the client area, wherever the window is on the desktop");
+    TEST_SECTION(TEXT("The console hangs from the top of the client area, wherever the window is on the desktop"));
     TEST_EXPECT_EQ(Console->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(Console->GetContentRectangle().Position.Y, 0);
     TEST_EXPECT_EQ(Console->GetContentRectangle().Width, 1280);
 
-    TEST_SECTION("Moving the window does not drag the console along");
+    TEST_SECTION(TEXT("Moving the window does not drag the console along"));
     Window->OnWindowMoved(FIntVector2(700, 320));
     FApplication::LayoutWindow(Window);
     TEST_EXPECT_EQ(Console->GetContentRectangle().Position.X, 0);
     TEST_EXPECT_EQ(Console->GetContentRectangle().Position.Y, 0);
 
-    TEST_SECTION("The input line is measured through the overlay, so it has room to draw into");
+    TEST_SECTION(TEXT("The input line is measured through the overlay, so it has room to draw into"));
     const FRectangle InputBounds = Input->GetContentRectangle();
     TEST_EXPECT(InputBounds.Height > 0);
     TEST_EXPECT(InputBounds.Width > 0);
@@ -943,19 +943,19 @@ bool ConsoleInWindow_Test()
 
     Window->PaintDeferred(CommandList, TopLayerId + 1);
 
-    TEST_SECTION("The focused input line draws its caret");
+    TEST_SECTION(TEXT("The focused input line draws its caret"));
     TEST_EXPECT(CommandList.CountCommandsOfType(EDrawCommandType::Line) > 0);
 
-    TEST_SECTION("Typed text and its candidates both come out with a height to be seen at");
-    TypeText(Console, "Test.Console.");
+    TEST_SECTION(TEXT("Typed text and its candidates both come out with a height to be seen at"));
+    TypeText(Console, TEXT("Test.Console."));
     FApplication::LayoutWindow(Window);
 
     CommandList.Reset();
     const int32 RedrawTopLayerId = Window->OnDraw(FDrawGeometry(Window->GetContentRectangle(), 1.0f), CommandList, 0);
     Window->PaintDeferred(CommandList, RedrawTopLayerId + 1);
 
-    const int32 TypedIndex     = CommandList.FindTextCommand("Test.Console.");
-    const int32 CandidateIndex = CommandList.FindTextCommand("Test.Console.Int");
+    const int32 TypedIndex     = CommandList.FindTextCommand(TEXT("Test.Console."));
+    const int32 CandidateIndex = CommandList.FindTextCommand(TEXT("Test.Console.Int"));
 
     TEST_EXPECT(TypedIndex != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(CandidateIndex != FDrawCommandList::InvalidIndex);
@@ -966,10 +966,10 @@ bool ConsoleInWindow_Test()
         TEST_EXPECT(CommandList[CandidateIndex].Bounds.Height > 0);
     }
 
-    TEST_SECTION("Backspace reaches the input line and shortens the command");
+    TEST_SECTION(TEXT("Backspace reaches the input line and shortens the command"));
     Input->OnKeyDown(CreateKeyDownEvent(Keys::Backspace));
-    TEST_EXPECT(Console->GetCommandLine().GetText().Equals("Test.Console"));
-    TEST_EXPECT(Input->GetText().Equals("Test.Console"));
+    TEST_EXPECT(Console->GetCommandLine().GetText().Equals(TEXT("Test.Console")));
+    TEST_EXPECT(Input->GetText().Equals(TEXT("Test.Console")));
 
     TEST_END();
 }
@@ -986,23 +986,23 @@ bool ConsoleTypeAndExecute_Test()
     TSharedPtr<FEditableText> Input = Console->GetInput();
     Input->OnFocusGained();
 
-    TEST_SECTION("Typing a prefix finds candidates");
-    TypeText(Console, "Test.Console.Int");
+    TEST_SECTION(TEXT("Typing a prefix finds candidates"));
+    TypeText(Console, TEXT("Test.Console.Int"));
     TEST_EXPECT(Console->GetCommandLine().HasCandidates());
-    TEST_EXPECT(Console->GetCommandLine().GetText().Equals("Test.Console.Int"));
+    TEST_EXPECT(Console->GetCommandLine().GetText().Equals(TEXT("Test.Console.Int")));
 
-    TEST_SECTION("Enter with no selection executes and echoes to the log");
+    TEST_SECTION(TEXT("Enter with no selection executes and echoes to the log"));
     Input->OnKeyDown(CreateKeyDownEvent(Keys::Enter));
 
     TArray<FConsoleLogLine> Lines;
     Console->GetLogBuffer().GetSnapshot(Lines);
 
     TEST_EXPECT(!Lines.IsEmpty());
-    TEST_EXPECT(Lines[0].Message.Equals("Test.Console.Int"));
+    TEST_EXPECT(Lines[0].Message.Equals(TEXT("Test.Console.Int")));
     TEST_EXPECT(Console->GetCommandLine().GetText().IsEmpty());
     TEST_EXPECT(Console->GetInput()->GetText().IsEmpty());
 
-    TEST_SECTION("The tree lays out and draws without a device");
+    TEST_SECTION(TEXT("The tree lays out and draws without a device"));
     Console->PrepareDesiredSize();
     Console->Arrange(FRectangle(FIntVector2(0, 0), 1280, 720));
 
@@ -1011,9 +1011,9 @@ bool ConsoleTypeAndExecute_Test()
 
     TEST_EXPECT(!CommandList.IsEmpty());
     TEST_EXPECT(CommandList.IsClipStackBalanced());
-    TEST_EXPECT(CommandList.FindTextCommand("Test.Console.Int") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(CommandList.FindTextCommand(TEXT("Test.Console.Int")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("The executed line is reachable again through the history");
+    TEST_SECTION(TEXT("The executed line is reachable again through the history"));
     Input->OnKeyDown(CreateKeyDownEvent(Keys::Up));
 
     const TArray<FString>& History = FConsoleManager::Get().GetHistory();

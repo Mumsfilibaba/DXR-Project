@@ -46,7 +46,7 @@ bool Sort_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Algorithm::Sort empty / one / two");
+    TEST_SECTION(TEXT("Algorithm::Sort empty / one / two"));
     {
         TArray<int32> Empty;
         Algorithm::Sort(Empty);
@@ -61,7 +61,7 @@ bool Sort_Test()
         TEST_EXPECT(Pair == TArray<int32>({ 1, 2 }));
     }
 
-    TEST_SECTION("Algorithm::Sort predicate descending");
+    TEST_SECTION(TEXT("Algorithm::Sort predicate descending"));
     {
         TArray<int32> Values = { 30, 10, 40, 20 };
         Algorithm::Sort(Values, [](int32 Left, int32 Right)
@@ -71,14 +71,14 @@ bool Sort_Test()
         TEST_EXPECT(Values == TArray<int32>({ 40, 30, 20, 10 }));
     }
 
-    TEST_SECTION("TArray wrapper Sort");
+    TEST_SECTION(TEXT("TArray wrapper Sort"));
     {
         TArray<int32> Values = { 30, 10, 40, 20 };
         Values.Sort();
         TEST_EXPECT(Values == TArray<int32>({ 10, 20, 30, 40 }));
     }
 
-    TEST_SECTION("TArrayView / TStaticArray / C array");
+    TEST_SECTION(TEXT("TArrayView / TStaticArray / C array"));
     {
         TStaticArray<int32, 4> Static = { 4, 1, 3, 2 };
         Algorithm::Sort(Static);
@@ -94,7 +94,7 @@ bool Sort_Test()
         TEST_EXPECT(Raw[0] == 1 && Raw[4] == 5);
     }
 
-    TEST_SECTION("Random permutations vs std::sort");
+    TEST_SECTION(TEXT("Random permutations vs std::sort"));
     {
         FRandom Random(12345);
         for (int32 Size : { 0, 1, 2, 3, 16, 24, 25, 128, 256, 1024 })
@@ -113,7 +113,7 @@ bool Sort_Test()
         }
     }
 
-    TEST_SECTION("Adversarial patterns");
+    TEST_SECTION(TEXT("Adversarial patterns"));
     {
         TArray<int32> Sorted;
         TArray<int32> Reverse;
@@ -143,7 +143,7 @@ bool Sort_Test()
         TEST_EXPECT(Algorithm::IsSorted(AllEqual));
     }
 
-    TEST_SECTION("StableSort preserves equal-key order");
+    TEST_SECTION(TEXT("StableSort preserves equal-key order"));
     {
         TArray<FStableItem> Items;
         for (int32 Index = 0; Index < 64; ++Index)
@@ -173,7 +173,7 @@ bool Sort_Test()
         }
     }
 
-    TEST_SECTION("Radix / counting / integer sort");
+    TEST_SECTION(TEXT("Radix / counting / integer sort"));
     {
         TArray<int32> Values = { -5, 3, -1, 0, 3, 100, -20, 7 };
         TArray<int32> Radix = Values;
@@ -203,7 +203,7 @@ bool Sort_Test()
         TEST_EXPECT(Big[0] == 1ull && Big[3] == (1ull << 40));
     }
 
-    TEST_SECTION("Heapify / HeapPop / HeapSort");
+    TEST_SECTION(TEXT("Heapify / HeapPop / HeapSort"));
     {
         TArray<int32> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
         Algorithm::Heapify(Heap);
@@ -220,7 +220,7 @@ bool Sort_Test()
         TEST_EXPECT(Sorted == TArray<int32>({ 1, 3, 4, 5, 6, 8, 9, 10, 13, 15, 17 }));
     }
 
-    TEST_SECTION("Large reverse-sorted introsort fallback");
+    TEST_SECTION(TEXT("Large reverse-sorted introsort fallback"));
     {
         TArray<int32> Reverse;
         Reverse.Reserve(10000);

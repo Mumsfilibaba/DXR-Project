@@ -63,14 +63,14 @@ bool DrawCommandList_Test()
 
     FDrawCommandList CommandList;
 
-    TEST_SECTION("A fresh list is empty and balanced");
+    TEST_SECTION(TEXT("A fresh list is empty and balanced"));
     TEST_EXPECT(CommandList.IsEmpty());
     TEST_EXPECT_EQ(CommandList.Size(), 0);
     TEST_EXPECT(CommandList.IsClipStackBalanced());
 
-    TEST_SECTION("Commands come back in emission order with their layers");
+    TEST_SECTION(TEXT("Commands come back in emission order with their layers"));
     CommandList.AddBox(0, FRectangle(FIntVector2(0, 0), 100, 50), FFloatColor::White);
-    CommandList.AddText(1, FRectangle(FIntVector2(4, 4), 90, 16), FString("Hello"), Font.Get(), FFloatColor::White);
+    CommandList.AddText(1, FRectangle(FIntVector2(4, 4), 90, 16), FString(TEXT("Hello")), Font.Get(), FFloatColor::White);
     CommandList.AddLine(2, FRectangle(FIntVector2(4, 4), 1, 16), FFloatColor::White);
 
     TEST_EXPECT_EQ(CommandList.Size(), 3);
@@ -82,19 +82,19 @@ bool DrawCommandList_Test()
     TEST_EXPECT_EQ(CommandList[1].LayerId, 1);
     TEST_EXPECT_EQ(CommandList[2].LayerId, 2);
 
-    TEST_SECTION("A text command keeps its string and face");
-    TEST_EXPECT(CommandList.GetCommandText(CommandList[1]).Equals("Hello"));
+    TEST_SECTION(TEXT("A text command keeps its string and face"));
+    TEST_EXPECT(CommandList.GetCommandText(CommandList[1]).Equals(TEXT("Hello")));
     TEST_EXPECT(CommandList[1].Font == Font.Get());
 
-    TEST_SECTION("Counting by type only counts that type");
+    TEST_SECTION(TEXT("Counting by type only counts that type"));
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Box), 1);
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Text), 1);
 
-    TEST_SECTION("Text lookup finds a match and reports a miss");
-    TEST_EXPECT_EQ(CommandList.FindTextCommand("Hello"), 1);
-    TEST_EXPECT_EQ(CommandList.FindTextCommand("Missing"), FDrawCommandList::InvalidIndex);
+    TEST_SECTION(TEXT("Text lookup finds a match and reports a miss"));
+    TEST_EXPECT_EQ(CommandList.FindTextCommand(TEXT("Hello")), 1);
+    TEST_EXPECT_EQ(CommandList.FindTextCommand(TEXT("Missing")), FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("Reset empties the list and the clip state");
+    TEST_SECTION(TEXT("Reset empties the list and the clip state"));
     CommandList.PushClip(0, FRectangle(FIntVector2(0, 0), 10, 10));
     CommandList.Reset();
 
@@ -110,7 +110,7 @@ bool HairlineCoverage_Test()
 
     constexpr float Hairline = 1.0f;
 
-    TEST_SECTION("A horizontal hairline on an integer coordinate covers pixels");
+    TEST_SECTION(TEXT("A horizontal hairline on an integer coordinate covers pixels"));
     {
         FDrawCommandList CommandList;
         CommandList.AddLine(0, FVector2(4.0f, 8.0f), FVector2(28.0f, 8.0f), FFloatColor::White, Hairline);
@@ -120,7 +120,7 @@ bool HairlineCoverage_Test()
         TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(4, 6), FIntVector2(27, 9)) > 0);
     }
 
-    TEST_SECTION("A vertical hairline on an integer coordinate covers pixels");
+    TEST_SECTION(TEXT("A vertical hairline on an integer coordinate covers pixels"));
     {
         FDrawCommandList CommandList;
         CommandList.AddLine(0, FVector2(8.0f, 4.0f), FVector2(8.0f, 28.0f), FFloatColor::White, Hairline);
@@ -129,7 +129,7 @@ bool HairlineCoverage_Test()
         TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(6, 4), FIntVector2(9, 27)) > 0);
     }
 
-    TEST_SECTION("A closed axis-aligned hairline outline covers pixels on every side");
+    TEST_SECTION(TEXT("A closed axis-aligned hairline outline covers pixels on every side"));
     {
         const FVector2 Corners[] =
         {
@@ -150,7 +150,7 @@ bool HairlineCoverage_Test()
         TEST_EXPECT(CountCoveredPixels(Image, FIntVector2(25, 7), FIntVector2(27, 25)) > 0);
     }
 
-    TEST_SECTION("A diagonal hairline still covers pixels");
+    TEST_SECTION(TEXT("A diagonal hairline still covers pixels"));
     {
         FDrawCommandList CommandList;
         CommandList.AddLine(0, FVector2(4.0f, 4.0f), FVector2(28.0f, 28.0f), FFloatColor::White, Hairline);
@@ -168,7 +168,7 @@ bool DrawClipNesting_Test()
 
     FDrawCommandList CommandList;
 
-    TEST_SECTION("A nested region is intersected with the enclosing one");
+    TEST_SECTION(TEXT("A nested region is intersected with the enclosing one"));
     CommandList.PushClip(0, FRectangle(FIntVector2(0, 0), 100, 100));
     TEST_EXPECT(CommandList.GetCurrentClipRectangle() == FRectangle(FIntVector2(0, 0), 100, 100));
 
@@ -180,35 +180,35 @@ bool DrawClipNesting_Test()
     TEST_EXPECT_EQ(Nested.Width, 50);
     TEST_EXPECT_EQ(Nested.Height, 50);
 
-    TEST_SECTION("A draw recorded inside the nested region stores that clip");
+    TEST_SECTION(TEXT("A draw recorded inside the nested region stores that clip"));
     CommandList.AddBox(2, FRectangle(FIntVector2(60, 60), 10, 10), FFloatColor::White);
     TEST_EXPECT_EQ(CommandList.Size(), 1);
     TEST_EXPECT(CommandList[0].IsClipped());
     TEST_EXPECT(CommandList.GetCommandClipRectangle(CommandList[0]) == Nested);
     TEST_EXPECT_EQ(CommandList.Size(), 1);
 
-    TEST_SECTION("Popping restores the enclosing region");
+    TEST_SECTION(TEXT("Popping restores the enclosing region"));
     CommandList.PopClip(1);
     TEST_EXPECT(CommandList.GetCurrentClipRectangle() == FRectangle(FIntVector2(0, 0), 100, 100));
 
-    TEST_SECTION("An unclosed push leaves the list unbalanced");
+    TEST_SECTION(TEXT("An unclosed push leaves the list unbalanced"));
     TEST_EXPECT(!CommandList.IsClipStackBalanced());
 
     CommandList.PopClip(0);
     TEST_EXPECT(CommandList.IsClipStackBalanced());
     TEST_EXPECT_EQ(CommandList.Size(), 1);
 
-    TEST_SECTION("An extra pop leaves the list unbalanced too");
+    TEST_SECTION(TEXT("An extra pop leaves the list unbalanced too"));
     CommandList.PopClip(0);
     TEST_EXPECT(!CommandList.IsClipStackBalanced());
 
-    TEST_SECTION("A scroll box clips its children without recording clip commands");
+    TEST_SECTION(TEXT("A scroll box clips its children without recording clip commands"));
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
     TSharedPtr<FVerticalBox> Content = FVerticalBox::Create();
     for (int32 Index = 0; Index < 10; ++Index)
     {
-        Content->AddSlot(CreateTextBlock("Line", Font));
+        Content->AddSlot(CreateTextBlock(TEXT("Line"), Font));
     }
 
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
@@ -243,11 +243,11 @@ bool BorderDraw_Test()
 
     TSharedPtr<IFontFace> Font = CreateTestFont();
 
-    TEST_SECTION("An opaque background emits one box beneath the child");
+    TEST_SECTION(TEXT("An opaque background emits one box beneath the child"));
     FBorder::FDesc Desc;
     Desc.BackgroundColor = FFloatColor(0.1f, 0.2f, 0.3f, 1.0f);
     Desc.Padding         = FMargin(10, 5);
-    Desc.Content         = CreateTextBlock("Border", Font);
+    Desc.Content         = CreateTextBlock(TEXT("Border"), Font);
 
     TSharedPtr<FBorder> Border = FBorder::Create(Desc);
     Border->PrepareDesiredSize();
@@ -259,17 +259,17 @@ bool BorderDraw_Test()
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Box), 1);
     TEST_EXPECT(CommandList[0].Type == EDrawCommandType::Box);
     TEST_EXPECT_EQ(CommandList[0].LayerId, 0);
-    TEST_EXPECT_EQ(CommandList.FindTextCommand("Border"), 1);
+    TEST_EXPECT_EQ(CommandList.FindTextCommand(TEXT("Border")), 1);
     TEST_EXPECT(MaxLayerId > 0);
 
-    TEST_SECTION("The desired size is the child plus the padding");
+    TEST_SECTION(TEXT("The desired size is the child plus the padding"));
     TEST_EXPECT_EQ(Border->GetCachedDesiredSize().X, (6 * 8) + 20);
     TEST_EXPECT_EQ(Border->GetCachedDesiredSize().Y, 16 + 10);
 
-    TEST_SECTION("A zero-alpha background emits no box at all");
+    TEST_SECTION(TEXT("A zero-alpha background emits no box at all"));
     FBorder::FDesc TransparentDesc;
     TransparentDesc.BackgroundColor = FFloatColor(0.1f, 0.2f, 0.3f, 0.0f);
-    TransparentDesc.Content         = CreateTextBlock("Border", Font);
+    TransparentDesc.Content         = CreateTextBlock(TEXT("Border"), Font);
 
     TSharedPtr<FBorder> Transparent = FBorder::Create(TransparentDesc);
     Transparent->PrepareDesiredSize();
@@ -281,11 +281,11 @@ bool BorderDraw_Test()
     TEST_EXPECT_EQ(TransparentCommandList.CountCommandsOfType(EDrawCommandType::Box), 0);
     TEST_EXPECT_EQ(TransparentCommandList.CountCommandsOfType(EDrawCommandType::Text), 1);
 
-    TEST_SECTION("A stroke goes under the child by default, so a child that fills the border hides it");
+    TEST_SECTION(TEXT("A stroke goes under the child by default, so a child that fills the border hides it"));
     FBorder::FDesc StrokeDesc;
     StrokeDesc.BorderColor     = FFloatColor(0.8f, 0.1f, 0.1f, 1.0f);
     StrokeDesc.BorderThickness = 1.0f;
-    StrokeDesc.Content         = CreateTextBlock("Border", Font);
+    StrokeDesc.Content         = CreateTextBlock(TEXT("Border"), Font);
 
     TSharedPtr<FBorder> UnderBorder = FBorder::Create(StrokeDesc);
     UnderBorder->PrepareDesiredSize();
@@ -297,9 +297,9 @@ bool BorderDraw_Test()
     TEST_EXPECT_EQ(UnderCommandList.CountCommandsOfType(EDrawCommandType::BoxOutline), 1);
     TEST_EXPECT(UnderCommandList[0].Type == EDrawCommandType::BoxOutline);
 
-    TEST_SECTION("Asked to draw over its child, the same stroke comes after it and no lower than its layer");
+    TEST_SECTION(TEXT("Asked to draw over its child, the same stroke comes after it and no lower than its layer"));
     StrokeDesc.bDrawBorderOverContent = true;
-    StrokeDesc.Content                = CreateTextBlock("Border", Font);
+    StrokeDesc.Content                = CreateTextBlock(TEXT("Border"), Font);
 
     TSharedPtr<FBorder> OverBorder = FBorder::Create(StrokeDesc);
     OverBorder->PrepareDesiredSize();
@@ -310,7 +310,7 @@ bool BorderDraw_Test()
 
     TEST_EXPECT_EQ(OverCommandList.CountCommandsOfType(EDrawCommandType::BoxOutline), 1);
 
-    const int32 TextIndex = OverCommandList.FindTextCommand("Border");
+    const int32 TextIndex = OverCommandList.FindTextCommand(TEXT("Border"));
     TEST_EXPECT(TextIndex >= 0);
 
     const int32          StrokeIndex = OverCommandList.GetCommands().LastIndex();
@@ -332,11 +332,11 @@ bool LogSeverityColors_Test()
     const FFloatColor WarningColor = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Warning);
     const FFloatColor ErrorColor   = FConsoleLogBuffer::GetSeverityColor(ELogSeverity::Error);
 
-    TEST_SECTION("Info is white and every severity is opaque");
+    TEST_SECTION(TEXT("Info is white and every severity is opaque"));
     TEST_EXPECT(InfoColor.R == 1.0f && InfoColor.G == 1.0f && InfoColor.B == 1.0f);
     TEST_EXPECT(InfoColor.A == 1.0f && WarningColor.A == 1.0f && ErrorColor.A == 1.0f);
 
-    TEST_SECTION("Warning and error are the saturated primaries the ImGui console used");
+    TEST_SECTION(TEXT("Warning and error are the saturated primaries the ImGui console used"));
     TEST_EXPECT(WarningColor.R == 1.0f && WarningColor.G == 1.0f && WarningColor.B == 0.0f);
     TEST_EXPECT(ErrorColor.R == 1.0f && ErrorColor.G == 0.0f && ErrorColor.B == 0.0f);
 
@@ -352,7 +352,7 @@ bool BoxLayerSequencing_Test()
     TSharedPtr<FVerticalBox> ScrollContent = FVerticalBox::Create();
     for (int32 Index = 0; Index < 4; ++Index)
     {
-        ScrollContent->AddSlot(CreateTextBlock("Log", Font));
+        ScrollContent->AddSlot(CreateTextBlock(TEXT("Log"), Font));
     }
 
     TSharedPtr<FScrollBox> ScrollBox = FScrollBox::Create();
@@ -360,7 +360,7 @@ bool BoxLayerSequencing_Test()
 
     FBorder::FDesc InputDesc;
     InputDesc.BackgroundColor = FFloatColor(0.1f, 0.1f, 0.1f, 1.0f);
-    InputDesc.Content         = CreateTextBlock("Input", Font);
+    InputDesc.Content         = CreateTextBlock(TEXT("Input"), Font);
 
     TSharedPtr<FVerticalBox> RootBox = FVerticalBox::Create();
     RootBox->AddSlot(ScrollBox).SetFillCoefficient(1.0f);
@@ -382,10 +382,10 @@ bool BoxLayerSequencing_Test()
         }
     }
 
-    const int32 LogIndex   = CommandList.FindTextCommand("Log");
-    const int32 InputIndex = CommandList.FindTextCommand("Input");
+    const int32 LogIndex   = CommandList.FindTextCommand(TEXT("Log"));
+    const int32 InputIndex = CommandList.FindTextCommand(TEXT("Input"));
 
-    TEST_SECTION("Both slots drew, inside one balanced region");
+    TEST_SECTION(TEXT("Both slots drew, inside one balanced region"));
     TEST_EXPECT(CommandList.IsClipStackBalanced());
     TEST_EXPECT(LogIndex != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(InputIndex != FDrawCommandList::InvalidIndex);
@@ -396,10 +396,10 @@ bool BoxLayerSequencing_Test()
         TEST_END();
     }
 
-    TEST_SECTION("The scrolled lines carry the clip, which is what clips them");
+    TEST_SECTION(TEXT("The scrolled lines carry the clip, which is what clips them"));
     TEST_EXPECT(CommandList[LogIndex].IsClipped());
 
-    TEST_SECTION("The row after it is recorded outside the region, so the layer sort leaves it unclipped");
+    TEST_SECTION(TEXT("The row after it is recorded outside the region, so the layer sort leaves it unclipped"));
     TEST_EXPECT(!CommandList[InputIndex].IsClipped());
     TEST_EXPECT(BoxLayerId > CommandList[LogIndex].LayerId);
     TEST_EXPECT(CommandList[InputIndex].LayerId > CommandList[LogIndex].LayerId);

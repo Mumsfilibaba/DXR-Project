@@ -9,7 +9,7 @@ bool TPriorityQueue_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Enqueue / Size / Peek / Dequeue priority order");
+    TEST_SECTION(TEXT("Enqueue / Size / Peek / Dequeue priority order"));
     {
         TPriorityQueue<int32> Queue;
         TEST_EXPECT_EQ(Queue.Size(), 0);
@@ -40,7 +40,7 @@ bool TPriorityQueue_Test()
         TEST_EXPECT_EQ(Queue.Size(), 0);
     }
 
-    TEST_SECTION("FIFO within a single priority");
+    TEST_SECTION(TEXT("FIFO within a single priority"));
     {
         TPriorityQueue<int32> Queue;
         Queue.Enqueue(1, EQueuePriority::Normal);
@@ -53,7 +53,7 @@ bool TPriorityQueue_Test()
         TEST_EXPECT(Queue.Dequeue(&Out) && Out == 3);
     }
 
-    TEST_SECTION("Remove / Reset");
+    TEST_SECTION(TEXT("Remove / Reset"));
     {
         TPriorityQueue<int32> Queue;
         Queue.Enqueue(1, EQueuePriority::Normal);
@@ -68,7 +68,7 @@ bool TPriorityQueue_Test()
         TEST_EXPECT_EQ(Queue.Size(), 0);
     }
 
-    TEST_SECTION("TPriorityQueue stress (FInstanced, random priorities, ordered drain, no leaks)");
+    TEST_SECTION(TEXT("TPriorityQueue stress (FInstanced, random priorities, ordered drain, no leaks)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)

@@ -9,7 +9,7 @@ bool TLinkedList_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("TLinkedListNode construction / linking / traversal");
+    TEST_SECTION(TEXT("TLinkedListNode construction / linking / traversal"));
     {
         TLinkedListNode<int32> First(1);
         TLinkedListNode<int32> Second(2);
@@ -34,7 +34,7 @@ bool TLinkedList_Test()
         TEST_EXPECT_EQ(Sum, 6);
     }
 
-    TEST_SECTION("TDoubleLinkedListNode forward / backward links");
+    TEST_SECTION(TEXT("TDoubleLinkedListNode forward / backward links"));
     {
         TDoubleLinkedListNode<int32> First(10);
         TDoubleLinkedListNode<int32> Second(20);
@@ -48,7 +48,7 @@ bool TLinkedList_Test()
         TEST_EXPECT(Second.Next == nullptr);
     }
 
-    TEST_SECTION("Heap-allocated node list with FInstanced (single destruction, no leaks)");
+    TEST_SECTION(TEXT("Heap-allocated node list with FInstanced (single destruction, no leaks)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)

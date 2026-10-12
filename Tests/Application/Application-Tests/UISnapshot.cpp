@@ -398,5 +398,5 @@ bool EnsureSnapshotDirectory(const FString& Directory)
 
 FString GetSnapshotDirectory(const FString& SubDirectory)
 {
-    return FString("Screenshots/") + SubDirectory;
+    return FString(TEXT("Screenshots/")) + SubDirectory;
 }

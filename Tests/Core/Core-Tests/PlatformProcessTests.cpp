@@ -14,11 +14,11 @@ static bool RunShell(const FString& Command, const FString& WorkingDirectory, FS
 {
     FProcessDesc Desc;
 #if PLATFORM_WINDOWS
-    Desc.Executable = "cmd.exe";
-    Desc.Arguments.Add(FString("/c"));
+    Desc.Executable = TEXT("cmd.exe");
+    Desc.Arguments.Add(FString(TEXT("/c")));
 #else
-    Desc.Executable = "/bin/sh";
-    Desc.Arguments.Add(FString("-c"));
+    Desc.Executable = TEXT("/bin/sh");
+    Desc.Arguments.Add(FString(TEXT("-c")));
 #endif
     Desc.Arguments.Add(Command);
     Desc.WorkingDirectory = WorkingDirectory;
@@ -59,57 +59,57 @@ bool PlatformProcess_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Output and the exit code of a finished process are collected");
+    TEST_SECTION(TEXT("Output and the exit code of a finished process are collected"));
     {
         FString Output;
         int32   ExitCode = -1;
-        TEST_EXPECT(RunShell("echo Hello", FString(), Output, ExitCode));
-        TEST_EXPECT(TrimLineEnd(Output).Equals("Hello"));
+        TEST_EXPECT(RunShell(TEXT("echo Hello"), FString(), Output, ExitCode));
+        TEST_EXPECT(TrimLineEnd(Output).Equals(TEXT("Hello")));
         TEST_EXPECT(ExitCode == 0);
     }
 
-    TEST_SECTION("A non-zero exit code is reported");
+    TEST_SECTION(TEXT("A non-zero exit code is reported"));
     {
         FString Output;
         int32   ExitCode = -1;
-        TEST_EXPECT(RunShell("exit 3", FString(), Output, ExitCode));
+        TEST_EXPECT(RunShell(TEXT("exit 3"), FString(), Output, ExitCode));
         TEST_EXPECT(ExitCode == 3);
     }
 
-    TEST_SECTION("Standard error is captured with standard output");
+    TEST_SECTION(TEXT("Standard error is captured with standard output"));
     {
         FString Output;
         int32   ExitCode = -1;
-        TEST_EXPECT(RunShell("echo Problem>&2", FString(), Output, ExitCode));
-        TEST_EXPECT(TrimLineEnd(Output).Equals("Problem"));
+        TEST_EXPECT(RunShell(TEXT("echo Problem>&2"), FString(), Output, ExitCode));
+        TEST_EXPECT(TrimLineEnd(Output).Equals(TEXT("Problem")));
     }
 
-    TEST_SECTION("The process starts in the requested working directory");
+    TEST_SECTION(TEXT("The process starts in the requested working directory"));
     {
-        const FString Directory = File::MakeAbsolute("PlatformProcessTests.Scratch");
+        const FString Directory = File::MakeAbsolute(TEXT("PlatformProcessTests.Scratch"));
         TEST_EXPECT(File::CreateDirectoryTree(Directory));
 
         FString Output;
         int32   ExitCode = -1;
 #if PLATFORM_WINDOWS
-        TEST_EXPECT(RunShell("cd", Directory, Output, ExitCode));
+        TEST_EXPECT(RunShell(TEXT("cd"), Directory, Output, ExitCode));
 #else
-        TEST_EXPECT(RunShell("pwd", Directory, Output, ExitCode));
+        TEST_EXPECT(RunShell(TEXT("pwd"), Directory, Output, ExitCode));
 #endif
         TEST_EXPECT(File::NormalizePath(TrimLineEnd(Output)).Equals(Directory));
         TEST_EXPECT(File::DeleteDirectoryTree(Directory));
     }
 
-    TEST_SECTION("A process that is still running can be waited for and killed");
+    TEST_SECTION(TEXT("A process that is still running can be waited for and killed"));
     {
         FProcessDesc Desc;
 #if PLATFORM_WINDOWS
-        Desc.Executable = "cmd.exe";
-        Desc.Arguments.Add(FString("/c"));
-        Desc.Arguments.Add(FString("ping -n 30 127.0.0.1 > nul"));
+        Desc.Executable = TEXT("cmd.exe");
+        Desc.Arguments.Add(FString(TEXT("/c")));
+        Desc.Arguments.Add(FString(TEXT("ping -n 30 127.0.0.1 > nul")));
 #else
-        Desc.Executable = "/bin/sleep";
-        Desc.Arguments.Add(FString("30"));
+        Desc.Executable = TEXT("/bin/sleep");
+        Desc.Arguments.Add(FString(TEXT("30")));
 #endif
 
         TUniquePtr<IPlatformProcessHandle> Process = FPlatformProcess::LaunchProcess(Desc);
@@ -128,10 +128,10 @@ bool PlatformProcess_Test()
         }
     }
 
-    TEST_SECTION("Starting a program that does not exist fails cleanly");
+    TEST_SECTION(TEXT("Starting a program that does not exist fails cleanly"));
     {
         FProcessDesc Desc;
-        Desc.Executable     = "ThisProgramDoesNotExist.exe";
+        Desc.Executable     = TEXT("ThisProgramDoesNotExist.exe");
         Desc.bCaptureOutput = true;
         TEST_EXPECT(FPlatformProcess::LaunchProcess(Desc) == nullptr);
     }

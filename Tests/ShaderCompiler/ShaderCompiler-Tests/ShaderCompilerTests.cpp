@@ -106,7 +106,7 @@ static bool ReadPartUInt64(TArrayView<const uint8> ByteCode, uint32 PartFourCC, 
 
 static FString GetMSLSource(TArrayView<const uint8> NativeCode)
 {
-    return FString(reinterpret_cast<const CHAR_T*>(NativeCode.Data()), NativeCode.Size());
+    return StringCast<CHAR_T>(reinterpret_cast<const ANSICHAR*>(NativeCode.Data()), NativeCode.Size()).ToString();
 }
 
 static bool HasExpectedSignature(const TArray<uint8>& ShaderCode, EShaderOutputLanguage OutputLanguage)
@@ -134,7 +134,7 @@ static bool HasExpectedSignature(const TArray<uint8>& ShaderCode, EShaderOutputL
         }
         case EShaderOutputLanguage::MSL:
         {
-            return GetMSLSource(NativeCode).Contains("metal_stdlib");
+            return GetMSLSource(NativeCode).Contains(TEXT("metal_stdlib"));
         }
         default:
         {
@@ -175,7 +175,7 @@ static FSpirvScan ScanSpirv(TArrayView<const uint8> NativeCode)
 
     const auto ReadString = [&](uint32 FirstWord, uint32 EndWord)
     {
-        const CHAR_T* Characters = reinterpret_cast<const CHAR_T*>(Words + FirstWord);
+        const ANSICHAR* Characters = reinterpret_cast<const ANSICHAR*>(Words + FirstWord);
         const uint32  MaxLength  = (EndWord - FirstWord) * static_cast<uint32>(sizeof(uint32));
 
         uint32 Length = 0;
@@ -184,7 +184,7 @@ static FSpirvScan ScanSpirv(TArrayView<const uint8> NativeCode)
             ++Length;
         }
 
-        return FString(Characters, static_cast<int32>(Length));
+        return StringCast<CHAR_T>(Characters, static_cast<int32>(Length)).ToString();
     };
 
     for (uint32 Read = 5; Read < NumWords;)
@@ -201,12 +201,12 @@ static FSpirvScan ScanSpirv(TArrayView<const uint8> NativeCode)
             Scan.bHasDebugOpcodes = true;
         }
 
-        if (OpCode == OpExtInstImport && InstWords > 2 && ReadString(Read + 2, Read + InstWords).Contains("NonSemantic.Shader.DebugInfo"))
+        if (OpCode == OpExtInstImport && InstWords > 2 && ReadString(Read + 2, Read + InstWords).Contains(TEXT("NonSemantic.Shader.DebugInfo")))
         {
             Scan.bHasDebugInfoImport = true;
         }
 
-        if (OpCode == OpExtension && InstWords > 1 && ReadString(Read + 1, Read + InstWords).Contains("SPV_GOOGLE"))
+        if (OpCode == OpExtension && InstWords > 1 && ReadString(Read + 1, Read + InstWords).Contains(TEXT("SPV_GOOGLE")))
         {
             Scan.bHasGoogleExtensions = true;
         }
@@ -266,17 +266,17 @@ bool ShaderCompilerOutputLanguages_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Every RHI maps to the output language it consumes");
+    TEST_SECTION(TEXT("Every RHI maps to the output language it consumes"));
     TEST_EXPECT_EQ(RHI::GetShaderOutputLanguage(ERHIType::D3D11), EShaderOutputLanguage::DXBC);
     TEST_EXPECT_EQ(RHI::GetShaderOutputLanguage(ERHIType::D3D12), EShaderOutputLanguage::DXIL);
     TEST_EXPECT_EQ(RHI::GetShaderOutputLanguage(ERHIType::Null), EShaderOutputLanguage::DXIL);
     TEST_EXPECT_EQ(RHI::GetShaderOutputLanguage(ERHIType::Vulkan), EShaderOutputLanguage::SPIRV);
     TEST_EXPECT_EQ(RHI::GetShaderOutputLanguage(ERHIType::Metal), EShaderOutputLanguage::MSL);
 
-    TEST_SECTION("Without an RHI the compiler targets DXIL");
+    TEST_SECTION(TEXT("Without an RHI the compiler targets DXIL"));
     TEST_EXPECT_EQ(RHI::GetShaderOutputLanguage(), EShaderOutputLanguage::DXIL);
 
-    TEST_SECTION("The platform languages are supported and listed once");
+    TEST_SECTION(TEXT("The platform languages are supported and listed once"));
     const TArray<EShaderOutputLanguage> Languages = FShaderCompiler::Get().GetSupportedOutputLanguages();
     TEST_EXPECT(!Languages.IsEmpty());
 
@@ -316,9 +316,9 @@ bool ShaderCompilerCompileFromFile_Test()
 
     const FShaderFileCase Cases[] =
     {
-        { "Shaders/UserInterface.hlsl",     "VSMain", EShaderStage::Vertex  },
-        { "Shaders/UserInterface.hlsl",     "PSMain", EShaderStage::Pixel   },
-        { "Shaders/GenerateMipsTex2D.hlsl", "Main",   EShaderStage::Compute },
+        { TEXT("Shaders/UserInterface.hlsl"),     TEXT("VSMain"), EShaderStage::Vertex  },
+        { TEXT("Shaders/UserInterface.hlsl"),     TEXT("PSMain"), EShaderStage::Pixel   },
+        { TEXT("Shaders/GenerateMipsTex2D.hlsl"), TEXT("Main"),   EShaderStage::Compute },
     };
 
     for (EShaderOutputLanguage OutputLanguage : FShaderCompiler::Get().GetSupportedOutputLanguages())
@@ -354,18 +354,18 @@ bool ShaderCompilerCompileFromSource_Test()
     TEST_BEGIN();
 
     const FString Source =
-        "RWStructuredBuffer<uint> Output : register(u0);\n"
+        TEXT("RWStructuredBuffer<uint> Output : register(u0);\n"
         "[numthreads(64, 1, 1)]\n"
         "void Main(uint3 ThreadID : SV_DispatchThreadID)\n"
         "{\n"
         "    Output[ThreadID.x] = ThreadID.x * 2;\n"
-        "}\n";
+        "}\n");
 
     for (EShaderOutputLanguage OutputLanguage : FShaderCompiler::Get().GetSupportedOutputLanguages())
     {
         TEST_SECTION(ToString(OutputLanguage));
 
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, OutputLanguage);
+        FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_0, EShaderStage::Compute, OutputLanguage);
 
         TArray<uint8> ShaderCode;
         TEST_EXPECT(FShaderCompiler::Get().CompileFromSource(Source, CompileInfo, ShaderCode));
@@ -384,14 +384,14 @@ bool ShaderCompilerCompileFailure_Test()
 {
     TEST_BEGIN();
 
-    const FString BrokenSource = "float4 Main() : SV_Target { return MissingValue; }\n";
-    const FString ValidSource  = "float4 Main() : SV_Target { return float4(1.0, 0.0, 0.0, 1.0); }\n";
+    const FString BrokenSource = TEXT("float4 Main() : SV_Target { return MissingValue; }\n");
+    const FString ValidSource  = TEXT("float4 Main() : SV_Target { return float4(1.0, 0.0, 0.0, 1.0); }\n");
 
     for (EShaderOutputLanguage OutputLanguage : FShaderCompiler::Get().GetSupportedOutputLanguages())
     {
         TEST_SECTION(ToString(OutputLanguage));
 
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, OutputLanguage);
+        FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_0, EShaderStage::Pixel, OutputLanguage);
 
         TArray<uint8> ShaderCode;
         TEST_EXPECT(!FShaderCompiler::Get().CompileFromSource(BrokenSource, CompileInfo, ShaderCode));
@@ -400,16 +400,16 @@ bool ShaderCompilerCompileFailure_Test()
 
     if (FShaderCompiler::Get().IsOutputLanguageSupported(EShaderOutputLanguage::DXBC))
     {
-        TEST_SECTION("DXBC is limited to what Shader Model 5.0 can express");
+        TEST_SECTION(TEXT("DXBC is limited to what Shader Model 5.0 can express"));
 
         TArray<uint8> ShaderCode;
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, EShaderOutputLanguage::DXBC);
+        FShaderCompileInfo CompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Pixel, EShaderOutputLanguage::DXBC);
         TEST_EXPECT(FShaderCompiler::Get().CompileFromSource(ValidSource, CompileInfo, ShaderCode));
 
-        CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_6, EShaderStage::Pixel, EShaderOutputLanguage::DXBC);
+        CompileInfo = FShaderCompileInfo(TEXT("Main"), EShaderModel::SM_6_6, EShaderStage::Pixel, EShaderOutputLanguage::DXBC);
         TEST_EXPECT(!FShaderCompiler::Get().CompileFromSource(ValidSource, CompileInfo, ShaderCode));
 
-        CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::RayGen, EShaderOutputLanguage::DXBC);
+        CompileInfo = FShaderCompileInfo(TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::RayGen, EShaderOutputLanguage::DXBC);
         TEST_EXPECT(!FShaderCompiler::Get().CompileFromSource(ValidSource, CompileInfo, ShaderCode));
     }
 
@@ -426,47 +426,47 @@ bool ShaderCompilerDXBCConstantsSlot_Test()
         const auto CompileAndReflect = [](const FString& Source, TMap<FString, uint32>& OutSlots)
         {
             TArray<uint8> ShaderCode;
-            return CompileSource(Source, "Main", EShaderModel::SM_6_0, EShaderStage::Pixel, EShaderOutputLanguage::DXBC, true, ShaderCode) && ReflectConstantBufferSlots(ShaderCode, OutSlots);
+            return CompileSource(Source, TEXT("Main"), EShaderModel::SM_6_0, EShaderStage::Pixel, EShaderOutputLanguage::DXBC, true, ShaderCode) && ReflectConstantBufferSlots(ShaderCode, OutSlots);
         };
 
         const FString Declarations =
-            "struct FFirst  { float4 A; };\n"
+            TEXT("struct FFirst  { float4 A; };\n"
             "struct FSecond { float4 B; };\n"
             "struct FShaderBlockConstants { float4 C; };\n"
-            "ConstantBuffer<FShaderBlockConstants> Constants : register(b0, space1);\n";
+            "ConstantBuffer<FShaderBlockConstants> Constants : register(b0, space1);\n");
 
-        TEST_SECTION("The shader constants take the slot after the constant buffers the shader declares");
+        TEST_SECTION(TEXT("The shader constants take the slot after the constant buffers the shader declares"));
         {
             const FString Source = Declarations +
-                "ConstantBuffer<FFirst>  First  : register(b0);\n"
+                TEXT("ConstantBuffer<FFirst>  First  : register(b0);\n"
                 "ConstantBuffer<FSecond> Second : register(b1);\n"
-                "float4 Main() : SV_Target { return First.A + Second.B + Constants.C; }\n";
+                "float4 Main() : SV_Target { return First.A + Second.B + Constants.C; }\n");
 
             TMap<FString, uint32> Slots;
             TEST_EXPECT(CompileAndReflect(Source, Slots));
-            TEST_EXPECT(Slots.Find("First_CB") && *Slots.Find("First_CB") == 0);
-            TEST_EXPECT(Slots.Find("Second_CB") && *Slots.Find("Second_CB") == 1);
-            TEST_EXPECT(Slots.Find("Constants_CB") && *Slots.Find("Constants_CB") == 2);
+            TEST_EXPECT(Slots.Find(TEXT("First_CB")) && *Slots.Find(TEXT("First_CB")) == 0);
+            TEST_EXPECT(Slots.Find(TEXT("Second_CB")) && *Slots.Find(TEXT("Second_CB")) == 1);
+            TEST_EXPECT(Slots.Find(TEXT("Constants_CB")) && *Slots.Find(TEXT("Constants_CB")) == 2);
         }
 
-        TEST_SECTION("A gap in the declared slots is filled first");
+        TEST_SECTION(TEXT("A gap in the declared slots is filled first"));
         {
             const FString Source = Declarations +
-                "ConstantBuffer<FFirst>  First  : register(b0);\n"
+                TEXT("ConstantBuffer<FFirst>  First  : register(b0);\n"
                 "ConstantBuffer<FSecond> Second : register(b2);\n"
-                "float4 Main() : SV_Target { return First.A + Second.B + Constants.C; }\n";
+                "float4 Main() : SV_Target { return First.A + Second.B + Constants.C; }\n");
 
             TMap<FString, uint32> Slots;
             TEST_EXPECT(CompileAndReflect(Source, Slots));
-            TEST_EXPECT(Slots.Find("Constants_CB") && *Slots.Find("Constants_CB") == 1);
+            TEST_EXPECT(Slots.Find(TEXT("Constants_CB")) && *Slots.Find(TEXT("Constants_CB")) == 1);
         }
 
-        TEST_SECTION("The shader constants are their own binding space, with their size");
+        TEST_SECTION(TEXT("The shader constants are their own binding space, with their size"));
         {
-            const FString Source = Declarations + "float4 Main() : SV_Target { return Constants.C; }\n";
+            const FString Source = Declarations + TEXT("float4 Main() : SV_Target { return Constants.C; }\n");
 
             TArray<uint8> ShaderCode;
-            TEST_EXPECT(CompileSource(Source, "Main", EShaderModel::SM_6_0, EShaderStage::Pixel, EShaderOutputLanguage::DXBC, false, ShaderCode));
+            TEST_EXPECT(CompileSource(Source, TEXT("Main"), EShaderModel::SM_6_0, EShaderStage::Pixel, EShaderOutputLanguage::DXBC, false, ShaderCode));
 
             FShaderCodeView CodeView;
             TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
@@ -474,13 +474,13 @@ bool ShaderCompilerDXBCConstantsSlot_Test()
             TEST_EXPECT(CodeView.GetBindings().Size() == 1 && CodeView.GetBindings()[0].Space == EShaderBindingSpace::ShaderConstants);
         }
 
-        TEST_SECTION("An engine shader never shares a slot with its own constant buffers");
+        TEST_SECTION(TEXT("An engine shader never shares a slot with its own constant buffers"));
         {
             TArray<uint8> ShaderCode;
             TMap<FString, uint32> Slots;
-            TEST_EXPECT(CompileFile("Shaders/UserInterface.hlsl", "VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXBC, true, ShaderCode));
+            TEST_EXPECT(CompileFile(TEXT("Shaders/UserInterface.hlsl"), TEXT("VSMain"), EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXBC, true, ShaderCode));
             TEST_EXPECT(ReflectConstantBufferSlots(ShaderCode, Slots));
-            TEST_EXPECT(Slots.Find("Constants_CB") != nullptr);
+            TEST_EXPECT(Slots.Find(TEXT("Constants_CB")) != nullptr);
 
             TArray<uint32> UsedSlots;
             Slots.Foreach([&](const FString&, uint32 Slot)
@@ -499,14 +499,14 @@ bool ShaderCompilerCompileHash_Test()
 {
     TEST_BEGIN();
 
-    const FString SourceFile = "Shaders/UserInterface.hlsl";
+    const FString SourceFile = TEXT("Shaders/UserInterface.hlsl");
 
-    TEST_SECTION("The same compile settings produce the same hash");
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXIL);
+    TEST_SECTION(TEXT("The same compile settings produce the same hash"));
+    FShaderCompileInfo CompileInfo(TEXT("VSMain"), EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXIL);
     const uint64 BaseHash = FShaderCompiler::Get().ComputeCompileHash(SourceFile, CompileInfo);
     TEST_EXPECT_EQ(FShaderCompiler::Get().ComputeCompileHash(SourceFile, CompileInfo), BaseHash);
 
-    TEST_SECTION("Each output language produces its own hash");
+    TEST_SECTION(TEXT("Each output language produces its own hash"));
     const TArray<EShaderOutputLanguage> Languages = FShaderCompiler::Get().GetSupportedOutputLanguages();
 
     TArray<uint64> Hashes;
@@ -519,16 +519,16 @@ bool ShaderCompilerCompileHash_Test()
         Hashes.Add(Hash);
     }
 
-    TEST_SECTION("Entry point, stage and defines change the hash");
-    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, EShaderOutputLanguage::DXIL);
+    TEST_SECTION(TEXT("Entry point, stage and defines change the hash"));
+    CompileInfo = FShaderCompileInfo(TEXT("PSMain"), EShaderModel::SM_6_2, EShaderStage::Pixel, EShaderOutputLanguage::DXIL);
     TEST_EXPECT(FShaderCompiler::Get().ComputeCompileHash(SourceFile, CompileInfo) != BaseHash);
 
-    FShaderDefine Defines[] = { FShaderDefine("TEST_DEFINE", "1") };
-    CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXIL, TArrayView<FShaderDefine>(Defines));
+    FShaderDefine Defines[] = { FShaderDefine(TEXT("TEST_DEFINE"), TEXT("1")) };
+    CompileInfo = FShaderCompileInfo(TEXT("VSMain"), EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXIL, TArrayView<FShaderDefine>(Defines));
     TEST_EXPECT(FShaderCompiler::Get().ComputeCompileHash(SourceFile, CompileInfo) != BaseHash);
 
-    TEST_SECTION("Debug and release builds have their own hash");
-    CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXIL);
+    TEST_SECTION(TEXT("Debug and release builds have their own hash"));
+    CompileInfo = FShaderCompileInfo(TEXT("VSMain"), EShaderModel::SM_6_2, EShaderStage::Vertex, EShaderOutputLanguage::DXIL);
     CompileInfo.bDebugInfo = !CompileInfo.bDebugInfo;
     TEST_EXPECT(FShaderCompiler::Get().ComputeCompileHash(SourceFile, CompileInfo) != BaseHash);
 
@@ -548,13 +548,13 @@ bool ShaderCompilerReleaseOutput_Test()
 
     const FShaderFileCase Cases[] =
     {
-        { "Shaders/UserInterface.hlsl",       "VSMain", EShaderStage::Vertex  },
-        { "Shaders/UserInterface.hlsl",       "PSMain", EShaderStage::Pixel   },
-        { "Shaders/UserInterface.hlsl",       "VSText", EShaderStage::Vertex  },
-        { "Shaders/ImGui.hlsl",               "VSMain", EShaderStage::Vertex  },
-        { "Shaders/ImGui.hlsl",               "PSMain", EShaderStage::Pixel   },
-        { "Shaders/GenerateMipsTex2D.hlsl",   "Main",   EShaderStage::Compute },
-        { "Shaders/GenerateMipsTexCube.hlsl", "Main",   EShaderStage::Compute },
+        { TEXT("Shaders/UserInterface.hlsl"),       TEXT("VSMain"), EShaderStage::Vertex  },
+        { TEXT("Shaders/UserInterface.hlsl"),       TEXT("PSMain"), EShaderStage::Pixel   },
+        { TEXT("Shaders/UserInterface.hlsl"),       TEXT("VSText"), EShaderStage::Vertex  },
+        { TEXT("Shaders/ImGui.hlsl"),               TEXT("VSMain"), EShaderStage::Vertex  },
+        { TEXT("Shaders/ImGui.hlsl"),               TEXT("PSMain"), EShaderStage::Pixel   },
+        { TEXT("Shaders/GenerateMipsTex2D.hlsl"),   TEXT("Main"),   EShaderStage::Compute },
+        { TEXT("Shaders/GenerateMipsTexCube.hlsl"), TEXT("Main"),   EShaderStage::Compute },
     };
 
     for (EShaderOutputLanguage OutputLanguage : FShaderCompiler::Get().GetSupportedOutputLanguages())
@@ -579,7 +579,7 @@ bool ShaderCompilerReleaseOutput_Test()
             TEST_EXPECT(FShaderCodeReader::Read(ReleaseCode, Release));
             TEST_EXPECT(FShaderCodeReader::Read(DebugCode, Debug));
 
-            TEST_SECTION("Release containers have no debug info and no names");
+            TEST_SECTION(TEXT("Release containers have no debug info and no names"));
             TEST_EXPECT(!Release.HasDebugInfo());
             TEST_EXPECT(Debug.HasDebugInfo());
             for (int32 Index = 0; Index < Release.GetBindings().Size(); ++Index)
@@ -588,7 +588,7 @@ bool ShaderCompilerReleaseOutput_Test()
                 TEST_EXPECT(Debug.GetBindingName(Index)[0] != '\0');
             }
 
-            TEST_SECTION("Debug and release reflect the same bindings");
+            TEST_SECTION(TEXT("Debug and release reflect the same bindings"));
             TEST_EXPECT_EQ(Release.GetBindings().Size(), Debug.GetBindings().Size());
             TEST_EXPECT_EQ(Release.GetVertexInputs().Size(), Debug.GetVertexInputs().Size());
             TEST_EXPECT_EQ(Release.GetInfo().ShaderConstantsSize, Debug.GetInfo().ShaderConstantsSize);
@@ -599,13 +599,13 @@ bool ShaderCompilerReleaseOutput_Test()
                 TEST_EXPECT(Release.GetBindings()[Index].Space == Debug.GetBindings()[Index].Space);
             }
 
-            TEST_SECTION("The release build is smaller than the debug build");
+            TEST_SECTION(TEXT("The release build is smaller than the debug build"));
             TEST_EXPECT(Release.GetNativeCode().Size() < Debug.GetNativeCode().Size());
 
             const TArrayView<const uint8> NativeCode = Release.GetNativeCode();
             if (OutputLanguage == EShaderOutputLanguage::DXIL)
             {
-                TEST_SECTION("Release DXIL has no debug, statistics or private parts");
+                TEST_SECTION(TEXT("Release DXIL has no debug, statistics or private parts"));
                 TEST_EXPECT(ContainerHasPart(NativeCode, MakeFourCC('D', 'X', 'I', 'L')));
                 TEST_EXPECT(!ContainerHasPart(NativeCode, MakeFourCC('I', 'L', 'D', 'B')));
                 TEST_EXPECT(!ContainerHasPart(NativeCode, MakeFourCC('I', 'L', 'D', 'N')));
@@ -614,7 +614,7 @@ bool ShaderCompilerReleaseOutput_Test()
             }
             else if (OutputLanguage == EShaderOutputLanguage::DXBC)
             {
-                TEST_SECTION("Release DXBC has no reflection or debug chunks, but keeps the input signature");
+                TEST_SECTION(TEXT("Release DXBC has no reflection or debug chunks, but keeps the input signature"));
                 TEST_EXPECT(!ContainerHasPart(NativeCode, MakeFourCC('R', 'D', 'E', 'F')));
                 TEST_EXPECT(!ContainerHasPart(NativeCode, MakeFourCC('S', 'T', 'A', 'T')));
                 TEST_EXPECT(!ContainerHasPart(NativeCode, MakeFourCC('S', 'D', 'B', 'G')));
@@ -625,13 +625,13 @@ bool ShaderCompilerReleaseOutput_Test()
             {
                 const FSpirvScan Scan = ScanSpirv(NativeCode);
 
-                TEST_SECTION("Release SPIR-V has no debug instructions and no Google extensions");
+                TEST_SECTION(TEXT("Release SPIR-V has no debug instructions and no Google extensions"));
                 TEST_EXPECT(Scan.bValid);
                 TEST_EXPECT(!Scan.bHasDebugOpcodes);
                 TEST_EXPECT(!Scan.bHasDebugInfoImport);
                 TEST_EXPECT(!Scan.bHasGoogleExtensions);
 
-                TEST_SECTION("Every SPIR-V offset points at a DescriptorSet or Binding operand");
+                TEST_SECTION(TEXT("Every SPIR-V offset points at a DescriptorSet or Binding operand"));
                 const TArrayView<const FSpirvBindingOffsets> SpirvOffsets = Release.GetSpirvOffsets();
                 TEST_EXPECT_EQ(SpirvOffsets.Size(), Release.GetBindings().Size());
                 for (const FSpirvBindingOffsets& Offsets : SpirvOffsets)
@@ -640,7 +640,7 @@ bool ShaderCompilerReleaseOutput_Test()
                     TEST_EXPECT(Scan.BindingOperandOffsets.Contains(Offsets.BindingWordOffset));
                 }
 
-                TEST_SECTION("SPIR-V always names its entry point");
+                TEST_SECTION(TEXT("SPIR-V always names its entry point"));
                 TEST_EXPECT(CString::Strcmp(Release.GetEntryPoint(), Case.EntryPoint) == 0);
             }
         }
@@ -655,12 +655,12 @@ bool ShaderCompilerVertexInputs_Test()
 
     const FVertexInputExpectation Expected[] =
     {
-        { "POSITION", 0, EShaderComponentType::Float32, 2 },
-        { "TEXCOORD", 0, EShaderComponentType::Float32, 2 },
-        { "COLOR",    0, EShaderComponentType::Float32, 4 },
+        { TEXT("POSITION"), 0, EShaderComponentType::Float32, 2 },
+        { TEXT("TEXCOORD"), 0, EShaderComponentType::Float32, 2 },
+        { TEXT("COLOR"),    0, EShaderComponentType::Float32, 4 },
     };
 
-    const CHAR_T* const Filenames[] = { "Shaders/UserInterface.hlsl", "Shaders/ImGui.hlsl" };
+    const CHAR_T* const Filenames[] = { TEXT("Shaders/UserInterface.hlsl"), TEXT("Shaders/ImGui.hlsl") };
 
     const TArray<EShaderOutputLanguage> SupportedLanguages = FShaderCompiler::Get().GetSupportedOutputLanguages();
 
@@ -679,7 +679,7 @@ bool ShaderCompilerVertexInputs_Test()
             TEST_SECTION(ToString(OutputLanguage));
 
             TArray<uint8> ShaderCode;
-            TEST_EXPECT(CompileFile(Filename, "VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, OutputLanguage, false, ShaderCode));
+            TEST_EXPECT(CompileFile(Filename, TEXT("VSMain"), EShaderModel::SM_6_2, EShaderStage::Vertex, OutputLanguage, false, ShaderCode));
 
             FShaderCodeView CodeView;
             TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
@@ -702,16 +702,16 @@ bool ShaderCompilerVertexInputs_Test()
 
             if (OutputLanguage == EShaderOutputLanguage::MSL)
             {
-                TEST_SECTION("The MSL declares an attribute at every reflected location");
+                TEST_SECTION(TEXT("The MSL declares an attribute at every reflected location"));
                 const TArrayView<const uint8> NativeCode = CodeView.GetNativeCode();
-                const FString Source(reinterpret_cast<const CHAR_T*>(NativeCode.Data()), NativeCode.Size());
+                const FString Source = GetMSLSource(NativeCode);
                 for (uint8 Location : Locations)
                 {
-                    TEST_EXPECT(Source.Contains(FString::Printf("[[attribute(%u)]]", static_cast<uint32>(Location))));
+                    TEST_EXPECT(Source.Contains(FString::Printf(TEXT("[[attribute(%u)]]"), static_cast<uint32>(Location))));
                 }
             }
 
-            TEST_SECTION("Every language reports the same locations");
+            TEST_SECTION(TEXT("Every language reports the same locations"));
             if (FirstLocations.IsEmpty())
             {
                 FirstLocations = Locations;
@@ -721,7 +721,7 @@ bool ShaderCompilerVertexInputs_Test()
                 TEST_EXPECT(FirstLocations == Locations);
             }
 
-            TEST_SECTION("The inputs are sorted by location");
+            TEST_SECTION(TEXT("The inputs are sorted by location"));
             for (int32 Index = 1; Index < VertexInputs.Size(); ++Index)
             {
                 TEST_EXPECT(VertexInputs[Index - 1].Location < VertexInputs[Index].Location);
@@ -729,7 +729,7 @@ bool ShaderCompilerVertexInputs_Test()
         }
     }
 
-    TEST_SECTION("System values are not vertex inputs");
+    TEST_SECTION(TEXT("System values are not vertex inputs"));
     for (EShaderOutputLanguage OutputLanguage : Languages)
     {
         if (!SupportedLanguages.Contains(OutputLanguage))
@@ -738,17 +738,17 @@ bool ShaderCompilerVertexInputs_Test()
         }
 
         TArray<uint8> ShaderCode;
-        TEST_EXPECT(CompileFile("Shaders/UserInterface.hlsl", "VSText", EShaderModel::SM_6_2, EShaderStage::Vertex, OutputLanguage, false, ShaderCode));
+        TEST_EXPECT(CompileFile(TEXT("Shaders/UserInterface.hlsl"), TEXT("VSText"), EShaderModel::SM_6_2, EShaderStage::Vertex, OutputLanguage, false, ShaderCode));
 
         FShaderCodeView CodeView;
         TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
         TEST_EXPECT_EQ(CodeView.GetVertexInputs().Size(), 5);
-        TEST_EXPECT(FindVertexInput(CodeView.GetVertexInputs(), "SV_VertexID", 0) == nullptr);
-        TEST_EXPECT(FindVertexInput(CodeView.GetVertexInputs(), "TEXCOORD", 2) != nullptr);
+        TEST_EXPECT(FindVertexInput(CodeView.GetVertexInputs(), TEXT("SV_VertexID"), 0) == nullptr);
+        TEST_EXPECT(FindVertexInput(CodeView.GetVertexInputs(), TEXT("TEXCOORD"), 2) != nullptr);
     }
 
-    TEST_SECTION("Semantics are case-insensitive");
-    TEST_EXPECT_EQ(HashShaderSemantic("texcoord"), HashShaderSemantic("TEXCOORD"));
+    TEST_SECTION(TEXT("Semantics are case-insensitive"));
+    TEST_EXPECT_EQ(HashShaderSemantic(TEXT("texcoord")), HashShaderSemantic(TEXT("TEXCOORD")));
 
     TEST_END();
 }
@@ -766,9 +766,9 @@ bool ShaderCompilerRayTracing_Test()
 
     const FRayTracingCase Cases[] =
     {
-        { "Shaders/RayGen.hlsl",     "RayGen",     EShaderStage::RayGen        },
-        { "Shaders/Miss.hlsl",       "Miss",       EShaderStage::RayMiss       },
-        { "Shaders/ClosestHit.hlsl", "ClosestHit", EShaderStage::RayClosestHit },
+        { TEXT("Shaders/RayGen.hlsl"),     TEXT("RayGen"),     EShaderStage::RayGen        },
+        { TEXT("Shaders/Miss.hlsl"),       TEXT("Miss"),       EShaderStage::RayMiss       },
+        { TEXT("Shaders/ClosestHit.hlsl"), TEXT("ClosestHit"), EShaderStage::RayClosestHit },
     };
 
     struct FPermutation
@@ -809,8 +809,8 @@ bool ShaderCompilerRayTracing_Test()
 
                 FShaderDefine Defines[] =
                 {
-                    FShaderDefine("ENABLE_BINDLESS", Permutation.bBindless ? "1" : "0"),
-                    FShaderDefine("RAY_TRACING_SHADER_EXECUTION_REORDERING", Permutation.bSER ? "1" : "0"),
+                    FShaderDefine(TEXT("ENABLE_BINDLESS"), Permutation.bBindless ? TEXT("1") : TEXT("0")),
+                    FShaderDefine(TEXT("RAY_TRACING_SHADER_EXECUTION_REORDERING"), Permutation.bSER ? TEXT("1") : TEXT("0")),
                 };
 
                 TArray<uint8> ShaderCode;
@@ -825,10 +825,10 @@ bool ShaderCompilerRayTracing_Test()
                 FShaderCodeView CodeView;
                 TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
 
-                TEST_SECTION("Ray-tracing shaders report their demangled export name");
+                TEST_SECTION(TEXT("Ray-tracing shaders report their demangled export name"));
                 TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), Case.EntryPoint) == 0);
 
-                TEST_SECTION("Only the non-bindless closest-hit shader has local SRVs");
+                TEST_SECTION(TEXT("Only the non-bindless closest-hit shader has local SRVs"));
                 uint32 NumLocalBindings = 0;
                 for (const FShaderResourceBinding& Binding : CodeView.GetBindings())
                 {
@@ -863,7 +863,7 @@ bool ShaderCompilerRayTracing_Test()
                 {
                     const TArrayView<const uint8> NativeCode = CodeView.GetNativeCode();
 
-                    TEST_SECTION("Release DXIL libraries keep RDAT and drop the debug, statistics and private parts");
+                    TEST_SECTION(TEXT("Release DXIL libraries keep RDAT and drop the debug, statistics and private parts"));
                     TEST_EXPECT(ContainerHasPart(NativeCode, MakeFourCC('R', 'D', 'A', 'T')));
                     TEST_EXPECT(!ContainerHasPart(NativeCode, MakeFourCC('S', 'T', 'A', 'T')));
                     TEST_EXPECT(!ContainerHasPart(NativeCode, MakeFourCC('I', 'L', 'D', 'B')));
@@ -871,7 +871,7 @@ bool ShaderCompilerRayTracing_Test()
                     TEST_EXPECT(!ContainerHasPart(NativeCode, MakeFourCC('P', 'R', 'I', 'V')));
 
                     // Libraries keep their per-function flags in RDAT, so the SFI0 part decides, as it did before the container
-                    TEST_SECTION("The required features match the SFI0 part");
+                    TEST_SECTION(TEXT("The required features match the SFI0 part"));
                     uint64 FeatureInfo = 0;
                     TEST_EXPECT(ReadPartUInt64(NativeCode, MakeFourCC('S', 'F', 'I', '0'), FeatureInfo));
 
@@ -884,16 +884,16 @@ bool ShaderCompilerRayTracing_Test()
         }
     }
 
-    TEST_SECTION("A library with two functions reflects the one named in the entry point");
+    TEST_SECTION(TEXT("A library with two functions reflects the one named in the entry point"));
     {
         const FString Source =
-            "struct FPayload { float4 Color; };\n"
+            TEXT("struct FPayload { float4 Color; };\n"
             "Texture2D<float4> First  : register(t0);\n"
             "Texture2D<float4> Second : register(t1);\n"
             "[shader(\"miss\")]\n"
             "void MissA(inout FPayload Payload) { Payload.Color = First.Load(int3(0, 0, 0)); }\n"
             "[shader(\"miss\")]\n"
-            "void MissB(inout FPayload Payload) { Payload.Color = Second.Load(int3(0, 0, 0)); }\n";
+            "void MissB(inout FPayload Payload) { Payload.Color = Second.Load(int3(0, 0, 0)); }\n");
 
         for (EShaderOutputLanguage OutputLanguage : Languages)
         {
@@ -903,11 +903,11 @@ bool ShaderCompilerRayTracing_Test()
             }
 
             TArray<uint8> ShaderCode;
-            TEST_EXPECT(CompileSource(Source, "MissB", EShaderModel::SM_6_3, EShaderStage::RayMiss, OutputLanguage, false, ShaderCode));
+            TEST_EXPECT(CompileSource(Source, TEXT("MissB"), EShaderModel::SM_6_3, EShaderStage::RayMiss, OutputLanguage, false, ShaderCode));
 
             FShaderCodeView CodeView;
             TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
-            TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), "MissB") == 0);
+            TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), TEXT("MissB")) == 0);
 
             // DXIL reflects each library function on its own
             if (OutputLanguage == EShaderOutputLanguage::DXIL)
@@ -939,11 +939,11 @@ bool ShaderCompilerMSL_Test()
 
     const FShaderFileCase Cases[] =
     {
-        { "Shaders/UserInterface.hlsl",     "VSMain", EShaderStage::Vertex  },
-        { "Shaders/UserInterface.hlsl",     "PSMain", EShaderStage::Pixel   },
-        { "Shaders/ImGui.hlsl",             "VSMain", EShaderStage::Vertex  },
-        { "Shaders/ImGui.hlsl",             "PSMain", EShaderStage::Pixel   },
-        { "Shaders/GenerateMipsTex2D.hlsl", "Main",   EShaderStage::Compute },
+        { TEXT("Shaders/UserInterface.hlsl"),     TEXT("VSMain"), EShaderStage::Vertex  },
+        { TEXT("Shaders/UserInterface.hlsl"),     TEXT("PSMain"), EShaderStage::Pixel   },
+        { TEXT("Shaders/ImGui.hlsl"),             TEXT("VSMain"), EShaderStage::Vertex  },
+        { TEXT("Shaders/ImGui.hlsl"),             TEXT("PSMain"), EShaderStage::Pixel   },
+        { TEXT("Shaders/GenerateMipsTex2D.hlsl"), TEXT("Main"),   EShaderStage::Compute },
     };
 
     for (const FShaderFileCase& Case : Cases)
@@ -970,11 +970,11 @@ bool ShaderCompilerMSL_Test()
         {
             const FString Source = GetMSLSource(CodeView->GetNativeCode());
 
-            TEST_SECTION("The entry point is the MSL function name");
+            TEST_SECTION(TEXT("The entry point is the MSL function name"));
             TEST_EXPECT(CodeView->GetEntryPoint()[0] != '\0');
-            TEST_EXPECT(Source.Contains(FString(CodeView->GetEntryPoint()) + "("));
+            TEST_EXPECT(Source.Contains(FString(CodeView->GetEntryPoint()) + TEXT("(")));
 
-            TEST_SECTION("Every slot is inside its table and unique");
+            TEST_SECTION(TEXT("Every slot is inside its table and unique"));
             const TArrayView<const FShaderResourceBinding> Bindings = CodeView->GetBindings();
             const TArrayView<const FMSLBindingSlot>        Slots    = CodeView->GetMSLSlots();
             TEST_EXPECT_EQ(Slots.Size(), Bindings.Size());
@@ -1009,14 +1009,14 @@ bool ShaderCompilerMSL_Test()
 
             if (Case.Stage == EShaderStage::Compute)
             {
-                TEST_SECTION("Compute shaders report their thread group size");
+                TEST_SECTION(TEXT("Compute shaders report their thread group size"));
                 TEST_EXPECT_EQ(CodeView->GetMSLInfo().ThreadGroupSize[0], 8);
                 TEST_EXPECT_EQ(CodeView->GetMSLInfo().ThreadGroupSize[1], 8);
                 TEST_EXPECT_EQ(CodeView->GetMSLInfo().ThreadGroupSize[2], 1);
             }
         }
 
-        TEST_SECTION("Release MSL is generated from stripped SPIR-V");
+        TEST_SECTION(TEXT("Release MSL is generated from stripped SPIR-V"));
         const FString ReleaseSource = GetMSLSource(Release.GetNativeCode());
         for (int32 Index = 0; Index < Debug.GetBindings().Size(); ++Index)
         {
@@ -1028,10 +1028,10 @@ bool ShaderCompilerMSL_Test()
         }
     }
 
-    TEST_SECTION("Every resource kind maps to an MSL binding type");
+    TEST_SECTION(TEXT("Every resource kind maps to an MSL binding type"));
     {
         const FString Source =
-            "struct FData { float4 Value; };\n"
+            TEXT("struct FData { float4 Value; };\n"
             "struct FConstants { uint Index; };\n"
             "[[vk::push_constant]] ConstantBuffer<FConstants> Constants : register(b0, space1);\n"
             "ConstantBuffer<FData>          Uniform    : register(b0);\n"
@@ -1047,10 +1047,10 @@ bool ShaderCompilerMSL_Test()
             "    float4 Value = Uniform.Value + ReadBuffer[Constants.Index].Value + ReadImage.SampleLevel(Sampler0, float2(0, 0), 0) + TexelRead[0];\n"
             "    OutBuffer[ThreadID.x].Value = Value;\n"
             "    OutImage[ThreadID.xy] = Value;\n"
-            "}\n";
+            "}\n");
 
         TArray<uint8> ShaderCode;
-        TEST_EXPECT(CompileSource(Source, "Main", EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::MSL, true, ShaderCode));
+        TEST_EXPECT(CompileSource(Source, TEXT("Main"), EShaderModel::SM_6_2, EShaderStage::Compute, EShaderOutputLanguage::MSL, true, ShaderCode));
 
         FShaderCodeView CodeView;
         TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));
@@ -1073,10 +1073,10 @@ bool ShaderCompilerMSL_Test()
         TEST_EXPECT(Types.Contains(EMSLBindingType::ShaderConstants));
     }
 
-    TEST_SECTION("The bindless heaps sit at buffers 29 and 30");
+    TEST_SECTION(TEXT("The bindless heaps sit at buffers 29 and 30"));
     {
         const FString Source =
-            "struct FConstants { uint TextureIndex; uint SamplerIndex; };\n"
+            TEXT("struct FConstants { uint TextureIndex; uint SamplerIndex; };\n"
             "[[vk::push_constant]] ConstantBuffer<FConstants> Constants : register(b0, space1);\n"
             "RWStructuredBuffer<float4> Output : register(u0);\n"
             "[numthreads(1, 1, 1)]\n"
@@ -1085,10 +1085,10 @@ bool ShaderCompilerMSL_Test()
             "    Texture2D<float4> Texture = ResourceDescriptorHeap[Constants.TextureIndex];\n"
             "    SamplerState      Sampler = SamplerDescriptorHeap[Constants.SamplerIndex];\n"
             "    Output[0] = Texture.SampleLevel(Sampler, float2(0, 0), 0);\n"
-            "}\n";
+            "}\n");
 
         TArray<uint8> ShaderCode;
-        TEST_EXPECT(CompileSource(Source, "Main", EShaderModel::SM_6_6, EShaderStage::Compute, EShaderOutputLanguage::MSL, false, ShaderCode));
+        TEST_EXPECT(CompileSource(Source, TEXT("Main"), EShaderModel::SM_6_6, EShaderStage::Compute, EShaderOutputLanguage::MSL, false, ShaderCode));
 
         FShaderCodeView CodeView;
         TEST_EXPECT(FShaderCodeReader::Read(ShaderCode, CodeView));

@@ -35,11 +35,11 @@ static void RefreshLogReadout()
     }
 
     GLogReadout->SetText(FString::Printf(
-        "%d line(s) held, %d showing, %s, %s",
+        TEXT("%d line(s) held, %d showing, %s, %s"),
         GLogView->GetNumLines(),
         GLogView->GetNumVisibleLines(),
-        GLogView->IsAutoScrollEnabled() ? "following the tail" : "not following",
-        GLogView->GetSearchText().IsEmpty() ? "no search" : (GLogView->IsFilteringToMatches() ? "hiding non-matches" : "highlighting matches")));
+        GLogView->IsAutoScrollEnabled() ? TEXT("following the tail") : TEXT("not following"),
+        GLogView->GetSearchText().IsEmpty() ? TEXT("no search") : (GLogView->IsFilteringToMatches() ? TEXT("hiding non-matches") : TEXT("highlighting matches"))));
 }
 
 static void LogNextSample()
@@ -52,19 +52,19 @@ static void LogNextSample()
 
     static const FSample Samples[] =
     {
-        { ELogSeverity::Info,    "Loaded 12 materials from the package cache" },
-        { ELogSeverity::Info,    "Compiled GBuffer.hlsl in 42ms" },
-        { ELogSeverity::Warning, "Texture 'Rock_N' has no mipmaps, sampling will alias" },
-        { ELogSeverity::Info,    "Streamed 3 clusters into the visibility buffer" },
-        { ELogSeverity::Error,   "Failed to create pipeline state, root signature mismatch" },
-        { ELogSeverity::Info,    "Frame 1204 took 8.3ms, 6.1ms of it on the GPU" },
-        { ELogSeverity::Warning, "Shader cache miss for VS_Skinned, compiling on demand" },
+        { ELogSeverity::Info,    TEXT("Loaded 12 materials from the package cache") },
+        { ELogSeverity::Info,    TEXT("Compiled GBuffer.hlsl in 42ms") },
+        { ELogSeverity::Warning, TEXT("Texture 'Rock_N' has no mipmaps, sampling will alias") },
+        { ELogSeverity::Info,    TEXT("Streamed 3 clusters into the visibility buffer") },
+        { ELogSeverity::Error,   TEXT("Failed to create pipeline state, root signature mismatch") },
+        { ELogSeverity::Info,    TEXT("Frame 1204 took 8.3ms, 6.1ms of it on the GPU") },
+        { ELogSeverity::Warning, TEXT("Shader cache miss for VS_Skinned, compiling on demand") },
     };
 
     const FSample& Sample = Samples[GNextSample % static_cast<int32>(ARRAY_COUNT(Samples))];
     GNextSample++;
 
-    GLogView->Log(Sample.Severity, FString::Printf("%s (#%d)", Sample.Message, GNextSample));
+    GLogView->Log(Sample.Severity, FString::Printf(TEXT("%s (#%d)"), Sample.Message, GNextSample));
     GLogView->Flush();
 
     RefreshLogReadout();
@@ -112,11 +112,11 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     RefreshLogReadout();
 
     FButton::FDesc LogDesc;
-    LogDesc.SetText("Log a line").SetFont(Fonts.Body);
+    LogDesc.SetText(TEXT("Log a line")).SetFont(Fonts.Body);
     LogDesc.SetOnClicked(FOnClicked::CreateLambda([]() { LogNextSample(); }));
 
     FButton::FDesc BurstDesc;
-    BurstDesc.SetText("Log twenty").SetFont(Fonts.Body);
+    BurstDesc.SetText(TEXT("Log twenty")).SetFont(Fonts.Body);
     BurstDesc.SetOnClicked(FOnClicked::CreateLambda([]()
     {
         for (int32 Index = 0; Index < 20; ++Index)
@@ -126,7 +126,7 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     }));
 
     FButton::FDesc ClearDesc;
-    ClearDesc.SetText("Clear").SetFont(Fonts.Body);
+    ClearDesc.SetText(TEXT("Clear")).SetFont(Fonts.Body);
     ClearDesc.SetOnClicked(FOnClicked::CreateLambda([]()
     {
         GLogView->Clear();
@@ -134,7 +134,7 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     }));
 
     FButton::FDesc CopyDesc;
-    CopyDesc.SetText("Select all and copy").SetFont(Fonts.Body);
+    CopyDesc.SetText(TEXT("Select all and copy")).SetFont(Fonts.Body);
     CopyDesc.SetOnClicked(FOnClicked::CreateLambda([]()
     {
         GLogView->SelectAll();
@@ -142,7 +142,7 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     }));
 
     FComboBox::FDesc SeverityDesc;
-    SeverityDesc.SetOptions({ "Info and up", "Warnings and up", "Errors only" }).SetFont(Fonts.Body);
+    SeverityDesc.SetOptions({ TEXT("Info and up"), TEXT("Warnings and up"), TEXT("Errors only") }).SetFont(Fonts.Body);
     SeverityDesc.SelectedIndex      = 0;
     SeverityDesc.OnSelectionChanged = FOnComboSelectionChanged::CreateLambda([](int32 SelectedIndex)
     {
@@ -153,7 +153,7 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     });
 
     FCheckBox::FDesc AutoScrollDesc;
-    AutoScrollDesc.SetText("Follow the tail").SetFont(Fonts.Body);
+    AutoScrollDesc.SetText(TEXT("Follow the tail")).SetFont(Fonts.Body);
     AutoScrollDesc.InitialState  = ECheckBoxState::Checked;
     AutoScrollDesc.OnStateChanged = FOnCheckStateChanged::CreateLambda([](ECheckBoxState NewState)
     {
@@ -162,7 +162,7 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     });
 
     FCheckBox::FDesc FilterDesc;
-    FilterDesc.SetText("Hide non-matches").SetFont(Fonts.Body);
+    FilterDesc.SetText(TEXT("Hide non-matches")).SetFont(Fonts.Body);
     FilterDesc.OnStateChanged = FOnCheckStateChanged::CreateLambda([](ECheckBoxState NewState)
     {
         GFilterToMatches = NewState == ECheckBoxState::Checked;
@@ -172,7 +172,7 @@ static TSharedPtr<FVisualElement> MakeLogControls(const FPlaygroundFonts& Fonts)
     });
 
     FEditableText::FDesc SearchDesc;
-    SearchDesc.HintText = "Search the log";
+    SearchDesc.HintText = TEXT("Search the log");
     SearchDesc.Font     = Fonts.Body;
 
     TSharedPtr<FEditableText> SearchField = FEditableText::Create(SearchDesc);
@@ -209,7 +209,7 @@ static TSharedPtr<FVisualElement> MakeRichTextRow(const FPlaygroundFonts& Fonts)
     const FUIStyle& Style = FUIStyle::GetDefault();
 
     FTextBlock::FDesc ReadoutDesc;
-    ReadoutDesc.Text            = "nothing selected";
+    ReadoutDesc.Text            = TEXT("nothing selected");
     ReadoutDesc.Font            = Fonts.Monospace;
     ReadoutDesc.ColorAndOpacity = Style.Colors.TextDisabled;
 
@@ -219,23 +219,23 @@ static TSharedPtr<FVisualElement> MakeRichTextRow(const FPlaygroundFonts& Fonts)
     Desc.Margin        = FMargin(12, 10);
     Desc.bAutoWrapText = true;
 
-    Desc.Runs.Add(FTextRun("A paragraph made of runs. ", Fonts.Body.Get(), Style.Colors.Text));
-    Desc.Runs.Add(FTextRun("This part is accented", Fonts.Body.Get(), Style.Colors.Accent));
-    Desc.Runs.Add(FTextRun(" and this part is dimmed, ", Fonts.Body.Get(), Style.Colors.TextDisabled));
-    Desc.Runs.Add(FTextRun("but a selection crosses all three without noticing where one ends. ", Fonts.Body.Get(), Style.Colors.Text));
-    Desc.Runs.Add(FTextRun("Drag across it, then press Command-C to copy what you took.", Fonts.Body.Get(), Style.Colors.Text));
+    Desc.Runs.Add(FTextRun(TEXT("A paragraph made of runs. "), Fonts.Body.Get(), Style.Colors.Text));
+    Desc.Runs.Add(FTextRun(TEXT("This part is accented"), Fonts.Body.Get(), Style.Colors.Accent));
+    Desc.Runs.Add(FTextRun(TEXT(" and this part is dimmed, "), Fonts.Body.Get(), Style.Colors.TextDisabled));
+    Desc.Runs.Add(FTextRun(TEXT("but a selection crosses all three without noticing where one ends. "), Fonts.Body.Get(), Style.Colors.Text));
+    Desc.Runs.Add(FTextRun(TEXT("Drag across it, then press Command-C to copy what you took."), Fonts.Body.Get(), Style.Colors.Text));
 
     Desc.OnSelectionChanged = FOnSelectionChanged::CreateLambda([](const FString& SelectedText)
     {
         GSelectionReadout->SetText(SelectedText.IsEmpty()
-            ? FString("nothing selected")
-            : FString::Printf("%d character(s): \"%s\"", SelectedText.Length(), SelectedText.Data()));
+            ? FString(TEXT("nothing selected"))
+            : FString::Printf(TEXT("%d character(s): \"%s\""), SelectedText.Length(), SelectedText.Data()));
     });
 
     GRichText = FRichTextBlock::Create(Desc);
 
     FEditableText::FDesc SearchDesc;
-    SearchDesc.HintText = "Highlight in the paragraph";
+    SearchDesc.HintText = TEXT("Highlight in the paragraph");
     SearchDesc.Font     = Fonts.Body;
 
     TSharedPtr<FEditableText> SearchField = FEditableText::Create(SearchDesc);
@@ -257,8 +257,8 @@ FPlaygroundScene CreateOutputLogScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Output log";
-        Desc.Description = "An IOutputDevice with a ring buffer behind it. Severity colours the line, the filters decide which ones are built into the text at all.";
+        Desc.Title       = TEXT("Output log");
+        Desc.Description = TEXT("An IOutputDevice with a ring buffer behind it. Severity colours the line, the filters decide which ones are built into the text at all.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeLogView(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -266,8 +266,8 @@ FPlaygroundScene CreateOutputLogScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Filters and the tail";
-        Desc.Description = "Raising the severity floor or filtering to matches hides lines without dropping them. Scroll away from the bottom and the view stops following.";
+        Desc.Title       = TEXT("Filters and the tail");
+        Desc.Description = TEXT("Raising the severity floor or filtering to matches hides lines without dropping them. Scroll away from the bottom and the view stops following.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeLogControls(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -275,12 +275,12 @@ FPlaygroundScene CreateOutputLogScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Rich text";
-        Desc.Description = "Selection and search over runs of different colours, which is what the log is built out of.";
+        Desc.Title       = TEXT("Rich text");
+        Desc.Description = TEXT("Selection and search over runs of different colours, which is what the log is built out of.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeRichTextRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Output Log", MakeSceneColumn("Output Log", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Output Log"), MakeSceneColumn(TEXT("Output Log"), Fonts, Panels));
 }

@@ -88,7 +88,7 @@ bool TOptional_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Empty optional / HasValue / operator bool / TryGetValue");
+    TEST_SECTION(TEXT("Empty optional / HasValue / operator bool / TryGetValue"));
     {
         TOptional<int32> Empty;
         TEST_EXPECT(!Empty.HasValue());
@@ -97,7 +97,7 @@ bool TOptional_Test()
         TEST_EXPECT_EQ(Empty.GetValueOrDefault(7), 7);
     }
 
-    TEST_SECTION("InPlace construction / GetValue / operator* / operator->");
+    TEST_SECTION(TEXT("InPlace construction / GetValue / operator* / operator->"));
     {
         TOptional<int32> Value(EInPlace::InPlace, 42);
         TEST_EXPECT(Value.HasValue());
@@ -109,7 +109,7 @@ bool TOptional_Test()
         TEST_EXPECT_EQ(Value.GetValueOrDefault(7), 42);
     }
 
-    TEST_SECTION("Emplace / Reset");
+    TEST_SECTION(TEXT("Emplace / Reset"));
     {
         TOptional<int32> Value;
         TEST_EXPECT_EQ(Value.Emplace(100), 100);
@@ -123,7 +123,7 @@ bool TOptional_Test()
         TEST_EXPECT(!Value.HasValue());
     }
 
-    TEST_SECTION("Copy / move / nullptr assignment");
+    TEST_SECTION(TEXT("Copy / move / nullptr assignment"));
     {
         TOptional<int32> Value(EInPlace::InPlace, 5);
         TOptional<int32> Copy;
@@ -142,7 +142,7 @@ bool TOptional_Test()
         TEST_EXPECT(!Moved.HasValue());
     }
 
-    TEST_SECTION("Swap (both set, one set, neither set)");
+    TEST_SECTION(TEXT("Swap (both set, one set, neither set)"));
     {
         TOptional<int32> First(EInPlace::InPlace, 1);
         TOptional<int32> Second(EInPlace::InPlace, 2);
@@ -160,7 +160,7 @@ bool TOptional_Test()
         TEST_EXPECT_EQ(*Unset, 9);
     }
 
-    TEST_SECTION("operator== / operator!=");
+    TEST_SECTION(TEXT("operator== / operator!="));
     {
         TOptional<int32> First(EInPlace::InPlace, 5);
         TOptional<int32> Second(EInPlace::InPlace, 5);
@@ -174,7 +174,7 @@ bool TOptional_Test()
         TEST_EXPECT(First != Empty1);
     }
 
-    TEST_SECTION("Non-trivial heap type: InPlace / Emplace / Swap / GetValueOrDefault");
+    TEST_SECTION(TEXT("Non-trivial heap type: InPlace / Emplace / Swap / GetValueOrDefault"));
     {
         TOptional<FHeavy> First;
         TOptional<FHeavy> Second(EInPlace::InPlace, 100);
@@ -193,7 +193,7 @@ bool TOptional_Test()
         TEST_EXPECT(First.GetValueOrDefault(FHeavy(50)) == 50);
     }
 
-    TEST_SECTION("Move-only payload: Emplace / move construction");
+    TEST_SECTION(TEXT("Move-only payload: Emplace / move construction"));
     {
         TOptional<FMoveOnly> First;
         First.Emplace();

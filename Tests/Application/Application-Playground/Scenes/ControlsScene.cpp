@@ -28,11 +28,11 @@ static TSharedPtr<FTextBlock> MakeReadout(const FPlaygroundFonts& Fonts, const F
 
 static TSharedPtr<FVisualElement> MakeButtonRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock>     Readout    = MakeReadout(Fonts, "no clicks yet");
+    TSharedPtr<FTextBlock>     Readout    = MakeReadout(Fonts, TEXT("no clicks yet"));
     TSharedPtr<int32>          ClickCount = MakeSharedPtr<int32>(0);
     TSharedPtr<FHorizontalBox> Row        = FHorizontalBox::Create();
 
-    const CHAR_T* Labels[] = { "Save", "Cancel", "Bordered", "Disabled" };
+    const CHAR_T* Labels[] = { TEXT("Save"), TEXT("Cancel"), TEXT("Bordered"), TEXT("Disabled") };
     for (int32 Index = 0; Index < static_cast<int32>(ARRAY_COUNT(Labels)); ++Index)
     {
         FButton::FDesc Desc;
@@ -41,7 +41,7 @@ static TSharedPtr<FVisualElement> MakeButtonRow(const FPlaygroundFonts& Fonts)
         Desc.OnClicked  = FOnClicked::CreateLambda([Readout, ClickCount, Label = FString(Labels[Index])]()
         {
             (*ClickCount)++;
-            Readout->SetText(FString::Printf("%s clicked, %d in total", Label.Data(), *ClickCount));
+            Readout->SetText(FString::Printf(TEXT("%s clicked, %d in total"), Label.Data(), *ClickCount));
         });
 
         TSharedPtr<FButton> Button = FButton::Create(Desc);
@@ -54,7 +54,7 @@ static TSharedPtr<FVisualElement> MakeButtonRow(const FPlaygroundFonts& Fonts)
     }
 
     FButton::FDesc WideDesc;
-    WideDesc.SetText("Left aligned in a fill slot").SetFont(Fonts.Body);
+    WideDesc.SetText(TEXT("Left aligned in a fill slot")).SetFont(Fonts.Body);
     WideDesc.HorizontalContentAlignment = EHorizontalAlignment::Left;
 
     Row->AddSlot(FButton::Create(WideDesc)).SetFillCoefficient(1.0f).SetVerticalAlignment(EVerticalAlignment::Center);
@@ -67,7 +67,7 @@ static TSharedPtr<FVisualElement> MakeButtonRow(const FPlaygroundFonts& Fonts)
 
 static TSharedPtr<FVisualElement> MakeCheckBoxRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock>   Readout = MakeReadout(Fonts, "nothing toggled yet");
+    TSharedPtr<FTextBlock>   Readout = MakeReadout(Fonts, TEXT("nothing toggled yet"));
     TSharedPtr<FVerticalBox> Column  = FVerticalBox::Create();
 
     struct FSample
@@ -80,10 +80,10 @@ static TSharedPtr<FVisualElement> MakeCheckBoxRow(const FPlaygroundFonts& Fonts)
 
     const FSample Samples[] =
     {
-        { "Two-state, off",             ECheckBoxState::Unchecked,    false, true  },
-        { "Two-state, on",              ECheckBoxState::Checked,      false, true  },
-        { "Tri-state, mixed selection", ECheckBoxState::Undetermined, true,  true  },
-        { "Disabled",                   ECheckBoxState::Checked,      false, false },
+        { TEXT("Two-state, off"),             ECheckBoxState::Unchecked,    false, true  },
+        { TEXT("Two-state, on"),              ECheckBoxState::Checked,      false, true  },
+        { TEXT("Tri-state, mixed selection"), ECheckBoxState::Undetermined, true,  true  },
+        { TEXT("Disabled"),                   ECheckBoxState::Checked,      false, false },
     };
 
     for (const FSample& Sample : Samples)
@@ -94,8 +94,8 @@ static TSharedPtr<FVisualElement> MakeCheckBoxRow(const FPlaygroundFonts& Fonts)
         Desc.bIsTriState    = Sample.bIsTriState;
         Desc.OnStateChanged = FOnCheckStateChanged::CreateLambda([Readout, Label = FString(Sample.Label)](ECheckBoxState NewState)
         {
-            const CHAR_T* StateName = NewState == ECheckBoxState::Checked ? "checked" : (NewState == ECheckBoxState::Unchecked ? "unchecked" : "undetermined");
-            Readout->SetText(FString::Printf("%s is now %s", Label.Data(), StateName));
+            const CHAR_T* StateName = NewState == ECheckBoxState::Checked ? TEXT("checked") : (NewState == ECheckBoxState::Unchecked ? TEXT("unchecked") : TEXT("undetermined"));
+            Readout->SetText(FString::Printf(TEXT("%s is now %s"), Label.Data(), StateName));
         });
 
         TSharedPtr<FCheckBox> CheckBox = FCheckBox::Create(Desc);
@@ -110,7 +110,7 @@ static TSharedPtr<FVisualElement> MakeCheckBoxRow(const FPlaygroundFonts& Fonts)
 
 static TSharedPtr<FVisualElement> MakeSliderRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, "drag a handle");
+    TSharedPtr<FTextBlock> Readout = MakeReadout(Fonts, TEXT("drag a handle"));
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
 
@@ -126,9 +126,9 @@ static TSharedPtr<FVisualElement> MakeSliderRow(const FPlaygroundFonts& Fonts)
 
     const FSample Samples[] =
     {
-        { "Continuous 0 to 1",    0.0f,   1.0f, 0.35f, 0.0f,  false },
-        { "Stepped by 10",        0.0f, 100.0f, 40.0f, 10.0f, true  },
-        { "Signed, -180 to 180", -180.0f, 180.0f, 0.0f, 1.0f, true  },
+        { TEXT("Continuous 0 to 1"),    0.0f,   1.0f, 0.35f, 0.0f,  false },
+        { TEXT("Stepped by 10"),        0.0f, 100.0f, 40.0f, 10.0f, true  },
+        { TEXT("Signed, -180 to 180"), -180.0f, 180.0f, 0.0f, 1.0f, true  },
     };
 
     for (const FSample& Sample : Samples)
@@ -146,11 +146,11 @@ static TSharedPtr<FVisualElement> MakeSliderRow(const FPlaygroundFonts& Fonts)
         SliderDesc.Precision      = Sample.Step >= 1.0f ? 0 : 2;
         SliderDesc.OnValueChanged = FOnSliderValueChanged::CreateLambda([Readout, Label = FString(Sample.Label)](float NewValue)
         {
-            Readout->SetText(FString::Printf("%s dragging: %.3f", Label.Data(), NewValue));
+            Readout->SetText(FString::Printf(TEXT("%s dragging: %.3f"), Label.Data(), NewValue));
         });
         SliderDesc.OnValueCommitted = FOnSliderValueCommitted::CreateLambda([Readout, Label = FString(Sample.Label)](float FinalValue)
         {
-            Readout->SetText(FString::Printf("%s committed: %.3f", Label.Data(), FinalValue));
+            Readout->SetText(FString::Printf(TEXT("%s committed: %.3f"), Label.Data(), FinalValue));
         });
 
         TSharedPtr<FHorizontalBox> Row = FHorizontalBox::Create();
@@ -169,7 +169,7 @@ static TSharedPtr<FVisualElement> MakeSliderRow(const FPlaygroundFonts& Fonts)
     VerticalRow->AddSlot(FSlider::Create(VerticalDesc)).SetPadding(FMargin(0, 0, 16, 0));
 
     FTextBlock::FDesc NoteDesc;
-    NoteDesc.Text            = "Vertical sliders count up from the bottom.";
+    NoteDesc.Text            = TEXT("Vertical sliders count up from the bottom.");
     NoteDesc.Font            = Fonts.Body;
     NoteDesc.ColorAndOpacity = FUIStyle::GetDefault().Colors.TextDisabled;
 
@@ -182,10 +182,10 @@ static TSharedPtr<FVisualElement> MakeSliderRow(const FPlaygroundFonts& Fonts)
 
 static TSharedPtr<FVisualElement> MakeSpinBoxRow(const FPlaygroundFonts& Fonts)
 {
-    TSharedPtr<FTextBlock>     Readout = MakeReadout(Fonts, "drag across a field, or click one to type");
+    TSharedPtr<FTextBlock>     Readout = MakeReadout(Fonts, TEXT("drag across a field, or click one to type"));
     TSharedPtr<FHorizontalBox> Row     = FHorizontalBox::Create();
 
-    const CHAR_T* Axes[] = { "X: ", "Y: ", "Z: " };
+    const CHAR_T* Axes[] = { TEXT("X: "), TEXT("Y: "), TEXT("Z: ") };
     for (int32 Index = 0; Index < static_cast<int32>(ARRAY_COUNT(Axes)); ++Index)
     {
         FSpinBox::FDesc Desc;
@@ -195,11 +195,11 @@ static TSharedPtr<FVisualElement> MakeSpinBoxRow(const FPlaygroundFonts& Fonts)
         Desc.ScrubSpeed     = 0.25f;
         Desc.OnValueChanged = FOnSpinBoxValueChanged::CreateLambda([Readout, Axis = FString(Axes[Index])](float NewValue)
         {
-            Readout->SetText(FString::Printf("%sscrubbing to %.2f", Axis.Data(), NewValue));
+            Readout->SetText(FString::Printf(TEXT("%sscrubbing to %.2f"), Axis.Data(), NewValue));
         });
         Desc.OnValueCommitted = FOnSpinBoxValueCommitted::CreateLambda([Readout, Axis = FString(Axes[Index])](float FinalValue)
         {
-            Readout->SetText(FString::Printf("%scommitted %.2f", Axis.Data(), FinalValue));
+            Readout->SetText(FString::Printf(TEXT("%scommitted %.2f"), Axis.Data(), FinalValue));
         });
 
         Row->AddSlot(FSpinBox::Create(Desc)).SetFillCoefficient(1.0f).SetPadding(FMargin(0, 0, 8, 0));
@@ -208,7 +208,7 @@ static TSharedPtr<FVisualElement> MakeSpinBoxRow(const FPlaygroundFonts& Fonts)
     // An unbounded field, which draws no fill because there is no range to show a position in
     FSpinBox::FDesc FreeDesc;
     FreeDesc.SetValue(1.0f).SetFont(Fonts.Monospace);
-    FreeDesc.Prefix     = "Scale: ";
+    FreeDesc.Prefix     = TEXT("Scale: ");
     FreeDesc.Precision  = 3;
     FreeDesc.ScrubSpeed = 0.01f;
 
@@ -228,7 +228,7 @@ static TSharedPtr<FVisualElement> MakeScrollBarRow(const FPlaygroundFonts& Fonts
     for (int32 Index = 0; Index < 40; ++Index)
     {
         FTextBlock::FDesc LineDesc;
-        LineDesc.Text            = FString::Printf("Row %02d, scroll with the wheel or drag the bar on the right", Index);
+        LineDesc.Text            = FString::Printf(TEXT("Row %02d, scroll with the wheel or drag the bar on the right"), Index);
         LineDesc.Font            = Fonts.Monospace;
         LineDesc.ColorAndOpacity = (Index % 5) == 0 ? Style.Colors.Accent : Style.Colors.Text;
 
@@ -255,7 +255,7 @@ static TSharedPtr<FVisualElement> MakeOverlayRow(const FPlaygroundFonts& Fonts)
     const FUIStyle& Style = FUIStyle::GetDefault();
 
     FTextBlock::FDesc BaseDesc;
-    BaseDesc.Text            = "A panel with a badge pinned to its top-right corner and a caption at the bottom.";
+    BaseDesc.Text            = TEXT("A panel with a badge pinned to its top-right corner and a caption at the bottom.");
     BaseDesc.Font            = Fonts.Body;
     BaseDesc.ColorAndOpacity = Style.Colors.Text;
 
@@ -267,7 +267,7 @@ static TSharedPtr<FVisualElement> MakeOverlayRow(const FPlaygroundFonts& Fonts)
     BaseFrame.Content         = FTextBlock::Create(BaseDesc);
 
     FTextBlock::FDesc BadgeText;
-    BadgeText.Text            = "12";
+    BadgeText.Text            = TEXT("12");
     BadgeText.Font            = Fonts.Body;
     BadgeText.ColorAndOpacity = FFloatColor(0.06f, 0.06f, 0.06f, 1.0f);
 
@@ -278,7 +278,7 @@ static TSharedPtr<FVisualElement> MakeOverlayRow(const FPlaygroundFonts& Fonts)
     BadgeFrame.Content         = FTextBlock::Create(BadgeText);
 
     FTextBlock::FDesc CaptionText;
-    CaptionText.Text            = "Bottom-centred caption";
+    CaptionText.Text            = TEXT("Bottom-centred caption");
     CaptionText.Font            = Fonts.Monospace;
     CaptionText.ColorAndOpacity = Style.Colors.TextDisabled;
 
@@ -301,12 +301,12 @@ static TSharedPtr<FVisualElement> MakeSpacingRow(const FPlaygroundFonts& Fonts)
     const FUIStyle& Style = FUIStyle::GetDefault();
 
     FTextBlock::FDesc LeftDesc;
-    LeftDesc.Text            = "Pinned left";
+    LeftDesc.Text            = TEXT("Pinned left");
     LeftDesc.Font            = Fonts.Body;
     LeftDesc.ColorAndOpacity = Style.Colors.Text;
 
     FTextBlock::FDesc RightDesc;
-    RightDesc.Text            = "Pushed right by a fill spacer";
+    RightDesc.Text            = TEXT("Pushed right by a fill spacer");
     RightDesc.Font            = Fonts.Body;
     RightDesc.ColorAndOpacity = Style.Colors.Text;
 
@@ -317,12 +317,12 @@ static TSharedPtr<FVisualElement> MakeSpacingRow(const FPlaygroundFonts& Fonts)
     Row->AddSlot(FTextBlock::Create(RightDesc)).SetVerticalAlignment(EVerticalAlignment::Center);
 
     FTextBlock::FDesc AboveDesc;
-    AboveDesc.Text            = "Above a horizontal rule";
+    AboveDesc.Text            = TEXT("Above a horizontal rule");
     AboveDesc.Font            = Fonts.Body;
     AboveDesc.ColorAndOpacity = Style.Colors.TextDisabled;
 
     FTextBlock::FDesc BelowDesc;
-    BelowDesc.Text            = "Below it, with a fixed spacer between the rule and this line";
+    BelowDesc.Text            = TEXT("Below it, with a fixed spacer between the rule and this line");
     BelowDesc.Font            = Fonts.Body;
     BelowDesc.ColorAndOpacity = Style.Colors.TextDisabled;
 
@@ -342,8 +342,8 @@ FPlaygroundScene CreateControlsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Buttons";
-        Desc.Description = "Hover, press, disabled and keyboard activation, with the label following the state.";
+        Desc.Title       = TEXT("Buttons");
+        Desc.Description = TEXT("Hover, press, disabled and keyboard activation, with the label following the state.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeButtonRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -351,8 +351,8 @@ FPlaygroundScene CreateControlsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Check boxes";
-        Desc.Description = "Two-state and tri-state, the third state being what a mixed multi-selection shows.";
+        Desc.Title       = TEXT("Check boxes");
+        Desc.Description = TEXT("Two-state and tri-state, the third state being what a mixed multi-selection shows.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeCheckBoxRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -360,8 +360,8 @@ FPlaygroundScene CreateControlsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Sliders";
-        Desc.Description = "Click the track to jump, drag to scrub, arrows to nudge. Continuous, stepped and vertical.";
+        Desc.Title       = TEXT("Sliders");
+        Desc.Description = TEXT("Click the track to jump, drag to scrub, arrows to nudge. Continuous, stepped and vertical.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeSliderRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -369,8 +369,8 @@ FPlaygroundScene CreateControlsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Spin boxes";
-        Desc.Description = "Drag across a field to scrub it, click without moving to type into it. Enter or clicking away commits.";
+        Desc.Title       = TEXT("Spin boxes");
+        Desc.Description = TEXT("Drag across a field to scrub it, click without moving to type into it. Enter or clicking away commits.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeSpinBoxRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -378,8 +378,8 @@ FPlaygroundScene CreateControlsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Scroll bar";
-        Desc.Description = "The bar appears only once there is something to scroll, and the wheel and the thumb agree.";
+        Desc.Title       = TEXT("Scroll bar");
+        Desc.Description = TEXT("The bar appears only once there is something to scroll, and the wheel and the thumb agree.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeScrollBarRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -387,8 +387,8 @@ FPlaygroundScene CreateControlsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Overlay";
-        Desc.Description = "Layers sharing one rectangle, each aligned in it. The badge is hit before the panel under it.";
+        Desc.Title       = TEXT("Overlay");
+        Desc.Description = TEXT("Layers sharing one rectangle, each aligned in it. The badge is hit before the panel under it.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeOverlayRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -396,12 +396,12 @@ FPlaygroundScene CreateControlsScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Spacers and separators";
-        Desc.Description = "A fill spacer pushes what follows to the far end, and a rule spans whatever it is given.";
+        Desc.Title       = TEXT("Spacers and separators");
+        Desc.Description = TEXT("A fill spacer pushes what follows to the far end, and a rule spans whatever it is given.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeSpacingRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Controls", MakeSceneColumn("Controls", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Controls"), MakeSceneColumn(TEXT("Controls"), Fonts, Panels));
 }

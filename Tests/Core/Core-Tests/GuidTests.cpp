@@ -13,7 +13,7 @@ struct FTestAssetReference
 {
     void Serialize(FJsonArchive& Archive)
     {
-        Archive.Field("Guid", Guid, FGuid());
+        Archive.Field(TEXT("Guid"), Guid, FGuid());
     }
 
     FGuid Guid;
@@ -23,14 +23,14 @@ bool Guid_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A default GUID is invalid");
+    TEST_SECTION(TEXT("A default GUID is invalid"));
     {
         FGuid Guid;
         TEST_EXPECT(!Guid.IsValid());
-        TEST_EXPECT(Guid.ToString().Equals("00000000000000000000000000000000"));
+        TEST_EXPECT(Guid.ToString().Equals(TEXT("00000000000000000000000000000000")));
     }
 
-    TEST_SECTION("Created GUIDs are valid, random version 4 and unique");
+    TEST_SECTION(TEXT("Created GUIDs are valid, random version 4 and unique"));
     {
         TMap<FGuid, int32> Seen;
         for (int32 Index = 0; Index < 1000; ++Index)
@@ -49,22 +49,22 @@ bool Guid_Test()
         TEST_EXPECT(Seen.Size() == 1000);
     }
 
-    TEST_SECTION("ToString writes 32 lowercase hex digits, A first");
+    TEST_SECTION(TEXT("ToString writes 32 lowercase hex digits, A first"));
     {
         const FGuid Guid(0x6F9619FF, 0x8B86D011, 0xB42D00CF, 0x4FC964FF);
-        TEST_EXPECT(Guid.ToString().Equals("6f9619ff8b86d011b42d00cf4fc964ff"));
+        TEST_EXPECT(Guid.ToString().Equals(TEXT("6f9619ff8b86d011b42d00cf4fc964ff")));
     }
 
-    TEST_SECTION("Parse reads the packed and dashed forms in either case");
+    TEST_SECTION(TEXT("Parse reads the packed and dashed forms in either case"));
     {
         const FGuid Expected(0x6F9619FF, 0x8B86D011, 0xB42D00CF, 0x4FC964FF);
 
         FGuid Packed;
-        TEST_EXPECT(FGuid::Parse("6f9619ff8b86d011b42d00cf4fc964ff", Packed));
+        TEST_EXPECT(FGuid::Parse(TEXT("6f9619ff8b86d011b42d00cf4fc964ff"), Packed));
         TEST_EXPECT(Packed == Expected);
 
         FGuid Dashed;
-        TEST_EXPECT(FGuid::Parse("6F9619FF-8B86-D011-B42D-00CF4FC964FF", Dashed));
+        TEST_EXPECT(FGuid::Parse(TEXT("6F9619FF-8B86-D011-B42D-00CF4FC964FF"), Dashed));
         TEST_EXPECT(Dashed == Expected);
 
         const FGuid Created = FGuid::Create();
@@ -73,22 +73,22 @@ bool Guid_Test()
         TEST_EXPECT(RoundTripped == Created);
     }
 
-    TEST_SECTION("Parse rejects anything that is not a GUID and leaves the output alone");
+    TEST_SECTION(TEXT("Parse rejects anything that is not a GUID and leaves the output alone"));
     {
         const FGuid Original(1, 2, 3, 4);
         FGuid Guid = Original;
 
-        TEST_EXPECT(!FGuid::Parse("", Guid));
-        TEST_EXPECT(!FGuid::Parse("6f9619ff8b86d011b42d00cf4fc964f", Guid));
-        TEST_EXPECT(!FGuid::Parse("6f9619ff8b86d011b42d00cf4fc964fff", Guid));
-        TEST_EXPECT(!FGuid::Parse("6f9619ff8b86d011b42d00cf4fc964fg", Guid));
-        TEST_EXPECT(!FGuid::Parse("6F9619FF-8B86-D011-B42D-00CF4FC964F", Guid));
-        TEST_EXPECT(!FGuid::Parse("6F9619FF8-B86-D011-B42D-00CF4FC964FF", Guid));
-        TEST_EXPECT(!FGuid::Parse("{6F9619FF-8B86-D011-B42D-00CF4FC964FF}", Guid));
+        TEST_EXPECT(!FGuid::Parse(TEXT(""), Guid));
+        TEST_EXPECT(!FGuid::Parse(TEXT("6f9619ff8b86d011b42d00cf4fc964f"), Guid));
+        TEST_EXPECT(!FGuid::Parse(TEXT("6f9619ff8b86d011b42d00cf4fc964fff"), Guid));
+        TEST_EXPECT(!FGuid::Parse(TEXT("6f9619ff8b86d011b42d00cf4fc964fg"), Guid));
+        TEST_EXPECT(!FGuid::Parse(TEXT("6F9619FF-8B86-D011-B42D-00CF4FC964F"), Guid));
+        TEST_EXPECT(!FGuid::Parse(TEXT("6F9619FF8-B86-D011-B42D-00CF4FC964FF"), Guid));
+        TEST_EXPECT(!FGuid::Parse(TEXT("{6F9619FF-8B86-D011-B42D-00CF4FC964FF}"), Guid));
         TEST_EXPECT(Guid == Original);
     }
 
-    TEST_SECTION("Comparison orders GUIDs like their strings");
+    TEST_SECTION(TEXT("Comparison orders GUIDs like their strings"));
     {
         const FGuid Low(0x00000001, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
         const FGuid High(0x00000002, 0x00000000, 0x00000000, 0x00000000);
@@ -98,7 +98,7 @@ bool Guid_Test()
         TEST_EXPECT(Low != High);
     }
 
-    TEST_SECTION("A GUID round trips through a JSON archive as a string");
+    TEST_SECTION(TEXT("A GUID round trips through a JSON archive as a string"));
     {
         FTestAssetReference Source;
         Source.Guid = FGuid(0x6F9619FF, 0x8B86D011, 0xB42D00CF, 0x4FC964FF);
@@ -107,9 +107,9 @@ bool Guid_Test()
         FJsonArchive Saver = FJsonArchive::Saver(Document);
         Source.Serialize(Saver);
 
-        const FJsonValue* Written = Document.Find("Guid");
+        const FJsonValue* Written = Document.Find(TEXT("Guid"));
         TEST_EXPECT(Written && Written->IsString());
-        TEST_EXPECT(Written && Written->GetStringOr("").Equals("6f9619ff8b86d011b42d00cf4fc964ff"));
+        TEST_EXPECT(Written && Written->GetStringOr(TEXT("")).Equals(TEXT("6f9619ff8b86d011b42d00cf4fc964ff")));
 
         FTestAssetReference Loaded;
         FJsonArchive Loader = FJsonArchive::Loader(Document);
@@ -121,13 +121,13 @@ bool Guid_Test()
         FJsonValue EmptyDocument;
         FJsonArchive EmptySaver = FJsonArchive::Saver(EmptyDocument);
         Empty.Serialize(EmptySaver);
-        TEST_EXPECT(EmptyDocument.Find("Guid") == nullptr);
+        TEST_EXPECT(EmptyDocument.Find(TEXT("Guid")) == nullptr);
     }
 
-    TEST_SECTION("Loading a malformed GUID reports an error");
+    TEST_SECTION(TEXT("Loading a malformed GUID reports an error"));
     {
         FJsonValue Document;
-        TEST_EXPECT(Json::Parse(FStringView("{\"Guid\": \"not-a-guid\"}"), Document));
+        TEST_EXPECT(Json::Parse(FStringView(TEXT("{\"Guid\": \"not-a-guid\"}")), Document));
 
         FTestAssetReference Loaded;
         FJsonArchive Loader = FJsonArchive::Loader(Document);

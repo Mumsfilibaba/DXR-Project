@@ -7,8 +7,6 @@
 
 #include "TestCommon/TestMacros.h"
 
-#include <cstdio>
-
 static bool ReadClosedFile(const FString& Path, TArray<CHAR_T>& OutText)
 {
     TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(Path);
@@ -35,11 +33,11 @@ bool FileOutputDevice_Test()
 {
     TEST_BEGIN();
 
-    const FString TempPath("FileOutputDeviceTests.tmp.log");
+    const FString TempPath(TEXT("FileOutputDeviceTests.tmp.log"));
 
-    TEST_SECTION("Lines logged from many threads all reach the file exactly once");
+    TEST_SECTION(TEXT("Lines logged from many threads all reach the file exactly once"));
     {
-        ::remove(*TempPath);
+        FPlatformFile::DeleteFile(*TempPath);
 
         constexpr int32 NumWriters        = 64;
         constexpr int32 NumLinesPerWriter = 16;
@@ -52,7 +50,7 @@ bool FileOutputDevice_Test()
             {
                 for (int32 Index = 0; Index < NumLinesPerWriter; Index++)
                 {
-                    Device.Log(ELogSeverity::Info, FString::Printf("FileOutputDeviceTests W%03dL%03d", Writer, Index));
+                    Device.Log(ELogSeverity::Info, FString::Printf(TEXT("FileOutputDeviceTests W%03dL%03d"), Writer, Index));
                 }
             });
         }
@@ -65,7 +63,7 @@ bool FileOutputDevice_Test()
         {
             for (int32 Index = 0; Index < NumLinesPerWriter; Index++)
             {
-                const FString Expected = FString::Printf("FileOutputDeviceTests W%03dL%03d", Writer, Index);
+                const FString Expected = FString::Printf(TEXT("FileOutputDeviceTests W%03dL%03d"), Writer, Index);
                 if (CountOccurrences(Text.Data(), *Expected) != 1)
                 {
                     NumWrong++;
@@ -75,12 +73,12 @@ bool FileOutputDevice_Test()
 
         TEST_EXPECT_EQ(NumWrong, 0);
 
-        ::remove(*TempPath);
+        FPlatformFile::DeleteFile(*TempPath);
     }
 
-    TEST_SECTION("Warnings, which flush blocking, keep their lines when threads contend");
+    TEST_SECTION(TEXT("Warnings, which flush blocking, keep their lines when threads contend"));
     {
-        ::remove(*TempPath);
+        FPlatformFile::DeleteFile(*TempPath);
 
         constexpr int32 NumWriters        = 32;
         constexpr int32 NumLinesPerWriter = 16;
@@ -94,7 +92,7 @@ bool FileOutputDevice_Test()
                 for (int32 Index = 0; Index < NumLinesPerWriter; Index++)
                 {
                     const ELogSeverity Severity = (Index % 2 == 0) ? ELogSeverity::Warning : ELogSeverity::Info;
-                    Device.Log(Severity, FString::Printf("FileOutputDeviceTests Mixed W%03dL%03d", Writer, Index));
+                    Device.Log(Severity, FString::Printf(TEXT("FileOutputDeviceTests Mixed W%03dL%03d"), Writer, Index));
                 }
             });
         }
@@ -107,7 +105,7 @@ bool FileOutputDevice_Test()
         {
             for (int32 Index = 0; Index < NumLinesPerWriter; Index++)
             {
-                const FString Expected = FString::Printf("FileOutputDeviceTests Mixed W%03dL%03d", Writer, Index);
+                const FString Expected = FString::Printf(TEXT("FileOutputDeviceTests Mixed W%03dL%03d"), Writer, Index);
                 if (CountOccurrences(Text.Data(), *Expected) != 1)
                 {
                     NumWrong++;
@@ -117,26 +115,26 @@ bool FileOutputDevice_Test()
 
         TEST_EXPECT_EQ(NumWrong, 0);
 
-        ::remove(*TempPath);
+        FPlatformFile::DeleteFile(*TempPath);
     }
 
-    TEST_SECTION("A device that could not open its file absorbs lines instead of growing a backlog");
+    TEST_SECTION(TEXT("A device that could not open its file absorbs lines instead of growing a backlog"));
     {
-        FFileOutputDevice Device(FString("FileOutputDeviceTests_NoSuchDirectory/Output.log"));
+        FFileOutputDevice Device(FString(TEXT("FileOutputDeviceTests_NoSuchDirectory/Output.log")));
         TEST_EXPECT(!Device.IsValid());
 
         for (int32 Index = 0; Index < 512; Index++)
         {
-            Device.Log(ELogSeverity::Info, FString::Printf("FileOutputDeviceTests Dropped%03d", Index));
+            Device.Log(ELogSeverity::Info, FString::Printf(TEXT("FileOutputDeviceTests Dropped%03d"), Index));
         }
 
-        Device.Log(ELogSeverity::Error, FString("FileOutputDeviceTests Dropped error"));
+        Device.Log(ELogSeverity::Error, FString(TEXT("FileOutputDeviceTests Dropped error")));
         Device.Flush();
     }
 
-    TEST_SECTION("A line is written once however often the device is flushed");
+    TEST_SECTION(TEXT("A line is written once however often the device is flushed"));
     {
-        ::remove(*TempPath);
+        FPlatformFile::DeleteFile(*TempPath);
 
         constexpr int32 NumLines = 32;
 
@@ -146,7 +144,7 @@ bool FileOutputDevice_Test()
 
             for (int32 Index = 0; Index < NumLines; Index++)
             {
-                Device.Log(ELogSeverity::Info, FString::Printf("FileOutputDeviceTests Once%03d", Index));
+                Device.Log(ELogSeverity::Info, FString::Printf(TEXT("FileOutputDeviceTests Once%03d"), Index));
                 Device.Flush();
                 Device.Flush();
             }
@@ -158,7 +156,7 @@ bool FileOutputDevice_Test()
         int32 NumWrong = 0;
         for (int32 Index = 0; Index < NumLines; Index++)
         {
-            const FString Expected = FString::Printf("FileOutputDeviceTests Once%03d", Index);
+            const FString Expected = FString::Printf(TEXT("FileOutputDeviceTests Once%03d"), Index);
             if (CountOccurrences(Text.Data(), *Expected) != 1)
             {
                 NumWrong++;
@@ -167,7 +165,7 @@ bool FileOutputDevice_Test()
 
         TEST_EXPECT_EQ(NumWrong, 0);
 
-        ::remove(*TempPath);
+        FPlatformFile::DeleteFile(*TempPath);
     }
 
     TEST_END();

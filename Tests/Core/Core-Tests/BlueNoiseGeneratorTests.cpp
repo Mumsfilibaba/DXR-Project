@@ -34,7 +34,7 @@ bool BlueNoiseGenerator_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Separable energy matches the reference loop");
+    TEST_SECTION(TEXT("Separable energy matches the reference loop"));
     {
         FBlueNoiseParams Params;
         Params.Algorithm = EBlueNoiseAlgorithm::VoidAndCluster;
@@ -61,7 +61,7 @@ bool BlueNoiseGenerator_Test()
         TEST_EXPECT(bIdentical);
     }
 
-    TEST_SECTION("Void-and-cluster produces a complete permutation");
+    TEST_SECTION(TEXT("Void-and-cluster produces a complete permutation"));
     {
         FBlueNoiseParams Params;
         Params.Algorithm = EBlueNoiseAlgorithm::VoidAndCluster;
@@ -96,7 +96,7 @@ bool BlueNoiseGenerator_Test()
         TEST_EXPECT(bComplete);
     }
 
-    TEST_SECTION("Void-and-cluster suppresses low frequencies");
+    TEST_SECTION(TEXT("Void-and-cluster suppresses low frequencies"));
     {
         FBlueNoiseParams Params;
         Params.Algorithm = EBlueNoiseAlgorithm::VoidAndCluster;
@@ -122,7 +122,7 @@ bool BlueNoiseGenerator_Test()
         TEST_EXPECT(BlueLow < (WhiteLow * 0.5f));
     }
 
-    TEST_SECTION("Vector swap suppresses low frequencies in every channel");
+    TEST_SECTION(TEXT("Vector swap suppresses low frequencies in every channel"));
     {
         FBlueNoiseParams Params;
         Params.Algorithm     = EBlueNoiseAlgorithm::VectorSwap;
@@ -151,7 +151,7 @@ bool BlueNoiseGenerator_Test()
         }
     }
 
-    TEST_SECTION("Values stay uniformly distributed");
+    TEST_SECTION(TEXT("Values stay uniformly distributed"));
     {
         FBlueNoiseParams Params;
         Params.Algorithm = EBlueNoiseAlgorithm::VoidAndCluster;
@@ -177,7 +177,7 @@ bool BlueNoiseGenerator_Test()
         TEST_EXPECT(ComputeHistogramDeviation(VectorMask, 2, 1, 16) < 0.05f);
     }
 
-    TEST_SECTION("Spatiotemporal slices are individually blue-noise");
+    TEST_SECTION(TEXT("Spatiotemporal slices are individually blue-noise"));
     {
         FBlueNoiseParams Params;
         Params.Algorithm = EBlueNoiseAlgorithm::VoidAndCluster;

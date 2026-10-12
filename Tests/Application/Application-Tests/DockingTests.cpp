@@ -8,6 +8,7 @@
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/IniFile.h>
 #include <Core/Misc/Paths.h>
+#include <Core/Platform/PlatformFile.h>
 #include <Application/Docking/DockDragState.h>
 #include <Application/Docking/DockLayoutFile.h>
 #include <Application/Docking/DockNode.h>
@@ -64,9 +65,9 @@ struct FDockingFixture
 
         Area = FDockingArea::Create(Desc);
 
-        Area->RegisterPanel("Outliner", "Outliner", MakePanel("Outliner", Font));
-        Area->RegisterPanel("Details", "Details", MakePanel("Details", Font));
-        Area->RegisterPanel("Content", "Content Browser", MakePanel("Content", Font));
+        Area->RegisterPanel(TEXT("Outliner"), TEXT("Outliner"), MakePanel(TEXT("Outliner"), Font));
+        Area->RegisterPanel(TEXT("Details"), TEXT("Details"), MakePanel(TEXT("Details"), Font));
+        Area->RegisterPanel(TEXT("Content"), TEXT("Content Browser"), MakePanel(TEXT("Content"), Font));
 
         Window->SetContent(Area);
     }
@@ -283,31 +284,31 @@ bool DockNodeMinimumSize_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A leaf is a panel with a strip over it");
-    const FDockNode Leaf = FDockNode::CreateTabs({ "Outliner" });
+    TEST_SECTION(TEXT("A leaf is a panel with a strip over it"));
+    const FDockNode Leaf = FDockNode::CreateTabs({ TEXT("Outliner") });
 
     TEST_EXPECT_EQ(Leaf.ComputeMinimumSize().X, FDockMetrics::MinimumPanelWidth);
     TEST_EXPECT_EQ(Leaf.ComputeMinimumSize().Y, FDockMetrics::MinimumPanelHeight + FDockMetrics::TabStripHeight);
 
-    TEST_SECTION("A row adds its children's widths and the handle between them, and takes the taller one");
+    TEST_SECTION(TEXT("A row adds its children's widths and the handle between them, and takes the taller one"));
     const FDockNode Row = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Leaf, Leaf);
 
     TEST_EXPECT_EQ(Row.ComputeMinimumSize().X, FDockMetrics::MinimumPanelWidth * 2 + FDockMetrics::SplitterThickness);
     TEST_EXPECT_EQ(Row.ComputeMinimumSize().Y, Leaf.ComputeMinimumSize().Y);
 
-    TEST_SECTION("A column does the same the other way round");
+    TEST_SECTION(TEXT("A column does the same the other way round"));
     const FDockNode Column = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Leaf, Leaf);
 
     TEST_EXPECT_EQ(Column.ComputeMinimumSize().X, FDockMetrics::MinimumPanelWidth);
     TEST_EXPECT_EQ(Column.ComputeMinimumSize().Y, Leaf.ComputeMinimumSize().Y * 2 + FDockMetrics::SplitterThickness);
 
-    TEST_SECTION("Nesting accumulates, so an outer drag cannot squeeze an inner panel out of existence");
+    TEST_SECTION(TEXT("Nesting accumulates, so an outer drag cannot squeeze an inner panel out of existence"));
     const FDockNode Nested = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Leaf, Column);
 
     TEST_EXPECT_EQ(Nested.ComputeMinimumSize().X, FDockMetrics::MinimumPanelWidth * 2 + FDockMetrics::SplitterThickness);
     TEST_EXPECT_EQ(Nested.ComputeMinimumSize().Y, Column.ComputeMinimumSize().Y);
 
-    TEST_SECTION("A fresh split shares its space evenly");
+    TEST_SECTION(TEXT("A fresh split shares its space evenly"));
     TEST_EXPECT_EQ(Row.ChildFractions.Size(), 2);
     TEST_EXPECT(Math::Abs(Row.ChildFractions[0] - 0.5f) < 0.0001f);
 
@@ -318,44 +319,44 @@ bool DockNodeCollapse_Test()
 {
     TEST_BEGIN();
 
-    const FDockNode Outliner = FDockNode::CreateTabs({ "Outliner" });
-    const FDockNode Details  = FDockNode::CreateTabs({ "Details" });
+    const FDockNode Outliner = FDockNode::CreateTabs({ TEXT("Outliner") });
+    const FDockNode Details  = FDockNode::CreateTabs({ TEXT("Details") });
 
-    TEST_SECTION("An emptied leaf is dropped and the split of one that leaves becomes its other child");
+    TEST_SECTION(TEXT("An emptied leaf is dropped and the split of one that leaves becomes its other child"));
     FDockNode Row = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Outliner, Details);
     Row.Children[0].TabIds.Clear();
     Row.CollapseDegenerateNodes();
 
     TEST_EXPECT_EQ(Row.Kind, EDockNodeKind::Tabs);
     TEST_EXPECT_EQ(Row.TabIds.Size(), 1);
-    TEST_EXPECT_EQ(Row.TabIds[0], FString("Details"));
+    TEST_EXPECT_EQ(Row.TabIds[0], FString(TEXT("Details")));
 
-    TEST_SECTION("A split whose child splits the same way absorbs it rather than nesting");
+    TEST_SECTION(TEXT("A split whose child splits the same way absorbs it rather than nesting"));
     FDockNode Inner = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Outliner, Details);
-    FDockNode Outer = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Inner, FDockNode::CreateTabs({ "Content" }));
+    FDockNode Outer = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, Inner, FDockNode::CreateTabs({ TEXT("Content") }));
 
     Outer.CollapseDegenerateNodes();
 
     TEST_EXPECT_EQ(Outer.Kind, EDockNodeKind::Split);
     TEST_EXPECT_EQ(Outer.Children.Size(), 3);
-    TEST_EXPECT_EQ(Outer.Children[0].TabIds[0], FString("Outliner"));
-    TEST_EXPECT_EQ(Outer.Children[1].TabIds[0], FString("Details"));
-    TEST_EXPECT_EQ(Outer.Children[2].TabIds[0], FString("Content"));
+    TEST_EXPECT_EQ(Outer.Children[0].TabIds[0], FString(TEXT("Outliner")));
+    TEST_EXPECT_EQ(Outer.Children[1].TabIds[0], FString(TEXT("Details")));
+    TEST_EXPECT_EQ(Outer.Children[2].TabIds[0], FString(TEXT("Content")));
 
-    TEST_SECTION("The absorbed children divide the share the child they came from had");
+    TEST_SECTION(TEXT("The absorbed children divide the share the child they came from had"));
     TEST_EXPECT(Math::Abs(Outer.ChildFractions[0] - 0.25f) < 0.0001f);
     TEST_EXPECT(Math::Abs(Outer.ChildFractions[1] - 0.25f) < 0.0001f);
     TEST_EXPECT(Math::Abs(Outer.ChildFractions[2] - 0.50f) < 0.0001f);
 
-    TEST_SECTION("A child splitting the other way is left alone, because it is a real nesting");
-    FDockNode Mixed = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Outliner, Details), FDockNode::CreateTabs({ "Content" }));
+    TEST_SECTION(TEXT("A child splitting the other way is left alone, because it is a real nesting"));
+    FDockNode Mixed = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Outliner, Details), FDockNode::CreateTabs({ TEXT("Content") }));
     Mixed.CollapseDegenerateNodes();
 
     TEST_EXPECT_EQ(Mixed.Children.Size(), 2);
     TEST_EXPECT_EQ(Mixed.Children[0].Kind, EDockNodeKind::Split);
     TEST_EXPECT_EQ(Mixed.Children[0].Orientation, EDockSplitOrientation::Vertical);
 
-    TEST_SECTION("Emptying everything leaves an empty leaf rather than a split with no children");
+    TEST_SECTION(TEXT("Emptying everything leaves an empty leaf rather than a split with no children"));
     FDockNode Everything = FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Outliner, Details);
     Everything.Children[0].TabIds.Clear();
     Everything.Children[1].TabIds.Clear();
@@ -364,11 +365,11 @@ bool DockNodeCollapse_Test()
     TEST_EXPECT_EQ(Everything.Kind, EDockNodeKind::Tabs);
     TEST_EXPECT(Everything.IsEmpty());
 
-    TEST_SECTION("A collapse that empties two levels does not leave a rung behind");
+    TEST_SECTION(TEXT("A collapse that empties two levels does not leave a rung behind"));
     FDockNode Deep = FDockNode::CreateSplit(
         EDockSplitOrientation::Horizontal,
         FDockNode::CreateSplit(EDockSplitOrientation::Vertical, Outliner, Details),
-        FDockNode::CreateTabs({ "Content" }));
+        FDockNode::CreateTabs({ TEXT("Content") }));
 
     Deep.Children[0].Children[0].TabIds.Clear();
     Deep.CollapseDegenerateNodes();
@@ -376,9 +377,9 @@ bool DockNodeCollapse_Test()
     TEST_EXPECT_EQ(Deep.Kind, EDockNodeKind::Split);
     TEST_EXPECT_EQ(Deep.Children.Size(), 2);
     TEST_EXPECT_EQ(Deep.Children[0].Kind, EDockNodeKind::Tabs);
-    TEST_EXPECT_EQ(Deep.Children[0].TabIds[0], FString("Details"));
+    TEST_EXPECT_EQ(Deep.Children[0].TabIds[0], FString(TEXT("Details")));
 
-    TEST_SECTION("The fractions still add to one after all of that");
+    TEST_SECTION(TEXT("The fractions still add to one after all of that"));
     float Total = 0.0f;
     for (float Fraction : Deep.ChildFractions)
     {
@@ -387,8 +388,8 @@ bool DockNodeCollapse_Test()
 
     TEST_EXPECT(Math::Abs(Total - 1.0f) < 0.0001f);
 
-    TEST_SECTION("An active index left past the end of a shortened tab list is pulled back");
-    FDockNode Stack = FDockNode::CreateTabs({ "Outliner", "Details" });
+    TEST_SECTION(TEXT("An active index left past the end of a shortened tab list is pulled back"));
+    FDockNode Stack = FDockNode::CreateTabs({ TEXT("Outliner"), TEXT("Details") });
     Stack.ActiveTabIndex = 1;
     Stack.TabIds.RemoveAt(1);
     Stack.CollapseDegenerateNodes();
@@ -409,34 +410,34 @@ bool SplitterLayout_Test()
     Desc.HandleThickness = 4;
 
     TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
-    Splitter->AddChild(MakePanel("Left", Font), FIntVector2(120, 60));
-    Splitter->AddChild(MakePanel("Right", Font), FIntVector2(120, 60));
+    Splitter->AddChild(MakePanel(TEXT("Left"), Font), FIntVector2(120, 60));
+    Splitter->AddChild(MakePanel(TEXT("Right"), Font), FIntVector2(120, 60));
 
     LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 404, 300));
 
     TArray<TSharedPtr<FVisualElement>> Children;
     Splitter->GetChildren(Children);
 
-    TEST_SECTION("The handle comes out of the space before the children divide what is left");
+    TEST_SECTION(TEXT("The handle comes out of the space before the children divide what is left"));
     TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Width, 200);
     TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 200);
 
-    TEST_SECTION("The children fill the height of a horizontal splitter");
+    TEST_SECTION(TEXT("The children fill the height of a horizontal splitter"));
     TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Height, 300);
 
-    TEST_SECTION("The handle sits in the gap between them");
+    TEST_SECTION(TEXT("The handle sits in the gap between them"));
     const FRectangle Handle = Splitter->GetHandleRectangle(0);
     TEST_EXPECT_EQ(Handle.Position.X, 200);
     TEST_EXPECT_EQ(Handle.Width, 4);
     TEST_EXPECT_EQ(Handle.Height, 300);
 
-    TEST_SECTION("Points on the handle resolve to it and points on a child do not");
+    TEST_SECTION(TEXT("Points on the handle resolve to it and points on a child do not"));
     TEST_EXPECT_EQ(Splitter->GetHandleIndexAt(FIntVector2(202, 150)), 0);
     TEST_EXPECT_EQ(Splitter->GetHandleIndexAt(FIntVector2(100, 150)), -1);
     TEST_EXPECT_EQ(Splitter->GetHandleIndexAt(FIntVector2(300, 150)), -1);
 
-    TEST_SECTION("A third child re-divides the space and adds a second handle");
-    Splitter->AddChild(MakePanel("Far", Font), FIntVector2(120, 60));
+    TEST_SECTION(TEXT("A third child re-divides the space and adds a second handle"));
+    Splitter->AddChild(MakePanel(TEXT("Far"), Font), FIntVector2(120, 60));
     LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 308, 300));
 
     Children.Clear();
@@ -447,14 +448,14 @@ bool SplitterLayout_Test()
     TEST_EXPECT_EQ(Children[2]->GetContentRectangle().GetRight(), 308);
     TEST_EXPECT_EQ(Splitter->GetHandleRectangle(1).Position.X, 204);
 
-    TEST_SECTION("A vertical splitter divides the other axis and its handles run across");
+    TEST_SECTION(TEXT("A vertical splitter divides the other axis and its handles run across"));
     FSplitter::FDesc ColumnDesc;
     ColumnDesc.Orientation     = EDockSplitOrientation::Vertical;
     ColumnDesc.HandleThickness = 4;
 
     TSharedPtr<FSplitter> Column = FSplitter::Create(ColumnDesc);
-    Column->AddChild(MakePanel("Top", Font), FIntVector2(120, 60));
-    Column->AddChild(MakePanel("Bottom", Font), FIntVector2(120, 60));
+    Column->AddChild(MakePanel(TEXT("Top"), Font), FIntVector2(120, 60));
+    Column->AddChild(MakePanel(TEXT("Bottom"), Font), FIntVector2(120, 60));
 
     LayoutElement(Column, FRectangle(FIntVector2(0, 0), 400, 204));
 
@@ -466,7 +467,7 @@ bool SplitterLayout_Test()
     TEST_EXPECT_EQ(Column->GetHandleRectangle(0).Height, 4);
     TEST_EXPECT_EQ(Column->GetHandleRectangle(0).Width, 400);
 
-    TEST_SECTION("The cursor changes only over a handle, and along the axis it moves");
+    TEST_SECTION(TEXT("The cursor changes only over a handle, and along the axis it moves"));
     ECursor Cursor = ECursor::Arrow;
     TEST_EXPECT(!Column->GetCursor(Cursor));
 
@@ -485,7 +486,7 @@ bool SplitterSeededDesc_Test()
 
     const TSharedPtr<IFontFace> Font = CreateFont();
 
-    TEST_SECTION("Shares seeded through the description survive every child arriving");
+    TEST_SECTION(TEXT("Shares seeded through the description survive every child arriving"));
     {
         FSplitter::FDesc Desc;
         Desc.Orientation     = EDockSplitOrientation::Horizontal;
@@ -494,8 +495,8 @@ bool SplitterSeededDesc_Test()
         Desc.Fractions.Add(0.75f);
 
         TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
-        Splitter->AddChild(MakePanel("Left", Font), FIntVector2(120, 60));
-        Splitter->AddChild(MakePanel("Right", Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Left"), Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Right"), Font), FIntVector2(120, 60));
 
         LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 404, 300));
 
@@ -506,7 +507,7 @@ bool SplitterSeededDesc_Test()
         TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 300);
     }
 
-    TEST_SECTION("A seeded set that does not sum to one is normalized rather than refused");
+    TEST_SECTION(TEXT("A seeded set that does not sum to one is normalized rather than refused"));
     {
         FSplitter::FDesc Desc;
         Desc.Orientation     = EDockSplitOrientation::Horizontal;
@@ -515,8 +516,8 @@ bool SplitterSeededDesc_Test()
         Desc.Fractions.Add(3.0f);
 
         TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
-        Splitter->AddChild(MakePanel("Left", Font), FIntVector2(120, 60));
-        Splitter->AddChild(MakePanel("Right", Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Left"), Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Right"), Font), FIntVector2(120, 60));
 
         LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 404, 300));
 
@@ -524,7 +525,7 @@ bool SplitterSeededDesc_Test()
         TEST_EXPECT(Math::Abs(Splitter->GetFractions()[0] - 0.25f) < 0.001f);
     }
 
-    TEST_SECTION("A child arriving past the seeded shares falls back to sharing evenly");
+    TEST_SECTION(TEXT("A child arriving past the seeded shares falls back to sharing evenly"));
     {
         FSplitter::FDesc Desc;
         Desc.Orientation     = EDockSplitOrientation::Horizontal;
@@ -533,15 +534,15 @@ bool SplitterSeededDesc_Test()
         Desc.Fractions.Add(0.75f);
 
         TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
-        Splitter->AddChild(MakePanel("Left", Font), FIntVector2(120, 60));
-        Splitter->AddChild(MakePanel("Right", Font), FIntVector2(120, 60));
-        Splitter->AddChild(MakePanel("Far", Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Left"), Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Right"), Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Far"), Font), FIntVector2(120, 60));
 
         TEST_EXPECT_EQ(Splitter->GetFractions().Size(), 3);
         TEST_EXPECT(Math::Abs(Splitter->GetFractions()[0] - (1.0f / 3.0f)) < 0.001f);
     }
 
-    TEST_SECTION("A minimum seeded through the description wins over the one AddChild is given");
+    TEST_SECTION(TEXT("A minimum seeded through the description wins over the one AddChild is given"));
     {
         FSplitter::FDesc Desc;
         Desc.Orientation     = EDockSplitOrientation::Horizontal;
@@ -550,8 +551,8 @@ bool SplitterSeededDesc_Test()
         Desc.MinimumSizes.Add(FIntVector2(250, 60));
 
         TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
-        Splitter->AddChild(MakePanel("Left", Font), FIntVector2(10, 10));
-        Splitter->AddChild(MakePanel("Right", Font), FIntVector2(10, 10));
+        Splitter->AddChild(MakePanel(TEXT("Left"), Font), FIntVector2(10, 10));
+        Splitter->AddChild(MakePanel(TEXT("Right"), Font), FIntVector2(10, 10));
 
         LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 404, 300));
 
@@ -562,7 +563,7 @@ bool SplitterSeededDesc_Test()
         TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 250);
     }
 
-    TEST_SECTION("A fixed length holds its pixels while the other child takes the remainder");
+    TEST_SECTION(TEXT("A fixed length holds its pixels while the other child takes the remainder"));
     {
         FSplitter::FDesc Desc;
         Desc.Orientation     = EDockSplitOrientation::Horizontal;
@@ -571,8 +572,8 @@ bool SplitterSeededDesc_Test()
         Desc.FixedLengths.Add(0);
 
         TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
-        Splitter->AddChild(MakePanel("Folders", Font), FIntVector2(120, 60));
-        Splitter->AddChild(MakePanel("Tiles", Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Folders"), Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Tiles"), Font), FIntVector2(120, 60));
 
         LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 804, 300));
 
@@ -589,15 +590,15 @@ bool SplitterSeededDesc_Test()
         TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 780);
     }
 
-    TEST_SECTION("An unseeded description still shares evenly and takes the minimums AddChild is given");
+    TEST_SECTION(TEXT("An unseeded description still shares evenly and takes the minimums AddChild is given"));
     {
         FSplitter::FDesc Desc;
         Desc.Orientation     = EDockSplitOrientation::Horizontal;
         Desc.HandleThickness = 4;
 
         TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
-        Splitter->AddChild(MakePanel("Left", Font), FIntVector2(120, 60));
-        Splitter->AddChild(MakePanel("Right", Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Left"), Font), FIntVector2(120, 60));
+        Splitter->AddChild(MakePanel(TEXT("Right"), Font), FIntVector2(120, 60));
 
         LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 404, 300));
 
@@ -634,38 +635,38 @@ bool SplitterDrag_Test()
     });
 
     TSharedPtr<FSplitter> Splitter = FSplitter::Create(Desc);
-    Splitter->AddChild(MakePanel("Left", Font), FIntVector2(120, 60));
-    Splitter->AddChild(MakePanel("Right", Font), FIntVector2(120, 60));
+    Splitter->AddChild(MakePanel(TEXT("Left"), Font), FIntVector2(120, 60));
+    Splitter->AddChild(MakePanel(TEXT("Right"), Font), FIntVector2(120, 60));
 
     LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 404, 300));
 
     TArray<TSharedPtr<FVisualElement>> Children;
     Splitter->GetChildren(Children);
 
-    TEST_SECTION("Dragging the handle right moves that many pixels into the leading child");
+    TEST_SECTION(TEXT("Dragging the handle right moves that many pixels into the leading child"));
     DragSplitterHandle(Splitter, 0, FIntVector2(50, 0));
 
     TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Width, 250);
     TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 150);
 
-    TEST_SECTION("The shares that came out of it are reported once, when the drag settles");
+    TEST_SECTION(TEXT("The shares that came out of it are reported once, when the drag settles"));
     TEST_EXPECT_EQ(NumChangeCallbacks, 1);
     TEST_EXPECT_EQ(ReportedFractions.Size(), 2);
     TEST_EXPECT(Math::Abs(ReportedFractions[0] - 0.625f) < 0.001f);
 
-    TEST_SECTION("A drag past the trailing minimum stops there rather than squeezing it out");
+    TEST_SECTION(TEXT("A drag past the trailing minimum stops there rather than squeezing it out"));
     DragSplitterHandle(Splitter, 0, FIntVector2(400, 0));
 
     TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 120);
     TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Width, 280);
 
-    TEST_SECTION("The same holds the other way");
+    TEST_SECTION(TEXT("The same holds the other way"));
     DragSplitterHandle(Splitter, 0, FIntVector2(-400, 0));
 
     TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Width, 120);
     TEST_EXPECT_EQ(Children[1]->GetContentRectangle().Width, 280);
 
-    TEST_SECTION("A drag that hits a minimum and comes back follows the cursor rather than lagging behind it");
+    TEST_SECTION(TEXT("A drag that hits a minimum and comes back follows the cursor rather than lagging behind it"));
     const FIntVector2 Start = Splitter->GetHandleRectangle(0).GetCenter();
 
     Splitter->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, Start, true));
@@ -675,8 +676,8 @@ bool SplitterDrag_Test()
 
     TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Width, 180);
 
-    TEST_SECTION("A middle handle leaves the far child where it was");
-    Splitter->AddChild(MakePanel("Far", Font), FIntVector2(120, 60));
+    TEST_SECTION(TEXT("A middle handle leaves the far child where it was"));
+    Splitter->AddChild(MakePanel(TEXT("Far"), Font), FIntVector2(120, 60));
     LayoutElement(Splitter, FRectangle(FIntVector2(0, 0), 608, 300));
 
     Children.Clear();
@@ -716,43 +717,43 @@ bool TabStripReorder_Test()
     });
 
     TSharedPtr<FTabStrip> Strip = FTabStrip::Create(Desc);
-    Strip->AddTab("Outliner", "Outliner", true);
-    Strip->AddTab("Details", "Details", true);
-    Strip->AddTab("Content", "Content", true);
+    Strip->AddTab(TEXT("Outliner"), TEXT("Outliner"), true);
+    Strip->AddTab(TEXT("Details"), TEXT("Details"), true);
+    Strip->AddTab(TEXT("Content"), TEXT("Content"), true);
 
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), 600, FDockMetrics::TabStripHeight));
 
-    TEST_SECTION("The first tab added is the one showing");
-    TEST_EXPECT_EQ(Strip->GetActivePanelId(), FString("Outliner"));
-    TEST_EXPECT(FindTab(Strip, "Outliner")->IsActive());
-    TEST_EXPECT(!FindTab(Strip, "Details")->IsActive());
+    TEST_SECTION(TEXT("The first tab added is the one showing"));
+    TEST_EXPECT_EQ(Strip->GetActivePanelId(), FString(TEXT("Outliner")));
+    TEST_EXPECT(FindTab(Strip, TEXT("Outliner"))->IsActive());
+    TEST_EXPECT(!FindTab(Strip, TEXT("Details"))->IsActive());
 
-    TEST_SECTION("The tabs are laid out left to right at the style's spacing, each as wide as its label needs");
+    TEST_SECTION(TEXT("The tabs are laid out left to right at the style's spacing, each as wide as its label needs"));
     const int32 TabSpacing = FUIStyle::GetDefault().Tab.Spacing;
 
-    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Position.X, TabSpacing);
-    TEST_EXPECT_EQ(FindTab(Strip, "Details")->GetContentRectangle().Position.X,
-        FindTab(Strip, "Outliner")->GetContentRectangle().GetRight() + TabSpacing);
+    TEST_EXPECT_EQ(FindTab(Strip, TEXT("Outliner"))->GetContentRectangle().Position.X, TabSpacing);
+    TEST_EXPECT_EQ(FindTab(Strip, TEXT("Details"))->GetContentRectangle().Position.X,
+        FindTab(Strip, TEXT("Outliner"))->GetContentRectangle().GetRight() + TabSpacing);
 
-    TEST_SECTION("A tab floats inside the strip, held off the top and the bottom by the style's insets");
+    TEST_SECTION(TEXT("A tab floats inside the strip, held off the top and the bottom by the style's insets"));
     const FUITabStyle& TabStyle = FUIStyle::GetDefault().Tab;
 
     TEST_EXPECT_EQ(FDockMetrics::TabStripHeight, TabStyle.StripHeight);
-    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Position.Y, TabStyle.TopInset);
-    TEST_EXPECT_EQ(FindTab(Strip, "Outliner")->GetContentRectangle().Height,
+    TEST_EXPECT_EQ(FindTab(Strip, TEXT("Outliner"))->GetContentRectangle().Position.Y, TabStyle.TopInset);
+    TEST_EXPECT_EQ(FindTab(Strip, TEXT("Outliner"))->GetContentRectangle().Height,
         FDockMetrics::TabStripHeight - TabStyle.TopInset - TabStyle.BottomInset);
 
-    TEST_SECTION("Its close button is held off the trailing edge by the close inset, not by the label's padding");
-    const FRectangle OutlinerBounds = FindTab(Strip, "Outliner")->GetContentRectangle();
-    const FRectangle OutlinerClose  = FindTab(Strip, "Outliner")->GetCloseButtonRectangle();
+    TEST_SECTION(TEXT("Its close button is held off the trailing edge by the close inset, not by the label's padding"));
+    const FRectangle OutlinerBounds = FindTab(Strip, TEXT("Outliner"))->GetContentRectangle();
+    const FRectangle OutlinerClose  = FindTab(Strip, TEXT("Outliner"))->GetCloseButtonRectangle();
 
     TEST_EXPECT_EQ(OutlinerBounds.GetRight() - OutlinerClose.GetRight(), TabStyle.CloseInset);
     TEST_EXPECT_EQ(OutlinerClose.Width, TabStyle.CloseSize);
     TEST_EXPECT(OutlinerClose.Position.X > OutlinerBounds.Position.X + TabStyle.HorizontalPadding);
 
-    TEST_SECTION("Its label sits the padding in from the leading edge, and fills the tab's height so the face can sit level with the cross");
+    TEST_SECTION(TEXT("Its label sits the padding in from the leading edge, and fills the tab's height so the face can sit level with the cross"));
     FDrawCommandList LabelCommands;
-    DrawElement(FindTab(Strip, "Outliner"), LabelCommands);
+    DrawElement(FindTab(Strip, TEXT("Outliner")), LabelCommands);
 
     const FDrawCommand* Label = FindCommand(LabelCommands, EDrawCommandType::Text);
     TEST_EXPECT(Label != nullptr);
@@ -769,8 +770,8 @@ bool TabStripReorder_Test()
         TEST_EXPECT(Label->Bounds.GetCenter().Y <= OutlinerClose.GetCenter().Y + 1);
     }
 
-    TEST_SECTION("A hovered tab puts the hand under the cursor, over its close button as much as over its label");
-    const TSharedPtr<FTab> HoveredTab = FindTab(Strip, "Outliner");
+    TEST_SECTION(TEXT("A hovered tab puts the hand under the cursor, over its close button as much as over its label"));
+    const TSharedPtr<FTab> HoveredTab = FindTab(Strip, TEXT("Outliner"));
 
     ECursor Cursor = ECursor::Arrow;
     TEST_EXPECT(!HoveredTab->GetCursor(Cursor));
@@ -782,48 +783,48 @@ bool TabStripReorder_Test()
     HoveredTab->OnMouseMove(MakeMoveEvent(OutlinerClose.GetCenter()));
     TEST_EXPECT(HoveredTab->GetCursor(Cursor));
 
-    TEST_SECTION("The strip behind them has no opinion, so the gap between two tabs keeps the arrow");
+    TEST_SECTION(TEXT("The strip behind them has no opinion, so the gap between two tabs keeps the arrow"));
     HoveredTab->OnMouseLeft(MakeMoveEvent(FIntVector2(900, 900)));
 
     TEST_EXPECT(!HoveredTab->GetCursor(Cursor));
     TEST_EXPECT(!Strip->GetCursor(Cursor));
 
-    TEST_SECTION("Pressing a tab shows it, so a drag starts from the panel it is about to move");
-    const TSharedPtr<FTab> DetailsTab = FindTab(Strip, "Details");
+    TEST_SECTION(TEXT("Pressing a tab shows it, so a drag starts from the panel it is about to move"));
+    const TSharedPtr<FTab> DetailsTab = FindTab(Strip, TEXT("Details"));
     DetailsTab->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, DetailsTab->GetContentRectangle().GetCenter(), true));
 
-    TEST_EXPECT_EQ(Strip->GetActivePanelId(), FString("Details"));
-    TEST_EXPECT_EQ(ActivatedPanelId, FString("Details"));
-    TEST_EXPECT_EQ(Strip->GetDraggedPanelId(), FString("Details"));
+    TEST_EXPECT_EQ(Strip->GetActivePanelId(), FString(TEXT("Details")));
+    TEST_EXPECT_EQ(ActivatedPanelId, FString(TEXT("Details")));
+    TEST_EXPECT_EQ(Strip->GetDraggedPanelId(), FString(TEXT("Details")));
 
-    TEST_SECTION("Dragging it over the first tab moves it there and reports the new index");
-    const FIntVector2 OverFirst(FindTab(Strip, "Outliner")->GetContentRectangle().GetCenter());
+    TEST_SECTION(TEXT("Dragging it over the first tab moves it there and reports the new index"));
+    const FIntVector2 OverFirst(FindTab(Strip, TEXT("Outliner"))->GetContentRectangle().GetCenter());
     Strip->OnTabDragged(DetailsTab.Get(), OverFirst, OverFirst);
 
-    TEST_EXPECT_EQ(GetTabOrder(Strip)[0], FString("Details"));
-    TEST_EXPECT_EQ(GetTabOrder(Strip)[1], FString("Outliner"));
-    TEST_EXPECT_EQ(ReorderedPanelId, FString("Details"));
+    TEST_EXPECT_EQ(GetTabOrder(Strip)[0], FString(TEXT("Details")));
+    TEST_EXPECT_EQ(GetTabOrder(Strip)[1], FString(TEXT("Outliner")));
+    TEST_EXPECT_EQ(ReorderedPanelId, FString(TEXT("Details")));
     TEST_EXPECT_EQ(ReorderedIndex, 0);
 
-    TEST_SECTION("The moved tab is given the slot where it now sits, and slides there rather than jumping");
+    TEST_SECTION(TEXT("The moved tab is given the slot where it now sits, and slides there rather than jumping"));
     TEST_EXPECT_EQ(DetailsTab->GetSlotOffset(), TabSpacing);
     TEST_EXPECT(DetailsTab->IsSliding());
 
-    TEST_SECTION("Letting go ends the drag");
+    TEST_SECTION(TEXT("Letting go ends the drag"));
     DetailsTab->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, DetailsTab->GetContentRectangle().GetCenter(), false));
     TEST_EXPECT(Strip->GetDraggedPanelId().IsEmpty());
 
-    TEST_SECTION("A drag past the far end takes the tab to the far end");
-    const TSharedPtr<FTab> ContentTab = FindTab(Strip, "Content");
+    TEST_SECTION(TEXT("A drag past the far end takes the tab to the far end"));
+    const TSharedPtr<FTab> ContentTab = FindTab(Strip, TEXT("Content"));
     Strip->OnTabPressed(ContentTab.Get(), ContentTab->GetContentRectangle().GetCenter());
     Strip->OnTabDragged(ContentTab.Get(), FIntVector2(-40, 10), FIntVector2(-40, 10));
 
-    TEST_EXPECT_EQ(GetTabOrder(Strip)[0], FString("Content"));
+    TEST_EXPECT_EQ(GetTabOrder(Strip)[0], FString(TEXT("Content")));
 
     Strip->OnTabReleased(ContentTab.Get(), ContentTab->GetContentRectangle().GetCenter(), ContentTab->GetContentRectangle().GetCenter());
 
-    TEST_SECTION("Clicking the cross closes the panel, and clicking the label does not");
-    const TSharedPtr<FTab> OutlinerTab = FindTab(Strip, "Outliner");
+    TEST_SECTION(TEXT("Clicking the cross closes the panel, and clicking the label does not"));
+    const TSharedPtr<FTab> OutlinerTab = FindTab(Strip, TEXT("Outliner"));
 
     const FIntVector2 LabelPoint = OutlinerTab->GetContentRectangle().Position + FIntVector2(4, 4);
     const FIntVector2 CrossPoint = OutlinerTab->GetCloseButtonRectangle().GetCenter();
@@ -832,39 +833,39 @@ bool TabStripReorder_Test()
     Strip->OnTabReleased(OutlinerTab.Get(), LabelPoint, LabelPoint);
     TEST_EXPECT(ClosedPanelId.IsEmpty());
 
-    TEST_SECTION("Pressing the cross and letting go elsewhere does not close it either");
+    TEST_SECTION(TEXT("Pressing the cross and letting go elsewhere does not close it either"));
     Strip->OnTabPressed(OutlinerTab.Get(), CrossPoint);
     Strip->OnTabReleased(OutlinerTab.Get(), LabelPoint, LabelPoint);
     TEST_EXPECT(ClosedPanelId.IsEmpty());
 
     Strip->OnTabPressed(OutlinerTab.Get(), CrossPoint);
     Strip->OnTabReleased(OutlinerTab.Get(), CrossPoint, CrossPoint);
-    TEST_EXPECT_EQ(ClosedPanelId, FString("Outliner"));
+    TEST_EXPECT_EQ(ClosedPanelId, FString(TEXT("Outliner")));
 
-    TEST_SECTION("Removing the active tab hands the panel to its neighbour");
-    Strip->SetActiveTab("Details");
-    Strip->RemoveTab("Details");
+    TEST_SECTION(TEXT("Removing the active tab hands the panel to its neighbour"));
+    Strip->SetActiveTab(TEXT("Details"));
+    Strip->RemoveTab(TEXT("Details"));
 
     TEST_EXPECT_EQ(Strip->GetTabs().Size(), 2);
     TEST_EXPECT(!Strip->GetActivePanelId().IsEmpty());
     TEST_EXPECT(FindTab(Strip, Strip->GetActivePanelId())->IsActive());
 
-    TEST_SECTION("A strip with reordering turned off keeps its order");
+    TEST_SECTION(TEXT("A strip with reordering turned off keeps its order"));
     FTabStrip::FDesc FixedDesc;
     FixedDesc.Font          = Font;
     FixedDesc.bAllowReorder = false;
 
     TSharedPtr<FTabStrip> Fixed = FTabStrip::Create(FixedDesc);
-    Fixed->AddTab("First", "First", false);
-    Fixed->AddTab("Second", "Second", false);
+    Fixed->AddTab(TEXT("First"), TEXT("First"), false);
+    Fixed->AddTab(TEXT("Second"), TEXT("Second"), false);
 
     LayoutElement(Fixed, FRectangle(FIntVector2(0, 0), 600, FDockMetrics::TabStripHeight));
 
-    const TSharedPtr<FTab> SecondTab = FindTab(Fixed, "Second");
+    const TSharedPtr<FTab> SecondTab = FindTab(Fixed, TEXT("Second"));
     Fixed->OnTabPressed(SecondTab.Get(), SecondTab->GetContentRectangle().GetCenter());
     Fixed->OnTabDragged(SecondTab.Get(), FIntVector2(2, 10), FIntVector2(2, 10));
 
-    TEST_EXPECT_EQ(GetTabOrder(Fixed)[0], FString("First"));
+    TEST_EXPECT_EQ(GetTabOrder(Fixed)[0], FString(TEXT("First")));
 
     TEST_END();
 }
@@ -885,17 +886,17 @@ bool TabStripScroll_Test()
     TSharedPtr<FTabStrip> Strip = FTabStrip::Create(Desc);
     for (int32 Index = 0; Index < 12; ++Index)
     {
-        const FString PanelId = FString::Printf("Panel%d", Index);
+        const FString PanelId = FString::Printf(TEXT("Panel%d"), Index);
         Strip->AddTab(PanelId, PanelId, true);
     }
 
-    TEST_SECTION("A strip wide enough for every tab has nothing to scroll");
+    TEST_SECTION(TEXT("A strip wide enough for every tab has nothing to scroll"));
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), 4000, FDockMetrics::TabStripHeight));
 
     TEST_EXPECT_EQ(Strip->GetMaxScrollOffset(), 0);
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), 0);
 
-    TEST_SECTION("The desired width budgets the gap before the first tab as well as the one after each");
+    TEST_SECTION(TEXT("The desired width budgets the gap before the first tab as well as the one after each"));
     const int32 ContentWidth = Strip->ComputeDesiredSize().X;
 
     int32 ExpectedWidth = TabStyle.Spacing;
@@ -907,13 +908,13 @@ bool TabStripScroll_Test()
     TEST_EXPECT_EQ(ContentWidth, ExpectedWidth);
     TEST_EXPECT_EQ(Strip->GetTabs().Last()->GetContentRectangle().GetRight() + TabStyle.Spacing, ContentWidth);
 
-    TEST_SECTION("Narrowing it past the content leaves exactly the overflow to scroll through");
+    TEST_SECTION(TEXT("Narrowing it past the content leaves exactly the overflow to scroll through"));
     const int32 ViewWidth = 300;
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
 
     TEST_EXPECT_EQ(Strip->GetMaxScrollOffset(), ContentWidth - ViewWidth);
 
-    TEST_SECTION("Scrolling shifts every tab by the offset, leading gap and all");
+    TEST_SECTION(TEXT("Scrolling shifts every tab by the offset, leading gap and all"));
     const int32 FirstTabStart = Strip->GetTabs()[0]->GetContentRectangle().Position.X;
 
     Strip->SetScrollOffset(50);
@@ -922,14 +923,14 @@ bool TabStripScroll_Test()
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), 50);
     TEST_EXPECT_EQ(Strip->GetTabs()[0]->GetContentRectangle().Position.X, FirstTabStart - 50);
 
-    TEST_SECTION("An offset past either end is clamped rather than running the tabs off the strip");
+    TEST_SECTION(TEXT("An offset past either end is clamped rather than running the tabs off the strip"));
     Strip->SetScrollOffset(-100);
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), 0);
 
     Strip->SetScrollOffset(100000);
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), Strip->GetMaxScrollOffset());
 
-    TEST_SECTION("The wheel scrolls sideways on either axis, since the strip has only the one to give");
+    TEST_SECTION(TEXT("The wheel scrolls sideways on either axis, since the strip has only the one to give"));
     Strip->SetScrollOffset(200);
 
     TEST_EXPECT(Strip->OnMouseScroll(MakeScrollEvent(1.0f)).IsEventHandled());
@@ -938,37 +939,37 @@ bool TabStripScroll_Test()
     TEST_EXPECT(Strip->OnMouseScroll(MakeScrollEvent(-1.0f, EScrollAxis::Horizontal)).IsEventHandled());
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), 200);
 
-    TEST_SECTION("Activating a tab off the leading end pulls it flush against that edge");
+    TEST_SECTION(TEXT("Activating a tab off the leading end pulls it flush against that edge"));
     Strip->SetScrollOffset(Strip->GetMaxScrollOffset());
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
 
-    Strip->SetActiveTab("Panel0");
+    Strip->SetActiveTab(TEXT("Panel0"));
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
 
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), TabStyle.Spacing);
     TEST_EXPECT_EQ(Strip->GetTabs()[0]->GetContentRectangle().Position.X, 0);
 
-    TEST_SECTION("One off the trailing end comes just far enough to show, rather than all the way to the stop");
-    Strip->SetActiveTab("Panel11");
+    TEST_SECTION(TEXT("One off the trailing end comes just far enough to show, rather than all the way to the stop"));
+    Strip->SetActiveTab(TEXT("Panel11"));
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), ViewWidth, FDockMetrics::TabStripHeight));
 
     TEST_EXPECT_EQ(Strip->GetTabs().Last()->GetContentRectangle().GetRight(), ViewWidth);
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), Strip->GetMaxScrollOffset() - TabStyle.Spacing);
 
-    TEST_SECTION("A tab already in view is left where it is");
+    TEST_SECTION(TEXT("A tab already in view is left where it is"));
     const int32 SettledOffset = Strip->GetScrollOffset();
 
-    Strip->SetActiveTab("Panel11");
+    Strip->SetActiveTab(TEXT("Panel11"));
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), SettledOffset);
 
-    TEST_SECTION("The strip clips itself, so a tab scrolled past the end stops painting outside it");
+    TEST_SECTION(TEXT("The strip clips itself, so a tab scrolled past the end stops painting outside it"));
     FDrawCommandList ScrolledCommands;
     DrawElement(Strip, ScrolledCommands);
 
     TEST_EXPECT(FindFirstClippedCommand(ScrolledCommands) != nullptr);
     TEST_EXPECT_EQ(ScrolledCommands.GetCommandClipRectangle(*FindFirstClippedCommand(ScrolledCommands)), Strip->GetContentRectangle());
 
-    TEST_SECTION("It stops answering for a point out there too, so the tab cannot be clicked through the panel below");
+    TEST_SECTION(TEXT("It stops answering for a point out there too, so the tab cannot be clicked through the panel below"));
     FElementPath OutsidePath;
     Strip->HitTest(FIntVector2(ViewWidth + 40, TabStyle.TopInset + 4), OutsidePath);
     TEST_EXPECT(OutsidePath.GetElements().IsEmpty());
@@ -977,7 +978,7 @@ bool TabStripScroll_Test()
     Strip->HitTest(Strip->GetTabs().Last()->GetContentRectangle().GetCenter(), InsidePath);
     TEST_EXPECT(!InsidePath.GetElements().IsEmpty());
 
-    TEST_SECTION("The bar it scrolls with lies along the bottom of the strip, thin enough to leave the pills alone");
+    TEST_SECTION(TEXT("The bar it scrolls with lies along the bottom of the strip, thin enough to leave the pills alone"));
     const TSharedPtr<FScrollBar>& ScrollBar = Strip->GetScrollBar();
     TEST_EXPECT(ScrollBar != nullptr);
     TEST_EXPECT(ScrollBar->GetOrientation() == EOrientation::Horizontal);
@@ -987,17 +988,17 @@ bool TabStripScroll_Test()
     TEST_EXPECT_EQ(BarBounds.GetBottom(), Strip->GetContentRectangle().GetBottom());
     TEST_EXPECT(ScrollBar->IsScrollable());
 
-    TEST_SECTION("The pills give up the height it takes to stand clear of that bar by the gap the style names");
+    TEST_SECTION(TEXT("The pills give up the height it takes to stand clear of that bar by the gap the style names"));
     const FRectangle ScrolledTab = Strip->GetTabs()[0]->GetContentRectangle();
 
     TEST_EXPECT_EQ(ScrolledTab.Position.Y, TabStyle.TopInset);
     TEST_EXPECT_EQ(BarBounds.Position.Y - ScrolledTab.GetBottom(), TabStyle.ScrollBarGap);
 
-    TEST_SECTION("Its track is cleared away, so what fades in over the strip is the thumb on its own");
+    TEST_SECTION(TEXT("Its track is cleared away, so what fades in over the strip is the thumb on its own"));
     TEST_EXPECT_EQ(ScrollBar->GetStyle().Track.A, 0.0f);
     TEST_EXPECT(ScrollBar->GetStyle().Grab.A > 0.0f);
 
-    TEST_SECTION("It is invisible until the cursor arrives, and dragging it scrolls the tabs");
+    TEST_SECTION(TEXT("It is invisible until the cursor arrives, and dragging it scrolls the tabs"));
     TEST_EXPECT_EQ(ScrollBar->GetOpacity(), 0.0f);
 
     ScrollBar->SetOffset(0);
@@ -1006,20 +1007,20 @@ bool TabStripScroll_Test()
 
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), Strip->GetMaxScrollOffset());
 
-    TEST_SECTION("An opacity outside zero to one is clamped rather than blowing the alpha out");
+    TEST_SECTION(TEXT("An opacity outside zero to one is clamped rather than blowing the alpha out"));
     ScrollBar->SetOpacity(4.0f);
     TEST_EXPECT_EQ(ScrollBar->GetOpacity(), 1.0f);
 
     ScrollBar->SetOpacity(-1.0f);
     TEST_EXPECT_EQ(ScrollBar->GetOpacity(), 0.0f);
 
-    TEST_SECTION("A strip everything fits in hides the bar and hands the wheel back to whatever is behind it");
+    TEST_SECTION(TEXT("A strip everything fits in hides the bar and hands the wheel back to whatever is behind it"));
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), 4000, FDockMetrics::TabStripHeight));
 
     TEST_EXPECT_EQ(Strip->GetScrollOffset(), 0);
     TEST_EXPECT(!Strip->OnMouseScroll(MakeScrollEvent(1.0f)).IsEventHandled());
 
-    TEST_SECTION("With no bar to stand clear of, its pills have the whole strip back bar the two insets");
+    TEST_SECTION(TEXT("With no bar to stand clear of, its pills have the whole strip back bar the two insets"));
     TEST_EXPECT_EQ(Strip->GetTabs()[0]->GetContentRectangle().Height,
         FDockMetrics::TabStripHeight - TabStyle.TopInset - TabStyle.BottomInset);
 
@@ -1061,35 +1062,35 @@ bool TabStripStyle_Test()
     Desc.Style = TabStyle;
 
     TSharedPtr<FTabStrip> Strip = FTabStrip::Create(Desc);
-    Strip->AddTab("Outliner", "Outliner", true);
-    Strip->AddTab("Details", "Details", true);
+    Strip->AddTab(TEXT("Outliner"), TEXT("Outliner"), true);
+    Strip->AddTab(TEXT("Details"), TEXT("Details"), true);
 
     Strip->PrepareDesiredSize();
 
-    TEST_SECTION("The strip asks for the height the description named rather than the shipped one");
+    TEST_SECTION(TEXT("The strip asks for the height the description named rather than the shipped one"));
     TEST_EXPECT_EQ(Strip->GetCachedDesiredSize().Y, TabStyle.StripHeight);
     TEST_EXPECT(TabStyle.StripHeight != FUIStyle::GetDefault().Tab.StripHeight);
 
     Strip->Arrange(FRectangle(FIntVector2(0, 0), 600, TabStyle.StripHeight));
 
-    TEST_SECTION("Its tabs take that description's spacing, inset and padding too");
-    const TSharedPtr<FTab> OutlinerTab = FindTab(Strip, "Outliner");
-    const TSharedPtr<FTab> DetailsTab  = FindTab(Strip, "Details");
+    TEST_SECTION(TEXT("Its tabs take that description's spacing, inset and padding too"));
+    const TSharedPtr<FTab> OutlinerTab = FindTab(Strip, TEXT("Outliner"));
+    const TSharedPtr<FTab> DetailsTab  = FindTab(Strip, TEXT("Details"));
 
     TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().Position.X, TabStyle.Spacing);
     TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().Position.Y, TabStyle.TopInset);
     TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().Height, TabStyle.StripHeight - TabStyle.TopInset - TabStyle.BottomInset);
     TEST_EXPECT_EQ(DetailsTab->GetContentRectangle().Position.X, OutlinerTab->GetContentRectangle().GetRight() + TabStyle.Spacing);
 
-    TEST_SECTION("With the floor turned off, a closable tab pays the padding on its leading edge and the close inset on its trailing one");
-    const int32 LabelWidth = Font->MeasureWidth(FStringView("Outliner", 8));
+    TEST_SECTION(TEXT("With the floor turned off, a closable tab pays the padding on its leading edge and the close inset on its trailing one"));
+    const int32 LabelWidth = Font->MeasureWidth(FStringView(TEXT("Outliner"), 8));
     TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().Width,
         TabStyle.HorizontalPadding + LabelWidth + TabStyle.LabelCloseGap + TabStyle.CloseSize + TabStyle.CloseInset);
 
     TEST_EXPECT_EQ(OutlinerTab->GetContentRectangle().GetRight() - OutlinerTab->GetCloseButtonRectangle().GetRight(),
         TabStyle.CloseInset);
 
-    TEST_SECTION("The strip fills itself in the description's colour");
+    TEST_SECTION(TEXT("The strip fills itself in the description's colour"));
     FDrawCommandList StripCommands;
     DrawElement(Strip, StripCommands);
 
@@ -1097,7 +1098,7 @@ bool TabStripStyle_Test()
     TEST_EXPECT_EQ(StripCommands.GetCommands()[0].Type, EDrawCommandType::Box);
     TEST_EXPECT(StripCommands.GetCommands()[0].HasTint(TabStyle.StripFill));
 
-    TEST_SECTION("A resting tab paints no fill at all, so the rule the description turned back on comes first");
+    TEST_SECTION(TEXT("A resting tab paints no fill at all, so the rule the description turned back on comes first"));
     FDrawCommandList InactiveCommands;
     DrawElement(DetailsTab, InactiveCommands);
 
@@ -1114,7 +1115,7 @@ bool TabStripStyle_Test()
     TEST_EXPECT_EQ(Rule.Bounds.Width, TabStyle.SeparatorThickness);
     TEST_EXPECT_EQ(Rule.Bounds.GetRight(), DetailsTab->GetContentRectangle().GetRight());
 
-    TEST_SECTION("The active one takes the active fill from the same description, rounded on top");
+    TEST_SECTION(TEXT("The active one takes the active fill from the same description, rounded on top"));
     TEST_EXPECT(OutlinerTab->IsActive());
 
     FDrawCommandList ActiveCommands;
@@ -1153,7 +1154,7 @@ bool TabStripStyle_Test()
         TEST_EXPECT_EQ(Pill->CornerRadius.BottomRight, 0.0f);
     }
 
-    TEST_SECTION("The rule that description asked for is stroked along the tab itself, bright on the top and faint round the rest");
+    TEST_SECTION(TEXT("The rule that description asked for is stroked along the tab itself, bright on the top and faint round the rest"));
     if (Pill && Accent)
     {
         TEST_EXPECT(AccentIndex > PillIndex);
@@ -1167,7 +1168,7 @@ bool TabStripStyle_Test()
         TEST_EXPECT_EQ(Accent->GetTrailAlpha(), TabStyle.ActiveStripTrailAlpha);
     }
 
-    TEST_SECTION("Hovering a resting tab fills it rounded on top, without lending it the accent");
+    TEST_SECTION(TEXT("Hovering a resting tab fills it rounded on top, without lending it the accent"));
     DetailsTab->OnMouseEntered(MakeMoveEvent(DetailsTab->GetContentRectangle().GetCenter()));
 
     FDrawCommandList HoveredCommands;
@@ -1201,7 +1202,7 @@ bool TabStripStyle_Test()
 
     DetailsTab->OnMouseLeft(MakeMoveEvent(FIntVector2(-100, -100)));
 
-    TEST_SECTION("A resting tab has no accent at all");
+    TEST_SECTION(TEXT("A resting tab has no accent at all"));
     TEST_EXPECT_EQ(CountCommands(InactiveCommands, EDrawCommandType::RoundedAccentRing), 0);
     bool bRestingHasAccent = false;
     for (const FDrawCommand& Command : InactiveCommands.GetCommands())
@@ -1213,22 +1214,22 @@ bool TabStripStyle_Test()
     }
     TEST_EXPECT(!bRestingHasAccent);
 
-    TEST_SECTION("With no close brush to hand, the cross is drawn as two strokes");
+    TEST_SECTION(TEXT("With no close brush to hand, the cross is drawn as two strokes"));
     TEST_EXPECT_EQ(CountCommands(ActiveCommands, EDrawCommandType::Polyline), 2);
     TEST_EXPECT_EQ(CountCommands(ActiveCommands, EDrawCommandType::Image), 0);
 
-    TEST_SECTION("A strip given one draws the glyph instead, centred in the button at the style's size");
+    TEST_SECTION(TEXT("A strip given one draws the glyph instead, centred in the button at the style's size"));
     FTabStrip::FDesc IconDesc;
     IconDesc.Font      = Font;
     IconDesc.Style     = TabStyle;
     IconDesc.CloseIcon = FUIBrush(reinterpret_cast<FRHITexture*>(0x10));
 
     TSharedPtr<FTabStrip> Iconed = FTabStrip::Create(IconDesc);
-    Iconed->AddTab("Outliner", "Outliner", true);
+    Iconed->AddTab(TEXT("Outliner"), TEXT("Outliner"), true);
 
     LayoutElement(Iconed, FRectangle(FIntVector2(0, 0), 600, TabStyle.StripHeight));
 
-    const TSharedPtr<FTab> IconedTab = FindTab(Iconed, "Outliner");
+    const TSharedPtr<FTab> IconedTab = FindTab(Iconed, TEXT("Outliner"));
 
     FDrawCommandList IconCommands;
     DrawElement(IconedTab, IconCommands);
@@ -1242,7 +1243,7 @@ bool TabStripStyle_Test()
     TEST_EXPECT_EQ(Glyph.Bounds.Height, TabStyle.CloseIconSize);
     TEST_EXPECT_EQ(Glyph.Bounds.GetCenter(), IconedTab->GetCloseButtonRectangle().GetCenter());
 
-    TEST_SECTION("None of it touched the process-wide style, so the next strip is the shipped one");
+    TEST_SECTION(TEXT("None of it touched the process-wide style, so the next strip is the shipped one"));
     TEST_EXPECT(FUIStyle::GetDefault().Tab.Fill == FUITabStyle().Fill);
     TEST_EXPECT(FUIStyle::GetDefault().Tab.StripFill == FUITabStyle().StripFill);
 
@@ -1250,16 +1251,16 @@ bool TabStripStyle_Test()
     PlainDesc.Font = Font;
 
     TSharedPtr<FTabStrip> Plain = FTabStrip::Create(PlainDesc);
-    Plain->AddTab("Plain", "Plain", true);
+    Plain->AddTab(TEXT("Plain"), TEXT("Plain"), true);
     Plain->PrepareDesiredSize();
 
     TEST_EXPECT_EQ(Plain->GetCachedDesiredSize().Y, FUIStyle::GetDefault().Tab.StripHeight);
 
-    TEST_SECTION("Its active tab is rounded on top in the panel's fill, carrying no rule at all");
+    TEST_SECTION(TEXT("Its active tab is rounded on top in the panel's fill, carrying no rule at all"));
     LayoutElement(Plain, FRectangle(FIntVector2(0, 0), 600, FUIStyle::GetDefault().Tab.StripHeight));
 
     const FUITabStyle&     PlainStyle = FUIStyle::GetDefault().Tab;
-    const TSharedPtr<FTab> PlainTab   = FindTab(Plain, "Plain");
+    const TSharedPtr<FTab> PlainTab   = FindTab(Plain, TEXT("Plain"));
 
     TEST_EXPECT(PlainTab->IsActive());
 
@@ -1292,26 +1293,26 @@ bool TabMinimumWidth_Test()
     Desc.Font = Font;
 
     TSharedPtr<FTabStrip> Strip = FTabStrip::Create(Desc);
-    Strip->AddTab("About", "About", true);
-    Strip->AddTab("Content Browser", "Content Browser", true);
+    Strip->AddTab(TEXT("About"), TEXT("About"), true);
+    Strip->AddTab(TEXT("Content Browser"), TEXT("Content Browser"), true);
 
     LayoutElement(Strip, FRectangle(FIntVector2(0, 0), 900, FDockMetrics::TabStripHeight));
 
-    TEST_SECTION("A short title is padded out to the style's floor rather than shrinking to its label");
-    TEST_EXPECT_EQ(FindTab(Strip, "About")->GetCachedDesiredSize().X, TabStyle.MinWidth);
+    TEST_SECTION(TEXT("A short title is padded out to the style's floor rather than shrinking to its label"));
+    TEST_EXPECT_EQ(FindTab(Strip, TEXT("About"))->GetCachedDesiredSize().X, TabStyle.MinWidth);
 
-    TEST_SECTION("A title the floor cannot hold still takes the room it measures");
-    TEST_EXPECT(FindTab(Strip, "Content Browser")->GetCachedDesiredSize().X > TabStyle.MinWidth);
+    TEST_SECTION(TEXT("A title the floor cannot hold still takes the room it measures"));
+    TEST_EXPECT(FindTab(Strip, TEXT("Content Browser"))->GetCachedDesiredSize().X > TabStyle.MinWidth);
 
-    TEST_SECTION("The floor is cut to the editor's own titles, so a middling one reaches it and the longest runs past");
-    TSharedPtr<FTrueTypeFontFace> Body = FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + "/Editor/Fonts/segoeui.ttf", 20);
+    TEST_SECTION(TEXT("The floor is cut to the editor's own titles, so a middling one reaches it and the longest runs past"));
+    TSharedPtr<FTrueTypeFontFace> Body = FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + TEXT("/Editor/Fonts/segoeui.ttf"), 20);
     TEST_EXPECT(Body != nullptr);
 
     if (Body)
     {
         const int32 Chrome           = TabStyle.HorizontalPadding + TabStyle.LabelCloseGap + TabStyle.CloseSize + TabStyle.CloseInset;
-        const int32 ProfilerTab      = Chrome + Body->MeasureWidth(FStringView("Profiler", 8));
-        const int32 RendererSettings = Chrome + Body->MeasureWidth(FStringView("Renderer Settings", 17));
+        const int32 ProfilerTab      = Chrome + Body->MeasureWidth(FStringView(TEXT("Profiler"), 8));
+        const int32 RendererSettings = Chrome + Body->MeasureWidth(FStringView(TEXT("Renderer Settings"), 17));
 
         TEST_EXPECT(ProfilerTab <= TabStyle.MinWidth);
         TEST_EXPECT(RendererSettings > TabStyle.MinWidth);
@@ -1353,71 +1354,71 @@ bool TabStripTearOut_Test()
     Desc.OnTabDragFinished = FOnTabDragFinished::CreateLambda([&](const FString&, const FIntVector2&, const FIntVector2&) { NumFinishedCallbacks++; });
 
     TSharedPtr<FTabStrip> Strip = FTabStrip::Create(Desc);
-    Strip->AddTab("Outliner", "Outliner", true);
-    Strip->AddTab("Details", "Details", true);
+    Strip->AddTab(TEXT("Outliner"), TEXT("Outliner"), true);
+    Strip->AddTab(TEXT("Details"), TEXT("Details"), true);
 
     LayoutElement(Strip, FRectangle(FIntVector2(0, 30), 600, FDockMetrics::TabStripHeight));
 
-    const TSharedPtr<FTab> DetailsTab = FindTab(Strip, "Details");
+    const TSharedPtr<FTab> DetailsTab = FindTab(Strip, TEXT("Details"));
     Strip->OnTabPressed(DetailsTab.Get(), DetailsTab->GetContentRectangle().GetCenter());
 
-    TEST_SECTION("A drag inside the strip is a reorder, however far it goes sideways");
+    TEST_SECTION(TEXT("A drag inside the strip is a reorder, however far it goes sideways"));
     Strip->OnTabDragged(DetailsTab.Get(), FIntVector2(4, 40), FIntVector2(4, 40));
     TEST_EXPECT_EQ(NumDetachCallbacks, 0);
 
-    TEST_SECTION("A drag just off the strip is not enough either, so a shaky hand does not tear a panel out");
+    TEST_SECTION(TEXT("A drag just off the strip is not enough either, so a shaky hand does not tear a panel out"));
     const FIntVector2 JustOff(200, 30 + FDockMetrics::TabStripHeight + FTabStrip::TearOutDistance - 1);
     Strip->OnTabDragged(DetailsTab.Get(), JustOff, JustOff);
     TEST_EXPECT_EQ(NumDetachCallbacks, 0);
 
-    TEST_SECTION("Past the threshold the panel comes out, once");
+    TEST_SECTION(TEXT("Past the threshold the panel comes out, once"));
     const FIntVector2 FarBelow(200, 30 + FDockMetrics::TabStripHeight + FTabStrip::TearOutDistance + 10);
 
     Strip->OnTabDragged(DetailsTab.Get(), FarBelow, FarBelow);
     Strip->OnTabDragged(DetailsTab.Get(), FarBelow + FIntVector2(0, 20), FarBelow + FIntVector2(0, 20));
 
     TEST_EXPECT_EQ(NumDetachCallbacks, 1);
-    TEST_EXPECT_EQ(DetachedPanelId, FString("Details"));
+    TEST_EXPECT_EQ(DetachedPanelId, FString(TEXT("Details")));
     TEST_EXPECT_EQ(DetachedPosition.Y, FarBelow.Y);
 
-    TEST_SECTION("The strip stops reordering it, but keeps reporting where it goes");
+    TEST_SECTION(TEXT("The strip stops reordering it, but keeps reporting where it goes"));
     TEST_EXPECT(Strip->GetDraggedPanelId().IsEmpty());
-    TEST_EXPECT_EQ(Strip->GetDetachedPanelId(), FString("Details"));
+    TEST_EXPECT_EQ(Strip->GetDetachedPanelId(), FString(TEXT("Details")));
     TEST_EXPECT_EQ(NumMoveCallbacks, 1);
     TEST_EXPECT_EQ(LastMovePosition.Y, FarBelow.Y + 20);
-    TEST_EXPECT_EQ(GetTabOrder(Strip)[1], FString("Details"));
+    TEST_EXPECT_EQ(GetTabOrder(Strip)[1], FString(TEXT("Details")));
 
-    TEST_SECTION("Letting go says so once, and the strip is done with it");
+    TEST_SECTION(TEXT("Letting go says so once, and the strip is done with it"));
     Strip->OnTabReleased(DetailsTab.Get(), LastMovePosition, LastMovePosition);
 
     TEST_EXPECT_EQ(NumFinishedCallbacks, 1);
     TEST_EXPECT(Strip->GetDetachedPanelId().IsEmpty());
 
-    TEST_SECTION("Dragging above the strip tears out too");
+    TEST_SECTION(TEXT("Dragging above the strip tears out too"));
     const FIntVector2 FarAbove(200, 30 - FTabStrip::TearOutDistance - 10);
     Strip->OnTabPressed(DetailsTab.Get(), DetailsTab->GetContentRectangle().GetCenter());
     Strip->OnTabDragged(DetailsTab.Get(), FarAbove, FarAbove);
 
     TEST_EXPECT_EQ(NumDetachCallbacks, 2);
 
-    TEST_SECTION("A strip with tear-out turned off reorders instead");
+    TEST_SECTION(TEXT("A strip with tear-out turned off reorders instead"));
     FTabStrip::FDesc FixedDesc;
     FixedDesc.Font              = Font;
     FixedDesc.bAllowTearOut     = false;
     FixedDesc.OnTabDragDetached = FOnTabDragDetached::CreateLambda([&](const FString&, const FIntVector2&, const FIntVector2&) { NumDetachCallbacks++; });
 
     TSharedPtr<FTabStrip> Fixed = FTabStrip::Create(FixedDesc);
-    Fixed->AddTab("First", "First", false);
-    Fixed->AddTab("Second", "Second", false);
+    Fixed->AddTab(TEXT("First"), TEXT("First"), false);
+    Fixed->AddTab(TEXT("Second"), TEXT("Second"), false);
 
     LayoutElement(Fixed, FRectangle(FIntVector2(0, 0), 600, FDockMetrics::TabStripHeight));
 
-    const TSharedPtr<FTab> SecondTab = FindTab(Fixed, "Second");
+    const TSharedPtr<FTab> SecondTab = FindTab(Fixed, TEXT("Second"));
     Fixed->OnTabPressed(SecondTab.Get(), SecondTab->GetContentRectangle().GetCenter());
     Fixed->OnTabDragged(SecondTab.Get(), FIntVector2(4, 400), FIntVector2(4, 400));
 
     TEST_EXPECT_EQ(NumDetachCallbacks, 2);
-    TEST_EXPECT_EQ(GetTabOrder(Fixed)[0], FString("Second"));
+    TEST_EXPECT_EQ(GetTabOrder(Fixed)[0], FString(TEXT("Second")));
 
     TEST_END();
 }
@@ -1429,78 +1430,78 @@ bool DockingAreaDockUndock_Test()
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600));
 
-    TEST_SECTION("An area starts empty, and the first panel docked becomes the whole tree");
+    TEST_SECTION(TEXT("An area starts empty, and the first panel docked becomes the whole tree"));
     TEST_EXPECT(Fixture.Area->GetDockedPanelIds().IsEmpty());
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
     TEST_EXPECT_EQ(Fixture.Area->SaveLayout().Kind, EDockNodeKind::Tabs);
-    TEST_EXPECT(Fixture.Area->IsPanelDocked("Outliner"));
+    TEST_EXPECT(Fixture.Area->IsPanelDocked(TEXT("Outliner")));
 
-    TEST_SECTION("Docking to the right of it splits horizontally, with the new panel second");
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    TEST_SECTION(TEXT("Docking to the right of it splits horizontally, with the new panel second"));
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
 
     const FDockNode& AfterRight = Fixture.Area->SaveLayout();
     TEST_EXPECT_EQ(AfterRight.Kind, EDockNodeKind::Split);
     TEST_EXPECT_EQ(AfterRight.Orientation, EDockSplitOrientation::Horizontal);
     TEST_EXPECT_EQ(AfterRight.Children.Size(), 2);
-    TEST_EXPECT_EQ(AfterRight.Children[0].TabIds[0], FString("Outliner"));
-    TEST_EXPECT_EQ(AfterRight.Children[1].TabIds[0], FString("Details"));
+    TEST_EXPECT_EQ(AfterRight.Children[0].TabIds[0], FString(TEXT("Outliner")));
+    TEST_EXPECT_EQ(AfterRight.Children[1].TabIds[0], FString(TEXT("Details")));
 
-    TEST_SECTION("Docking below one of them nests a column inside the row");
-    Fixture.Area->DockPanel("Content", "Details", EDockDirection::Bottom);
+    TEST_SECTION(TEXT("Docking below one of them nests a column inside the row"));
+    Fixture.Area->DockPanel(TEXT("Content"), TEXT("Details"), EDockDirection::Bottom);
 
     const FDockNode& AfterBottom = Fixture.Area->SaveLayout();
     TEST_EXPECT_EQ(AfterBottom.Children.Size(), 2);
     TEST_EXPECT_EQ(AfterBottom.Children[1].Kind, EDockNodeKind::Split);
     TEST_EXPECT_EQ(AfterBottom.Children[1].Orientation, EDockSplitOrientation::Vertical);
-    TEST_EXPECT_EQ(AfterBottom.Children[1].Children[1].TabIds[0], FString("Content"));
+    TEST_EXPECT_EQ(AfterBottom.Children[1].Children[1].TabIds[0], FString(TEXT("Content")));
 
-    TEST_SECTION("Every docked panel is still accounted for, in layout order");
+    TEST_SECTION(TEXT("Every docked panel is still accounted for, in layout order"));
     const TArray<FString> Docked = Fixture.Area->GetDockedPanelIds();
     TEST_EXPECT_EQ(Docked.Size(), 3);
-    TEST_EXPECT_EQ(Docked[0], FString("Outliner"));
-    TEST_EXPECT_EQ(Docked[1], FString("Details"));
-    TEST_EXPECT_EQ(Docked[2], FString("Content"));
+    TEST_EXPECT_EQ(Docked[0], FString(TEXT("Outliner")));
+    TEST_EXPECT_EQ(Docked[1], FString(TEXT("Details")));
+    TEST_EXPECT_EQ(Docked[2], FString(TEXT("Content")));
 
-    TEST_SECTION("Docking into the center of a panel stacks it as a tab instead of splitting");
-    Fixture.Area->DockPanel("Content", "Outliner", EDockDirection::Center);
+    TEST_SECTION(TEXT("Docking into the center of a panel stacks it as a tab instead of splitting"));
+    Fixture.Area->DockPanel(TEXT("Content"), TEXT("Outliner"), EDockDirection::Center);
 
     const FDockNode& AfterCenter = Fixture.Area->SaveLayout();
     TEST_EXPECT_EQ(AfterCenter.Kind, EDockNodeKind::Split);
     TEST_EXPECT_EQ(AfterCenter.Children[0].TabIds.Size(), 2);
-    TEST_EXPECT_EQ(AfterCenter.Children[0].TabIds[1], FString("Content"));
+    TEST_EXPECT_EQ(AfterCenter.Children[0].TabIds[1], FString(TEXT("Content")));
     TEST_EXPECT_EQ(AfterCenter.Children[0].ActiveTabIndex, 1);
 
-    TEST_SECTION("Moving a panel does not leave a copy where it was");
+    TEST_SECTION(TEXT("Moving a panel does not leave a copy where it was"));
     TEST_EXPECT_EQ(Fixture.Area->GetDockedPanelIds().Size(), 3);
     TEST_EXPECT_EQ(AfterCenter.Children[1].TabIds.Size(), 1);
-    TEST_EXPECT_EQ(AfterCenter.Children[1].TabIds[0], FString("Details"));
+    TEST_EXPECT_EQ(AfterCenter.Children[1].TabIds[0], FString(TEXT("Details")));
 
-    TEST_SECTION("Undocking a stacked panel leaves the stack, and the split alone");
-    Fixture.Area->UndockPanel("Content");
+    TEST_SECTION(TEXT("Undocking a stacked panel leaves the stack, and the split alone"));
+    Fixture.Area->UndockPanel(TEXT("Content"));
 
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Content"));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Content")));
     TEST_EXPECT_EQ(Fixture.Area->SaveLayout().Children.Size(), 2);
 
-    TEST_SECTION("Undocking the last panel of a leaf collapses the split it was in");
-    Fixture.Area->UndockPanel("Details");
+    TEST_SECTION(TEXT("Undocking the last panel of a leaf collapses the split it was in"));
+    Fixture.Area->UndockPanel(TEXT("Details"));
 
     TEST_EXPECT_EQ(Fixture.Area->SaveLayout().Kind, EDockNodeKind::Tabs);
-    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[0], FString("Outliner"));
+    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[0], FString(TEXT("Outliner")));
 
-    TEST_SECTION("Undocking everything leaves an empty tree rather than a husk");
-    Fixture.Area->UndockPanel("Outliner");
+    TEST_SECTION(TEXT("Undocking everything leaves an empty tree rather than a husk"));
+    Fixture.Area->UndockPanel(TEXT("Outliner"));
 
     TEST_EXPECT(Fixture.Area->SaveLayout().IsEmpty());
     TEST_EXPECT(Fixture.Area->GetDockedPanelIds().IsEmpty());
 
-    TEST_SECTION("An unregistered id cannot be docked");
-    Fixture.Area->DockPanel("Nothing", FString(), EDockDirection::Center);
+    TEST_SECTION(TEXT("An unregistered id cannot be docked"));
+    Fixture.Area->DockPanel(TEXT("Nothing"), FString(), EDockDirection::Center);
     TEST_EXPECT(Fixture.Area->GetDockedPanelIds().IsEmpty());
 
-    TEST_SECTION("The elements the tree describes are built by the next layout");
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    TEST_SECTION(TEXT("The elements the tree describes are built by the next layout"));
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
     Fixture.Layout();
 
     TArray<TSharedPtr<FVisualElement>> Children;
@@ -1509,10 +1510,10 @@ bool DockingAreaDockUndock_Test()
     TEST_EXPECT_EQ(Children.Size(), 1);
     TEST_EXPECT_EQ(Children[0]->GetContentRectangle().Width, 800);
 
-    TEST_SECTION("Unregistering a panel takes it out of the tree as well as the registry");
-    Fixture.Area->UnregisterPanel("Details");
+    TEST_SECTION(TEXT("Unregistering a panel takes it out of the tree as well as the registry"));
+    Fixture.Area->UnregisterPanel(TEXT("Details"));
 
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Details")));
     TEST_EXPECT_EQ(Fixture.Area->GetRegisteredPanelIds().Size(), 2);
 
     TEST_END();
@@ -1525,18 +1526,18 @@ bool DockingAreaHitTest_Test()
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600), FIntVector2(100, 50));
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
     Fixture.Layout();
 
     FString        TargetPanelId;
     EDockDirection Direction = EDockDirection::Center;
     int32          TabIndex  = -1;
 
-    TEST_SECTION("A point outside the window is over nothing");
+    TEST_SECTION(TEXT("A point outside the window is over nothing"));
     TEST_EXPECT(!Fixture.Area->HitTestDropTarget(FIntVector2(0, 0), TargetPanelId, Direction, TabIndex));
 
-    TEST_SECTION("A leaf offers its strip and one chip a side, and nothing in the middle of the panel");
+    TEST_SECTION(TEXT("A leaf offers its strip and one chip a side, and nothing in the middle of the panel"));
     TArray<FDropZone> Zones;
     Fixture.Area->GatherDropZones(FIntVector2(200, 300), Zones);
 
@@ -1545,60 +1546,60 @@ bool DockingAreaHitTest_Test()
 
     for (const FDropZone& Zone : Zones)
     {
-        TEST_EXPECT_EQ(Zone.TargetPanelId, FString("Outliner"));
+        TEST_EXPECT_EQ(Zone.TargetPanelId, FString(TEXT("Outliner")));
     }
 
-    TEST_SECTION("The middle of a panel is in none of them, so a drop there lands nowhere");
+    TEST_SECTION(TEXT("The middle of a panel is in none of them, so a drop there lands nowhere"));
     TEST_EXPECT(!Fixture.Area->HitTestDropTarget(FIntVector2(100 + 200, 50 + 300), TargetPanelId, Direction, TabIndex));
 
-    TEST_SECTION("Each chip is the side it stands for, over the panel it was gathered from");
+    TEST_SECTION(TEXT("Each chip is the side it stands for, over the panel it was gathered from"));
     const EDockDirection Directions[] = { EDockDirection::Left, EDockDirection::Right, EDockDirection::Top, EDockDirection::Bottom };
     for (EDockDirection Expected : Directions)
     {
         TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(FIntVector2(200, 300), Expected), TargetPanelId, Direction, TabIndex));
-        TEST_EXPECT_EQ(TargetPanelId, FString("Outliner"));
+        TEST_EXPECT_EQ(TargetPanelId, FString(TEXT("Outliner")));
         TEST_EXPECT_EQ(Direction, Expected);
         TEST_EXPECT_EQ(TabIndex, -1);
     }
 
-    TEST_SECTION("The tab strip is the one Center target, and it is the whole strip rather than a chip");
+    TEST_SECTION(TEXT("The tab strip is the one Center target, and it is the whole strip rather than a chip"));
     TEST_EXPECT(Fixture.Area->HitTestDropTarget(FIntVector2(100 + 200, 50 + 10), TargetPanelId, Direction, TabIndex));
-    TEST_EXPECT_EQ(TargetPanelId, FString("Outliner"));
+    TEST_EXPECT_EQ(TargetPanelId, FString(TEXT("Outliner")));
     TEST_EXPECT_EQ(Direction, EDockDirection::Center);
 
-    TEST_SECTION("A drop onto a tab strip goes before the first tab whose middle is past the cursor");
+    TEST_SECTION(TEXT("A drop onto a tab strip goes before the first tab whose middle is past the cursor"));
     TEST_EXPECT_EQ(TabIndex, 1);
     TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetTabStripStart(FIntVector2(200, 300)), TargetPanelId, Direction, TabIndex));
     TEST_EXPECT_EQ(TabIndex, 0);
 
-    TEST_SECTION("The other panel has zones of its own, naming it rather than its neighbour");
+    TEST_SECTION(TEXT("The other panel has zones of its own, naming it rather than its neighbour"));
     TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(FIntVector2(600, 300), EDockDirection::Right), TargetPanelId, Direction, TabIndex));
-    TEST_EXPECT_EQ(TargetPanelId, FString("Details"));
+    TEST_EXPECT_EQ(TargetPanelId, FString(TEXT("Details")));
     TEST_EXPECT_EQ(Direction, EDockDirection::Right);
 
-    TEST_SECTION("Dropping where the hit test points lands the panel there");
+    TEST_SECTION(TEXT("Dropping where the hit test points lands the panel there"));
     TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetDropZoneCenter(FIntVector2(200, 300), EDockDirection::Right), TargetPanelId, Direction, TabIndex));
-    Fixture.Area->DockPanel("Content", TargetPanelId, Direction);
+    Fixture.Area->DockPanel(TEXT("Content"), TargetPanelId, Direction);
 
     const FDockNode& Tree = Fixture.Area->SaveLayout();
     TEST_EXPECT_EQ(Tree.Children.Size(), 3);
-    TEST_EXPECT_EQ(Tree.Children[1].TabIds[0], FString("Content"));
+    TEST_EXPECT_EQ(Tree.Children[1].TabIds[0], FString(TEXT("Content")));
 
-    TEST_SECTION("A tab dropped onto a strip goes in at the index the hit test gives");
+    TEST_SECTION(TEXT("A tab dropped onto a strip goes in at the index the hit test gives"));
     Fixture.Layout();
     TEST_EXPECT(Fixture.Area->HitTestDropTarget(Fixture.GetTabStripStart(FIntVector2(100, 300)), TargetPanelId, Direction, TabIndex));
-    TEST_EXPECT_EQ(TargetPanelId, FString("Outliner"));
+    TEST_EXPECT_EQ(TargetPanelId, FString(TEXT("Outliner")));
     TEST_EXPECT_EQ(TabIndex, 0);
-    Fixture.Area->DockPanel("Content", TargetPanelId, Direction, TabIndex);
+    Fixture.Area->DockPanel(TEXT("Content"), TargetPanelId, Direction, TabIndex);
 
     const FDockNode& TabbedTree = Fixture.Area->SaveLayout();
     TEST_EXPECT_EQ(TabbedTree.Children.Size(), 2);
-    TEST_EXPECT(TabbedTree.Children[0].TabIds.Size() == 2 && TabbedTree.Children[0].TabIds[0] == FString("Content") && TabbedTree.Children[0].TabIds[1] == FString("Outliner"));
+    TEST_EXPECT(TabbedTree.Children[0].TabIds.Size() == 2 && TabbedTree.Children[0].TabIds[0] == FString(TEXT("Content")) && TabbedTree.Children[0].TabIds[1] == FString(TEXT("Outliner")));
 
-    TEST_SECTION("An area with nothing in it takes a drop anywhere, which is how a panel gets back into one");
-    Fixture.Area->UndockPanel("Outliner");
-    Fixture.Area->UndockPanel("Details");
-    Fixture.Area->UndockPanel("Content");
+    TEST_SECTION(TEXT("An area with nothing in it takes a drop anywhere, which is how a panel gets back into one"));
+    Fixture.Area->UndockPanel(TEXT("Outliner"));
+    Fixture.Area->UndockPanel(TEXT("Details"));
+    Fixture.Area->UndockPanel(TEXT("Content"));
     Fixture.Layout();
 
     TEST_EXPECT(Fixture.Area->HitTestDropTarget(FIntVector2(100 + 200, 50 + 300), TargetPanelId, Direction, TabIndex));
@@ -1615,30 +1616,30 @@ bool DockingAreaPersistence_Test()
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600));
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
-    Fixture.Area->DockPanel("Content", "Details", EDockDirection::Bottom);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
+    Fixture.Area->DockPanel(TEXT("Content"), TEXT("Details"), EDockDirection::Bottom);
     Fixture.Layout();
 
-    const FString Filename("DockingTests.tmp.ini");
+    const FString Filename(TEXT("DockingTests.tmp.ini"));
 
-    TEST_SECTION("A layout writes to a file");
+    TEST_SECTION(TEXT("A layout writes to a file"));
     TEST_EXPECT(Fixture.Area->SaveLayoutToFile(Filename));
 
     const FDockNode Saved = Fixture.Area->SaveLayout();
 
-    TEST_SECTION("Reading it back into a fresh area rebuilds the same tree");
+    TEST_SECTION(TEXT("Reading it back into a fresh area rebuilds the same tree"));
     FDockingFixture Restored(Application, FIntVector2(800, 600));
     TEST_EXPECT(Restored.Area->RestoreLayoutFromFile(Filename));
     TEST_EXPECT(AreNodesEqual(Restored.Area->SaveLayout(), Saved));
 
-    TEST_SECTION("Which means the panels come back where they were");
+    TEST_SECTION(TEXT("Which means the panels come back where they were"));
     const TArray<FString> RestoredPanels = Restored.Area->GetDockedPanelIds();
     TEST_EXPECT_EQ(RestoredPanels.Size(), 3);
-    TEST_EXPECT_EQ(RestoredPanels[0], FString("Outliner"));
-    TEST_EXPECT_EQ(RestoredPanels[2], FString("Content"));
+    TEST_EXPECT_EQ(RestoredPanels[0], FString(TEXT("Outliner")));
+    TEST_EXPECT_EQ(RestoredPanels[2], FString(TEXT("Content")));
 
-    TEST_SECTION("Dragged splitter shares survive the round trip");
+    TEST_SECTION(TEXT("Dragged splitter shares survive the round trip"));
     FDockNode Resized = Saved;
     Resized.ChildFractions[0] = 0.3f;
     Resized.ChildFractions[1] = 0.7f;
@@ -1650,7 +1651,7 @@ bool DockingAreaPersistence_Test()
     TEST_EXPECT(ResizedRestore.Area->RestoreLayoutFromFile(Filename));
     TEST_EXPECT(Math::Abs(ResizedRestore.Area->SaveLayout().ChildFractions[0] - 0.3f) < 0.0001f);
 
-    TEST_SECTION("Which the layout then honours");
+    TEST_SECTION(TEXT("Which the layout then honours"));
     ResizedRestore.Layout();
 
     TArray<TSharedPtr<FVisualElement>> RootChildren;
@@ -1669,22 +1670,22 @@ bool DockingAreaPersistence_Test()
 
     TEST_EXPECT(Math::Abs(SplitChildren[0]->GetContentRectangle().Width - static_cast<int32>(Divisible * 0.3f)) <= 2);
 
-    TEST_SECTION("A saved id nobody registered is dropped rather than leaving a tab with no panel");
-    FDockNode WithStranger = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateTabs({ "Outliner" }), FDockNode::CreateTabs({ "Profiler" }));
+    TEST_SECTION(TEXT("A saved id nobody registered is dropped rather than leaving a tab with no panel"));
+    FDockNode WithStranger = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal, FDockNode::CreateTabs({ TEXT("Outliner") }), FDockNode::CreateTabs({ TEXT("Profiler") }));
 
     Fixture.Area->RestoreLayout(WithStranger);
 
     TEST_EXPECT_EQ(Fixture.Area->SaveLayout().Kind, EDockNodeKind::Tabs);
     TEST_EXPECT_EQ(Fixture.Area->GetDockedPanelIds().Size(), 1);
-    TEST_EXPECT_EQ(Fixture.Area->GetDockedPanelIds()[0], FString("Outliner"));
+    TEST_EXPECT_EQ(Fixture.Area->GetDockedPanelIds()[0], FString(TEXT("Outliner")));
 
-    TEST_SECTION("A file that is not there leaves the layout alone");
+    TEST_SECTION(TEXT("A file that is not there leaves the layout alone"));
     const FDockNode BeforeMissing = Fixture.Area->SaveLayout();
 
-    TEST_EXPECT(!Fixture.Area->RestoreLayoutFromFile(Filename + ".does-not-exist"));
+    TEST_EXPECT(!Fixture.Area->RestoreLayoutFromFile(Filename + TEXT(".does-not-exist")));
     TEST_EXPECT(AreNodesEqual(Fixture.Area->SaveLayout(), BeforeMissing));
 
-    ::remove(Filename.Data());
+    FPlatformFile::DeleteFile(Filename.Data());
 
     TEST_END();
 }
@@ -1696,57 +1697,57 @@ bool DockingAreaTabReorder_Test()
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600));
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Center);
-    Fixture.Area->DockPanel("Content", "Outliner", EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Content"), TEXT("Outliner"), EDockDirection::Center);
     Fixture.Layout();
 
-    TEST_SECTION("The three panels start as one stack, in the order they were docked");
+    TEST_SECTION(TEXT("The three panels start as one stack, in the order they were docked"));
     TEST_EXPECT_EQ(Fixture.Area->SaveLayout().Kind, EDockNodeKind::Tabs);
     TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds.Size(), 3);
-    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[0], FString("Outliner"));
-    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[2], FString("Content"));
+    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[0], FString(TEXT("Outliner")));
+    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[2], FString(TEXT("Content")));
 
     TSharedPtr<FTabStrip> Strip = FindStrip(Fixture.Area);
     TEST_EXPECT(Strip != nullptr);
 
-    TEST_SECTION("Dragging the last tab over the first moves it along the strip");
-    const TSharedPtr<FTab> ContentTab = FindTab(Strip, "Content");
+    TEST_SECTION(TEXT("Dragging the last tab over the first moves it along the strip"));
+    const TSharedPtr<FTab> ContentTab = FindTab(Strip, TEXT("Content"));
 
-    const FIntVector2 OverOutliner(FindTab(Strip, "Outliner")->GetContentRectangle().GetCenter());
+    const FIntVector2 OverOutliner(FindTab(Strip, TEXT("Outliner"))->GetContentRectangle().GetCenter());
 
     Strip->OnTabPressed(ContentTab.Get(), ContentTab->GetContentRectangle().GetCenter());
     Strip->OnTabDragged(ContentTab.Get(), OverOutliner, OverOutliner);
 
-    TEST_EXPECT_EQ(GetTabOrder(Strip)[0], FString("Content"));
+    TEST_EXPECT_EQ(GetTabOrder(Strip)[0], FString(TEXT("Content")));
 
-    TEST_SECTION("And the tree moves with it, rather than keeping the order it was built with");
-    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[0], FString("Content"));
-    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[1], FString("Outliner"));
-    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[2], FString("Details"));
+    TEST_SECTION(TEXT("And the tree moves with it, rather than keeping the order it was built with"));
+    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[0], FString(TEXT("Content")));
+    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[1], FString(TEXT("Outliner")));
+    TEST_EXPECT_EQ(Fixture.Area->SaveLayout().TabIds[2], FString(TEXT("Details")));
 
-    TEST_SECTION("The active index follows the panel it was on rather than the slot it was in");
+    TEST_SECTION(TEXT("The active index follows the panel it was on rather than the slot it was in"));
     TEST_EXPECT_EQ(Fixture.Area->SaveLayout().ActiveTabIndex, 0);
-    TEST_EXPECT(Fixture.Area->IsPanelVisible("Content"));
+    TEST_EXPECT(Fixture.Area->IsPanelVisible(TEXT("Content")));
 
     Strip->OnTabReleased(ContentTab.Get(), ContentTab->GetContentRectangle().GetCenter(), ContentTab->GetContentRectangle().GetCenter());
 
-    TEST_SECTION("A rebuild keeps the new order, which is what used to throw it away");
+    TEST_SECTION(TEXT("A rebuild keeps the new order, which is what used to throw it away"));
     Fixture.Layout();
-    TEST_EXPECT_EQ(GetTabOrder(FindStrip(Fixture.Area))[0], FString("Content"));
+    TEST_EXPECT_EQ(GetTabOrder(FindStrip(Fixture.Area))[0], FString(TEXT("Content")));
 
-    TEST_SECTION("And so does a save and restore round trip");
-    const FString Filename("DockingReorderTests.tmp.ini");
+    TEST_SECTION(TEXT("And so does a save and restore round trip"));
+    const FString Filename(TEXT("DockingReorderTests.tmp.ini"));
     TEST_EXPECT(Fixture.Area->SaveLayoutToFile(Filename));
 
     FDockingFixture Restored(Application, FIntVector2(800, 600));
     TEST_EXPECT(Restored.Area->RestoreLayoutFromFile(Filename));
 
-    TEST_EXPECT_EQ(Restored.Area->SaveLayout().TabIds[0], FString("Content"));
-    TEST_EXPECT_EQ(Restored.Area->SaveLayout().TabIds[2], FString("Details"));
+    TEST_EXPECT_EQ(Restored.Area->SaveLayout().TabIds[0], FString(TEXT("Content")));
+    TEST_EXPECT_EQ(Restored.Area->SaveLayout().TabIds[2], FString(TEXT("Details")));
     TEST_EXPECT_EQ(Restored.Area->SaveLayout().ActiveTabIndex, 0);
 
-    ::remove(Filename.Data());
+    FPlatformFile::DeleteFile(Filename.Data());
 
     TEST_END();
 }
@@ -1758,8 +1759,8 @@ bool DockWindowManagerTearOut_Test()
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600));
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
     Fixture.Layout();
 
     FDockWindowManager::FDesc ManagerDesc;
@@ -1773,57 +1774,57 @@ bool DockWindowManagerTearOut_Test()
 
     const int32 NumWindowsBefore = Application.GetApplication().GetWindows().Size();
 
-    TEST_SECTION("Nothing is torn out to begin with");
+    TEST_SECTION(TEXT("Nothing is torn out to begin with"));
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 0);
 
-    TEST_SECTION("A drag let go clear of every area has nowhere to drop");
-    DragState.BeginDrag("Details", Fixture.Area.Get(), FIntVector2(2000, 2000));
+    TEST_SECTION(TEXT("A drag let go clear of every area has nowhere to drop"));
+    DragState.BeginDrag(TEXT("Details"), Fixture.Area.Get(), FIntVector2(2000, 2000));
     TEST_EXPECT(!DragState.HasTarget());
 
-    TEST_SECTION("The drag carries the label the area registered, not the bare id");
-    TEST_EXPECT_EQ(DragState.GetDraggedPanelLabel(), FString("Details"));
+    TEST_SECTION(TEXT("The drag carries the label the area registered, not the bare id"));
+    TEST_EXPECT_EQ(DragState.GetDraggedPanelLabel(), FString(TEXT("Details")));
 
-    TEST_SECTION("Letting go there spawns a host window holding the panel");
+    TEST_SECTION(TEXT("Letting go there spawns a host window holding the panel"));
     DragState.EndDrag();
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
     TEST_EXPECT_EQ(Application.GetApplication().GetWindows().Size(), NumWindowsBefore + 1);
 
-    TEST_SECTION("Which is a top-level window drawing its own caption, not a child that floats over the editor");
+    TEST_SECTION(TEXT("Which is a top-level window drawing its own caption, not a child that floats over the editor"));
     TSharedPtr<FWindow> HostWindow = Manager.GetHostWindow(0);
     TEST_EXPECT(HostWindow != nullptr);
     TEST_EXPECT(HostWindow->GetParentWindow() == nullptr);
     TEST_EXPECT_EQ(HostWindow->GetStyle(), EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar);
-    TEST_EXPECT_EQ(HostWindow->GetTitle(), FString("Details"));
+    TEST_EXPECT_EQ(HostWindow->GetTitle(), FString(TEXT("Details")));
 
-    TEST_SECTION("The panel moved rather than being copied, so only the host holds it");
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Details"));
-    TEST_EXPECT(Manager.GetHostArea(0)->IsPanelDocked("Details"));
-    TEST_EXPECT(Manager.IsPanelDockedAnywhere("Details"));
-    TEST_EXPECT(Manager.IsPanelVisibleAnywhere("Details"));
-    TEST_EXPECT_EQ(Manager.FindAreaForPanel("Outliner"), Fixture.Area);
+    TEST_SECTION(TEXT("The panel moved rather than being copied, so only the host holds it"));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Details")));
+    TEST_EXPECT(Manager.GetHostArea(0)->IsPanelDocked(TEXT("Details")));
+    TEST_EXPECT(Manager.IsPanelDockedAnywhere(TEXT("Details")));
+    TEST_EXPECT(Manager.IsPanelVisibleAnywhere(TEXT("Details")));
+    TEST_EXPECT_EQ(Manager.FindAreaForPanel(TEXT("Outliner")), Fixture.Area);
 
-    TEST_SECTION("And the area it left collapsed back to the panel still in it");
+    TEST_SECTION(TEXT("And the area it left collapsed back to the panel still in it"));
     TEST_EXPECT_EQ(Fixture.Area->SaveLayout().Kind, EDockNodeKind::Tabs);
     TEST_EXPECT_EQ(Fixture.Area->GetDockedPanelIds().Size(), 1);
 
-    TEST_SECTION("A host with a panel in it is left alone by a tick");
+    TEST_SECTION(TEXT("A host with a panel in it is left alone by a tick"));
     Manager.Tick();
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
 
-    TEST_SECTION("Dragging the panel back into the main area empties the host");
+    TEST_SECTION(TEXT("Dragging the panel back into the main area empties the host"));
     Fixture.Layout();
     FApplication::LayoutWindow(HostWindow);
 
-    DragState.BeginDrag("Details", Manager.GetHostArea(0).Get(), Fixture.GetDropZoneCenter(FIntVector2(200, 300), EDockDirection::Center));
+    DragState.BeginDrag(TEXT("Details"), Manager.GetHostArea(0).Get(), Fixture.GetDropZoneCenter(FIntVector2(200, 300), EDockDirection::Center));
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Fixture.Area.Get());
 
     DragState.EndDrag();
 
-    TEST_EXPECT(Fixture.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(Fixture.Area->IsPanelDocked(TEXT("Details")));
     TEST_EXPECT(Manager.GetHostArea(0)->GetDockedPanelIds().IsEmpty());
 
-    TEST_SECTION("Which the next tick notices, closing the window it left behind");
+    TEST_SECTION(TEXT("Which the next tick notices, closing the window it left behind"));
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
 
     Manager.Tick();
@@ -1831,65 +1832,65 @@ bool DockWindowManagerTearOut_Test()
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 0);
     TEST_EXPECT_EQ(Application.GetApplication().GetWindows().Size(), NumWindowsBefore);
 
-    TEST_SECTION("A host closed by its own title bar takes what it held with it rather than dropping it back in");
-    DragState.BeginDrag("Details", Fixture.Area.Get(), FIntVector2(2000, 2000));
+    TEST_SECTION(TEXT("A host closed by its own title bar takes what it held with it rather than dropping it back in"));
+    DragState.BeginDrag(TEXT("Details"), Fixture.Area.Get(), FIntVector2(2000, 2000));
     DragState.EndDrag();
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Details")));
 
     Application.GetApplication().OnWindowClosed(Manager.GetHostWindow(0)->GetPlatformWindow());
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 0);
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Details")));
     TEST_EXPECT_EQ(Application.GetApplication().GetWindows().Size(), NumWindowsBefore);
 
-    TEST_SECTION("But the registration lands on the main area, which is what a menu needs to open it again");
+    TEST_SECTION(TEXT("But the registration lands on the main area, which is what a menu needs to open it again"));
     FString                    ClosedLabel;
     TSharedPtr<FVisualElement> ClosedPanel;
-    TEST_EXPECT(Fixture.Area->GetPanelRegistration("Details", ClosedLabel, ClosedPanel));
-    TEST_EXPECT_EQ(ClosedLabel, FString("Details"));
+    TEST_EXPECT(Fixture.Area->GetPanelRegistration(TEXT("Details"), ClosedLabel, ClosedPanel));
+    TEST_EXPECT_EQ(ClosedLabel, FString(TEXT("Details")));
     TEST_EXPECT(ClosedPanel != nullptr);
 
-    Fixture.Area->DockPanel("Details", FString(), EDockDirection::Center);
-    TEST_EXPECT(Fixture.Area->IsPanelDocked("Details"));
+    Fixture.Area->DockPanel(TEXT("Details"), FString(), EDockDirection::Center);
+    TEST_EXPECT(Fixture.Area->IsPanelDocked(TEXT("Details")));
 
-    TEST_SECTION("A panel closed inside a host keeps its registration when the emptied host goes");
-    DragState.BeginDrag("Details", Fixture.Area.Get(), FIntVector2(2000, 2000));
+    TEST_SECTION(TEXT("A panel closed inside a host keeps its registration when the emptied host goes"));
+    DragState.BeginDrag(TEXT("Details"), Fixture.Area.Get(), FIntVector2(2000, 2000));
     DragState.EndDrag();
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
 
-    Manager.GetHostArea(0)->UndockPanel("Details");
+    Manager.GetHostArea(0)->UndockPanel(TEXT("Details"));
     TEST_EXPECT(Manager.GetHostArea(0)->GetDockedPanelIds().IsEmpty());
-    TEST_EXPECT(Manager.GetHostArea(0)->GetRegisteredPanelIds().Contains(FString("Details")));
+    TEST_EXPECT(Manager.GetHostArea(0)->GetRegisteredPanelIds().Contains(FString(TEXT("Details"))));
 
     Manager.Tick();
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 0);
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Details"));
-    TEST_EXPECT(Fixture.Area->GetRegisteredPanelIds().Contains(FString("Details")));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Details")));
+    TEST_EXPECT(Fixture.Area->GetRegisteredPanelIds().Contains(FString(TEXT("Details"))));
 
-    Fixture.Area->DockPanel("Details", FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), FString(), EDockDirection::Center);
 
-    TEST_SECTION("A cancelled drag puts the panel back where it came from without spawning anything");
-    DragState.BeginDrag("Details", Fixture.Area.Get(), FIntVector2(2000, 2000));
+    TEST_SECTION(TEXT("A cancelled drag puts the panel back where it came from without spawning anything"));
+    DragState.BeginDrag(TEXT("Details"), Fixture.Area.Get(), FIntVector2(2000, 2000));
     DragState.CancelDrag();
 
     TEST_EXPECT(!DragState.IsDragging());
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 0);
-    TEST_EXPECT(Fixture.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(Fixture.Area->IsPanelDocked(TEXT("Details")));
 
-    TEST_SECTION("A drop outside with the manager gone loses the panel, since tear-out already took it out");
+    TEST_SECTION(TEXT("A drop outside with the manager gone loses the panel, since tear-out already took it out"));
     FDockWindowManager::Shutdown();
 
-    DragState.BeginDrag("Details", Fixture.Area.Get(), FIntVector2(2000, 2000));
+    DragState.BeginDrag(TEXT("Details"), Fixture.Area.Get(), FIntVector2(2000, 2000));
 
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Details")));
 
     DragState.EndDrag();
 
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Details")));
     TEST_EXPECT(!DragState.IsDragging());
 
     FDockDragState::Shutdown();
@@ -1906,9 +1907,9 @@ bool DockDecoratorDrag_Test()
     FDockingFixture Source(Application, FIntVector2(800, 600), FIntVector2(0, 0));
     FDockingFixture Destination(Application, FIntVector2(400, 400), FIntVector2(1000, 0));
 
-    Source.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Source.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
-    Destination.Area->DockPanel("Content", FString(), EDockDirection::Center);
+    Source.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Source.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
+    Destination.Area->DockPanel(TEXT("Content"), FString(), EDockDirection::Center);
 
     Source.Layout();
     Destination.Layout();
@@ -1924,46 +1925,46 @@ bool DockDecoratorDrag_Test()
 
     const int32 NumWindowsBefore = Application.GetApplication().GetWindows().Size();
 
-    TEST_SECTION("Nothing is torn out to begin with, so there is no decorator");
+    TEST_SECTION(TEXT("Nothing is torn out to begin with, so there is no decorator"));
     TEST_EXPECT(Manager.GetDecoratorWindow() == nullptr);
 
-    TEST_SECTION("Tearing a tab out puts a window of its own under the cursor");
+    TEST_SECTION(TEXT("Tearing a tab out puts a window of its own under the cursor"));
 
     const FIntVector2 TearOutPosition(600, 700);
-    DragState.BeginDrag("Details", Source.Area.Get(), TearOutPosition);
+    DragState.BeginDrag(TEXT("Details"), Source.Area.Get(), TearOutPosition);
 
     TSharedPtr<FWindow> Decorator = Manager.GetDecoratorWindow();
     TEST_EXPECT(Decorator != nullptr);
     TEST_EXPECT_EQ(Application.GetApplication().GetWindows().Size(), NumWindowsBefore + 1);
-    TEST_EXPECT_EQ(Decorator->GetTitle(), FString("Details"));
+    TEST_EXPECT_EQ(Decorator->GetTitle(), FString(TEXT("Details")));
 
-    TEST_SECTION("Backed off the cursor by the same inset a spawned host uses, so the tab stays under it");
+    TEST_SECTION(TEXT("Backed off the cursor by the same inset a spawned host uses, so the tab stays under it"));
     TEST_EXPECT_EQ(Decorator->GetPosition().X, TearOutPosition.X - FDockWindowManager::SpawnCursorInset);
     TEST_EXPECT_EQ(Decorator->GetPosition().Y, TearOutPosition.Y - FDockWindowManager::SpawnCursorInset);
 
-    TEST_SECTION("A band the width of a host, rather than the host-sized window it stands for");
+    TEST_SECTION(TEXT("A band the width of a host, rather than the host-sized window it stands for"));
     TEST_EXPECT_EQ(Decorator->GetSize().X, FDockWindowManager::DecoratorWidth);
     TEST_EXPECT_EQ(Decorator->GetSize().Y, FDockWindowManager::DecoratorHeight);
 
-    TEST_SECTION("And it is click-through, so the cursor keeps resolving to what is behind it");
+    TEST_SECTION(TEXT("And it is click-through, so the cursor keeps resolving to what is behind it"));
     TEST_EXPECT(!Decorator->GetAcceptsInput());
 
-    TEST_SECTION("It fades in from nothing to dimmed, on the platform window too, though it was asked for before that existed");
+    TEST_SECTION(TEXT("It fades in from nothing to dimmed, on the platform window too, though it was asked for before that existed"));
     TEST_EXPECT(Decorator->GetOpacity() < FDockWindowManager::DecoratorOpacity);
     WaitForDecoratorFade(Manager);
     TEST_EXPECT_EQ(Decorator->GetOpacity(), FDockWindowManager::DecoratorOpacity);
     TEST_EXPECT_EQ(GetStubWindow(Decorator)->GetWindowOpacity(), FDockWindowManager::DecoratorOpacity);
 
-    TEST_SECTION("The panel left its area at that moment rather than on the drop");
-    TEST_EXPECT(!Source.Area->IsPanelDocked("Details"));
-    TEST_EXPECT(!Source.Area->GetRegisteredPanelIds().Contains(FString("Details")));
-    TEST_EXPECT(Manager.GetDecoratorArea()->IsPanelDocked("Details"));
+    TEST_SECTION(TEXT("The panel left its area at that moment rather than on the drop"));
+    TEST_EXPECT(!Source.Area->IsPanelDocked(TEXT("Details")));
+    TEST_EXPECT(!Source.Area->GetRegisteredPanelIds().Contains(FString(TEXT("Details"))));
+    TEST_EXPECT(Manager.GetDecoratorArea()->IsPanelDocked(TEXT("Details")));
 
-    TEST_SECTION("The decorator is no target for its own drag, however far over itself the cursor goes");
+    TEST_SECTION(TEXT("The decorator is no target for its own drag, however far over itself the cursor goes"));
     DragState.UpdateDrag(TearOutPosition + FIntVector2(40, 40));
     TEST_EXPECT(!DragState.HasTarget());
 
-    TEST_SECTION("Over a zone the decorator fades out but keeps following the cursor, since the zone's preview shows the drop");
+    TEST_SECTION(TEXT("Over a zone the decorator fades out but keeps following the cursor, since the zone's preview shows the drop"));
     const FIntVector2 OverDestinationStrip = Destination.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Center);
 
     DragState.UpdateDrag(OverDestinationStrip);
@@ -1979,14 +1980,14 @@ bool DockDecoratorDrag_Test()
     TEST_EXPECT_EQ(Decorator->GetSize().X, FDockWindowManager::DecoratorWidth);
     TEST_EXPECT_EQ(Decorator->GetSize().Y, FDockWindowManager::DecoratorHeight);
 
-    TEST_SECTION("The rectangle a zone stands for is in screen coordinates, so it sits inside its window");
+    TEST_SECTION(TEXT("The rectangle a zone stands for is in screen coordinates, so it sits inside its window"));
     FRectangle PreviewBounds;
     TEST_EXPECT(Destination.Area->GetDropPreviewBounds(DragState.GetTargetPanelId(), DragState.GetTargetDirection(), PreviewBounds));
 
     TEST_EXPECT(PreviewBounds.Position.X >= Destination.Window->GetPosition().X);
     TEST_EXPECT(PreviewBounds.Position.Y >= Destination.Window->GetPosition().Y);
 
-    TEST_SECTION("An edge drop takes half the leaf, so the preview shows the split rather than the whole panel");
+    TEST_SECTION(TEXT("An edge drop takes half the leaf, so the preview shows the split rather than the whole panel"));
     const FIntVector2 OverDestinationLeftChip = Destination.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Left);
 
     DragState.UpdateDrag(OverDestinationLeftChip);
@@ -2001,7 +2002,7 @@ bool DockDecoratorDrag_Test()
     TEST_EXPECT_EQ(LeftBounds.Width, PreviewBounds.Width / 2);
     TEST_EXPECT_EQ(LeftBounds.Position.X, PreviewBounds.Position.X);
 
-    TEST_SECTION("Clear of every area the decorator fades back in and follows the cursor, at the size it began at");
+    TEST_SECTION(TEXT("Clear of every area the decorator fades back in and follows the cursor, at the size it began at"));
     const FIntVector2 BetweenWindows(900, 200);
 
     DragState.UpdateDrag(BetweenWindows);
@@ -2014,7 +2015,7 @@ bool DockDecoratorDrag_Test()
     TEST_EXPECT_EQ(Manager.GetDecoratorWindow()->GetSize().X, FDockWindowManager::DecoratorWidth);
     TEST_EXPECT_EQ(Manager.GetDecoratorWindow()->GetSize().Y, FDockWindowManager::DecoratorHeight);
 
-    TEST_SECTION("The middle of a panel is no zone either, so the cursor is over an area but aimed at nothing");
+    TEST_SECTION(TEXT("The middle of a panel is no zone either, so the cursor is over an area but aimed at nothing"));
     const FIntVector2 OverDestinationMiddle(1000 + 200, 200);
 
     DragState.UpdateDrag(OverDestinationMiddle);
@@ -2022,27 +2023,27 @@ bool DockDecoratorDrag_Test()
 
     TEST_EXPECT(!DragState.HasTarget());
 
-    TEST_SECTION("So letting go there floats the panel into a host of its own rather than docking it");
+    TEST_SECTION(TEXT("So letting go there floats the panel into a host of its own rather than docking it"));
     const FIntVector2 DecoratorPosition = Manager.GetDecoratorWindow()->GetPosition();
 
     DragState.EndDrag();
 
-    TEST_EXPECT(!Destination.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(!Destination.Area->IsPanelDocked(TEXT("Details")));
     TEST_EXPECT(Manager.GetDecoratorWindow() == nullptr);
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
     TEST_EXPECT_EQ(Application.GetApplication().GetWindows().Size(), NumWindowsBefore + 1);
     TEST_EXPECT_EQ(Manager.GetHostWindow(0)->GetPosition().X, DecoratorPosition.X);
     TEST_EXPECT_EQ(Manager.GetHostWindow(0)->GetPosition().Y, DecoratorPosition.Y);
-    TEST_EXPECT(Manager.GetHostArea(0)->IsPanelDocked("Details"));
+    TEST_EXPECT(Manager.GetHostArea(0)->IsPanelDocked(TEXT("Details")));
 
-    TEST_SECTION("At the size a host is, rather than the band the decorator followed the cursor at");
+    TEST_SECTION(TEXT("At the size a host is, rather than the band the decorator followed the cursor at"));
     TEST_EXPECT_EQ(Manager.GetHostWindow(0)->GetSize().X, ManagerDesc.DefaultSize.X);
     TEST_EXPECT_EQ(Manager.GetHostWindow(0)->GetSize().Y, ManagerDesc.DefaultSize.Y);
 
-    TEST_SECTION("Letting go over a target docks it there instead, and still takes the decorator down");
+    TEST_SECTION(TEXT("Letting go over a target docks it there instead, and still takes the decorator down"));
     FApplication::LayoutWindow(Manager.GetHostWindow(0));
 
-    DragState.BeginDrag("Details", Manager.GetHostArea(0).Get(), TearOutPosition);
+    DragState.BeginDrag(TEXT("Details"), Manager.GetHostArea(0).Get(), TearOutPosition);
     TEST_EXPECT(Manager.GetDecoratorWindow() != nullptr);
 
     DragState.UpdateDrag(OverDestinationStrip);
@@ -2051,10 +2052,10 @@ bool DockDecoratorDrag_Test()
     DragState.EndDrag();
 
     TEST_EXPECT(Manager.GetDecoratorWindow() == nullptr);
-    TEST_EXPECT(Destination.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(Destination.Area->IsPanelDocked(TEXT("Details")));
     TEST_EXPECT(Manager.GetHostArea(0)->GetDockedPanelIds().IsEmpty());
 
-    TEST_SECTION("And the host the drag emptied is closed by the next tick");
+    TEST_SECTION(TEXT("And the host the drag emptied is closed by the next tick"));
     Manager.Tick();
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 0);
@@ -2075,9 +2076,9 @@ bool DockDecoratorSnapshot_Test()
     FDockingFixture Source(Application, FIntVector2(800, 600), FIntVector2(0, 0));
     FDockingFixture Destination(Application, FIntVector2(400, 400), FIntVector2(1000, 0));
 
-    Source.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Source.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
-    Destination.Area->DockPanel("Content", FString(), EDockDirection::Center);
+    Source.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Source.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
+    Destination.Area->DockPanel(TEXT("Content"), FString(), EDockDirection::Center);
 
     Source.Layout();
     Destination.Layout();
@@ -2091,28 +2092,28 @@ bool DockDecoratorSnapshot_Test()
 
     Manager.Initialize(ManagerDesc);
 
-    IConsoleVariable* SnapshotVariable = FConsoleManager::Get().FindConsoleVariable("Docking.DecoratorSnapshot");
+    IConsoleVariable* SnapshotVariable = FConsoleManager::Get().FindConsoleVariable(TEXT("Docking.DecoratorSnapshot"));
     TEST_EXPECT(SnapshotVariable != nullptr);
 
     SnapshotVariable->SetAsBool(true, EConsoleVariableFlags::SetByCode);
 
-    TEST_SECTION("Tearing out still puts up a decorator with the panel in it");
-    DragState.BeginDrag("Details", Source.Area.Get(), FIntVector2(600, 700));
+    TEST_SECTION(TEXT("Tearing out still puts up a decorator with the panel in it"));
+    DragState.BeginDrag(TEXT("Details"), Source.Area.Get(), FIntVector2(600, 700));
 
     TEST_EXPECT(Manager.GetDecoratorWindow() != nullptr);
-    TEST_EXPECT(Manager.GetDecoratorArea()->IsPanelDocked("Details"));
+    TEST_EXPECT(Manager.GetDecoratorArea()->IsPanelDocked(TEXT("Details")));
 
-    TEST_SECTION("With no RHI behind the renderer there is nothing to snapshot into, so the area stays live");
+    TEST_SECTION(TEXT("With no RHI behind the renderer there is nothing to snapshot into, so the area stays live"));
     TEST_EXPECT(Manager.GetDecoratorSnapshot() == nullptr);
     TEST_EXPECT_EQ(Manager.GetDecoratorArea()->GetParentElement().ToSharedPtr().Get(), Manager.GetDecoratorWindow()->GetContent().Get());
 
-    TEST_SECTION("And the drop commits the same way it does without the trial");
+    TEST_SECTION(TEXT("And the drop commits the same way it does without the trial"));
     DragState.UpdateDrag(Destination.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Center));
     DragState.EndDrag();
 
     TEST_EXPECT(Manager.GetDecoratorWindow() == nullptr);
     TEST_EXPECT(Manager.GetDecoratorSnapshot() == nullptr);
-    TEST_EXPECT(Destination.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(Destination.Area->IsPanelDocked(TEXT("Details")));
 
     SnapshotVariable->SetAsBool(false, EConsoleVariableFlags::SetByCode);
 
@@ -2131,9 +2132,9 @@ bool DockDropPreview_Test()
     FDockingFixture Source(Application, FIntVector2(800, 600), FIntVector2(0, 0));
     FDockingFixture Destination(Application, FIntVector2(400, 400), FIntVector2(1000, 0));
 
-    Source.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Source.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
-    Destination.Area->DockPanel("Content", FString(), EDockDirection::Center);
+    Source.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Source.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
+    Destination.Area->DockPanel(TEXT("Content"), FString(), EDockDirection::Center);
 
     Source.Layout();
     Destination.Layout();
@@ -2147,19 +2148,19 @@ bool DockDropPreview_Test()
 
     Manager.Initialize(ManagerDesc);
 
-    TEST_SECTION("Nothing is in flight, so there is no picture and asking for one changes that not at all");
+    TEST_SECTION(TEXT("Nothing is in flight, so there is no picture and asking for one changes that not at all"));
     TEST_EXPECT(Manager.GetDropPreviewTexture() == nullptr);
 
     Manager.UpdateDropPreview();
     TEST_EXPECT(Manager.GetDropPreviewTexture() == nullptr);
 
-    TEST_SECTION("A leaf still offers its strip and one chip a side once the chips are twice the size");
+    TEST_SECTION(TEXT("A leaf still offers its strip and one chip a side once the chips are twice the size"));
     TArray<FDropZone> Zones;
     Destination.Area->GatherDropZones(FIntVector2(200, 200), Zones);
     TEST_EXPECT_EQ(Zones.Size(), 5);
 
-    TEST_SECTION("Tearing out and aiming at a zone puts the picture's rectangle on the target");
-    DragState.BeginDrag("Details", Source.Area.Get(), FIntVector2(600, 700));
+    TEST_SECTION(TEXT("Tearing out and aiming at a zone puts the picture's rectangle on the target"));
+    DragState.BeginDrag(TEXT("Details"), Source.Area.Get(), FIntVector2(600, 700));
     TEST_EXPECT(Manager.GetDecoratorWindow() != nullptr);
 
     const FIntVector2 OverDestinationLeftChip = Destination.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Left);
@@ -2170,18 +2171,18 @@ bool DockDropPreview_Test()
 
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Destination.Area.Get());
 
-    TEST_SECTION("With no RHI behind the renderer there is nothing to render into, so the target draws a fill");
+    TEST_SECTION(TEXT("With no RHI behind the renderer there is nothing to render into, so the target draws a fill"));
     TEST_EXPECT(Manager.GetDropPreviewTexture() == nullptr);
 
-    TEST_SECTION("The area was only borrowed to render at the landing size, so the decorator has it back under its title bar");
+    TEST_SECTION(TEXT("The area was only borrowed to render at the landing size, so the decorator has it back under its title bar"));
     TEST_EXPECT_EQ(Manager.GetDecoratorWindow()->GetSize().X, FDockWindowManager::DecoratorWidth);
     TEST_EXPECT_EQ(Manager.GetDecoratorWindow()->GetSize().Y, FDockWindowManager::DecoratorHeight);
     TEST_EXPECT_EQ(Manager.GetDecoratorArea()->GetContentRectangle().Width, FDockWindowManager::DecoratorWidth);
     TEST_EXPECT_EQ(Manager.GetDecoratorArea()->GetContentRectangle().GetBottom(), FDockWindowManager::DecoratorHeight);
     TEST_EXPECT(Manager.GetDecoratorArea()->GetContentRectangle().Position.Y > 0);
 
-    TEST_SECTION("Aiming at nothing shows no picture, since the chips are islands and the gaps between them "
-        "are aimed at nothing on the way from one to the next");
+    TEST_SECTION(TEXT("Aiming at nothing shows no picture, since the chips are islands and the gaps between them "
+        "are aimed at nothing on the way from one to the next"));
     const FIntVector2 BetweenWindows(900, 700);
 
     DragState.UpdateDrag(BetweenWindows);
@@ -2191,7 +2192,7 @@ bool DockDropPreview_Test()
     TEST_EXPECT(!DragState.HasTarget());
     TEST_EXPECT(Manager.GetDropPreviewTexture() == nullptr);
 
-    TEST_SECTION("And coming back to the chip it left is the same zone again rather than a new one");
+    TEST_SECTION(TEXT("And coming back to the chip it left is the same zone again rather than a new one"));
     DragState.UpdateDrag(OverDestinationLeftChip);
     Manager.MoveDecorator(OverDestinationLeftChip);
     Manager.UpdateDropPreview();
@@ -2199,7 +2200,7 @@ bool DockDropPreview_Test()
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Destination.Area.Get());
     TEST_EXPECT_EQ(DragState.GetTargetDirection(), EDockDirection::Left);
 
-    TEST_SECTION("Letting go takes the picture down with the decorator");
+    TEST_SECTION(TEXT("Letting go takes the picture down with the decorator"));
     const FIntVector2 OverDestinationStrip = Destination.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Center);
 
     DragState.UpdateDrag(OverDestinationStrip);
@@ -2210,7 +2211,7 @@ bool DockDropPreview_Test()
 
     TEST_EXPECT(Manager.GetDecoratorWindow() == nullptr);
     TEST_EXPECT(Manager.GetDropPreviewTexture() == nullptr);
-    TEST_EXPECT(Destination.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(Destination.Area->IsPanelDocked(TEXT("Details")));
 
     FDockWindowManager::Shutdown();
     FDockDragState::Shutdown();
@@ -2226,8 +2227,8 @@ bool DockHostNativeDrag_Test()
 
     FDockingFixture Main(Application, FIntVector2(800, 600), FIntVector2(0, 0));
 
-    Main.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Main.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    Main.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Main.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
     Main.Layout();
 
     FDockWindowManager::FDesc ManagerDesc;
@@ -2239,7 +2240,7 @@ bool DockHostNativeDrag_Test()
 
     Manager.Initialize(ManagerDesc);
 
-    DragState.BeginDrag("Details", Main.Area.Get(), FIntVector2(2000, 2000));
+    DragState.BeginDrag(TEXT("Details"), Main.Area.Get(), FIntVector2(2000, 2000));
     DragState.EndDrag();
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
@@ -2254,14 +2255,14 @@ bool DockHostNativeDrag_Test()
     const FIntVector2 GrabOffset(120, 12);
     const FIntVector2 GrabPoint = HostWindow->GetPosition() + GrabOffset;
 
-    TEST_SECTION("The OS taking a host by its title bar starts no drag, since only a tab drag docks");
+    TEST_SECTION(TEXT("The OS taking a host by its title bar starts no drag, since only a tab drag docks"));
     Application.GetPlatformApplication()->GetCursor()->SetPosition(GrabPoint.X, GrabPoint.Y);
     App.BeginWindowInteraction(HostWindow->GetPlatformWindow(), EWindowInteraction::Move);
 
     TEST_EXPECT(!DragState.IsDragging());
     TEST_EXPECT(!DragState.HasTarget());
 
-    TEST_SECTION("The moves it delivers move the window and resolve nothing");
+    TEST_SECTION(TEXT("The moves it delivers move the window and resolve nothing"));
     const FIntVector2 OverMainArea(600, 300);
 
     App.OnWindowMoved(HostWindow->GetPlatformWindow(), OverMainArea.X - GrabOffset.X, OverMainArea.Y - GrabOffset.Y);
@@ -2270,16 +2271,16 @@ bool DockHostNativeDrag_Test()
     TEST_EXPECT_EQ(HostWindow->GetPosition().Y, OverMainArea.Y - GrabOffset.Y);
     TEST_EXPECT(!DragState.HasTarget());
 
-    TEST_SECTION("And letting go over the main area leaves the host the window it was");
+    TEST_SECTION(TEXT("And letting go over the main area leaves the host the window it was"));
     Application.GetPlatformApplication()->GetCursor()->SetPosition(OverMainArea.X, OverMainArea.Y);
     App.EndWindowInteraction(HostWindow->GetPlatformWindow(), EWindowInteraction::Move);
 
     TEST_EXPECT(!DragState.HasTarget());
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
-    TEST_EXPECT(Manager.GetHostArea(0)->IsPanelDocked("Details"));
-    TEST_EXPECT(!Main.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(Manager.GetHostArea(0)->IsPanelDocked(TEXT("Details")));
+    TEST_EXPECT(!Main.Area->IsPanelDocked(TEXT("Details")));
 
-    TEST_SECTION("Dragging the main window over the host is the same the other way round");
+    TEST_SECTION(TEXT("Dragging the main window over the host is the same the other way round"));
     App.BeginWindowInteraction(Main.Window->GetPlatformWindow(), EWindowInteraction::Move);
     App.OnWindowMoved(Main.Window->GetPlatformWindow(), OverMainArea.X, OverMainArea.Y);
 
@@ -2289,13 +2290,13 @@ bool DockHostNativeDrag_Test()
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
 
-    TEST_SECTION("Dragging the tab out of that same host still docks, so only the whole-window move changed");
+    TEST_SECTION(TEXT("Dragging the tab out of that same host still docks, so only the whole-window move changed"));
     Main.Layout();
     FApplication::LayoutWindow(Manager.GetHostWindow(0));
 
     const FIntVector2 OverMainStrip = Main.Window->GetPosition() + FIntVector2(Main.Window->GetSize().X - 24, 8);
 
-    DragState.BeginDrag("Details", Manager.GetHostArea(0).Get(), FIntVector2(2000, 2000));
+    DragState.BeginDrag(TEXT("Details"), Manager.GetHostArea(0).Get(), FIntVector2(2000, 2000));
     DragState.UpdateDrag(OverMainStrip);
 
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Main.Area.Get());
@@ -2304,7 +2305,7 @@ bool DockHostNativeDrag_Test()
     Manager.Tick();
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 0);
-    TEST_EXPECT(Main.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(Main.Area->IsPanelDocked(TEXT("Details")));
 
     FDockWindowManager::Shutdown();
     FDockDragState::Shutdown();
@@ -2316,46 +2317,46 @@ bool DockLayoutFileMultiWindow_Test()
 {
     TEST_BEGIN();
 
-    const FString Filename("DockingMultiWindowTests.tmp.ini");
-    const FString LegacyFilename("DockingLegacyTests.tmp.ini");
+    const FString Filename(TEXT("DockingMultiWindowTests.tmp.ini"));
+    const FString LegacyFilename(TEXT("DockingLegacyTests.tmp.ini"));
 
     FDockWindowLayout Main;
-    Main.Title    = "Editor";
+    Main.Title    = TEXT("Editor");
     Main.Position = FIntVector2(0, 0);
     Main.Size     = FIntVector2(1600, 900);
     Main.Root     = FDockNode::CreateSplit(EDockSplitOrientation::Horizontal,
-        FDockNode::CreateTabs({ "Outliner" }), FDockNode::CreateTabs({ "Viewport", "Stats" }));
+        FDockNode::CreateTabs({ TEXT("Outliner") }), FDockNode::CreateTabs({ TEXT("Viewport"), TEXT("Stats") }));
 
     FDockWindowLayout Host;
-    Host.Title               = "Details";
+    Host.Title               = TEXT("Details");
     Host.Position            = FIntVector2(320, 180);
     Host.Size                = FIntVector2(520, 400);
-    Host.Root                = FDockNode::CreateTabs({ "Details", "Materials" });
+    Host.Root                = FDockNode::CreateTabs({ TEXT("Details"), TEXT("Materials") });
     Host.Root.ActiveTabIndex = 1;
 
     TArray<FDockWindowLayout> Windows;
     Windows.Add(Main);
     Windows.Add(Host);
 
-    TEST_SECTION("Two windows write to one file");
+    TEST_SECTION(TEXT("Two windows write to one file"));
     TEST_EXPECT(FDockLayoutFile::Save(Filename, Windows));
 
-    TEST_SECTION("And read back with their trees, captions, positions and sizes");
+    TEST_SECTION(TEXT("And read back with their trees, captions, positions and sizes"));
     TArray<FDockWindowLayout> Restored;
     TEST_EXPECT(FDockLayoutFile::Load(Filename, Restored));
     TEST_EXPECT_EQ(Restored.Size(), 2);
 
-    TEST_EXPECT_EQ(Restored[0].Title, FString("Editor"));
+    TEST_EXPECT_EQ(Restored[0].Title, FString(TEXT("Editor")));
     TEST_EXPECT_EQ(Restored[0].Size.X, 1600);
     TEST_EXPECT(AreNodesEqual(Restored[0].Root, Main.Root));
 
-    TEST_EXPECT_EQ(Restored[1].Title, FString("Details"));
+    TEST_EXPECT_EQ(Restored[1].Title, FString(TEXT("Details")));
     TEST_EXPECT_EQ(Restored[1].Position.X, 320);
     TEST_EXPECT_EQ(Restored[1].Position.Y, 180);
     TEST_EXPECT_EQ(Restored[1].Size.Y, 400);
     TEST_EXPECT(AreNodesEqual(Restored[1].Root, Host.Root));
 
-    TEST_SECTION("The main window is written first, so the version 1 key still names its tree");
+    TEST_SECTION(TEXT("The main window is written first, so the version 1 key still names its tree"));
     FIniFile File;
     TEST_EXPECT(File.LoadFromFile(Filename));
 
@@ -2363,21 +2364,21 @@ bool DockLayoutFileMultiWindow_Test()
     int32 RootIndex  = -1;
     int32 NumWindows = 0;
 
-    TEST_EXPECT(File.GetInt("Layout", "Version", Version));
+    TEST_EXPECT(File.GetInt(TEXT("Layout"), TEXT("Version"), Version));
     TEST_EXPECT_EQ(Version, FDockLayoutFile::CurrentVersion);
 
-    TEST_EXPECT(File.GetInt("Layout", "Root", RootIndex));
+    TEST_EXPECT(File.GetInt(TEXT("Layout"), TEXT("Root"), RootIndex));
     TEST_EXPECT_EQ(RootIndex, 0);
 
-    TEST_EXPECT(File.GetInt("Layout", "NumWindows", NumWindows));
+    TEST_EXPECT(File.GetInt(TEXT("Layout"), TEXT("NumWindows"), NumWindows));
     TEST_EXPECT_EQ(NumWindows, 2);
 
-    TEST_SECTION("A single-window area still round-trips through the same file");
+    TEST_SECTION(TEXT("A single-window area still round-trips through the same file"));
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600));
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
 
     TEST_EXPECT(Fixture.Area->SaveLayoutToFile(Filename));
 
@@ -2385,16 +2386,16 @@ bool DockLayoutFileMultiWindow_Test()
     TEST_EXPECT(SingleRestore.Area->RestoreLayoutFromFile(Filename));
     TEST_EXPECT(AreNodesEqual(SingleRestore.Area->SaveLayout(), Fixture.Area->SaveLayout()));
 
-    TEST_SECTION("A version 1 file reads back as a main window on its own, carrying no shape");
+    TEST_SECTION(TEXT("A version 1 file reads back as a main window on its own, carrying no shape"));
     FIniFile Legacy;
     Legacy.Filename = LegacyFilename;
 
-    Legacy.SetOrAddInt("Layout", "Version", FDockLayoutFile::SingleWindowVersion);
-    Legacy.SetOrAddInt("Layout", "NumNodes", 1);
-    Legacy.SetOrAddInt("Layout", "Root", 0);
-    Legacy.SetOrAddString("Node0", "Kind", FString("Tabs"));
-    Legacy.SetOrAddString("Node0", "Tabs", FString("Outliner,Details"));
-    Legacy.SetOrAddInt("Node0", "ActiveTab", 1);
+    Legacy.SetOrAddInt(TEXT("Layout"), TEXT("Version"), FDockLayoutFile::SingleWindowVersion);
+    Legacy.SetOrAddInt(TEXT("Layout"), TEXT("NumNodes"), 1);
+    Legacy.SetOrAddInt(TEXT("Layout"), TEXT("Root"), 0);
+    Legacy.SetOrAddString(TEXT("Node0"), TEXT("Kind"), FString(TEXT("Tabs")));
+    Legacy.SetOrAddString(TEXT("Node0"), TEXT("Tabs"), FString(TEXT("Outliner,Details")));
+    Legacy.SetOrAddInt(TEXT("Node0"), TEXT("ActiveTab"), 1);
 
     TEST_EXPECT(Legacy.WriteToFile());
 
@@ -2405,19 +2406,19 @@ bool DockLayoutFileMultiWindow_Test()
     TEST_EXPECT_EQ(LegacyWindows[0].Root.ActiveTabIndex, 1);
     TEST_EXPECT_EQ(LegacyWindows[0].Size.X, 0);
 
-    TEST_SECTION("A version nobody knows is refused rather than half-read");
-    Legacy.SetOrAddInt("Layout", "Version", 99);
+    TEST_SECTION(TEXT("A version nobody knows is refused rather than half-read"));
+    Legacy.SetOrAddInt(TEXT("Layout"), TEXT("Version"), 99);
     TEST_EXPECT(Legacy.WriteToFile());
 
     LegacyWindows.Clear();
     TEST_EXPECT(!FDockLayoutFile::Load(LegacyFilename, LegacyWindows));
     TEST_EXPECT(LegacyWindows.IsEmpty());
 
-    TEST_SECTION("A file that is not there is refused too");
-    TEST_EXPECT(!FDockLayoutFile::Load(Filename + ".does-not-exist", LegacyWindows));
+    TEST_SECTION(TEXT("A file that is not there is refused too"));
+    TEST_EXPECT(!FDockLayoutFile::Load(Filename + TEXT(".does-not-exist"), LegacyWindows));
 
-    ::remove(Filename.Data());
-    ::remove(LegacyFilename.Data());
+    FPlatformFile::DeleteFile(Filename.Data());
+    FPlatformFile::DeleteFile(LegacyFilename.Data());
 
     TEST_END();
 }
@@ -2431,82 +2432,82 @@ bool DockDragState_Test()
     FDockingFixture Source(Application, FIntVector2(400, 400), FIntVector2(0, 0));
     FDockingFixture Destination(Application, FIntVector2(400, 400), FIntVector2(500, 0));
 
-    Source.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Source.Area->DockPanel("Details", "Outliner", EDockDirection::Center);
-    Destination.Area->DockPanel("Content", FString(), EDockDirection::Center);
+    Source.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Source.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Center);
+    Destination.Area->DockPanel(TEXT("Content"), FString(), EDockDirection::Center);
 
     Source.Layout();
     Destination.Layout();
 
     FDockDragState& DragState = FDockDragState::Get();
 
-    TEST_SECTION("Nothing is in flight to begin with");
+    TEST_SECTION(TEXT("Nothing is in flight to begin with"));
     TEST_EXPECT(!DragState.IsDragging());
     TEST_EXPECT(!DragState.HasTarget());
 
     const TSharedPtr<FStubPlatformApplication>& Platform = Application.GetPlatformApplication();
 
-    TEST_SECTION("A torn-out tab starts a drag that carries the panel");
+    TEST_SECTION(TEXT("A torn-out tab starts a drag that carries the panel"));
     Platform->SetWindowUnderCursor(Source.Window->GetPlatformWindow());
-    DragState.BeginDrag("Details", Source.Area.Get(), Source.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Center));
+    DragState.BeginDrag(TEXT("Details"), Source.Area.Get(), Source.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Center));
 
     TEST_EXPECT(DragState.IsDragging());
-    TEST_EXPECT_EQ(DragState.GetDraggedPanelId(), FString("Details"));
+    TEST_EXPECT_EQ(DragState.GetDraggedPanelId(), FString(TEXT("Details")));
 
-    TEST_SECTION("Over a zone of the area it came from, the drop is resolved against that area");
+    TEST_SECTION(TEXT("Over a zone of the area it came from, the drop is resolved against that area"));
     TEST_EXPECT(DragState.HasTarget());
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Source.Area.Get());
 
-    TEST_SECTION("Between the two windows there is nowhere to drop");
+    TEST_SECTION(TEXT("Between the two windows there is nowhere to drop"));
     Platform->SetWindowUnderCursor(nullptr);
     DragState.UpdateDrag(FIntVector2(450, 200));
 
     TEST_EXPECT(DragState.IsDragging());
     TEST_EXPECT(!DragState.HasTarget());
 
-    TEST_SECTION("Over the other window the target moves with the cursor");
+    TEST_SECTION(TEXT("Over the other window the target moves with the cursor"));
     Platform->SetWindowUnderCursor(Destination.Window->GetPlatformWindow());
     DragState.UpdateDrag(Destination.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Right));
 
     TEST_EXPECT_EQ(DragState.GetTargetArea(), Destination.Area.Get());
-    TEST_EXPECT_EQ(DragState.GetTargetPanelId(), FString("Content"));
+    TEST_EXPECT_EQ(DragState.GetTargetPanelId(), FString(TEXT("Content")));
     TEST_EXPECT_EQ(DragState.GetTargetDirection(), EDockDirection::Right);
 
-    TEST_SECTION("Letting go there docks it, and it is gone from where it started");
+    TEST_SECTION(TEXT("Letting go there docks it, and it is gone from where it started"));
     DragState.EndDrag();
 
     TEST_EXPECT(!DragState.IsDragging());
-    TEST_EXPECT(!Source.Area->IsPanelDocked("Details"));
-    TEST_EXPECT(Destination.Area->IsPanelDocked("Details"));
+    TEST_EXPECT(!Source.Area->IsPanelDocked(TEXT("Details")));
+    TEST_EXPECT(Destination.Area->IsPanelDocked(TEXT("Details")));
 
     const FDockNode& DestinationTree = Destination.Area->SaveLayout();
     TEST_EXPECT_EQ(DestinationTree.Kind, EDockNodeKind::Split);
-    TEST_EXPECT_EQ(DestinationTree.Children[1].TabIds[0], FString("Details"));
+    TEST_EXPECT_EQ(DestinationTree.Children[1].TabIds[0], FString(TEXT("Details")));
 
-    TEST_SECTION("The area it left collapsed back to the one panel still in it");
+    TEST_SECTION(TEXT("The area it left collapsed back to the one panel still in it"));
     TEST_EXPECT_EQ(Source.Area->SaveLayout().Kind, EDockNodeKind::Tabs);
     TEST_EXPECT_EQ(Source.Area->GetDockedPanelIds().Size(), 1);
 
-    TEST_SECTION("A cancelled drag leaves both trees where they were");
+    TEST_SECTION(TEXT("A cancelled drag leaves both trees where they were"));
     Source.Layout();
     Destination.Layout();
 
     const TArray<FString> BeforeCancel = Destination.Area->GetDockedPanelIds();
 
-    DragState.BeginDrag("Outliner", Source.Area.Get(), FIntVector2(500 + 200, 200));
+    DragState.BeginDrag(TEXT("Outliner"), Source.Area.Get(), FIntVector2(500 + 200, 200));
     DragState.CancelDrag();
 
     TEST_EXPECT(!DragState.IsDragging());
-    TEST_EXPECT(Source.Area->IsPanelDocked("Outliner"));
+    TEST_EXPECT(Source.Area->IsPanelDocked(TEXT("Outliner")));
     TEST_EXPECT_EQ(Destination.Area->GetDockedPanelIds().Size(), BeforeCancel.Size());
 
-    TEST_SECTION("An area that has gone is no longer a drop target");
+    TEST_SECTION(TEXT("An area that has gone is no longer a drop target"));
     const FIntVector2 OverDestinationStrip = Destination.GetDropZoneCenter(FIntVector2(200, 200), EDockDirection::Center);
 
     Destination.Area.Reset();
     Destination.Window->SetContent(nullptr);
 
-    DragState.BeginDrag("Outliner", Source.Area.Get(), OverDestinationStrip);
+    DragState.BeginDrag(TEXT("Outliner"), Source.Area.Get(), OverDestinationStrip);
 
     TEST_EXPECT(!DragState.HasTarget());
     DragState.CancelDrag();
@@ -2523,8 +2524,8 @@ bool DockHostAdaptiveChrome_Test()
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600));
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
     Fixture.Layout();
 
     FDockWindowManager::FDesc ManagerDesc;
@@ -2535,7 +2536,7 @@ bool DockHostAdaptiveChrome_Test()
     Manager.Initialize(ManagerDesc);
 
     FDockDragState& DragState = FDockDragState::Get();
-    DragState.BeginDrag("Details", Fixture.Area.Get(), FIntVector2(2000, 2000));
+    DragState.BeginDrag(TEXT("Details"), Fixture.Area.Get(), FIntVector2(2000, 2000));
     DragState.EndDrag();
     Manager.Tick();
 
@@ -2546,7 +2547,7 @@ bool DockHostAdaptiveChrome_Test()
 
     FApplication::LayoutWindow(HostWindow);
 
-    TEST_SECTION("An unsplit host lifts its strip out of the dock tree and into the caption");
+    TEST_SECTION(TEXT("An unsplit host lifts its strip out of the dock tree and into the caption"));
     TEST_EXPECT(HostArea->IsRootTabStripSuppressed());
 
     TSharedPtr<FTabStrip> RootStrip = HostArea->GetRootTabStrip();
@@ -2560,9 +2561,9 @@ bool DockHostAdaptiveChrome_Test()
     TSharedPtr<FTitleBar> TitleBar = StaticCastSharedPtr<FTitleBar>(HostChildren[0]);
     TEST_EXPECT(TitleBar->GetLeadingContent() == StaticCastSharedPtr<FVisualElement>(RootStrip));
 
-    TEST_SECTION("Splitting the host puts the strip back in the pane and restores the caption title");
-    HostArea->RegisterPanel("Content", "Content Browser", MakePanel("Content", Fixture.Font));
-    HostArea->DockPanel("Content", "Details", EDockDirection::Right);
+    TEST_SECTION(TEXT("Splitting the host puts the strip back in the pane and restores the caption title"));
+    HostArea->RegisterPanel(TEXT("Content"), TEXT("Content Browser"), MakePanel(TEXT("Content"), Fixture.Font));
+    HostArea->DockPanel(TEXT("Content"), TEXT("Details"), EDockDirection::Right);
     Manager.Tick();
     FApplication::LayoutWindow(HostWindow);
 
@@ -2570,7 +2571,7 @@ bool DockHostAdaptiveChrome_Test()
     TEST_EXPECT(TitleBar->GetLeadingContent() == nullptr);
     TEST_EXPECT(HostArea->GetRootTabStrip() == nullptr);
 
-    TSharedPtr<FTabStrip> DetailsStrip = HostArea->FindPanelTabStrip("Details");
+    TSharedPtr<FTabStrip> DetailsStrip = HostArea->FindPanelTabStrip(TEXT("Details"));
     TEST_EXPECT(DetailsStrip != nullptr);
     TEST_EXPECT(ContainsElement(HostArea, DetailsStrip.Get()));
 
@@ -2587,9 +2588,9 @@ bool DockTabDragIntoExistingHost_Test()
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600), FIntVector2(0, 0));
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Center);
-    Fixture.Area->DockPanel("Content", "Outliner", EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Content"), TEXT("Outliner"), EDockDirection::Center);
     Fixture.Layout();
 
     FDockWindowManager::FDesc ManagerDesc;
@@ -2601,7 +2602,7 @@ bool DockTabDragIntoExistingHost_Test()
 
     Manager.Initialize(ManagerDesc);
 
-    DragState.BeginDrag("Details", Fixture.Area.Get(), FIntVector2(2000, 2000));
+    DragState.BeginDrag(TEXT("Details"), Fixture.Area.Get(), FIntVector2(2000, 2000));
     DragState.EndDrag();
     Manager.Tick();
 
@@ -2616,13 +2617,13 @@ bool DockTabDragIntoExistingHost_Test()
     FApplication::LayoutWindow(HostWindow);
     Fixture.Layout();
 
-    TSharedPtr<FTabStrip> MainStrip = Fixture.Area->FindPanelTabStrip("Content");
+    TSharedPtr<FTabStrip> MainStrip = Fixture.Area->FindPanelTabStrip(TEXT("Content"));
     TEST_EXPECT(MainStrip != nullptr);
 
-    TSharedPtr<FTab> ContentTab = FindTab(MainStrip, "Content");
+    TSharedPtr<FTab> ContentTab = FindTab(MainStrip, TEXT("Content"));
     TEST_EXPECT(ContentTab != nullptr);
 
-    TEST_SECTION("Dragging a tab off the main strip detaches it, which is what puts a drag in flight");
+    TEST_SECTION(TEXT("Dragging a tab off the main strip detaches it, which is what puts a drag in flight"));
     MainStrip->OnTabPressed(ContentTab.Get(), ContentTab->GetContentRectangle().GetCenter());
 
     const FRectangle StripBounds = MainStrip->GetContentRectangle();
@@ -2630,10 +2631,10 @@ bool DockTabDragIntoExistingHost_Test()
 
     MainStrip->OnTabDragged(ContentTab.Get(), BelowStrip, BelowStrip);
 
-    TEST_EXPECT_EQ(MainStrip->GetDetachedPanelId(), FString("Content"));
+    TEST_EXPECT_EQ(MainStrip->GetDetachedPanelId(), FString(TEXT("Content")));
     TEST_EXPECT(DragState.IsDragging());
 
-    TEST_SECTION("Carrying it over the floating host's strip resolves that host, not the window it came from");
+    TEST_SECTION(TEXT("Carrying it over the floating host's strip resolves that host, not the window it came from"));
     TSharedPtr<FTabStrip> HostStrip = HostArea->GetRootTabStrip();
     TEST_EXPECT(HostStrip != nullptr && !HostStrip->GetTabs().IsEmpty());
 
@@ -2647,14 +2648,14 @@ bool DockTabDragIntoExistingHost_Test()
     TEST_EXPECT_EQ(DragState.GetTargetArea(), HostArea.Get());
     TEST_EXPECT_EQ(DragState.GetTargetDirection(), EDockDirection::Center);
 
-    TEST_SECTION("Letting go there gives the host a second tab rather than a second window");
+    TEST_SECTION(TEXT("Letting go there gives the host a second tab rather than a second window"));
     MainStrip->OnTabReleased(ContentTab.Get(), OverHost, OverHost);
     Manager.Tick();
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
-    TEST_EXPECT(HostArea->IsPanelDocked("Content"));
+    TEST_EXPECT(HostArea->IsPanelDocked(TEXT("Content")));
     TEST_EXPECT_EQ(HostArea->GetDockedPanelIds().Size(), 2);
-    TEST_EXPECT(!Fixture.Area->IsPanelDocked("Content"));
+    TEST_EXPECT(!Fixture.Area->IsPanelDocked(TEXT("Content")));
 
     FDockWindowManager::Shutdown();
     FDockDragState::Shutdown();
@@ -2669,9 +2670,9 @@ bool DockHostCaptionTabDrop_Test()
     FScopedStubApplication Application;
     FDockingFixture        Fixture(Application, FIntVector2(800, 600));
 
-    Fixture.Area->DockPanel("Outliner", FString(), EDockDirection::Center);
-    Fixture.Area->DockPanel("Content", "Outliner", EDockDirection::Center);
-    Fixture.Area->DockPanel("Details", "Outliner", EDockDirection::Right);
+    Fixture.Area->DockPanel(TEXT("Outliner"), FString(), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Content"), TEXT("Outliner"), EDockDirection::Center);
+    Fixture.Area->DockPanel(TEXT("Details"), TEXT("Outliner"), EDockDirection::Right);
     Fixture.Layout();
 
     FDockWindowManager::FDesc ManagerDesc;
@@ -2683,7 +2684,7 @@ bool DockHostCaptionTabDrop_Test()
 
     FDockDragState& DragState = FDockDragState::Get();
 
-    DragState.BeginDrag("Details", Fixture.Area.Get(), FIntVector2(2000, 2000));
+    DragState.BeginDrag(TEXT("Details"), Fixture.Area.Get(), FIntVector2(2000, 2000));
     DragState.EndDrag();
     Manager.Tick();
 
@@ -2695,7 +2696,7 @@ bool DockHostCaptionTabDrop_Test()
     HostWindow->MoveTo(FIntVector2(100, 100));
     FApplication::LayoutWindow(HostWindow);
 
-    TEST_SECTION("A host's caption strip is a drop target even though it sits outside the area");
+    TEST_SECTION(TEXT("A host's caption strip is a drop target even though it sits outside the area"));
     TSharedPtr<FTabStrip> CaptionStrip = HostArea->GetRootTabStrip();
     TEST_EXPECT(CaptionStrip != nullptr);
     TEST_EXPECT(!CaptionStrip->GetContentRectangle().IsEmpty());
@@ -2716,35 +2717,35 @@ bool DockHostCaptionTabDrop_Test()
     EDockDirection TargetDirection = EDockDirection::Left;
     int32          TargetTabIndex  = -1;
     TEST_EXPECT(HostArea->HitTestDropTarget(OverCaptionStripScreen, TargetPanelId, TargetDirection, TargetTabIndex));
-    TEST_EXPECT_EQ(TargetPanelId, FString("Details"));
+    TEST_EXPECT_EQ(TargetPanelId, FString(TEXT("Details")));
     TEST_EXPECT_EQ(TargetDirection, EDockDirection::Center);
     TEST_EXPECT_EQ(TargetTabIndex, 1);
 
-    TEST_SECTION("The host takes the drop rather than the window it floats over");
+    TEST_SECTION(TEXT("The host takes the drop rather than the window it floats over"));
     Application.GetPlatformApplication()->SetWindowUnderCursor(HostWindow->GetPlatformWindow());
-    DragState.BeginDrag("Content", Fixture.Area.Get(), OverCaptionStripScreen);
+    DragState.BeginDrag(TEXT("Content"), Fixture.Area.Get(), OverCaptionStripScreen);
 
     TEST_EXPECT_EQ(DragState.GetTargetArea(), HostArea.Get());
-    TEST_EXPECT_EQ(DragState.GetTargetPanelId(), FString("Details"));
+    TEST_EXPECT_EQ(DragState.GetTargetPanelId(), FString(TEXT("Details")));
     TEST_EXPECT_EQ(DragState.GetTargetDirection(), EDockDirection::Center);
 
-    TEST_SECTION("Letting go there gives the host a second tab rather than a second window");
+    TEST_SECTION(TEXT("Letting go there gives the host a second tab rather than a second window"));
     DragState.EndDrag();
     Manager.Tick();
     FApplication::LayoutWindow(HostWindow);
 
     TEST_EXPECT_EQ(Manager.GetNumHosts(), 1);
-    TEST_EXPECT(HostArea->IsPanelDocked("Content"));
+    TEST_EXPECT(HostArea->IsPanelDocked(TEXT("Content")));
     TEST_EXPECT_EQ(HostArea->GetDockedPanelIds().Size(), 2);
     TEST_EXPECT_EQ(HostArea->SaveLayout().Kind, EDockNodeKind::Tabs);
 
-    TEST_SECTION("Both tabs are in the caption, which is where an unsplit host keeps its strip");
+    TEST_SECTION(TEXT("Both tabs are in the caption, which is where an unsplit host keeps its strip"));
     TEST_EXPECT(HostArea->IsRootTabStripSuppressed());
 
     const TArray<FString> CaptionTabs = GetTabOrder(HostArea->GetRootTabStrip());
     TEST_EXPECT_EQ(CaptionTabs.Size(), 2);
-    TEST_EXPECT_EQ(CaptionTabs[0], FString("Details"));
-    TEST_EXPECT_EQ(CaptionTabs[1], FString("Content"));
+    TEST_EXPECT_EQ(CaptionTabs[0], FString(TEXT("Details")));
+    TEST_EXPECT_EQ(CaptionTabs[1], FString(TEXT("Content")));
 
     FDockWindowManager::Shutdown();
     FDockDragState::Shutdown();

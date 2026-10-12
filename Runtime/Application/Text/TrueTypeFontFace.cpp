@@ -82,7 +82,7 @@ int32 FTrueTypeFontFace::GetCapHeight() const
 
 const FShapedRun& FTrueTypeFontFace::ShapeText(const FStringView& Text) const
 {
-    const int32  SetIndex  = static_cast<int32>(HashBytes(Text.Data(), static_cast<uint64>(Text.Length())) & (ShapedRunCacheSetCount - 1));
+    const int32  SetIndex  = static_cast<int32>(HashBytes(Text.Data(), static_cast<uint64>(Text.SizeInBytes())) & (ShapedRunCacheSetCount - 1));
     const int32  SetOffset = SetIndex * ShapedRunCacheWays;
     const uint64 Revision  = Atlas.GetRevision();
 
@@ -91,7 +91,7 @@ const FShapedRun& FTrueTypeFontFace::ShapeText(const FStringView& Text) const
         FCachedRun& Candidate = ShapedRuns[SetOffset + Way];
         if (Candidate.Revision == Revision
             && Candidate.Text.Length() == Text.Length()
-            && Memory::Memcmp(Candidate.Text.Data(), Text.Data(), static_cast<uint64>(Text.Length())) == 0)
+            && Memory::Memcmp(Candidate.Text.Data(), Text.Data(), static_cast<uint64>(Text.SizeInBytes())) == 0)
         {
             return Candidate.Run;
         }

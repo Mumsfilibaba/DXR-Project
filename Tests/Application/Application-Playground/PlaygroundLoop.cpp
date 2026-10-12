@@ -95,7 +95,7 @@ struct FConsoleToggleHandler final : public FInputHandler
 
 static void InitializeOutputDevices()
 {
-    GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(Paths::GetProjectDir() + "/PlaygroundLog.txt");
+    GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(Paths::GetProjectDir() + TEXT("/PlaygroundLog.txt"));
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
     {
         FOutputDeviceManager::Get()->RegisterOutputDevice(GFileOutputDevice.Get());
@@ -117,12 +117,12 @@ static bool LoadPlaygroundModules()
 {
     const CHAR_T* ModuleNames[] =
     {
-        "Core",
-        "CoreApplication",
-        "Application",
-        "RHI",
-        "RendererCore",
-        "ApplicationRenderer",
+        TEXT("Core"),
+        TEXT("CoreApplication"),
+        TEXT("Application"),
+        TEXT("RHI"),
+        TEXT("RendererCore"),
+        TEXT("ApplicationRenderer"),
     };
 
     for (const CHAR_T* ModuleName : ModuleNames)
@@ -171,7 +171,7 @@ int32 FPlaygroundLoop::PreInit()
 
     GConfig->LoadConsoleVariables();
 
-    if (IConsoleVariable* RHIThreadVariable = FConsoleManager::Get().FindConsoleVariable("TaskGraph.EnableRHIThread"))
+    if (IConsoleVariable* RHIThreadVariable = FConsoleManager::Get().FindConsoleVariable(TEXT("TaskGraph.EnableRHIThread")))
     {
         RHIThreadVariable->SetAsBool(false, EConsoleVariableFlags::SetByCode);
     }
@@ -261,11 +261,11 @@ int32 FPlaygroundLoop::Init()
 
 bool FPlaygroundLoop::LoadFonts()
 {
-    const FString FontDir = Paths::GetAssetDir() + "/Editor/Fonts/";
+    const FString FontDir = Paths::GetAssetDir() + TEXT("/Editor/Fonts/");
 
-    Fonts.Body      = FTrueTypeFontFace::CreateFromFile(FontDir + "segoeui.ttf", GBodyFontHeight);
-    Fonts.Heading   = FTrueTypeFontFace::CreateFromFile(FontDir + "seguisb.ttf", GHeadingFontHeight);
-    Fonts.Monospace = FTrueTypeFontFace::CreateFromFile(FontDir + "consola.ttf", GMonospaceFontHeight);
+    Fonts.Body      = FTrueTypeFontFace::CreateFromFile(FontDir + TEXT("segoeui.ttf"), GBodyFontHeight);
+    Fonts.Heading   = FTrueTypeFontFace::CreateFromFile(FontDir + TEXT("seguisb.ttf"), GHeadingFontHeight);
+    Fonts.Monospace = FTrueTypeFontFace::CreateFromFile(FontDir + TEXT("consola.ttf"), GMonospaceFontHeight);
 
     if (!Fonts.Body || !Fonts.Heading || !Fonts.Monospace)
     {
@@ -279,7 +279,7 @@ bool FPlaygroundLoop::LoadFonts()
 bool FPlaygroundLoop::CreateMainWindow()
 {
     FWindow::FDesc WindowDesc;
-    WindowDesc.Title      = "DXR UI Playground";
+    WindowDesc.Title      = TEXT("DXR UI Playground");
     WindowDesc.Size       = FIntVector2(GDefaultWindowWidth, GDefaultWindowHeight);
     WindowDesc.StyleFlags = EWindowStyleFlags::Default | EWindowStyleFlags::CustomTitleBar;
 
@@ -334,7 +334,7 @@ void FPlaygroundLoop::AttachConsole()
 
 void FPlaygroundLoop::OnMainWindowClosed()
 {
-    RequestEngineExit("The playground window was closed");
+    RequestEngineExit(TEXT("The playground window was closed"));
 }
 
 void FPlaygroundLoop::Tick()
@@ -447,14 +447,14 @@ static int32 RunPlayground()
     int32 ErrorCode = Loop.PreInit();
     if (ErrorCode != 0)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FPlaygroundLoop::PreInit failed");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FPlaygroundLoop::PreInit failed"));
         return ErrorCode;
     }
 
     ErrorCode = Loop.Init();
     if (ErrorCode != 0)
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FPlaygroundLoop::Init failed");
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), TEXT("FPlaygroundLoop::Init failed"));
         return ErrorCode;
     }
 
@@ -466,4 +466,4 @@ static int32 RunPlayground()
     return 0;
 }
 
-IMPLEMENT_PROGRAM_MAIN("UI Playground Output", RunPlayground);
+IMPLEMENT_PROGRAM_MAIN(TEXT("UI Playground Output"), RunPlayground);

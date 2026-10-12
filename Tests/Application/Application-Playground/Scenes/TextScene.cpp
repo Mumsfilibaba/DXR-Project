@@ -13,10 +13,10 @@
 #include "ScenePanel.h"
 
 static const CHAR_T* GWrapSample =
-    "FTextLayout breaks a run wherever the wrap width says it must, preferring the space between two "
+    TEXT("FTextLayout breaks a run wherever the wrap width says it must, preferring the space between two "
     "words and falling back to a mid-word cut only when one word is wider than the line it is on. "
     "Resize the window and this paragraph reflows: the runs are re-split every frame against the width "
-    "the canvas was arranged into, so nothing here is measured once and cached against a stale width.";
+    "the canvas was arranged into, so nothing here is measured once and cached against a stale width.");
 
 static TSharedPtr<FVisualElement> MakeTextBlockRow(const FPlaygroundFonts& Fonts)
 {
@@ -30,9 +30,9 @@ static TSharedPtr<FVisualElement> MakeTextBlockRow(const FPlaygroundFonts& Fonts
 
     const FSample Samples[] =
     {
-        { "Normal text",   Style.Colors.Text         },
-        { "Disabled text", Style.Colors.TextDisabled },
-        { "Accent text",   Style.Colors.Accent       },
+        { TEXT("Normal text"),   Style.Colors.Text         },
+        { TEXT("Disabled text"), Style.Colors.TextDisabled },
+        { TEXT("Accent text"),   Style.Colors.Accent       },
     };
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
@@ -49,7 +49,7 @@ static TSharedPtr<FVisualElement> MakeTextBlockRow(const FPlaygroundFonts& Fonts
     }
 
     FTextBlock::FDesc MonoDesc;
-    MonoDesc.Text            = "Monospace 0123456789 iiiii mmmmm |||||";
+    MonoDesc.Text            = TEXT("Monospace 0123456789 iiiii mmmmm |||||");
     MonoDesc.Font            = Fonts.Monospace;
     MonoDesc.ColorAndOpacity = Style.Colors.Text;
 
@@ -68,15 +68,15 @@ static TSharedPtr<FVisualElement> MakeEditableTextRow(const FPlaygroundFonts& Fo
 
     const CHAR_T* Initial[] =
     {
-        "Click to place the caret, drag to select",
-        "",
+        TEXT("Click to place the caret, drag to select"),
+        TEXT(""),
     };
 
     for (int32 Index = 0; Index < static_cast<int32>(ARRAY_COUNT(Initial)); ++Index)
     {
         FEditableText::FDesc EditDesc;
         EditDesc.Text     = Initial[Index];
-        EditDesc.HintText = "type here";
+        EditDesc.HintText = TEXT("type here");
         EditDesc.Font     = Fonts.Monospace;
 
         FBorder::FDesc FieldDesc;
@@ -117,23 +117,23 @@ static TSharedPtr<FVisualElement> MakeRichRunCanvas(const FPlaygroundFonts& Font
 
     TSharedPtr<FTextLayout> Layout = MakeSharedPtr<FTextLayout>();
 
-    Layout->AppendRun(FTextRun("Runs carry a face and a color, ", Fonts.Body.Get(), Style.Colors.Text));
-    Layout->AppendRun(FTextRun("so a heading face", Fonts.Heading.Get(), Style.Colors.Accent));
-    Layout->AppendRun(FTextRun(" and a ", Fonts.Body.Get(), Style.Colors.Text));
-    Layout->AppendRun(FTextRun("monospace one", Fonts.Monospace.Get(), Style.Colors.Text));
-    Layout->AppendRun(FTextRun(" share a line and the taller of them sets its height.\n", Fonts.Body.Get(), Style.Colors.Text));
+    Layout->AppendRun(FTextRun(TEXT("Runs carry a face and a color, "), Fonts.Body.Get(), Style.Colors.Text));
+    Layout->AppendRun(FTextRun(TEXT("so a heading face"), Fonts.Heading.Get(), Style.Colors.Accent));
+    Layout->AppendRun(FTextRun(TEXT(" and a "), Fonts.Body.Get(), Style.Colors.Text));
+    Layout->AppendRun(FTextRun(TEXT("monospace one"), Fonts.Monospace.Get(), Style.Colors.Text));
+    Layout->AppendRun(FTextRun(TEXT(" share a line and the taller of them sets its height.\n"), Fonts.Body.Get(), Style.Colors.Text));
 
-    FTextRun Selected("This run carries a selection tint", Fonts.Body.Get(), Style.Colors.Text);
+    FTextRun Selected(TEXT("This run carries a selection tint"), Fonts.Body.Get(), Style.Colors.Text);
     Selected.BackgroundTint = Style.Colors.TextSelectionBackground;
 
     Layout->AppendRun(Selected);
-    Layout->AppendRun(FTextRun(" and ", Fonts.Body.Get(), Style.Colors.Text));
+    Layout->AppendRun(FTextRun(TEXT(" and "), Fonts.Body.Get(), Style.Colors.Text));
 
-    FTextRun Highlighted("this one a search highlight", Fonts.Body.Get(), FFloatColor(0.06f, 0.06f, 0.06f, 1.0f));
+    FTextRun Highlighted(TEXT("this one a search highlight"), Fonts.Body.Get(), FFloatColor(0.06f, 0.06f, 0.06f, 1.0f));
     Highlighted.BackgroundTint = FFloatColor(0.95f, 0.78f, 0.24f, 1.0f);
 
     Layout->AppendRun(Highlighted);
-    Layout->AppendRun(FTextRun(".\n\nA blank line keeps its height, and a trailing newline opens an empty line after it.\n", Fonts.Body.Get(), Style.Colors.TextDisabled));
+    Layout->AppendRun(FTextRun(TEXT(".\n\nA blank line keeps its height, and a trailing newline opens an empty line after it.\n"), Fonts.Body.Get(), Style.Colors.TextDisabled));
 
     FDrawCanvas::FDesc CanvasDesc;
     CanvasDesc.DesiredSize  = FIntVector2(0, 130);
@@ -153,8 +153,8 @@ FPlaygroundScene CreateTextScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Text blocks";
-        Desc.Description = "One line per face and color, measured through the atlas the renderer uploads.";
+        Desc.Title       = TEXT("Text blocks");
+        Desc.Description = TEXT("One line per face and color, measured through the atlas the renderer uploads.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeTextBlockRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -162,8 +162,8 @@ FPlaygroundScene CreateTextScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Editable text";
-        Desc.Description = "Caret, selection, word motion and the hint shown by the empty field below.";
+        Desc.Title       = TEXT("Editable text");
+        Desc.Description = TEXT("Caret, selection, word motion and the hint shown by the empty field below.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeEditableTextRow(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -171,8 +171,8 @@ FPlaygroundScene CreateTextScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Wrapping";
-        Desc.Description = "Wrapped to the width it was arranged into, so resizing the window reflows it.";
+        Desc.Title       = TEXT("Wrapping");
+        Desc.Description = TEXT("Wrapped to the width it was arranged into, so resizing the window reflows it.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeWrappingCanvas(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
@@ -180,12 +180,12 @@ FPlaygroundScene CreateTextScene(const FPlaygroundFonts& Fonts)
 
     {
         FScenePanel::FDesc Desc;
-        Desc.Title       = "Styled runs";
-        Desc.Description = "Mixed faces on one line, newlines, blank lines, and the tints selection and search draw with.";
+        Desc.Title       = TEXT("Styled runs");
+        Desc.Description = TEXT("Mixed faces on one line, newlines, blank lines, and the tints selection and search draw with.");
         Desc.Fonts       = Fonts;
         Desc.Content     = MakeRichRunCanvas(Fonts);
         Panels.Add(FScenePanel::Create(Desc));
     }
 
-    return FPlaygroundScene("Text", MakeSceneColumn("Text", Fonts, Panels));
+    return FPlaygroundScene(TEXT("Text"), MakeSceneColumn(TEXT("Text"), Fonts, Panels));
 }

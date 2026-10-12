@@ -5,7 +5,7 @@
 constexpr int32 GNumConsoleCrowdVariables = 40;
 
 /** @brief The prefix every crowd variable shares, so one typed character matches all of them. */
-constexpr const CHAR_T* GConsoleCrowdPrefix = "Zulu";
+constexpr const CHAR_T* GConsoleCrowdPrefix = TEXT("Zulu");
 
 void RegisterConsoleTestVariables();
 void RegisterConsoleCrowdVariables();

@@ -211,14 +211,14 @@ static void SettleWindowDrawCache(const TSharedPtr<FWindow>& Window, int32 Frame
 static TSharedPtr<FMenu> MakeLongMenu(const TSharedPtr<IFontFace>& Font)
 {
     TArray<FString> Labels;
-    Labels.Add("New");
-    Labels.Add("Open");
-    Labels.Add("Save");
+    Labels.Add(TEXT("New"));
+    Labels.Add(TEXT("Open"));
+    Labels.Add(TEXT("Save"));
 
     for (int32 Index = 0; Index < 30; ++Index)
     {
         CHAR_T Label[32];
-        CString::Snprintf(Label, static_cast<int32>(sizeof(Label)), "Recent %d", Index);
+        CString::Snprintf(Label, ARRAY_COUNT(Label), TEXT("Recent %d"), Index);
 
         Labels.Add(FString(Label));
     }
@@ -228,7 +228,7 @@ static TSharedPtr<FMenu> MakeLongMenu(const TSharedPtr<IFontFace>& Font)
 
 static TSharedPtr<FBorder> MakePanel(const TSharedPtr<IFontFace>& Font)
 {
-    static const CHAR_T* RowLabels[] = { "Alpha", "Bravo", "Charlie", "Delta" };
+    static const CHAR_T* RowLabels[] = { TEXT("Alpha"), TEXT("Bravo"), TEXT("Charlie"), TEXT("Delta") };
 
     TSharedPtr<FVerticalBox> Column = FVerticalBox::Create();
 
@@ -258,7 +258,7 @@ static TSharedPtr<FBorder> MakeBigPanel(const TSharedPtr<IFontFace>& Font)
     for (int32 Index = 0; Index < 40; ++Index)
     {
         CHAR_T Label[32];
-        CString::Snprintf(Label, static_cast<int32>(sizeof(Label)), "Row %d", Index);
+        CString::Snprintf(Label, ARRAY_COUNT(Label), TEXT("Row %d"), Index);
 
         FTextBlock::FDesc TextDesc;
         TextDesc.Text = Label;
@@ -286,20 +286,20 @@ bool DrawCacheEquivalence_Test()
     Panel->SetDrawCachePolicy(EDrawCachePolicy::Always);
     LayoutElement(Panel, FRectangle(FIntVector2(10, 20), 200, 160));
 
-    TEST_SECTION("The first recording is walked rather than replayed, and it is what gets kept");
+    TEST_SECTION(TEXT("The first recording is walked rather than replayed, and it is what gets kept"));
     FDrawCommandList FirstPass;
     Record(Panel, FirstPass);
 
     TEST_EXPECT(Panel->HasDrawCache());
     TEST_EXPECT(FirstPass.Size() > 0);
 
-    TEST_SECTION("The next recording replays that block and comes out the same command for command");
+    TEST_SECTION(TEXT("The next recording replays that block and comes out the same command for command"));
     FDrawCommandList ReplayPass;
     Record(Panel, ReplayPass);
     TEST_EXPECT(RecordingsMatch(FirstPass, ReplayPass));
     TEST_EXPECT(ReplayPass.WasFullyReplayed());
 
-    TEST_SECTION("Releasing the block and walking the tree again lands on the same commands once more");
+    TEST_SECTION(TEXT("Releasing the block and walking the tree again lands on the same commands once more"));
     Panel->ReleaseDrawCache();
 
     FDrawCommandList FreshPass;
@@ -308,7 +308,7 @@ bool DrawCacheEquivalence_Test()
     TEST_EXPECT(!FreshPass.WasFullyReplayed());
     TEST_EXPECT(RecordingsMatch(ReplayPass, FreshPass));
 
-    TEST_SECTION("An overlay holding the panel replays through the same path");
+    TEST_SECTION(TEXT("An overlay holding the panel replays through the same path"));
     TSharedPtr<FOverlay> Overlay = FOverlay::Create();
     Overlay->AddSlot(MakePanel(Font));
     Overlay->SetDrawCachePolicy(EDrawCachePolicy::Always);
@@ -323,7 +323,7 @@ bool DrawCacheEquivalence_Test()
     TEST_EXPECT(OverlayReplay.WasFullyReplayed());
     TEST_EXPECT(RecordingsMatch(OverlayFirst, OverlayReplay));
 
-    TEST_SECTION("A scroll box clips its content, and the clipped commands survive the round trip");
+    TEST_SECTION(TEXT("A scroll box clips its content, and the clipped commands survive the round trip"));
     TSharedPtr<FScrollBox> Scroller = FScrollBox::Create();
     Scroller->SetContent(MakePanel(Font));
     Scroller->SetDrawCachePolicy(EDrawCachePolicy::Always);
@@ -357,21 +357,21 @@ bool DrawCacheGuards_Test()
     Record(Panel, Warmup);
     TEST_EXPECT(Panel->HasDrawCache());
 
-    TEST_SECTION("Asking for a different layer rejects the block, because every command carries its layer");
+    TEST_SECTION(TEXT("Asking for a different layer rejects the block, because every command carries its layer"));
     SettleDrawCache(Panel);
 
     FDrawCommandList OtherLayer;
     Panel->Draw(FDrawGeometry(Bounds, 1.0f), OtherLayer, 7);
     TEST_EXPECT(!OtherLayer.WasFullyReplayed());
 
-    TEST_SECTION("A different DPI scale rejects it too, since the pixels were rounded at the old one");
+    TEST_SECTION(TEXT("A different DPI scale rejects it too, since the pixels were rounded at the old one"));
     SettleDrawCache(Panel);
 
     FDrawCommandList OtherScale;
     Panel->Draw(FDrawGeometry(Bounds, 2.0f), OtherScale, 0);
     TEST_EXPECT(!OtherScale.WasFullyReplayed());
 
-    TEST_SECTION("A clip that was not open when the block recorded rejects it");
+    TEST_SECTION(TEXT("A clip that was not open when the block recorded rejects it"));
     SettleDrawCache(Panel);
 
     FDrawCommandList Replayable;
@@ -384,7 +384,7 @@ bool DrawCacheGuards_Test()
     Clipped.PopClip(0);
     TEST_EXPECT(!Clipped.WasFullyReplayed());
 
-    TEST_SECTION("Moving the element rejects it, because the block holds absolute positions");
+    TEST_SECTION(TEXT("Moving the element rejects it, because the block holds absolute positions"));
     SettleDrawCache(Panel);
 
     FDrawCommandList BeforeMove;
@@ -397,7 +397,7 @@ bool DrawCacheGuards_Test()
     Record(Panel, AfterMove);
     TEST_EXPECT(!AfterMove.WasFullyReplayed());
 
-    TEST_SECTION("Advancing the epoch drops every block at once");
+    TEST_SECTION(TEXT("Advancing the epoch drops every block at once"));
     SettleDrawCache(Panel);
 
     FDrawCommandList BeforeEpoch;
@@ -411,7 +411,7 @@ bool DrawCacheGuards_Test()
     Record(Panel, AfterEpoch);
     TEST_EXPECT(!AfterEpoch.WasFullyReplayed());
 
-    TEST_SECTION("Turning the cache off on an element releases what it was holding");
+    TEST_SECTION(TEXT("Turning the cache off on an element releases what it was holding"));
     SettleDrawCache(Panel);
     TEST_EXPECT(Panel->HasDrawCache());
 
@@ -448,20 +448,20 @@ bool DrawCacheNesting_Test()
 
     LayoutElement(Outer, FRectangle(FIntVector2(0, 0), 240, 200));
 
-    TEST_SECTION("Only the outermost candidate keeps a block, since its own covers everything below");
+    TEST_SECTION(TEXT("Only the outermost candidate keeps a block, since its own covers everything below"));
     FDrawCommandList FirstPass;
     Record(Outer, FirstPass);
 
     TEST_EXPECT(Outer->HasDrawCache());
     TEST_EXPECT(!Inner->HasDrawCache());
 
-    TEST_SECTION("The outer block replays the whole subtree in one span");
+    TEST_SECTION(TEXT("The outer block replays the whole subtree in one span"));
     FDrawCommandList ReplayPass;
     Record(Outer, ReplayPass);
     TEST_EXPECT(ReplayPass.WasFullyReplayed());
     TEST_EXPECT(RecordingsMatch(FirstPass, ReplayPass));
 
-    TEST_SECTION("Dirtying the inner element re-walks the outer one, because invalidation travels upward");
+    TEST_SECTION(TEXT("Dirtying the inner element re-walks the outer one, because invalidation travels upward"));
     Inner->InvalidatePaint();
     TEST_EXPECT(Outer->IsPaintDirty());
 
@@ -471,7 +471,7 @@ bool DrawCacheNesting_Test()
     TEST_EXPECT(!AfterDirty.WasFullyReplayed());
     TEST_EXPECT(RecordingsMatch(ReplayPass, AfterDirty));
 
-    TEST_SECTION("An element that refuses caching stops its ancestors from keeping it frozen");
+    TEST_SECTION(TEXT("An element that refuses caching stops its ancestors from keeping it frozen"));
     Inner->SetDrawCachePolicy(EDrawCachePolicy::Never);
     Outer->InvalidatePaint();
 
@@ -492,9 +492,9 @@ bool DrawCacheInvalidation_Test()
 
     const TSharedPtr<IFontFace> Font = CreateFont();
 
-    TEST_SECTION("Hovering a button re-records it, so the hover fill is not left out of the replay");
+    TEST_SECTION(TEXT("Hovering a button re-records it, so the hover fill is not left out of the replay"));
     FButton::FDesc ButtonDesc;
-    ButtonDesc.SetText("Save as...").SetFont(Font);
+    ButtonDesc.SetText(TEXT("Save as...")).SetFont(Font);
 
     TSharedPtr<FButton> Button = FButton::Create(ButtonDesc);
     Button->SetDrawCachePolicy(EDrawCachePolicy::Always);
@@ -515,7 +515,7 @@ bool DrawCacheInvalidation_Test()
     TEST_EXPECT(!Hovered.WasFullyReplayed());
     TEST_EXPECT(!RecordingsAgree(AtRest, Hovered));
 
-    TEST_SECTION("And the hovered look is what a fresh walk of the hovered button produces");
+    TEST_SECTION(TEXT("And the hovered look is what a fresh walk of the hovered button produces"));
     SettleDrawCache(Button);
 
     FDrawCommandList HoveredReplay;
@@ -528,9 +528,9 @@ bool DrawCacheInvalidation_Test()
     Record(Button, HoveredFresh);
     TEST_EXPECT(RecordingsMatch(HoveredReplay, HoveredFresh));
 
-    TEST_SECTION("Checking a box re-records it");
+    TEST_SECTION(TEXT("Checking a box re-records it"));
     FCheckBox::FDesc CheckDesc;
-    CheckDesc.SetText("Enabled").SetFont(Font);
+    CheckDesc.SetText(TEXT("Enabled")).SetFont(Font);
 
     TSharedPtr<FCheckBox> CheckBox = FCheckBox::Create(CheckDesc);
     CheckBox->SetDrawCachePolicy(EDrawCachePolicy::Always);
@@ -551,7 +551,7 @@ bool DrawCacheInvalidation_Test()
     TEST_EXPECT(!Checked.WasFullyReplayed());
     TEST_EXPECT(!RecordingsAgree(Unchecked, Checked));
 
-    TEST_SECTION("Scrolling a box re-records it, because its children move under a clip that does not");
+    TEST_SECTION(TEXT("Scrolling a box re-records it, because its children move under a clip that does not"));
     TSharedPtr<FScrollBox> Scroller = FScrollBox::Create();
     Scroller->SetContent(MakePanel(Font));
     Scroller->SetDrawCachePolicy(EDrawCachePolicy::Always);
@@ -572,7 +572,7 @@ bool DrawCacheInvalidation_Test()
     Record(Scroller, Scrolled);
     TEST_EXPECT(!Scrolled.WasFullyReplayed());
 
-    TEST_SECTION("Pressing a button re-records it as well");
+    TEST_SECTION(TEXT("Pressing a button re-records it as well"));
     Button->OnMouseLeft(MakeMoveEvent(FIntVector2(900, 900)));
     SettleDrawCache(Button);
 
@@ -598,7 +598,7 @@ bool DrawCacheAtlasRevision_Test()
     DrawCacheRegistry::ReleaseAll();
 
     const TSharedPtr<FTrueTypeFontFace> Font =
-        FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + "/Editor/Fonts/consola.ttf", 16);
+        FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + TEXT("/Editor/Fonts/consola.ttf"), 16);
 
     if (!Font)
     {
@@ -613,7 +613,7 @@ bool DrawCacheAtlasRevision_Test()
 
     SettleDrawCache(Panel);
 
-    TEST_SECTION("Text in the block is tracked back to the atlas its glyphs were packed from");
+    TEST_SECTION(TEXT("Text in the block is tracked back to the atlas its glyphs were packed from"));
     TEST_EXPECT(Panel->HasDrawCache());
 
     const FFontAtlas* Atlas = Font->GetAtlas();
@@ -623,10 +623,10 @@ bool DrawCacheAtlasRevision_Test()
     Record(Panel, Replayed);
     TEST_EXPECT(Replayed.WasFullyReplayed());
 
-    TEST_SECTION("Repacking the atlas moves every glyph, so the block stops being replayable");
+    TEST_SECTION(TEXT("Repacking the atlas moves every glyph, so the block stops being replayable"));
     const uint64 RevisionBefore = Atlas ? Atlas->GetRevision() : 0;
 
-    Font->ShapeText("\xC3\xA5\xC3\xA4\xC3\xB6\xC3\x85\xC3\x84\xC3\x96\xC2\xA7\xC2\xB1\xC2\xB5\xC2\xB6");
+    Font->ShapeText(TEXT("\xC3\xA5\xC3\xA4\xC3\xB6\xC3\x85\xC3\x84\xC3\x96\xC2\xA7\xC2\xB1\xC2\xB5\xC2\xB6"));
 
     if (Atlas && Atlas->GetRevision() != RevisionBefore)
     {
@@ -635,7 +635,7 @@ bool DrawCacheAtlasRevision_Test()
         TEST_EXPECT(!AfterRepack.WasFullyReplayed());
     }
 
-    TEST_SECTION("And the recording it settles back into still matches a walk of the tree");
+    TEST_SECTION(TEXT("And the recording it settles back into still matches a walk of the tree"));
     SettleDrawCache(Panel);
 
     FDrawCommandList SettledReplay;
@@ -658,7 +658,7 @@ bool DrawCacheGeometry_Test()
 
     DrawCacheRegistry::ReleaseAll();
 
-    IConsoleVariable* GeometryVariable = FConsoleManager::Get().FindConsoleVariable("UI.DrawCache.Geometry");
+    IConsoleVariable* GeometryVariable = FConsoleManager::Get().FindConsoleVariable(TEXT("UI.DrawCache.Geometry"));
     TEST_EXPECT(GeometryVariable != nullptr);
 
     if (!GeometryVariable)
@@ -675,7 +675,7 @@ bool DrawCacheGeometry_Test()
     Panel->SetDrawCachePolicy(EDrawCachePolicy::Always);
     LayoutElement(Panel, FRectangle(FIntVector2(10, 20), 200, 160));
 
-    TEST_SECTION("The first build tessellates a fresh recording, which is the answer everything is held to");
+    TEST_SECTION(TEXT("The first build tessellates a fresh recording, which is the answer everything is held to"));
     FDrawCommandList FirstCommands;
     Record(Panel, FirstCommands);
 
@@ -690,7 +690,7 @@ bool DrawCacheGeometry_Test()
 
     TEST_EXPECT(FirstVertices.Size() > 0);
 
-    TEST_SECTION("The first build over replayed commands is where the triangles get kept, so it still walks them");
+    TEST_SECTION(TEXT("The first build over replayed commands is where the triangles get kept, so it still walks them"));
     FDrawCommandList CaptureCommands;
     Record(Panel, CaptureCommands);
     TEST_EXPECT(CaptureCommands.WasFullyReplayed());
@@ -699,7 +699,7 @@ bool DrawCacheGeometry_Test()
     CaptureData.BuildFromCommandList(CaptureCommands);
     TEST_EXPECT(!CaptureData.IsFullyReplayed());
 
-    TEST_SECTION("The build after that splices them back in and lands on the same streams");
+    TEST_SECTION(TEXT("The build after that splices them back in and lands on the same streams"));
     FDrawCommandList ReplayCommands;
     Record(Panel, ReplayCommands);
     TEST_EXPECT(ReplayCommands.WasFullyReplayed());
@@ -712,7 +712,7 @@ bool DrawCacheGeometry_Test()
     TEST_EXPECT_EQ(ReplayData.GetShapeInstances().Size(), FirstShapes.Size());
     TEST_EXPECT_EQ(ReplayData.GetTextGlyphInstances().Size(), FirstGlyphs.Size());
 
-    TEST_SECTION("Down to the bytes, so the upload can be skipped outright");
+    TEST_SECTION(TEXT("Down to the bytes, so the upload can be skipped outright"));
     bool bVerticesMatch = true;
     for (int32 Index = 0; Index < FirstVertices.Size(); ++Index)
     {
@@ -755,10 +755,10 @@ bool DrawCacheGeometry_Test()
 
     TEST_EXPECT(bGlyphsMatch);
 
-    TEST_SECTION("The batches are rebuilt whole rather than cut at the seam the splice made");
+    TEST_SECTION(TEXT("The batches are rebuilt whole rather than cut at the seam the splice made"));
     TEST_EXPECT_EQ(ReplayData.GetBatches().Size(), FirstBatches);
 
-    TEST_SECTION("A fully replayed build says so, which is what lets the geometry hash be skipped");
+    TEST_SECTION(TEXT("A fully replayed build says so, which is what lets the geometry hash be skipped"));
     TEST_EXPECT(ReplayData.IsFullyReplayed());
     TEST_EXPECT(ReplayData.GetReplayFingerprint() != 0);
 
@@ -771,7 +771,7 @@ bool DrawCacheGeometry_Test()
     TEST_EXPECT(SecondReplayData.IsFullyReplayed());
     TEST_EXPECT_EQ(SecondReplayData.GetReplayFingerprint(), ReplayData.GetReplayFingerprint());
 
-    TEST_SECTION("Something drawn outside the block stops the build counting as fully replayed");
+    TEST_SECTION(TEXT("Something drawn outside the block stops the build counting as fully replayed"));
     FDrawCommandList MixedCommands;
     Record(Panel, MixedCommands);
     MixedCommands.AddBox(9, FRectangle(FIntVector2(0, 0), 4, 4), FFloatColor::White);
@@ -802,15 +802,15 @@ bool DrawCacheMenuHost_Test()
     Host->AddChild(Menu, FRectangle(FIntVector2(20, 40), 200, 600));
     LayoutElement(Host, FRectangle(FIntVector2(0, 0), 800, 800));
 
-    TEST_SECTION("An open menu is drawn through its host, and settles into a recording worth keeping");
+    TEST_SECTION(TEXT("An open menu is drawn through its host, and settles into a recording worth keeping"));
     SettleDrawCache(Host);
     TEST_EXPECT(RecordingReplays(Host));
 
     FDrawCommandList WhileOpen;
     Record(Host, WhileOpen);
-    TEST_EXPECT(WhileOpen.FindTextCommand("Open") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(WhileOpen.FindTextCommand(TEXT("Open")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("Closing the menu takes it out of the host's recording rather than leaving a ghost behind");
+    TEST_SECTION(TEXT("Closing the menu takes it out of the host's recording rather than leaving a ghost behind"));
     Host->RemoveChild(Menu);
     LayoutElement(Host, FRectangle(FIntVector2(0, 0), 800, 800));
 
@@ -818,13 +818,13 @@ bool DrawCacheMenuHost_Test()
     Record(Host, AfterClose);
 
     TEST_EXPECT(Host->IsEmpty());
-    TEST_EXPECT_EQ(AfterClose.FindTextCommand("Open"), FDrawCommandList::InvalidIndex);
+    TEST_EXPECT_EQ(AfterClose.FindTextCommand(TEXT("Open")), FDrawCommandList::InvalidIndex);
     TEST_EXPECT(ReplayMatchesFreshWalk(Host));
 
-    TEST_SECTION("The closed menu no longer claims the host as its parent, so it cannot dirty it from off the tree");
+    TEST_SECTION(TEXT("The closed menu no longer claims the host as its parent, so it cannot dirty it from off the tree"));
     TEST_EXPECT(Menu->GetParentElement() == nullptr);
 
-    TEST_SECTION("Reopening it brings it back, and moving it afterwards takes the move with it");
+    TEST_SECTION(TEXT("Reopening it brings it back, and moving it afterwards takes the move with it"));
     Host->AddChild(Menu, FRectangle(FIntVector2(20, 40), 200, 600));
     LayoutElement(Host, FRectangle(FIntVector2(0, 0), 800, 800));
     SettleDrawCache(Host);
@@ -854,12 +854,12 @@ bool DrawCacheWindowDeferred_Test()
     Window->SetContent(MakeBigPanel(Font));
     FApplication::LayoutWindow(Window);
 
-    TEST_SECTION("A window still long enough to cache its recording replays it");
+    TEST_SECTION(TEXT("A window still long enough to cache its recording replays it"));
     SettleWindowDrawCache(Window);
     TEST_EXPECT(RecordingReplays(Window));
 
-    TEST_SECTION("A menu left open long enough for the window to settle again is still painted every frame");
-    TSharedPtr<FMenu> Menu   = CreateMenu(Font, { "New", "Open" });
+    TEST_SECTION(TEXT("A menu left open long enough for the window to settle again is still painted every frame"));
+    TSharedPtr<FMenu> Menu   = CreateMenu(Font, { TEXT("New"), TEXT("Open") });
     FMenuHandle       Handle = FMenuStack::Get().PushMenu(Window, FRectangle(FIntVector2(10, 10), 40, 24), EMenuPlacement::BelowLeftAligned, Menu);
 
     TEST_EXPECT(Handle != nullptr);
@@ -873,18 +873,18 @@ bool DrawCacheWindowDeferred_Test()
     FDrawCommandList WithMenu;
     RecordWindow(Window, WithMenu);
 
-    TEST_EXPECT(WithMenu.FindTextCommand("Open") != FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(WithMenu.FindTextCommand("Alpha") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(WithMenu.FindTextCommand(TEXT("Open")) != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(WithMenu.FindTextCommand(TEXT("Alpha")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("Dismissing it takes it away again, however settled the window had become");
+    TEST_SECTION(TEXT("Dismissing it takes it away again, however settled the window had become"));
     FMenuStack::Get().DismissAll();
     FApplication::LayoutWindow(Window);
 
     FDrawCommandList AfterDismiss;
     RecordWindow(Window, AfterDismiss);
 
-    TEST_EXPECT_EQ(AfterDismiss.FindTextCommand("Open"), FDrawCommandList::InvalidIndex);
-    TEST_EXPECT(AfterDismiss.FindTextCommand("Alpha") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT_EQ(AfterDismiss.FindTextCommand(TEXT("Open")), FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(AfterDismiss.FindTextCommand(TEXT("Alpha")) != FDrawCommandList::InvalidIndex);
 
     DrawCacheRegistry::ReleaseAll();
     TEST_END();
@@ -904,26 +904,26 @@ bool DrawCacheMenuBar_Test()
 
     TSharedPtr<FMenuBar> MenuBar = FMenuBar::Create();
 
-    TSharedPtr<FMenuAnchor> FileAnchor   = MenuBar->AddMenu("File", Font, CreateMenu(Font, { "New", "Open" }));
-    TSharedPtr<FMenuAnchor> WindowAnchor = MenuBar->AddMenu("Window", Font, CreateMenu(Font, { "Viewport", "Console" }));
+    TSharedPtr<FMenuAnchor> FileAnchor   = MenuBar->AddMenu(TEXT("File"), Font, CreateMenu(Font, { TEXT("New"), TEXT("Open") }));
+    TSharedPtr<FMenuAnchor> WindowAnchor = MenuBar->AddMenu(TEXT("Window"), Font, CreateMenu(Font, { TEXT("Viewport"), TEXT("Console") }));
 
     for (int32 Index = 0; Index < 60; ++Index)
     {
         CHAR_T Label[32];
-        CString::Snprintf(Label, static_cast<int32>(sizeof(Label)), "Filler %d", Index);
+        CString::Snprintf(Label, ARRAY_COUNT(Label), TEXT("Filler %d"), Index);
 
-        MenuBar->AddMenu(Label, Font, CreateMenu(Font, { "One", "Two" }));
+        MenuBar->AddMenu(Label, Font, CreateMenu(Font, { TEXT("One"), TEXT("Two") }));
     }
 
     Window->SetContent(MenuBar);
     FApplication::LayoutWindow(Window);
 
-    TEST_SECTION("A settled bar with nothing open replays what a fresh walk would draw");
+    TEST_SECTION(TEXT("A settled bar with nothing open replays what a fresh walk would draw"));
     SettleDrawCache(MenuBar);
     TEST_EXPECT(RecordingReplays(MenuBar));
     TEST_EXPECT(ReplayMatchesFreshWalk(MenuBar));
 
-    TEST_SECTION("Opening a menu re-records the button that owns it, rather than replaying its closed chrome");
+    TEST_SECTION(TEXT("Opening a menu re-records the button that owns it, rather than replaying its closed chrome"));
     SettleDrawCache(MenuBar);
     WindowAnchor->Open();
     FApplication::LayoutWindow(Window);
@@ -931,7 +931,7 @@ bool DrawCacheMenuBar_Test()
     TEST_EXPECT(ReplayMatchesFreshWalk(MenuBar));
     TEST_EXPECT(WindowAnchor->IsOpen());
 
-    TEST_SECTION("Switching menus leaves the first button looking closed and the second looking open");
+    TEST_SECTION(TEXT("Switching menus leaves the first button looking closed and the second looking open"));
     SettleDrawCache(MenuBar);
     FileAnchor->Open();
     FApplication::LayoutWindow(Window);
@@ -940,7 +940,7 @@ bool DrawCacheMenuBar_Test()
     TEST_EXPECT(FileAnchor->IsOpen());
     TEST_EXPECT(!WindowAnchor->IsOpen());
 
-    TEST_SECTION("A menu the stack dismisses behind the anchor's back still clears the button's chrome");
+    TEST_SECTION(TEXT("A menu the stack dismisses behind the anchor's back still clears the button's chrome"));
     SettleDrawCache(MenuBar);
     TEST_EXPECT(RecordingReplays(MenuBar));
 
@@ -973,10 +973,10 @@ bool DrawCacheToolTip_Test()
     SettleWindowDrawCache(Window);
     TEST_EXPECT(RecordingReplays(Window));
 
-    TEST_SECTION("A tip that is still up once the window has gone quiet again is painted every frame");
+    TEST_SECTION(TEXT("A tip that is still up once the window has gone quiet again is painted every frame"));
     FToolTipService& ToolTips = FToolTipService::Get();
     ToolTips.NotifyCursorMoved(FIntVector2(300, 200));
-    ToolTips.RequestTextToolTip(Panel, "Opens the file", Font, EToolTipPlacement::FollowCursor, 0.5f);
+    ToolTips.RequestTextToolTip(Panel, TEXT("Opens the file"), Font, EToolTipPlacement::FollowCursor, 0.5f);
     ToolTips.Tick(1.0f);
 
     TEST_EXPECT(ToolTips.IsShowing());
@@ -988,16 +988,16 @@ bool DrawCacheToolTip_Test()
     FDrawCommandList WithTip;
     RecordWindow(Window, WithTip);
 
-    TEST_EXPECT(WithTip.FindTextCommand("Opens the file") != FDrawCommandList::InvalidIndex);
+    TEST_EXPECT(WithTip.FindTextCommand(TEXT("Opens the file")) != FDrawCommandList::InvalidIndex);
 
-    TEST_SECTION("Dismissing it takes it away rather than leaving it replaying out of the menu host");
+    TEST_SECTION(TEXT("Dismissing it takes it away rather than leaving it replaying out of the menu host"));
     ToolTips.DismissToolTip();
     FApplication::LayoutWindow(Window);
 
     FDrawCommandList AfterDismiss;
     RecordWindow(Window, AfterDismiss);
 
-    TEST_EXPECT_EQ(AfterDismiss.FindTextCommand("Opens the file"), FDrawCommandList::InvalidIndex);
+    TEST_EXPECT_EQ(AfterDismiss.FindTextCommand(TEXT("Opens the file")), FDrawCommandList::InvalidIndex);
 
     DrawCacheRegistry::ReleaseAll();
     TEST_END();
@@ -1009,7 +1009,7 @@ bool DrawCacheLayerOrder_Test()
 
     DrawCacheRegistry::ReleaseAll();
 
-    IConsoleVariable* GeometryVariable = FConsoleManager::Get().FindConsoleVariable("UI.DrawCache.Geometry");
+    IConsoleVariable* GeometryVariable = FConsoleManager::Get().FindConsoleVariable(TEXT("UI.DrawCache.Geometry"));
     TEST_EXPECT(GeometryVariable != nullptr);
 
     if (!GeometryVariable)
@@ -1031,7 +1031,7 @@ bool DrawCacheLayerOrder_Test()
     FUIDrawData FreshData;
     FreshData.BuildFromCommandList(FreshCommands);
 
-    TEST_SECTION("A block whose layers step back down still sorts as one run, so its geometry is kept and spliced");
+    TEST_SECTION(TEXT("A block whose layers step back down still sorts as one run, so its geometry is kept and spliced"));
     for (int32 Frame = 0; Frame < 2; ++Frame)
     {
         FDrawCommandList Warmup;
@@ -1049,7 +1049,7 @@ bool DrawCacheLayerOrder_Test()
     ReplayData.BuildFromCommandList(ReplayCommands);
     TEST_EXPECT(ReplayData.IsFullyReplayed());
 
-    TEST_SECTION("And the spliced streams are the ones a fresh build sorts into");
+    TEST_SECTION(TEXT("And the spliced streams are the ones a fresh build sorts into"));
     TEST_EXPECT_EQ(ReplayData.GetVertices().Size(), FreshData.GetVertices().Size());
     TEST_EXPECT_EQ(ReplayData.GetShapeInstances().Size(), FreshData.GetShapeInstances().Size());
     TEST_EXPECT_EQ(ReplayData.GetBatches().Size(), FreshData.GetBatches().Size());
@@ -1094,12 +1094,12 @@ bool DrawCacheTranslation_Test()
     LayoutElement(Frame, FRectangle(FIntVector2(0, 0), 200, 160));
     SettleDrawCache(Frame);
 
-    TEST_SECTION("Moving the frame without resizing carries the panel along, so it stays clean");
+    TEST_SECTION(TEXT("Moving the frame without resizing carries the panel along, so it stays clean"));
     LayoutElement(Frame, FRectangle(FIntVector2(30, 40), 200, 160));
     TEST_EXPECT(!Panel->IsPaintDirty());
     TEST_EXPECT(Frame->IsPaintDirty());
 
-    TEST_SECTION("The panel replays its recording moved, and that agrees with walking it where it stands now");
+    TEST_SECTION(TEXT("The panel replays its recording moved, and that agrees with walking it where it stands now"));
     FDrawCommandList Moved;
     Record(Frame, Moved);
     TEST_EXPECT(Moved.GetReplayedCommandCount() > 0);
@@ -1109,11 +1109,11 @@ bool DrawCacheTranslation_Test()
     Record(Frame, Fresh);
     TEST_EXPECT(RecordingsMatch(Moved, Fresh));
 
-    TEST_SECTION("A resize is not a move, so the panel records again");
+    TEST_SECTION(TEXT("A resize is not a move, so the panel records again"));
     LayoutElement(Frame, FRectangle(FIntVector2(30, 40), 220, 160));
     TEST_EXPECT(Panel->IsPaintDirty());
 
-    TEST_SECTION("A child placed where its moving parent was is dirtied, while one that moves along is not");
+    TEST_SECTION(TEXT("A child placed where its moving parent was is dirtied, while one that moves along is not"));
     TSharedPtr<FChildPlacementHost> Host  = MakeSharedPtr<FChildPlacementHost>();
     TSharedPtr<FVisualElement>      Child = MakeSharedPtr<FCompoundElement>();
     Host->SetChild(Child);
@@ -1144,11 +1144,11 @@ bool DrawCommandPayload_Test()
     const FCornerRadii    Radii(1.0f, 2.0f, 3.0f, 4.0f);
     const FFloatColor     Tint(1.0f, 1.0f, 1.0f, 1.0f);
 
-    TEST_SECTION("Each command keeps the payload its type owns");
+    TEST_SECTION(TEXT("Each command keeps the payload its type owns"));
     FDrawCommandList Commands;
     Commands.AddRoundedBottomBar(0, Bounds, Radii, 2.0f, Tint, 6.0f);
     Commands.AddRoundedAccentRing(0, Bounds, Radii, 2.0f, Tint, 0.25f, 0.5f);
-    Commands.AddText(0, Bounds, "Text", Font.Get(), Tint);
+    Commands.AddText(0, Bounds, TEXT("Text"), Font.Get(), Tint);
 
     const TArray<FDrawCommand>& Recorded = Commands.GetCommands();
     TEST_EXPECT_EQ(Recorded.Size(), 3);
@@ -1158,25 +1158,25 @@ bool DrawCommandPayload_Test()
     TEST_EXPECT_EQ(Recorded[1].GetTrailAlpha(), 0.5f);
     TEST_EXPECT(Recorded[2].Font == Font.Get());
 
-    TEST_SECTION("A different fade is a difference, and so is a different face");
+    TEST_SECTION(TEXT("A different fade is a difference, and so is a different face"));
     FDrawCommandList OtherFade;
     OtherFade.AddRoundedBottomBar(0, Bounds, Radii, 2.0f, Tint, 7.0f);
     OtherFade.AddRoundedAccentRing(0, Bounds, Radii, 2.0f, Tint, 0.25f, 0.5f);
-    OtherFade.AddText(0, Bounds, "Text", Font.Get(), Tint);
+    OtherFade.AddText(0, Bounds, TEXT("Text"), Font.Get(), Tint);
     TEST_EXPECT(!RecordingsAgree(Commands, OtherFade));
 
     TSharedPtr<IFontFace> OtherFont = CreateFont();
     FDrawCommandList      OtherFace;
     OtherFace.AddRoundedBottomBar(0, Bounds, Radii, 2.0f, Tint, 6.0f);
     OtherFace.AddRoundedAccentRing(0, Bounds, Radii, 2.0f, Tint, 0.25f, 0.5f);
-    OtherFace.AddText(0, Bounds, "Text", OtherFont.Get(), Tint);
+    OtherFace.AddText(0, Bounds, TEXT("Text"), OtherFont.Get(), Tint);
     TEST_EXPECT(!RecordingsAgree(Commands, OtherFace));
 
-    TEST_SECTION("The same recording twice agrees");
+    TEST_SECTION(TEXT("The same recording twice agrees"));
     FDrawCommandList Same;
     Same.AddRoundedBottomBar(0, Bounds, Radii, 2.0f, Tint, 6.0f);
     Same.AddRoundedAccentRing(0, Bounds, Radii, 2.0f, Tint, 0.25f, 0.5f);
-    Same.AddText(0, Bounds, "Text", Font.Get(), Tint);
+    Same.AddText(0, Bounds, TEXT("Text"), Font.Get(), Tint);
     TEST_EXPECT(RecordingsAgree(Commands, Same));
 
     TEST_END();

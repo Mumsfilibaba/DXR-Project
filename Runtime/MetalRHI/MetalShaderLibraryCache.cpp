@@ -1,6 +1,7 @@
 #include "MetalRHI/MetalShaderLibraryCache.h"
 #include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalStats.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/CRC.h"
 #include "Core/Templates/CString.h"
@@ -32,7 +33,7 @@ static uint64 HashSource(TArrayView<const uint8> Source, const CHAR_T* EntryPoin
 {
     uint64 Hash = static_cast<uint64>(Source.Size());
     HashCombine(Hash, CRC32::Generate(Source.Data(), Source.Size()));
-    HashCombine(Hash, CRC32::Generate(EntryPoint, CString::Strlen(EntryPoint)));
+    HashCombine(Hash, CRC32::Generate(EntryPoint, CString::Strlen(EntryPoint) * sizeof(CHAR_T)));
     return Hash;
 }
 
@@ -142,7 +143,7 @@ TSharedRef<FMetalCompiledShader> FMetalShaderLibraryCache::Compile(TArrayView<co
 {
     SCOPED_AUTORELEASE_POOL();
 
-    const FString SourceString(reinterpret_cast<const CHAR_T*>(Source.Data()), Source.Size());
+    const FString SourceString = StringCast<CHAR_T>(reinterpret_cast<const ANSICHAR*>(Source.Data()), Source.Size()).ToString();
 
     NSString* SourceText = SourceString.GetNSString();
     CHECK(SourceText != nil);

@@ -12,7 +12,7 @@ bool TSet_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Add (dedup) / Size / IsEmpty / Contains / Find");
+    TEST_SECTION(TEXT("Add (dedup) / Size / IsEmpty / Contains / Find"));
     {
         TSet<int32> Set;
         TEST_EXPECT_EQ(Set.Size(), 0);
@@ -34,7 +34,7 @@ bool TSet_Test()
         TEST_EXPECT(Set.Find(99) == nullptr);
     }
 
-    TEST_SECTION("RemoveKey");
+    TEST_SECTION(TEXT("RemoveKey"));
     {
         TSet<int32> Set;
         Set.Add(1);
@@ -47,7 +47,7 @@ bool TSet_Test()
         TEST_EXPECT(!Set.RemoveKey(2));
     }
 
-    TEST_SECTION("Growth / rehash (1000 entries) / dedup / Clear");
+    TEST_SECTION(TEXT("Growth / rehash (1000 entries) / dedup / Clear"));
     {
         TSet<int32> Big;
         for (int32 Index = 0; Index < 1000; ++Index)
@@ -72,18 +72,18 @@ bool TSet_Test()
         TEST_EXPECT(Big.IsEmpty());
     }
 
-    TEST_SECTION("String elements (non-trivial element hashing)");
+    TEST_SECTION(TEXT("FString elements (non-trivial element hashing)"));
     {
         TSet<FString> Strings;
-        Strings.Add(FString("alpha"));
-        Strings.Add(FString("beta"));
-        Strings.Add(FString("alpha"));
+        Strings.Add(FString(TEXT("alpha")));
+        Strings.Add(FString(TEXT("beta")));
+        Strings.Add(FString(TEXT("alpha")));
 
         TEST_EXPECT_EQ(Strings.Size(), 2);
-        TEST_EXPECT(Strings.Contains(FString("beta")));
+        TEST_EXPECT(Strings.Contains(FString(TEXT("beta"))));
     }
 
-    TEST_SECTION("Add(out) / Emplace / FindOrAdd / Append / Remove");
+    TEST_SECTION(TEXT("Add(out) / Emplace / FindOrAdd / Append / Remove"));
     {
         TSet<int32> Set;
         
@@ -110,7 +110,7 @@ bool TSet_Test()
         TEST_EXPECT(!Set.Contains(1));
     }
 
-    TEST_SECTION("GetValues / iterators / RemoveKey(out)");
+    TEST_SECTION(TEXT("GetValues / iterators / RemoveKey(out)"));
     {
         TSet<int32> Set;
         for (int32 Index = 1; Index <= 5; ++Index)
@@ -143,7 +143,7 @@ bool TSet_Test()
         TEST_EXPECT(!Set.RemoveKey(3, &Removed));
     }
 
-    TEST_SECTION("operator== / operator!= / copy / move / Reserve");
+    TEST_SECTION(TEXT("operator== / operator!= / copy / move / Reserve"));
     {
         TSet<int32> First;
         First.Add(1);
@@ -166,7 +166,7 @@ bool TSet_Test()
         TEST_EXPECT(First.BucketCount() >= 1);
     }
 
-    TEST_SECTION("Reserve keeps Find pointers until rehash");
+    TEST_SECTION(TEXT("Reserve keeps Find pointers until rehash"));
     {
         TSet<int32> Set;
         Set.Reserve(256);
@@ -187,7 +187,7 @@ bool TSet_Test()
         TEST_EXPECT(*Pointer == 7);
     }
 
-    TEST_SECTION("TSet rehash stress (FInstanced, seeded size sweep vs std::set)");
+    TEST_SECTION(TEXT("TSet rehash stress (FInstanced, seeded size sweep vs std::set)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)
@@ -241,7 +241,7 @@ bool TSet_Test()
         TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
-    TEST_SECTION("TInlineSet stays inline then spills to the heap");
+    TEST_SECTION(TEXT("TInlineSet stays inline then spills to the heap"));
     {
         TInlineSet<int32, 4> Set;
         TEST_EXPECT(!Set.IsHeapAllocated());
@@ -271,10 +271,10 @@ bool TSet_Test()
         TEST_EXPECT_EQ(Set.Size(), 0);
         TEST_EXPECT(!Set.IsHeapAllocated());
 
-        TInlineSet<FString, 4> Strings = { FString("alpha"), FString("beta"), FString("alpha") };
+        TInlineSet<FString, 4> Strings = { FString(TEXT("alpha")), FString(TEXT("beta")), FString(TEXT("alpha")) };
         TEST_EXPECT_EQ(Strings.Size(), 2);
         TEST_EXPECT(!Strings.IsHeapAllocated());
-        TEST_EXPECT(Strings.Contains(FString("beta")));
+        TEST_EXPECT(Strings.Contains(FString(TEXT("beta"))));
 
         Moved.Reset();
         TEST_EXPECT(!Moved.IsHeapAllocated());

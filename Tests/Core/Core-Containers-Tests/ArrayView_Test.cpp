@@ -11,7 +11,7 @@ bool TArrayView_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Construct from raw pointer + size / Size / IsEmpty / indexing");
+    TEST_SECTION(TEXT("Construct from raw pointer + size / Size / IsEmpty / indexing"));
     {
         int32 Values[5] = { 10, 20, 30, 40, 50 };
         TArrayView<int32> ArrayView(Values, 5);
@@ -29,7 +29,7 @@ bool TArrayView_Test()
         TEST_EXPECT(!Empty.IsValidIndex(Empty.LastIndex()));
     }
 
-    TEST_SECTION("Construct from TArray / First / Last / Data");
+    TEST_SECTION(TEXT("Construct from TArray / First / Last / Data"));
     {
         TArray<int32> Source = { 1, 2, 3, 4 };
         TArrayView<int32> ArrayView(Source);
@@ -39,7 +39,7 @@ bool TArrayView_Test()
         TEST_EXPECT_EQ(ArrayView.Data(), Source.Data());
     }
 
-    TEST_SECTION("Find / FindLast / Contains / predicates");
+    TEST_SECTION(TEXT("Find / FindLast / Contains / predicates"));
     {
         int32 Values[5] = { 5, 10, 15, 10, 25 };
         TArrayView<int32> ArrayView(Values, 5);
@@ -61,7 +61,7 @@ bool TArrayView_Test()
         }));
     }
 
-    TEST_SECTION("SubView");
+    TEST_SECTION(TEXT("SubView"));
     {
         int32 Values[6] = { 0, 1, 2, 3, 4, 5 };
         TArrayView<int32> ArrayView(Values, 6);
@@ -72,7 +72,7 @@ bool TArrayView_Test()
         TEST_EXPECT_EQ(Sub[2], 4);
     }
 
-    TEST_SECTION("Fill / mutation writes through to underlying memory");
+    TEST_SECTION(TEXT("Fill / mutation writes through to underlying memory"));
     {
         int32 Values[4] = { 1, 2, 3, 4 };
         
@@ -88,7 +88,7 @@ bool TArrayView_Test()
         TEST_EXPECT_EQ(Values[1], 100);
     }
 
-    TEST_SECTION("Swap");
+    TEST_SECTION(TEXT("Swap"));
     {
         int32 ValuesA[3] = { 1, 2, 3 };
         int32 ValuesB[2] = { 9, 8 };
@@ -103,7 +103,7 @@ bool TArrayView_Test()
         TEST_EXPECT_EQ(Second[0], 1);
     }
 
-    TEST_SECTION("Range-based iteration / Foreach");
+    TEST_SECTION(TEXT("Range-based iteration / Foreach"));
     {
         int32 Values[5] = { 2, 4, 6, 8, 10 };
         TArrayView<int32> ArrayView(Values, 5);
@@ -125,7 +125,7 @@ bool TArrayView_Test()
         TEST_EXPECT_EQ(ForeachSum, 30);
     }
 
-    TEST_SECTION("operator== / operator!= against TArray");
+    TEST_SECTION(TEXT("operator== / operator!= against TArray"));
     {
         int32 Values[4] = { 1, 2, 3, 4 };
         TArrayView<int32> ArrayView(Values, 4);
@@ -137,7 +137,7 @@ bool TArrayView_Test()
         TEST_EXPECT(ArrayView != Different);
     }
 
-    TEST_SECTION("Construct from TStaticArray / C-array / MakeArrayView helpers");
+    TEST_SECTION(TEXT("Construct from TStaticArray / C-array / MakeArrayView helpers"));
     {
         TStaticArray<int32, 4> Static = { 11, 12, 13, 14 };
         TArrayView<int32> FromStatic(Static);
@@ -160,7 +160,7 @@ bool TArrayView_Test()
         TEST_EXPECT_EQ(FromPtrHelper.Size(), 4);
     }
 
-    TEST_SECTION("Const-element view / copy / move construction");
+    TEST_SECTION(TEXT("Const-element view / copy / move construction"));
     {
         const TArray<int32> Source = { 1, 2, 3, 4 };
         TArrayView<const int32> ConstView(Source);

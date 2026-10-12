@@ -405,17 +405,13 @@ bool FIniFile::WriteToFile()
     FString ConfigString;
     DumpToString(ConfigString);
 
+    TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
+    if (!FileHandle)
     {
-        TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(Filename);
-        if (!File)
-        {
-            return false;
-        }
-
-        File->Write((const uint8*)ConfigString.Data(), ConfigString.SizeInBytes());
+        return false;
     }
 
-    return true;
+    return File::WriteTextFile(FileHandle.Get(), ConfigString);
 }
 
 void FIniFile::DumpToString(FString& OutString)

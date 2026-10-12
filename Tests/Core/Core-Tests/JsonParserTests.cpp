@@ -80,166 +80,166 @@ bool JsonParser_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("Every value type at the document root");
+    TEST_SECTION(TEXT("Every value type at the document root"));
     {
         FJsonValue Value;
 
-        TEST_EXPECT(ParseOk("null", Value) && Value.IsNull());
-        TEST_EXPECT(ParseOk("true", Value) && Value.IsBool() && Value.GetBoolOr(false));
-        TEST_EXPECT(ParseOk("false", Value) && Value.IsBool() && !Value.GetBoolOr(true));
-        TEST_EXPECT(ParseOk("42", Value) && Value.IsNumber() && Value.IsIntegral());
-        TEST_EXPECT(ParseOk("4.5", Value) && Value.IsNumber() && !Value.IsIntegral());
-        TEST_EXPECT(ParseOk("\"text\"", Value) && Value.IsString());
-        TEST_EXPECT(ParseOk("[]", Value) && Value.IsArray() && (Value.Num() == 0));
-        TEST_EXPECT(ParseOk("{}", Value) && Value.IsObject() && (Value.NumMembers() == 0));
+        TEST_EXPECT(ParseOk(TEXT("null"), Value) && Value.IsNull());
+        TEST_EXPECT(ParseOk(TEXT("true"), Value) && Value.IsBool() && Value.GetBoolOr(false));
+        TEST_EXPECT(ParseOk(TEXT("false"), Value) && Value.IsBool() && !Value.GetBoolOr(true));
+        TEST_EXPECT(ParseOk(TEXT("42"), Value) && Value.IsNumber() && Value.IsIntegral());
+        TEST_EXPECT(ParseOk(TEXT("4.5"), Value) && Value.IsNumber() && !Value.IsIntegral());
+        TEST_EXPECT(ParseOk(TEXT("\"text\""), Value) && Value.IsString());
+        TEST_EXPECT(ParseOk(TEXT("[]"), Value) && Value.IsArray() && (Value.Num() == 0));
+        TEST_EXPECT(ParseOk(TEXT("{}"), Value) && Value.IsObject() && (Value.NumMembers() == 0));
     }
 
-    TEST_SECTION("Objects keep their members in the order they were written");
+    TEST_SECTION(TEXT("Objects keep their members in the order they were written"));
     {
         FJsonValue Value;
-        TEST_EXPECT(ParseOk("{ \"Zebra\": 1, \"Apple\": 2, \"Mango\": 3 }", Value));
+        TEST_EXPECT(ParseOk(TEXT("{ \"Zebra\": 1, \"Apple\": 2, \"Mango\": 3 }"), Value));
         TEST_EXPECT(Value.NumMembers() == 3);
-        TEST_EXPECT(Value.GetMemberName(0).Equals("Zebra"));
-        TEST_EXPECT(Value.GetMemberName(1).Equals("Apple"));
-        TEST_EXPECT(Value.GetMemberName(2).Equals("Mango"));
+        TEST_EXPECT(Value.GetMemberName(0).Equals(TEXT("Zebra")));
+        TEST_EXPECT(Value.GetMemberName(1).Equals(TEXT("Apple")));
+        TEST_EXPECT(Value.GetMemberName(2).Equals(TEXT("Mango")));
     }
 
-    TEST_SECTION("Nesting several levels deep");
+    TEST_SECTION(TEXT("Nesting several levels deep"));
     {
         FJsonValue Value;
-        TEST_EXPECT(ParseOk("{\"a\":[{\"b\":[1,{\"c\":[[2]]}]}]}", Value));
+        TEST_EXPECT(ParseOk(TEXT("{\"a\":[{\"b\":[1,{\"c\":[[2]]}]}]}"), Value));
 
-        const FJsonValue* A = Value.Find("a");
+        const FJsonValue* A = Value.Find(TEXT("a"));
         TEST_EXPECT(A && A->IsArray() && (A->Num() == 1));
 
         if (A && A->IsArray() && (A->Num() == 1))
         {
-            const FJsonValue* B = (*A)[0].Find("b");
+            const FJsonValue* B = (*A)[0].Find(TEXT("b"));
             TEST_EXPECT(B && B->IsArray() && (B->Num() == 2));
 
             if (B && B->IsArray() && (B->Num() == 2))
             {
-                const FJsonValue* C = (*B)[1].Find("c");
+                const FJsonValue* C = (*B)[1].Find(TEXT("c"));
                 TEST_EXPECT(C && C->IsArray() && (C->Num() == 1));
                 TEST_EXPECT(C && (*C)[0].IsArray() && ((*C)[0][0].GetInt64Or(0) == 2));
             }
         }
     }
 
-    TEST_SECTION("Integers stay integers and reals stay reals");
+    TEST_SECTION(TEXT("Integers stay integers and reals stay reals"));
     {
         FJsonValue Value;
 
-        TEST_EXPECT(ParseOk("0", Value) && Value.IsIntegral() && (Value.GetInt64Or(-1) == 0));
-        TEST_EXPECT(ParseOk("-0", Value) && Value.IsIntegral() && (Value.GetInt64Or(-1) == 0));
-        TEST_EXPECT(ParseOk("-17", Value) && Value.IsIntegral() && (Value.GetInt64Or(0) == -17));
-        TEST_EXPECT(ParseOk("1e10", Value) && !Value.IsIntegral() && (Value.GetDoubleOr(0.0) == 1e10));
-        TEST_EXPECT(ParseOk("1E+10", Value) && !Value.IsIntegral() && (Value.GetDoubleOr(0.0) == 1e10));
-        TEST_EXPECT(ParseOk("-2.5e-3", Value) && !Value.IsIntegral() && (Value.GetDoubleOr(0.0) == -2.5e-3));
-        TEST_EXPECT(ParseOk("2.0", Value) && !Value.IsIntegral());
+        TEST_EXPECT(ParseOk(TEXT("0"), Value) && Value.IsIntegral() && (Value.GetInt64Or(-1) == 0));
+        TEST_EXPECT(ParseOk(TEXT("-0"), Value) && Value.IsIntegral() && (Value.GetInt64Or(-1) == 0));
+        TEST_EXPECT(ParseOk(TEXT("-17"), Value) && Value.IsIntegral() && (Value.GetInt64Or(0) == -17));
+        TEST_EXPECT(ParseOk(TEXT("1e10"), Value) && !Value.IsIntegral() && (Value.GetDoubleOr(0.0) == 1e10));
+        TEST_EXPECT(ParseOk(TEXT("1E+10"), Value) && !Value.IsIntegral() && (Value.GetDoubleOr(0.0) == 1e10));
+        TEST_EXPECT(ParseOk(TEXT("-2.5e-3"), Value) && !Value.IsIntegral() && (Value.GetDoubleOr(0.0) == -2.5e-3));
+        TEST_EXPECT(ParseOk(TEXT("2.0"), Value) && !Value.IsIntegral());
     }
 
-    TEST_SECTION("The int64 extremes survive exactly");
+    TEST_SECTION(TEXT("The int64 extremes survive exactly"));
     {
         FJsonValue Value;
 
-        TEST_EXPECT(ParseOk("9223372036854775807", Value));
+        TEST_EXPECT(ParseOk(TEXT("9223372036854775807"), Value));
         TEST_EXPECT(Value.IsIntegral() && (Value.GetInt64Or(0) == TNumericLimits<int64>::Max()));
 
-        TEST_EXPECT(ParseOk("-9223372036854775808", Value));
+        TEST_EXPECT(ParseOk(TEXT("-9223372036854775808"), Value));
         TEST_EXPECT(Value.IsIntegral() && (Value.GetInt64Or(0) == TNumericLimits<int64>::Min()));
 
         // 2^53 + 1 is the first integer a double cannot represent, and it has to stay exact
-        TEST_EXPECT(ParseOk("9007199254740993", Value));
+        TEST_EXPECT(ParseOk(TEXT("9007199254740993"), Value));
         TEST_EXPECT(Value.IsIntegral() && (Value.GetInt64Or(0) == 9007199254740993LL));
 
         // Past int64 there is nowhere exact to put it, so it becomes a real rather than wrapping
-        TEST_EXPECT(ParseOk("99999999999999999999", Value));
+        TEST_EXPECT(ParseOk(TEXT("99999999999999999999"), Value));
         TEST_EXPECT(Value.IsNumber() && !Value.IsIntegral());
     }
 
-    TEST_SECTION("Number grammar rejections from the RFC");
+    TEST_SECTION(TEXT("Number grammar rejections from the RFC"));
     {
-        TEST_EXPECT(ParseFails("+1"));
-        TEST_EXPECT(ParseFails("01"));
-        TEST_EXPECT(ParseFails("-01"));
-        TEST_EXPECT(ParseFails("007"));
-        TEST_EXPECT(ParseFails(".5"));
-        TEST_EXPECT(ParseFails("5."));
-        TEST_EXPECT(ParseFails("0x10"));
-        TEST_EXPECT(ParseFails("1e"));
-        TEST_EXPECT(ParseFails("1e+"));
-        TEST_EXPECT(ParseFails("-"));
-        TEST_EXPECT(ParseFails("1.2.3"));
-        TEST_EXPECT(ParseFails("Infinity"));
-        TEST_EXPECT(ParseFails("NaN"));
+        TEST_EXPECT(ParseFails(TEXT("+1")));
+        TEST_EXPECT(ParseFails(TEXT("01")));
+        TEST_EXPECT(ParseFails(TEXT("-01")));
+        TEST_EXPECT(ParseFails(TEXT("007")));
+        TEST_EXPECT(ParseFails(TEXT(".5")));
+        TEST_EXPECT(ParseFails(TEXT("5.")));
+        TEST_EXPECT(ParseFails(TEXT("0x10")));
+        TEST_EXPECT(ParseFails(TEXT("1e")));
+        TEST_EXPECT(ParseFails(TEXT("1e+")));
+        TEST_EXPECT(ParseFails(TEXT("-")));
+        TEST_EXPECT(ParseFails(TEXT("1.2.3")));
+        TEST_EXPECT(ParseFails(TEXT("Infinity")));
+        TEST_EXPECT(ParseFails(TEXT("NaN")));
     }
 
-    TEST_SECTION("Every two-character escape");
+    TEST_SECTION(TEXT("Every two-character escape"));
     {
-        TEST_EXPECT(ParsesToString("\"a\\\"b\"", "a\"b"));
-        TEST_EXPECT(ParsesToString("\"a\\\\b\"", "a\\b"));
-        TEST_EXPECT(ParsesToString("\"a\\/b\"", "a/b"));
-        TEST_EXPECT(ParsesToString("\"a\\bb\"", "a\bb"));
-        TEST_EXPECT(ParsesToString("\"a\\fb\"", "a\fb"));
-        TEST_EXPECT(ParsesToString("\"a\\nb\"", "a\nb"));
-        TEST_EXPECT(ParsesToString("\"a\\rb\"", "a\rb"));
-        TEST_EXPECT(ParsesToString("\"a\\tb\"", "a\tb"));
-        TEST_EXPECT(ParseFails("\"a\\qb\""));
+        TEST_EXPECT(ParsesToString(TEXT("\"a\\\"b\""), TEXT("a\"b")));
+        TEST_EXPECT(ParsesToString(TEXT("\"a\\\\b\""), TEXT("a\\b")));
+        TEST_EXPECT(ParsesToString(TEXT("\"a\\/b\""), TEXT("a/b")));
+        TEST_EXPECT(ParsesToString(TEXT("\"a\\bb\""), TEXT("a\bb")));
+        TEST_EXPECT(ParsesToString(TEXT("\"a\\fb\""), TEXT("a\fb")));
+        TEST_EXPECT(ParsesToString(TEXT("\"a\\nb\""), TEXT("a\nb")));
+        TEST_EXPECT(ParsesToString(TEXT("\"a\\rb\""), TEXT("a\rb")));
+        TEST_EXPECT(ParsesToString(TEXT("\"a\\tb\""), TEXT("a\tb")));
+        TEST_EXPECT(ParseFails(TEXT("\"a\\qb\"")));
     }
 
-    TEST_SECTION("Unicode escapes decode to UTF-8");
+    TEST_SECTION(TEXT("Unicode escapes decode to UTF-8"));
     {
-        TEST_EXPECT(ParsesToString("\"\\u0041\"", "A"));
+        TEST_EXPECT(ParsesToString(TEXT("\"\\u0041\""), TEXT("A")));
 
         // U+00E9 becomes two bytes, U+20AC three
-        TEST_EXPECT(ParsesToString("\"\\u00e9\"", "\xC3\xA9"));
-        TEST_EXPECT(ParsesToString("\"\\u20AC\"", "\xE2\x82\xAC"));
+        TEST_EXPECT(ParsesToString(TEXT("\"\\u00e9\""), TEXT("\xC3\xA9")));
+        TEST_EXPECT(ParsesToString(TEXT("\"\\u20AC\""), TEXT("\xE2\x82\xAC")));
 
         // U+1F600, written as a surrogate pair, becomes four
-        TEST_EXPECT(ParsesToString("\"\\uD83D\\uDE00\"", "\xF0\x9F\x98\x80"));
+        TEST_EXPECT(ParsesToString(TEXT("\"\\uD83D\\uDE00\""), TEXT("\xF0\x9F\x98\x80")));
 
-        TEST_EXPECT(ParseFails("\"\\uD83D\""));
-        TEST_EXPECT(ParseFails("\"\\uDE00\""));
-        TEST_EXPECT(ParseFails("\"\\uD83D\\u0041\""));
-        TEST_EXPECT(ParseFails("\"\\u00G1\""));
-        TEST_EXPECT(ParseFails("\"\\u12\""));
+        TEST_EXPECT(ParseFails(TEXT("\"\\uD83D\"")));
+        TEST_EXPECT(ParseFails(TEXT("\"\\uDE00\"")));
+        TEST_EXPECT(ParseFails(TEXT("\"\\uD83D\\u0041\"")));
+        TEST_EXPECT(ParseFails(TEXT("\"\\u00G1\"")));
+        TEST_EXPECT(ParseFails(TEXT("\"\\u12\"")));
     }
 
-    TEST_SECTION("Raw control characters are rejected inside strings");
+    TEST_SECTION(TEXT("Raw control characters are rejected inside strings"));
     {
-        TEST_EXPECT(ParseFails("\"line\nbreak\""));
-        TEST_EXPECT(ParseFails("\"tab\there\""));
+        TEST_EXPECT(ParseFails(TEXT("\"line\nbreak\"")));
+        TEST_EXPECT(ParseFails(TEXT("\"tab\there\"")));
     }
 
-    TEST_SECTION("Non-ASCII UTF-8 passes through untouched");
+    TEST_SECTION(TEXT("Non-ASCII UTF-8 passes through untouched"));
     {
-        TEST_EXPECT(ParsesToString("\"Sm\xC3\xB6rg\xC3\xA5sbord\"", "Sm\xC3\xB6rg\xC3\xA5sbord"));
+        TEST_EXPECT(ParsesToString(TEXT("\"Sm\xC3\xB6rg\xC3\xA5sbord\""), TEXT("Sm\xC3\xB6rg\xC3\xA5sbord")));
     }
 
-    TEST_SECTION("Malformed input reports the exact position");
+    TEST_SECTION(TEXT("Malformed input reports the exact position"));
     {
-        TEST_EXPECT(FailsAt("", 1, 1));
-        TEST_EXPECT(FailsAt("   ", 1, 4));
-        TEST_EXPECT(FailsAt("{\"a\" 1}", 1, 6));
-        TEST_EXPECT(FailsAt("{\"a\":1 \"b\":2}", 1, 8));
-        TEST_EXPECT(FailsAt("[1,2", 1, 5));
-        TEST_EXPECT(FailsAt("{\"a\":1", 1, 7));
-        TEST_EXPECT(FailsAt("\"unterminated", 1, 14));
-        TEST_EXPECT(FailsAt("[1,]", 1, 4));
-        TEST_EXPECT(FailsAt("{\"a\":1,}", 1, 8));
-        TEST_EXPECT(FailsAt("[1,,2]", 1, 4));
-        TEST_EXPECT(FailsAt("{1:2}", 1, 2));
-        TEST_EXPECT(FailsAt("{} junk", 1, 4));
+        TEST_EXPECT(FailsAt(TEXT(""), 1, 1));
+        TEST_EXPECT(FailsAt(TEXT("   "), 1, 4));
+        TEST_EXPECT(FailsAt(TEXT("{\"a\" 1}"), 1, 6));
+        TEST_EXPECT(FailsAt(TEXT("{\"a\":1 \"b\":2}"), 1, 8));
+        TEST_EXPECT(FailsAt(TEXT("[1,2"), 1, 5));
+        TEST_EXPECT(FailsAt(TEXT("{\"a\":1"), 1, 7));
+        TEST_EXPECT(FailsAt(TEXT("\"unterminated"), 1, 14));
+        TEST_EXPECT(FailsAt(TEXT("[1,]"), 1, 4));
+        TEST_EXPECT(FailsAt(TEXT("{\"a\":1,}"), 1, 8));
+        TEST_EXPECT(FailsAt(TEXT("[1,,2]"), 1, 4));
+        TEST_EXPECT(FailsAt(TEXT("{1:2}"), 1, 2));
+        TEST_EXPECT(FailsAt(TEXT("{} junk"), 1, 4));
     }
 
-    TEST_SECTION("Positions count lines through a multi-line document");
+    TEST_SECTION(TEXT("Positions count lines through a multi-line document"));
     {
-        TEST_EXPECT(FailsAt("{\n    \"a\": 1,\n    \"b\" 2\n}", 3, 9));
-        TEST_EXPECT(FailsAt("[\n  1,\n  2\n  3\n]", 4, 3));
+        TEST_EXPECT(FailsAt(TEXT("{\n    \"a\": 1,\n    \"b\" 2\n}"), 3, 9));
+        TEST_EXPECT(FailsAt(TEXT("[\n  1,\n  2\n  3\n]"), 4, 3));
     }
 
-    TEST_SECTION("Nesting past the depth limit fails instead of overflowing the stack");
+    TEST_SECTION(TEXT("Nesting past the depth limit fails instead of overflowing the stack"));
     {
         FJsonValue Value;
 
@@ -250,10 +250,10 @@ bool JsonParser_Test()
         TEST_EXPECT(!Json::Parse(FStringView(WayOver), Value));
     }
 
-    TEST_SECTION("Comments are rejected by default and accepted with the flag");
+    TEST_SECTION(TEXT("Comments are rejected by default and accepted with the flag"));
     {
-        const CHAR_T* WithLineComment  = "{\n    // a note\n    \"a\": 1\n}";
-        const CHAR_T* WithBlockComment = "{ /* a note */ \"a\": 1 }";
+        const CHAR_T* WithLineComment  = TEXT("{\n    // a note\n    \"a\": 1\n}");
+        const CHAR_T* WithBlockComment = TEXT("{ /* a note */ \"a\": 1 }");
 
         TEST_EXPECT(ParseFails(WithLineComment));
         TEST_EXPECT(ParseFails(WithBlockComment));
@@ -265,58 +265,58 @@ bool JsonParser_Test()
         TEST_EXPECT(ParseOk(WithBlockComment, Value, EJsonParseFlags::AllowComments));
         TEST_EXPECT(Value.NumMembers() == 1);
 
-        TEST_EXPECT(ParseFails("{ /* unterminated \"a\": 1 }", EJsonParseFlags::AllowComments));
+        TEST_EXPECT(ParseFails(TEXT("{ /* unterminated \"a\": 1 }"), EJsonParseFlags::AllowComments));
     }
 
-    TEST_SECTION("Trailing commas are rejected by default and accepted with the flag");
+    TEST_SECTION(TEXT("Trailing commas are rejected by default and accepted with the flag"));
     {
-        TEST_EXPECT(ParseFails("[1,2,]"));
-        TEST_EXPECT(ParseFails("{\"a\":1,}"));
+        TEST_EXPECT(ParseFails(TEXT("[1,2,]")));
+        TEST_EXPECT(ParseFails(TEXT("{\"a\":1,}")));
 
         FJsonValue Value;
-        TEST_EXPECT(ParseOk("[1,2,]", Value, EJsonParseFlags::AllowTrailingCommas) && (Value.Num() == 2));
-        TEST_EXPECT(ParseOk("{\"a\":1,}", Value, EJsonParseFlags::AllowTrailingCommas) && (Value.NumMembers() == 1));
+        TEST_EXPECT(ParseOk(TEXT("[1,2,]"), Value, EJsonParseFlags::AllowTrailingCommas) && (Value.Num() == 2));
+        TEST_EXPECT(ParseOk(TEXT("{\"a\":1,}"), Value, EJsonParseFlags::AllowTrailingCommas) && (Value.NumMembers() == 1));
 
         // Two commas in a row is still a mistake, not a trailing comma
-        TEST_EXPECT(ParseFails("[1,,]", EJsonParseFlags::AllowTrailingCommas));
+        TEST_EXPECT(ParseFails(TEXT("[1,,]"), EJsonParseFlags::AllowTrailingCommas));
     }
 
-    TEST_SECTION("Both leniencies together");
+    TEST_SECTION(TEXT("Both leniencies together"));
     {
         FJsonValue Value;
-        TEST_EXPECT(ParseOk("{\n  // hand edited\n  \"a\": [1, 2,],\n}", Value, EJsonParseFlags::Relaxed));
+        TEST_EXPECT(ParseOk(TEXT("{\n  // hand edited\n  \"a\": [1, 2,],\n}"), Value, EJsonParseFlags::Relaxed));
         TEST_EXPECT(Value.NumMembers() == 1);
     }
 
-    TEST_SECTION("A UTF-8 BOM is stripped and does not shift the reported column");
+    TEST_SECTION(TEXT("A UTF-8 BOM is stripped and does not shift the reported column"));
     {
         FJsonValue Value;
-        TEST_EXPECT(ParseOk("\xEF\xBB\xBF{\"a\":1}", Value) && (Value.NumMembers() == 1));
-        TEST_EXPECT(FailsAt("\xEF\xBB\xBF{\"a\" 1}", 1, 6));
+        TEST_EXPECT(ParseOk(TEXT("\xEF\xBB\xBF{\"a\":1}"), Value) && (Value.NumMembers() == 1));
+        TEST_EXPECT(FailsAt(TEXT("\xEF\xBB\xBF{\"a\" 1}"), 1, 6));
     }
 
-    TEST_SECTION("CRLF input parses the same as LF");
+    TEST_SECTION(TEXT("CRLF input parses the same as LF"));
     {
         FJsonValue Unix;
         FJsonValue Windows;
-        TEST_EXPECT(ParseOk("{\n    \"a\": 1,\n    \"b\": [2, 3]\n}", Unix));
-        TEST_EXPECT(ParseOk("{\r\n    \"a\": 1,\r\n    \"b\": [2, 3]\r\n}", Windows));
+        TEST_EXPECT(ParseOk(TEXT("{\n    \"a\": 1,\n    \"b\": [2, 3]\n}"), Unix));
+        TEST_EXPECT(ParseOk(TEXT("{\r\n    \"a\": 1,\r\n    \"b\": [2, 3]\r\n}"), Windows));
         TEST_EXPECT(Unix.Equals(Windows));
     }
 
-    TEST_SECTION("A repeated member keeps the last value, as every reader does");
+    TEST_SECTION(TEXT("A repeated member keeps the last value, as every reader does"));
     {
         FJsonValue Value;
-        TEST_EXPECT(ParseOk("{\"a\":1,\"a\":2}", Value));
+        TEST_EXPECT(ParseOk(TEXT("{\"a\":1,\"a\":2}"), Value));
         TEST_EXPECT(Value.NumMembers() == 1);
 
-        const FJsonValue* Found = Value.Find("a");
+        const FJsonValue* Found = Value.Find(TEXT("a"));
         TEST_EXPECT(Found && (Found->GetInt64Or(0) == 2));
     }
 
-    TEST_SECTION("A view without a null terminator stops where it is told to");
+    TEST_SECTION(TEXT("A view without a null terminator stops where it is told to"));
     {
-        const CHAR_T* Backing = "[1,2,3]garbage";
+        const CHAR_T* Backing = TEXT("[1,2,3]garbage");
 
         FJsonValue Value;
         TEST_EXPECT(Json::Parse(FStringView(Backing, 7), Value));

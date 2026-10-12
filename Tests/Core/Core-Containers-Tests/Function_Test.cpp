@@ -64,7 +64,7 @@ bool TFunction_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("TFunction default / IsValid / operator bool / Reset");
+    TEST_SECTION(TEXT("TFunction default / IsValid / operator bool / Reset"));
     {
         TFunction<int32(int32, int32)> Empty;
         TEST_EXPECT(!Empty.IsValid());
@@ -79,7 +79,7 @@ bool TFunction_Test()
         TEST_EXPECT(!Add.IsValid());
     }
 
-    TEST_SECTION("TFunction Bind / functor with state");
+    TEST_SECTION(TEXT("TFunction Bind / functor with state"));
     {
         TFunction<int32(int32, int32)> Func;
         FFunctor Functor{ 10 };
@@ -90,7 +90,7 @@ bool TFunction_Test()
         TEST_EXPECT(Func(4, 5) == 9);
     }
 
-    TEST_SECTION("TFunction copy / move / nullptr assignment");
+    TEST_SECTION(TEXT("TFunction copy / move / nullptr assignment"));
     {
         TFunction<int32(int32, int32)> Original = &FreeAdd;
         TFunction<int32(int32, int32)> Copy = Original;
@@ -106,7 +106,7 @@ bool TFunction_Test()
         TEST_EXPECT(!Moved.IsValid());
     }
 
-    TEST_SECTION("TFunction Swap");
+    TEST_SECTION(TEXT("TFunction Swap"));
     {
         TFunction<int32(int32, int32)> First = &FreeAdd;
         TFunction<int32(int32, int32)> Second = &FreeNegate;
@@ -115,7 +115,7 @@ bool TFunction_Test()
         TEST_EXPECT(Second(2, 3) == 5);
     }
 
-    TEST_SECTION("TFunctionRef free function (regression for non-owning pointer storage)");
+    TEST_SECTION(TEXT("TFunctionRef free function (regression for non-owning pointer storage)"));
     {
         TFunctionRef<int32(int32, int32)> Ref = FreeAdd;
         TEST_EXPECT(Ref.IsValid());
@@ -126,7 +126,7 @@ bool TFunction_Test()
         TEST_EXPECT(RefPtr(6, 7) == -13);
     }
 
-    TEST_SECTION("TFunctionRef functor / Bind / Swap");
+    TEST_SECTION(TEXT("TFunctionRef functor / Bind / Swap"));
     {
         FFunctor Functor{ 1 };
         TFunctionRef<int32(int32, int32)> Ref = Functor;
@@ -141,7 +141,7 @@ bool TFunction_Test()
         TEST_EXPECT(Ref(2, 3) == 106);
     }
 
-    TEST_SECTION("TUniqueFunction move-only semantics");
+    TEST_SECTION(TEXT("TUniqueFunction move-only semantics"));
     {
         TUniqueFunction<int32(int32, int32)> Empty;
         TEST_EXPECT(!Empty.IsValid());
@@ -160,7 +160,7 @@ bool TFunction_Test()
         TEST_EXPECT(!Moved.IsValid());
     }
 
-    TEST_SECTION("TUniqueFunction Swap / Reset / stateful capture");
+    TEST_SECTION(TEXT("TUniqueFunction Swap / Reset / stateful capture"));
     {
         int32 Base = 40;
         TUniqueFunction<int32(int32)> Func = [Base](int32 Add) -> int32
@@ -181,7 +181,7 @@ bool TFunction_Test()
         TEST_EXPECT(!Other.IsValid());
     }
 
-    TEST_SECTION("Bind: member / const member / payload / partial application / Invoke");
+    TEST_SECTION(TEXT("Bind: member / const member / payload / partial application / Invoke"));
     {
         FObject Obj;
         auto MemberBind = Bind(&FObject::Add, &Obj);
@@ -211,7 +211,7 @@ bool TFunction_Test()
         TEST_EXPECT(Invoke(&FObject::Add, &Obj, 5, 6) == 11);
     }
 
-    TEST_SECTION("Bind / Invoke virtual member (dynamic dispatch)");
+    TEST_SECTION(TEXT("Bind / Invoke virtual member (dynamic dispatch)"));
     {
         FVirtualDerived Derived;
         FVirtualBase* Base = &Derived;
@@ -221,7 +221,7 @@ bool TFunction_Test()
         TEST_EXPECT(Invoke(&FVirtualBase::Scale, Base, 5) == 10);
     }
 
-    TEST_SECTION("TFunction holding member bind / value+ref capturing lambdas");
+    TEST_SECTION(TEXT("TFunction holding member bind / value+ref capturing lambdas"));
     {
         FObject Obj;
         TFunction<int32(int32, int32)> MemberFunc = Bind(&FObject::Add, &Obj);
@@ -243,7 +243,7 @@ bool TFunction_Test()
         TEST_EXPECT(Counter == 5);
     }
 
-    TEST_SECTION("TFunctionRef holding member bind (non-owning)");
+    TEST_SECTION(TEXT("TFunctionRef holding member bind (non-owning)"));
     {
         FObject Obj;
         auto MemberBind = Bind(&FObject::Add, &Obj);
@@ -251,7 +251,7 @@ bool TFunction_Test()
         TEST_EXPECT(Ref(2, 3) == 5);
     }
 
-    TEST_SECTION("TFunction heap-storage stress (heavy capture, copy/move, no leaks)");
+    TEST_SECTION(TEXT("TFunction heap-storage stress (heavy capture, copy/move, no leaks)"));
     {
         FInstanced::Reset();
         STRESS_SWEEP(TargetSize, Seed, Stress::DefaultSeedCount)

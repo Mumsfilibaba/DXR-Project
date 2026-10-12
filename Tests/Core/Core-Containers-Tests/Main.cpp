@@ -54,7 +54,7 @@ struct FDebuggerOutputDevice : public IOutputDevice
     virtual void Log(const FString& Message)
     {
         FPlatformMisc::OutputDebugString(Message.Data());
-        FPlatformMisc::OutputDebugString("\n");
+        FPlatformMisc::OutputDebugString(TEXT("\n"));
     }
 
     virtual void Log(ELogSeverity Severity, const FString& Message)
@@ -72,103 +72,103 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 static void Tests()
 {
 #if RUN_TARRAY_TEST
-    RUN_TEST("Array", TArray_Test());
+    RUN_TEST(TEXT("Array"), TArray_Test());
 #endif
 
 #if RUN_TSHAREDPTR_TEST
-    RUN_TEST("SharedPtr", TSharedPtr_Test());
+    RUN_TEST(TEXT("SharedPtr"), TSharedPtr_Test());
 #endif
 
 #if RUN_TFUNCTION_TEST
-    RUN_TEST("Function", TFunction_Test());
+    RUN_TEST(TEXT("Function"), TFunction_Test());
 #endif
 
 #if RUN_TSTATICARRAY_TEST
-    RUN_TEST("StaticArray", TStaticArray_Test());
+    RUN_TEST(TEXT("StaticArray"), TStaticArray_Test());
 #endif
 
 #if RUN_TARRAYVIEW_TEST
-    RUN_TEST("ArrayView", TArrayView_Test());
+    RUN_TEST(TEXT("ArrayView"), TArrayView_Test());
 #endif
 
 #if RUN_TDELEGATE_TEST
-    RUN_TEST("Delegate", TDelegate_Test());
+    RUN_TEST(TEXT("Delegate"), TDelegate_Test());
 #endif
 
 #if RUN_TSTRING_TEST
-    RUN_TEST("String", TString_Test());
+    RUN_TEST(TEXT("String"), TString_Test());
 #endif
 
 #if RUN_TSTRINGCONVERSION_TEST
-    RUN_TEST("StringConversion", TStringConversion_Test());
+    RUN_TEST(TEXT("StringConversion"), TStringConversion_Test());
 #endif
 
 #if RUN_TOPIONAL_TEST
-    RUN_TEST("Optional", TOptional_Test());
+    RUN_TEST(TEXT("Optional"), TOptional_Test());
 #endif
 
 #if RUN_TQUEUE_TEST
-    RUN_TEST("Queue", TQueue_Test());
+    RUN_TEST(TEXT("Queue"), TQueue_Test());
 #endif
 
 #if RUN_TVARIANT_TEST
-    RUN_TEST("Variant", TVariant_Test());
+    RUN_TEST(TEXT("Variant"), TVariant_Test());
 #endif
 
 #if RUN_TBITARRAY_TEST
-    RUN_TEST("BitArray", TBitArray_Test());
+    RUN_TEST(TEXT("BitArray"), TBitArray_Test());
 #endif
 
 #if RUN_TSTATICBITARRAY_TEST
-    RUN_TEST("StaticBitArray", TStaticBitArray_Test());
+    RUN_TEST(TEXT("StaticBitArray"), TStaticBitArray_Test());
 #endif
 
 #if RUN_TMAP_TEST
-    RUN_TEST("Map", TMap_Test());
+    RUN_TEST(TEXT("Map"), TMap_Test());
 #endif
 
 #if RUN_TSET_TEST
-    RUN_TEST("Set", TSet_Test());
+    RUN_TEST(TEXT("Set"), TSet_Test());
 #endif
 
 #if RUN_TMULTIMAP_TEST
-    RUN_TEST("MultiMap", TMultiMap_Test());
+    RUN_TEST(TEXT("MultiMap"), TMultiMap_Test());
 #endif
 
 #if RUN_TUNIQUEPTR_TEST
-    RUN_TEST("UniquePtr", TUniquePtr_Test());
+    RUN_TEST(TEXT("UniquePtr"), TUniquePtr_Test());
 #endif
 
 #if RUN_TPRIORITYQUEUE_TEST
-    RUN_TEST("PriorityQueue", TPriorityQueue_Test());
+    RUN_TEST(TEXT("PriorityQueue"), TPriorityQueue_Test());
 #endif
 
 #if RUN_TLINKEDLIST_TEST
-    RUN_TEST("LinkedList", TLinkedList_Test());
+    RUN_TEST(TEXT("LinkedList"), TLinkedList_Test());
 #endif
 
 #if RUN_STRINGVIEW_SUITE
-    RUN_TEST("StringView", StringView_Suite());
+    RUN_TEST(TEXT("StringView"), StringView_Suite());
 #endif
 
 #if RUN_STATICSTRING_SUITE
-    RUN_TEST("StaticString", StaticString_Suite());
+    RUN_TEST(TEXT("StaticString"), StaticString_Suite());
 #endif
 
 #if RUN_CRC_TEST
-    RUN_TEST("CRC32", CRC_Test());
+    RUN_TEST(TEXT("CRC32"), CRC_Test());
 #endif
 
 #if RUN_SORT_TEST
-    RUN_TEST("Sort", Sort_Test());
+    RUN_TEST(TEXT("Sort"), Sort_Test());
 #endif
 
 #if RUN_UNIFORMGRID2D_TEST
-    RUN_TEST("UniformGrid2D", UniformGrid2D_Test());
+    RUN_TEST(TEXT("UniformGrid2D"), UniformGrid2D_Test());
 #endif
 
 #if RUN_RINGBUFFER_TEST
-    RUN_TEST("RingBuffer", RingBuffer_Test());
+    RUN_TEST(TEXT("RingBuffer"), RingBuffer_Test());
 #endif
 }
 
@@ -181,7 +181,7 @@ static int32 RunContainerTests()
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-    TestHarness::Initialize("TestResults_Core.log");
+    TestHarness::Initialize(TEXT("TestResults_Core.log"));
     LOG_INFO("=== Container Tests ===");
 
 #if RUN_TESTS
@@ -204,4 +204,4 @@ static int32 RunContainerTests()
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
-IMPLEMENT_PROGRAM_MAIN("Core-Containers-Tests", RunContainerTests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("Core-Containers-Tests"), RunContainerTests);

@@ -75,45 +75,45 @@ bool PropertyTableRows_Test()
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
 
-    TEST_SECTION("A row is a label beside an editor, handed back so the caller can finish describing it");
-    TSharedPtr<FVisualElement> LocationEditor = CreateEditor("0, 0, 0", Font);
+    TEST_SECTION(TEXT("A row is a label beside an editor, handed back so the caller can finish describing it"));
+    TSharedPtr<FVisualElement> LocationEditor = CreateEditor(TEXT("0, 0, 0"), Font);
 
-    FPropertyRow& LocationRow = Table->AddRow("Location", LocationEditor);
-    LocationRow.ToolTipText   = "Where the actor sits in the world";
+    FPropertyRow& LocationRow = Table->AddRow(TEXT("Location"), LocationEditor);
+    LocationRow.ToolTipText   = TEXT("Where the actor sits in the world");
     LocationRow.IndentLevel   = 1;
 
     TEST_EXPECT_EQ(Table->GetNumRows(), 1);
-    TEST_EXPECT(Table->GetRow(0).Label == FString("Location"));
+    TEST_EXPECT(Table->GetRow(0).Label == FString(TEXT("Location")));
     TEST_EXPECT(Table->GetRow(0).Editor == LocationEditor);
-    TEST_EXPECT(Table->GetRow(0).ToolTipText == FString("Where the actor sits in the world"));
+    TEST_EXPECT(Table->GetRow(0).ToolTipText == FString(TEXT("Where the actor sits in the world")));
     TEST_EXPECT_EQ(Table->GetRow(0).IndentLevel, 1);
     TEST_EXPECT(!Table->GetRow(0).bIsHeader);
 
-    TEST_SECTION("A heading spans both columns, so it is marked as one and carries no editor");
-    FPropertyRow& RenderingRow = Table->AddHeaderRow("Rendering");
-    RenderingRow.ToolTipText   = "How the actor is drawn";
+    TEST_SECTION(TEXT("A heading spans both columns, so it is marked as one and carries no editor"));
+    FPropertyRow& RenderingRow = Table->AddHeaderRow(TEXT("Rendering"));
+    RenderingRow.ToolTipText   = TEXT("How the actor is drawn");
 
     TEST_EXPECT(Table->GetRow(1).bIsHeader);
     TEST_EXPECT(Table->GetRow(1).Editor == nullptr);
-    TEST_EXPECT(Table->GetRow(1).Label == FString("Rendering"));
-    TEST_EXPECT(Table->GetRow(1).ToolTipText == FString("How the actor is drawn"));
+    TEST_EXPECT(Table->GetRow(1).Label == FString(TEXT("Rendering")));
+    TEST_EXPECT(Table->GetRow(1).ToolTipText == FString(TEXT("How the actor is drawn")));
 
-    TEST_SECTION("The count takes in the headings, and the rows read back in the order they arrived");
-    TSharedPtr<FVisualElement> VisibleEditor = CreateEditor("true", Font);
-    Table->AddRow("Visible", VisibleEditor);
+    TEST_SECTION(TEXT("The count takes in the headings, and the rows read back in the order they arrived"));
+    TSharedPtr<FVisualElement> VisibleEditor = CreateEditor(TEXT("true"), Font);
+    Table->AddRow(TEXT("Visible"), VisibleEditor);
 
     TEST_EXPECT_EQ(Table->GetNumRows(), 3);
-    TEST_EXPECT(Table->GetRow(0).Label == FString("Location"));
-    TEST_EXPECT(Table->GetRow(1).Label == FString("Rendering"));
-    TEST_EXPECT(Table->GetRow(2).Label == FString("Visible"));
+    TEST_EXPECT(Table->GetRow(0).Label == FString(TEXT("Location")));
+    TEST_EXPECT(Table->GetRow(1).Label == FString(TEXT("Rendering")));
+    TEST_EXPECT(Table->GetRow(2).Label == FString(TEXT("Visible")));
     TEST_EXPECT(Table->GetRow(2).Editor == VisibleEditor);
 
-    TEST_SECTION("The table is as tall as its rows together and asks for no width of its own");
+    TEST_SECTION(TEXT("The table is as tall as its rows together and asks for no width of its own"));
     Table->PrepareDesiredSize();
     TEST_EXPECT_EQ(Table->GetCachedDesiredSize().Y, 3 * 20);
     TEST_EXPECT_EQ(Table->GetCachedDesiredSize().X, 0);
 
-    TEST_SECTION("Clearing empties the table so it can be filled again");
+    TEST_SECTION(TEXT("Clearing empties the table so it can be filled again"));
     Table->ClearRows();
     TEST_EXPECT_EQ(Table->GetNumRows(), 0);
 
@@ -134,18 +134,18 @@ bool PropertyTableRowContext_Test()
     TArray<int32> ContextRows;
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
-    Table->AddRow("Location", nullptr);
-    Table->AddRow("Rotation", nullptr);
+    Table->AddRow(TEXT("Location"), nullptr);
+    Table->AddRow(TEXT("Rotation"), nullptr);
     Table->SetOnRowContext(FOnPropertyRowContext::CreateLambda([&ContextRows](int32 RowIndex) { ContextRows.Add(RowIndex); }));
 
     LayoutElement(Table, FRectangle(FIntVector2(0, 0), 200, 40));
 
-    TEST_SECTION("A right click on a row fires the context handler with that row");
+    TEST_SECTION(TEXT("A right click on a row fires the context handler with that row"));
     TEST_EXPECT(Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(20, 10), Keys::MouseButtonRight)).IsEventHandled());
     TEST_EXPECT_EQ(ContextRows.Size(), 1);
     TEST_EXPECT_EQ(ContextRows[0], 0);
 
-    TEST_SECTION("A right click below the rows is ignored");
+    TEST_SECTION(TEXT("A right click below the rows is ignored"));
     TEST_EXPECT(!Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(20, 80), Keys::MouseButtonRight)).IsEventHandled());
     TEST_EXPECT_EQ(ContextRows.Size(), 1);
 
@@ -162,14 +162,14 @@ bool PropertyTableColumnDrag_Test()
     Desc.LabelColumnFraction = 0.5f;
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
-    Table->AddRow("Location", nullptr);
-    Table->AddRow("Rotation", nullptr);
-    Table->AddRow("Scale", nullptr);
+    Table->AddRow(TEXT("Location"), nullptr);
+    Table->AddRow(TEXT("Rotation"), nullptr);
+    Table->AddRow(TEXT("Scale"), nullptr);
 
     const FRectangle Bounds(FIntVector2(0, 0), 200, 60);
     LayoutElement(Table, Bounds);
 
-    TEST_SECTION("The fraction is held between the narrowest and the widest label column");
+    TEST_SECTION(TEXT("The fraction is held between the narrowest and the widest label column"));
     Table->SetLabelColumnFraction(0.0f);
     TEST_EXPECT_EQ(Table->GetLabelColumnFraction(), FPropertyTable::MinLabelColumnFraction);
 
@@ -179,38 +179,38 @@ bool PropertyTableColumnDrag_Test()
     Table->SetLabelColumnFraction(0.5f);
     TEST_EXPECT_EQ(Table->GetLabelColumnFraction(), 0.5f);
 
-    TEST_SECTION("The band the divider is grabbed by is centred on it and as tall as the rows");
+    TEST_SECTION(TEXT("The band the divider is grabbed by is centred on it and as tall as the rows"));
     const FRectangle Divider = Table->GetDividerRectangle(Bounds);
     TEST_EXPECT_EQ(Divider.Width, FPropertyTable::DividerGrabWidth);
     TEST_EXPECT_EQ(Divider.Position.X, (Bounds.Width / 2) - (FPropertyTable::DividerGrabWidth / 2));
     TEST_EXPECT_EQ(Divider.Position.Y, Bounds.Position.Y);
     TEST_EXPECT_EQ(Divider.Height, 3 * 20);
 
-    TEST_SECTION("A press on the band and a drag sideways carries the divider along with the cursor");
+    TEST_SECTION(TEXT("A press on the band and a drag sideways carries the divider along with the cursor"));
     TEST_EXPECT(Table->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(100, 30))).IsEventHandled());
 
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(140, 30)));
     TEST_EXPECT(Math::Abs(Table->GetLabelColumnFraction() - 0.7f) < 0.001f);
     TEST_EXPECT_EQ(Table->GetDividerRectangle(Bounds).Position.X, 140 - (FPropertyTable::DividerGrabWidth / 2));
 
-    TEST_SECTION("Dragging past the end of the range clamps rather than running off");
+    TEST_SECTION(TEXT("Dragging past the end of the range clamps rather than running off"));
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(2000, 30)));
     TEST_EXPECT_EQ(Table->GetLabelColumnFraction(), FPropertyTable::MaxLabelColumnFraction);
 
-    TEST_SECTION("The release ends the drag, so the move after it leaves the divider alone");
+    TEST_SECTION(TEXT("The release ends the drag, so the move after it leaves the divider alone"));
     TEST_EXPECT(Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(2000, 30))).IsEventHandled());
 
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(20, 30)));
     TEST_EXPECT_EQ(Table->GetLabelColumnFraction(), FPropertyTable::MaxLabelColumnFraction);
 
-    TEST_SECTION("A press away from the band starts nothing, so the drag after it moves nothing");
+    TEST_SECTION(TEXT("A press away from the band starts nothing, so the drag after it moves nothing"));
     Table->SetLabelColumnFraction(0.5f);
     TEST_EXPECT(!Table->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(20, 30))).IsEventHandled());
 
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(160, 30)));
     TEST_EXPECT_EQ(Table->GetLabelColumnFraction(), 0.5f);
 
-    TEST_SECTION("A horizontal resize cursor is asked for on the divider and withheld off it");
+    TEST_SECTION(TEXT("A horizontal resize cursor is asked for on the divider and withheld off it"));
     ECursor Cursor = ECursor::Arrow;
 
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(100, 30)));
@@ -237,31 +237,31 @@ bool PropertyTableRevertCursor_Test()
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
 
-    Table->AddRow("Location", nullptr).IsModified = FOnPropertyModified::CreateLambda([&bLocationModified]() { return bLocationModified; });
-    Table->AddRow("Rotation", nullptr);
+    Table->AddRow(TEXT("Location"), nullptr).IsModified = FOnPropertyModified::CreateLambda([&bLocationModified]() { return bLocationModified; });
+    Table->AddRow(TEXT("Rotation"), nullptr);
 
     const FRectangle Bounds(FIntVector2(0, 0), 200, 40);
     LayoutElement(Table, Bounds);
 
     const int32 RevertCenterX = Bounds.GetRight() - (Desc.Style.RevertColumnWidth / 2);
 
-    TEST_SECTION("The arrow on a modified row is a small button, so the hand appears over it");
+    TEST_SECTION(TEXT("The arrow on a modified row is a small button, so the hand appears over it"));
     ECursor Cursor = ECursor::Arrow;
 
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(RevertCenterX, 10)));
     TEST_EXPECT(Table->GetCursor(Cursor));
     TEST_EXPECT(Cursor == ECursor::Hand);
 
-    TEST_SECTION("A row that never reports itself modified draws no arrow, so the same column keeps the plain shape");
+    TEST_SECTION(TEXT("A row that never reports itself modified draws no arrow, so the same column keeps the plain shape"));
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(RevertCenterX, 30)));
     TEST_EXPECT(!Table->GetCursor(Cursor));
 
-    TEST_SECTION("So does the first row once it matches its default again");
+    TEST_SECTION(TEXT("So does the first row once it matches its default again"));
     bLocationModified = false;
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(RevertCenterX, 10)));
     TEST_EXPECT(!Table->GetCursor(Cursor));
 
-    TEST_SECTION("A drag on the divider keeps the resize shape as it passes over an arrow on its way");
+    TEST_SECTION(TEXT("A drag on the divider keeps the resize shape as it passes over an arrow on its way"));
     bLocationModified = true;
     Table->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(100, 10)));
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(RevertCenterX, 10)));
@@ -285,10 +285,10 @@ bool PropertyTableFixedColumn_Test()
     Desc.LabelColumnWidth    = 80;
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
-    Table->AddRow("Location", nullptr);
-    Table->AddRow("Rotation", nullptr);
+    Table->AddRow(TEXT("Location"), nullptr);
+    Table->AddRow(TEXT("Rotation"), nullptr);
 
-    TEST_SECTION("A fixed width takes precedence over the fraction and stays put as the table is resized");
+    TEST_SECTION(TEXT("A fixed width takes precedence over the fraction and stays put as the table is resized"));
     const FRectangle Narrow(FIntVector2(0, 0), 200, 40);
     LayoutElement(Table, Narrow);
     TEST_EXPECT_EQ(Table->GetDividerRectangle(Narrow).Position.X, 80 - (FPropertyTable::DividerGrabWidth / 2));
@@ -297,7 +297,7 @@ bool PropertyTableFixedColumn_Test()
     LayoutElement(Table, Wide);
     TEST_EXPECT_EQ(Table->GetDividerRectangle(Wide).Position.X, 80 - (FPropertyTable::DividerGrabWidth / 2));
 
-    TEST_SECTION("Dragging it moves the width in pixels rather than reaching for the fraction");
+    TEST_SECTION(TEXT("Dragging it moves the width in pixels rather than reaching for the fraction"));
     TEST_EXPECT(Table->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(80, 20))).IsEventHandled());
 
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(120, 20)));
@@ -306,7 +306,7 @@ bool PropertyTableFixedColumn_Test()
 
     Table->OnMouseButtonUp(MakeButtonEvent(EInputEventType::MouseButtonUp, FIntVector2(120, 20)));
 
-    TEST_SECTION("The drag is held inside the same span of the width the fraction is");
+    TEST_SECTION(TEXT("The drag is held inside the same span of the width the fraction is"));
     TEST_EXPECT(Table->OnMouseButtonDown(MakeButtonEvent(EInputEventType::MouseButtonDown, FIntVector2(120, 20))).IsEventHandled());
 
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(4000, 20)));
@@ -336,50 +336,50 @@ bool PropertyTableToolTips_Test()
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
 
-    Table->AddRow("Location", nullptr).ToolTipText = "Where the actor sits in the world";
-    Table->AddRow("Rotation", nullptr);
-    Table->AddRow("Scale", nullptr).ToolTipText    = "How large the actor is drawn";
+    Table->AddRow(TEXT("Location"), nullptr).ToolTipText = TEXT("Where the actor sits in the world");
+    Table->AddRow(TEXT("Rotation"), nullptr);
+    Table->AddRow(TEXT("Scale"), nullptr).ToolTipText    = TEXT("How large the actor is drawn");
 
     LayoutElement(Table, FRectangle(FIntVector2(0, 0), 200, 60));
 
     FToolTipService& ToolTips = FToolTipService::Get();
 
-    TEST_SECTION("A point outside the rows belongs to no row");
+    TEST_SECTION(TEXT("A point outside the rows belongs to no row"));
     TEST_EXPECT_EQ(Table->FindRowAtPoint(FIntVector2(20, 10)), 0);
     TEST_EXPECT_EQ(Table->FindRowAtPoint(FIntVector2(20, 50)), 2);
     TEST_EXPECT_EQ(Table->FindRowAtPoint(FIntVector2(20, 80)), FPropertyTable::InvalidRowIndex);
     TEST_EXPECT_EQ(Table->FindRowAtPoint(FIntVector2(-20, 10)), FPropertyTable::InvalidRowIndex);
 
-    TEST_SECTION("Resting on a row with a tip asks for one on the table's behalf");
+    TEST_SECTION(TEXT("Resting on a row with a tip asks for one on the table's behalf"));
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(20, 10)));
     TEST_EXPECT(ToolTips.IsPending());
     TEST_EXPECT_EQ(ToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(Table));
 
-    TEST_SECTION("Moving within the same row leaves the request that is already waiting alone");
+    TEST_SECTION(TEXT("Moving within the same row leaves the request that is already waiting alone"));
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(60, 12)));
     TEST_EXPECT(ToolTips.IsPending());
 
-    TEST_SECTION("A row that explains itself takes the previous tip down and asks for nothing");
+    TEST_SECTION(TEXT("A row that explains itself takes the previous tip down and asks for nothing"));
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(20, 30)));
     TEST_EXPECT(!ToolTips.IsPending());
     TEST_EXPECT(ToolTips.GetOwner() == nullptr);
 
-    TEST_SECTION("Crossing onto another row with a tip asks again, so the text follows the cursor down the table");
+    TEST_SECTION(TEXT("Crossing onto another row with a tip asks again, so the text follows the cursor down the table"));
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(20, 50)));
     TEST_EXPECT(ToolTips.IsPending());
 
-    TEST_SECTION("Leaving the table takes the tip with it");
+    TEST_SECTION(TEXT("Leaving the table takes the tip with it"));
     Table->OnMouseLeft(MakeMoveEvent(FIntVector2(400, 400)));
     TEST_EXPECT(!ToolTips.IsPending());
 
-    TEST_SECTION("Refilling the table drops a tip belonging to a row that is about to go");
+    TEST_SECTION(TEXT("Refilling the table drops a tip belonging to a row that is about to go"));
     Table->OnMouseMove(MakeMoveEvent(FIntVector2(20, 10)));
     TEST_EXPECT(ToolTips.IsPending());
 
     Table->ClearRows();
     TEST_EXPECT(!ToolTips.IsPending());
 
-    TEST_SECTION("A label too long for its column falls back to raising its own full text");
+    TEST_SECTION(TEXT("A label too long for its column falls back to raising its own full text"));
     FPropertyTable::FDesc NarrowDesc;
     NarrowDesc.Font                = Font;
     NarrowDesc.RowHeight           = 20;
@@ -387,8 +387,8 @@ bool PropertyTableToolTips_Test()
 
     TSharedPtr<FPropertyTable> Narrow = FPropertyTable::Create(NarrowDesc);
 
-    Narrow->AddRow("Ambient occlusion strength", nullptr);
-    Narrow->AddRow("Scale", nullptr);
+    Narrow->AddRow(TEXT("Ambient occlusion strength"), nullptr);
+    Narrow->AddRow(TEXT("Scale"), nullptr);
 
     LayoutElement(Narrow, FRectangle(FIntVector2(0, 0), 200, 40));
 
@@ -396,7 +396,7 @@ bool PropertyTableToolTips_Test()
     TEST_EXPECT(ToolTips.IsPending());
     TEST_EXPECT_EQ(ToolTips.GetOwner(), StaticCastSharedPtr<FVisualElement>(Narrow));
 
-    TEST_SECTION("A label that fits still explains itself, so only the cut ones raise a tip");
+    TEST_SECTION(TEXT("A label that fits still explains itself, so only the cut ones raise a tip"));
     Narrow->OnMouseMove(MakeMoveEvent(FIntVector2(20, 30)));
     TEST_EXPECT(!ToolTips.IsPending());
 
@@ -417,21 +417,21 @@ bool PropertyTableLayout_Test()
 
     TSharedPtr<FPropertyTable> Table = FPropertyTable::Create(Desc);
 
-    TSharedPtr<FVisualElement> LocationEditor = CreateEditor("0, 0, 0", Font);
-    TSharedPtr<FVisualElement> RotationEditor = CreateEditor("0, 0, 90", Font);
-    TSharedPtr<FVisualElement> ScaleEditor    = CreateEditor("1, 1, 1", Font);
+    TSharedPtr<FVisualElement> LocationEditor = CreateEditor(TEXT("0, 0, 0"), Font);
+    TSharedPtr<FVisualElement> RotationEditor = CreateEditor(TEXT("0, 0, 90"), Font);
+    TSharedPtr<FVisualElement> ScaleEditor    = CreateEditor(TEXT("1, 1, 1"), Font);
 
-    Table->AddHeaderRow("Transform");
-    Table->AddRow("Location", LocationEditor);
-    Table->AddRow("Rotation", RotationEditor);
+    Table->AddHeaderRow(TEXT("Transform"));
+    Table->AddRow(TEXT("Location"), LocationEditor);
+    Table->AddRow(TEXT("Rotation"), RotationEditor);
 
-    FPropertyRow& ScaleRow = Table->AddRow("Scale", ScaleEditor);
+    FPropertyRow& ScaleRow = Table->AddRow(TEXT("Scale"), ScaleEditor);
     ScaleRow.IndentLevel   = 2;
 
     const FRectangle Bounds(FIntVector2(10, 20), 200, 80);
     LayoutElement(Table, Bounds);
 
-    TEST_SECTION("Every row sits one row height below the one before it, inside the bounds it was given");
+    TEST_SECTION(TEXT("Every row sits one row height below the one before it, inside the bounds it was given"));
     TEST_EXPECT_EQ(Table->GetRowRectangle(0, Bounds).Position, Bounds.Position);
     TEST_EXPECT_EQ(Table->GetRowRectangle(0, Bounds).Width, Bounds.Width);
     TEST_EXPECT_EQ(Table->GetRowRectangle(0, Bounds).Height, 20);
@@ -443,11 +443,11 @@ bool PropertyTableLayout_Test()
 
     TEST_EXPECT_EQ(Table->GetRowRectangle(3, Bounds).GetBottom(), Bounds.GetBottom());
 
-    TEST_SECTION("An index naming no row is an empty rectangle rather than a guess");
+    TEST_SECTION(TEXT("An index naming no row is an empty rectangle rather than a guess"));
     TEST_EXPECT(Table->GetRowRectangle(-1, Bounds).IsEmpty());
     TEST_EXPECT(Table->GetRowRectangle(Table->GetNumRows(), Bounds).IsEmpty());
 
-    TEST_SECTION("An editor is arranged into the right column, on the row that holds it, inset by the cell padding");
+    TEST_SECTION(TEXT("An editor is arranged into the right column, on the row that holds it, inset by the cell padding"));
     const FRectangle LocationRowBounds = Table->GetRowRectangle(1, Bounds);
     const FMargin&   CellPadding       = FUIStyle::GetDefault().PropertyTable.CellPadding;
 
@@ -456,7 +456,7 @@ bool PropertyTableLayout_Test()
     TEST_EXPECT(LocationEditor->GetContentRectangle().Position.X >= Table->GetDividerRectangle(Bounds).GetRight());
     TEST_EXPECT(LocationEditor->GetContentRectangle().GetRight() <= Bounds.GetRight());
 
-    TEST_SECTION("The editors are the table's children, in the order the rows hold them");
+    TEST_SECTION(TEXT("The editors are the table's children, in the order the rows hold them"));
     TArray<TSharedPtr<FVisualElement>> Children;
     Table->GetChildren(Children);
 
@@ -465,22 +465,22 @@ bool PropertyTableLayout_Test()
     TEST_EXPECT(Children[1] == RotationEditor);
     TEST_EXPECT(Children[2] == ScaleEditor);
 
-    TEST_SECTION("A point in the right column finds the editor under it");
+    TEST_SECTION(TEXT("A point in the right column finds the editor under it"));
     FElementPath Path;
     Table->HitTest(RotationEditor->GetContentRectangle().GetCenter(), Path);
 
     TEST_EXPECT(Path.GetElements().Size() >= 2);
     TEST_EXPECT(Path.GetElements().Last() == RotationEditor);
 
-    TEST_SECTION("Indenting a label moves it right and leaves the editor column where it was");
+    TEST_SECTION(TEXT("Indenting a label moves it right and leaves the editor column where it was"));
     TEST_EXPECT_EQ(ScaleEditor->GetContentRectangle().Position.X, RotationEditor->GetContentRectangle().Position.X);
     TEST_EXPECT_EQ(ScaleEditor->GetContentRectangle().Width, RotationEditor->GetContentRectangle().Width);
 
     FDrawCommandList Commands;
     DrawElement(Table, Commands);
 
-    const int32 RotationLabelIndex = Commands.FindTextCommand("Rotation");
-    const int32 ScaleLabelIndex    = Commands.FindTextCommand("Scale");
+    const int32 RotationLabelIndex = Commands.FindTextCommand(TEXT("Rotation"));
+    const int32 ScaleLabelIndex    = Commands.FindTextCommand(TEXT("Scale"));
     TEST_EXPECT(RotationLabelIndex != FDrawCommandList::InvalidIndex);
     TEST_EXPECT(ScaleLabelIndex != FDrawCommandList::InvalidIndex);
 

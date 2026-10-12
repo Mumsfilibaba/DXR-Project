@@ -15,7 +15,7 @@ bool MemoryStack_Test()
     FMemoryPagePool& Pool = FMemoryPagePool::Get();
     Pool.Flush();
 
-    TEST_SECTION("Allocations are aligned and do not overlap");
+    TEST_SECTION(TEXT("Allocations are aligned and do not overlap"));
     {
         FMemoryStack Stack;
         uint8* First  = Stack.PushBytes(24, 16);
@@ -28,7 +28,7 @@ bool MemoryStack_Test()
         TEST_EXPECT(Second >= First + 24);
     }
 
-    TEST_SECTION("A page holds exactly PageSize bytes before it spills");
+    TEST_SECTION(TEXT("A page holds exactly PageSize bytes before it spills"));
     {
         FMemoryStack Stack;
 
@@ -42,7 +42,7 @@ bool MemoryStack_Test()
         TEST_EXPECT_EQ(Stack.GetNumAllocatedBytes(), FMemoryStack::PageSize * 2);
     }
 
-    TEST_SECTION("A reset page comes back to the next stack");
+    TEST_SECTION(TEXT("A reset page comes back to the next stack"));
     {
         Pool.Flush();
 
@@ -60,7 +60,7 @@ bool MemoryStack_Test()
         TEST_EXPECT_EQ(Pool.GetNumFreePages(), 0);
     }
 
-    TEST_SECTION("Oversized allocations are not pooled");
+    TEST_SECTION(TEXT("Oversized allocations are not pooled"));
     {
         Pool.Flush();
         {
@@ -71,7 +71,7 @@ bool MemoryStack_Test()
         TEST_EXPECT_EQ(Pool.GetNumFreePages(), 0);
     }
 
-    TEST_SECTION("The free list is capped at MaxRetainedPages");
+    TEST_SECTION(TEXT("The free list is capped at MaxRetainedPages"));
     {
         Pool.Flush();
 
@@ -88,7 +88,7 @@ bool MemoryStack_Test()
         Pool.Flush();
     }
 
-    TEST_SECTION("A page nothing asked for over a whole window is pruned");
+    TEST_SECTION(TEXT("A page nothing asked for over a whole window is pruned"));
     {
         Pool.Flush();
         {
@@ -113,7 +113,7 @@ bool MemoryStack_Test()
         TEST_EXPECT_EQ(Pool.GetNumFreePages(), 0);
     }
 
-    TEST_SECTION("A page in demand every frame survives the window");
+    TEST_SECTION(TEXT("A page in demand every frame survives the window"));
     {
         Pool.Flush();
         {
@@ -140,7 +140,7 @@ bool MemoryStack_Test()
         TEST_EXPECT_EQ(Pool.GetNumFreePages(), 1);
     }
 
-    TEST_SECTION("Flush empties the pool");
+    TEST_SECTION(TEXT("Flush empties the pool"));
     {
         {
             FMemoryStack Stack;
@@ -154,7 +154,7 @@ bool MemoryStack_Test()
         TEST_EXPECT_EQ(Pool.GetNumPooledBytes(), 0);
     }
 
-    TEST_SECTION("IsEmpty tracks whether the stack holds a page");
+    TEST_SECTION(TEXT("IsEmpty tracks whether the stack holds a page"));
     {
         FMemoryStack Stack;
         TEST_EXPECT(Stack.IsEmpty());
@@ -166,7 +166,7 @@ bool MemoryStack_Test()
         TEST_EXPECT(Stack.IsEmpty());
     }
 
-    TEST_SECTION("Stacks on many threads do not hand out the same page twice");
+    TEST_SECTION(TEXT("Stacks on many threads do not hand out the same page twice"));
     {
         Pool.Flush();
 

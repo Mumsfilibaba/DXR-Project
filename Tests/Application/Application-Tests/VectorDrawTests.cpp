@@ -63,12 +63,12 @@ bool CornerRadiiTypes_Test()
 {
     TEST_BEGIN();
 
-    TEST_SECTION("A default radii rounds nothing");
+    TEST_SECTION(TEXT("A default radii rounds nothing"));
     const FCornerRadii Square;
     TEST_EXPECT(Square.IsZero());
     TEST_EXPECT_EQ(Square.GetLargest(), 0.0f);
 
-    TEST_SECTION("One number applies to every corner, which is what keeps the old call sites compiling");
+    TEST_SECTION(TEXT("One number applies to every corner, which is what keeps the old call sites compiling"));
     const FCornerRadii Uniform = 4.0f;
     TEST_EXPECT_EQ(Uniform.TopLeft, 4.0f);
     TEST_EXPECT_EQ(Uniform.TopRight, 4.0f);
@@ -76,7 +76,7 @@ bool CornerRadiiTypes_Test()
     TEST_EXPECT_EQ(Uniform.BottomLeft, 4.0f);
     TEST_EXPECT(!Uniform.IsZero());
 
-    TEST_SECTION("Top rounds the two corners a title bar shows and leaves the two it does not");
+    TEST_SECTION(TEXT("Top rounds the two corners a title bar shows and leaves the two it does not"));
     const FCornerRadii TitleBar = FCornerRadii::Top(6.0f);
     TEST_EXPECT_EQ(TitleBar.TopLeft, 6.0f);
     TEST_EXPECT_EQ(TitleBar.TopRight, 6.0f);
@@ -87,7 +87,7 @@ bool CornerRadiiTypes_Test()
     TEST_EXPECT_EQ(Footer.TopLeft, 0.0f);
     TEST_EXPECT_EQ(Footer.BottomRight, 6.0f);
 
-    TEST_SECTION("The four-argument form goes clockwise from the top-left");
+    TEST_SECTION(TEXT("The four-argument form goes clockwise from the top-left"));
     const FCornerRadii Mixed(1.0f, 2.0f, 3.0f, 4.0f);
     TEST_EXPECT_EQ(Mixed.TopLeft, 1.0f);
     TEST_EXPECT_EQ(Mixed.TopRight, 2.0f);
@@ -95,12 +95,12 @@ bool CornerRadiiTypes_Test()
     TEST_EXPECT_EQ(Mixed.BottomLeft, 4.0f);
     TEST_EXPECT_EQ(Mixed.GetLargest(), 4.0f);
 
-    TEST_SECTION("Clamping stops opposing corners meeting in the middle");
+    TEST_SECTION(TEXT("Clamping stops opposing corners meeting in the middle"));
     const FCornerRadii Clamped = FCornerRadii(50.0f).ClampToBounds(FRectangle(FIntVector2(0, 0), 100, 20));
     TEST_EXPECT_EQ(Clamped.TopLeft, 10.0f);
     TEST_EXPECT_EQ(Clamped.BottomRight, 10.0f);
 
-    TEST_SECTION("Equality compares every corner");
+    TEST_SECTION(TEXT("Equality compares every corner"));
     TEST_EXPECT(FCornerRadii(1.0f, 2.0f, 3.0f, 4.0f) == Mixed);
     TEST_EXPECT(FCornerRadii(1.0f, 2.0f, 3.0f, 5.0f) != Mixed);
 
@@ -113,7 +113,7 @@ bool VectorDrawCommands_Test()
 
     FDrawCommandList CommandList;
 
-    TEST_SECTION("Each emitter records its own command type");
+    TEST_SECTION(TEXT("Each emitter records its own command type"));
     const FVector2 Path[3] = { FVector2(0.0f, 0.0f), FVector2(10.0f, 10.0f), FVector2(20.0f, 0.0f) };
 
     CommandList.AddPolyline(0, TArrayView<const FVector2>(Path, 3), FFloatColor::White, 2.0f);
@@ -126,7 +126,7 @@ bool VectorDrawCommands_Test()
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::BoxOutline), 1);
     TEST_EXPECT_EQ(CommandList.CountCommandsOfType(EDrawCommandType::Image), 1);
 
-    TEST_SECTION("The points live in one pool and each command names its own slice of it");
+    TEST_SECTION(TEXT("The points live in one pool and each command names its own slice of it"));
     TEST_EXPECT_EQ(CommandList.GetPoints().Size(), 6);
     TEST_EXPECT_EQ(CommandList[0].PayloadOffset, 0);
     TEST_EXPECT_EQ(CommandList[0].PayloadCount, 3);
@@ -137,11 +137,11 @@ bool VectorDrawCommands_Test()
     TEST_EXPECT_EQ(FirstPoints.Size(), 3);
     TEST_EXPECT(FirstPoints[1] == FVector2(10.0f, 10.0f));
 
-    TEST_SECTION("A command that carries no points names an empty slice");
+    TEST_SECTION(TEXT("A command that carries no points names an empty slice"));
     TEST_EXPECT_EQ(CommandList[2].PayloadCount, 0);
     TEST_EXPECT(CommandList.GetCommandPoints(CommandList[2]).IsEmpty());
 
-    TEST_SECTION("A degenerate primitive is refused rather than recorded and skipped later");
+    TEST_SECTION(TEXT("A degenerate primitive is refused rather than recorded and skipped later"));
     FDrawCommandList DegenerateList;
     DegenerateList.AddPolyline(0, TArrayView<const FVector2>(Path, 1), FFloatColor::White, 2.0f);
     DegenerateList.AddPolyline(0, TArrayView<const FVector2>(Path, 3), FFloatColor::White, 0.0f);
@@ -151,7 +151,7 @@ bool VectorDrawCommands_Test()
     TEST_EXPECT(DegenerateList.IsEmpty());
     TEST_EXPECT(DegenerateList.GetPoints().IsEmpty());
 
-    TEST_SECTION("Reset drops the point pool with the commands");
+    TEST_SECTION(TEXT("Reset drops the point pool with the commands"));
     CommandList.Reset();
     TEST_EXPECT(CommandList.IsEmpty());
     TEST_EXPECT(CommandList.GetPoints().IsEmpty());
@@ -166,7 +166,7 @@ bool VectorDrawPolyline_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    TEST_SECTION("An open two-point stroke is one quad, whatever its angle");
+    TEST_SECTION(TEXT("An open two-point stroke is one quad, whatever its angle"));
     FDrawCommandList LineList;
     LineList.AddLine(0, FVector2(0.0f, 10.0f), FVector2(100.0f, 10.0f), FFloatColor::White, 4.0f);
     DrawData.BuildFromCommandList(LineList);
@@ -174,14 +174,14 @@ bool VectorDrawPolyline_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 6);
 
-    TEST_SECTION("The stroke is centred on the path and is exactly as wide as it was asked to be");
+    TEST_SECTION(TEXT("The stroke is centred on the path and is exactly as wide as it was asked to be"));
     FGeometryExtent Extent = MeasureGeometry(DrawData);
     TEST_EXPECT(IsNearly(Extent.MinY, 8.0f));
     TEST_EXPECT(IsNearly(Extent.MaxY, 12.0f));
     TEST_EXPECT(IsNearly(Extent.MinX, 0.0f));
     TEST_EXPECT(IsNearly(Extent.MaxX, 100.0f));
 
-    TEST_SECTION("A diagonal stroke keeps its width measured across the line rather than along an axis");
+    TEST_SECTION(TEXT("A diagonal stroke keeps its width measured across the line rather than along an axis"));
     FDrawCommandList DiagonalList;
     DiagonalList.AddLine(0, FVector2(0.0f, 0.0f), FVector2(100.0f, 100.0f), FFloatColor::White, 4.0f);
     DrawData.BuildFromCommandList(DiagonalList);
@@ -191,7 +191,7 @@ bool VectorDrawPolyline_Test()
     const FVector2 Across = DrawData.GetVertices()[0].Position - DrawData.GetVertices()[1].Position;
     TEST_EXPECT(IsNearly(Across.GetLength(), 4.0f));
 
-    TEST_SECTION("Every extra point adds one quad, and the joins share their vertices");
+    TEST_SECTION(TEXT("Every extra point adds one quad, and the joins share their vertices"));
     const FVector2 Path[4] =
     {
         FVector2(0.0f, 0.0f),
@@ -207,7 +207,7 @@ bool VectorDrawPolyline_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 3 * 6);
 
-    TEST_SECTION("Closing the run joins the last point back to the first, which is one more segment");
+    TEST_SECTION(TEXT("Closing the run joins the last point back to the first, which is one more segment"));
     FDrawCommandList ClosedList;
     ClosedList.AddPolyline(0, TArrayView<const FVector2>(Path, 4), FFloatColor::White, 2.0f, true);
     DrawData.BuildFromCommandList(ClosedList);
@@ -215,12 +215,12 @@ bool VectorDrawPolyline_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 8);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 4 * 6);
 
-    TEST_SECTION("A right-angle join miters, so the outer corner reaches the corner of the path");
+    TEST_SECTION(TEXT("A right-angle join miters, so the outer corner reaches the corner of the path"));
     Extent = MeasureGeometry(DrawData);
     TEST_EXPECT(IsNearly(Extent.MinX, -1.0f));
     TEST_EXPECT(IsNearly(Extent.MaxX, 51.0f));
 
-    TEST_SECTION("A doubled point does not produce a not-a-number, since the direction is degenerate");
+    TEST_SECTION(TEXT("A doubled point does not produce a not-a-number, since the direction is degenerate"));
     const FVector2 Repeated[3] = { FVector2(0.0f, 0.0f), FVector2(0.0f, 0.0f), FVector2(20.0f, 0.0f) };
 
     FDrawCommandList RepeatedList;
@@ -233,7 +233,7 @@ bool VectorDrawPolyline_Test()
         TEST_EXPECT(Vertex.Position.Y == Vertex.Position.Y);
     }
 
-    TEST_SECTION("A stroke shares the untextured batch with the boxes around it");
+    TEST_SECTION(TEXT("A stroke shares the untextured batch with the boxes around it"));
     FDrawCommandList MixedList;
     MixedList.AddBox(0, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White);
     MixedList.AddLine(1, FVector2(0.0f, 0.0f), FVector2(10.0f, 10.0f), FFloatColor::White, 1.0f);
@@ -252,7 +252,7 @@ bool VectorDrawConvexPolygon_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    TEST_SECTION("A triangle is three vertices and one face");
+    TEST_SECTION(TEXT("A triangle is three vertices and one face"));
     FDrawCommandList TriangleList;
     TriangleList.AddTriangle(0, FVector2(0.0f, 0.0f), FVector2(10.0f, 0.0f), FVector2(5.0f, 10.0f), FFloatColor::White);
     DrawData.BuildFromCommandList(TriangleList);
@@ -260,7 +260,7 @@ bool VectorDrawConvexPolygon_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 3);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 3);
 
-    TEST_SECTION("The fan turns around the first point, so N points make N minus two faces");
+    TEST_SECTION(TEXT("The fan turns around the first point, so N points make N minus two faces"));
     const FVector2 Quad[4] =
     {
         FVector2(0.0f, 0.0f),
@@ -278,10 +278,10 @@ bool VectorDrawConvexPolygon_Test()
     TEST_EXPECT_EQ(DrawData.GetIndices()[0], 0u);
     TEST_EXPECT_EQ(DrawData.GetIndices()[3], 0u);
 
-    TEST_SECTION("The vertices land exactly where the points were, with no rounding to the pixel grid");
+    TEST_SECTION(TEXT("The vertices land exactly where the points were, with no rounding to the pixel grid"));
     TEST_EXPECT(DrawData.GetVertices()[2].Position == FVector2(10.0f, 10.0f));
 
-    TEST_SECTION("The tint reaches every vertex");
+    TEST_SECTION(TEXT("The tint reaches every vertex"));
     FDrawCommandList RedList;
     RedList.AddTriangle(0, FVector2(0.0f, 0.0f), FVector2(10.0f, 0.0f), FVector2(5.0f, 10.0f), FFloatColor(1.0f, 0.0f, 0.0f, 1.0f));
     DrawData.BuildFromCommandList(RedList);
@@ -301,7 +301,7 @@ bool VectorDrawCircles_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    TEST_SECTION("A filled circle is one fan with the segment count it was asked for");
+    TEST_SECTION(TEXT("A filled circle is one fan with the segment count it was asked for"));
     FDrawCommandList FilledList;
     FilledList.AddCircleFilled(0, FVector2(50.0f, 50.0f), 20.0f, FFloatColor::White, 16);
     DrawData.BuildFromCommandList(FilledList);
@@ -309,14 +309,14 @@ bool VectorDrawCircles_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 16);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 14 * 3);
 
-    TEST_SECTION("Every point sits on the circle");
+    TEST_SECTION(TEXT("Every point sits on the circle"));
     for (const FUIVertex& Vertex : DrawData.GetVertices())
     {
         const FVector2 Offset = Vertex.Position - FVector2(50.0f, 50.0f);
         TEST_EXPECT(IsNearly(Offset.GetLength(), 20.0f, 0.05f));
     }
 
-    TEST_SECTION("An outline is a closed ring, so it has two vertices and one quad per segment");
+    TEST_SECTION(TEXT("An outline is a closed ring, so it has two vertices and one quad per segment"));
     FDrawCommandList OutlineList;
     OutlineList.AddCircle(0, FVector2(50.0f, 50.0f), 20.0f, FFloatColor::White, 2.0f, 16);
     DrawData.BuildFromCommandList(OutlineList);
@@ -324,12 +324,12 @@ bool VectorDrawCircles_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 32);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 16 * 6);
 
-    TEST_SECTION("The ring straddles the radius rather than sitting inside or outside it");
+    TEST_SECTION(TEXT("The ring straddles the radius rather than sitting inside or outside it"));
     const FGeometryExtent Extent = MeasureGeometry(DrawData);
     TEST_EXPECT(IsNearly(Extent.MinX, 29.0f, 0.2f));
     TEST_EXPECT(IsNearly(Extent.MaxX, 71.0f, 0.2f));
 
-    TEST_SECTION("A bigger circle earns more segments when the caller does not choose");
+    TEST_SECTION(TEXT("A bigger circle earns more segments when the caller does not choose"));
     FDrawCommandList SmallList;
     SmallList.AddCircleFilled(0, FVector2(0.0f, 0.0f), 4.0f, FFloatColor::White);
     DrawData.BuildFromCommandList(SmallList);
@@ -344,7 +344,7 @@ bool VectorDrawCircles_Test()
     TEST_EXPECT(SmallVertexCount >= FDrawCommandList::MinCircleSegments);
     TEST_EXPECT(LargeVertexCount <= FDrawCommandList::MaxCircleSegments);
 
-    TEST_SECTION("A rotation arc walks between two angles rather than all the way round");
+    TEST_SECTION(TEXT("A rotation arc walks between two angles rather than all the way round"));
     FDrawCommandList ArcList;
     ArcList.AddArc(0, FVector2(0.0f, 0.0f), 10.0f, 0.0f, Math::Constants::HalfPI, FFloatColor::White, 1.0f, 8);
     DrawData.BuildFromCommandList(ArcList);
@@ -352,7 +352,7 @@ bool VectorDrawCircles_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 9 * 2);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 8 * 6);
 
-    TEST_SECTION("The drag wedge is a fan led by the center, which closes it back through the pivot");
+    TEST_SECTION(TEXT("The drag wedge is a fan led by the center, which closes it back through the pivot"));
     FDrawCommandList WedgeList;
     WedgeList.AddArcFilled(0, FVector2(0.0f, 0.0f), 10.0f, 0.0f, Math::Constants::HalfPI, FFloatColor::White, 8);
     DrawData.BuildFromCommandList(WedgeList);
@@ -360,7 +360,7 @@ bool VectorDrawCircles_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 1 + 9);
     TEST_EXPECT(DrawData.GetVertices()[0].Position == FVector2(0.0f, 0.0f));
 
-    TEST_SECTION("A circle with no radius draws nothing");
+    TEST_SECTION(TEXT("A circle with no radius draws nothing"));
     FDrawCommandList EmptyList;
     EmptyList.AddCircle(0, FVector2(0.0f, 0.0f), 0.0f, FFloatColor::White, 1.0f);
     EmptyList.AddCircleFilled(0, FVector2(0.0f, 0.0f), -5.0f, FFloatColor::White);
@@ -376,26 +376,26 @@ bool VectorDrawBezier_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    TEST_SECTION("A bezier is flattened into the number of segments it was asked for");
+    TEST_SECTION(TEXT("A bezier is flattened into the number of segments it was asked for"));
     FDrawCommandList CurveList;
     CurveList.AddBezier(0, FVector2(0.0f, 0.0f), FVector2(50.0f, 0.0f), FVector2(50.0f, 100.0f), FVector2(100.0f, 100.0f), FFloatColor::White, 2.0f, 16);
 
     TEST_EXPECT_EQ(CurveList.CountCommandsOfType(EDrawCommandType::Polyline), 1);
     TEST_EXPECT_EQ(CurveList[0].PayloadCount, 17);
 
-    TEST_SECTION("The curve starts and ends on its endpoints");
+    TEST_SECTION(TEXT("The curve starts and ends on its endpoints"));
     const TArrayView<const FVector2> Points = CurveList.GetCommandPoints(CurveList[0]);
     TEST_EXPECT(Points[0] == FVector2(0.0f, 0.0f));
     TEST_EXPECT(Points[Points.Size() - 1] == FVector2(100.0f, 100.0f));
 
-    TEST_SECTION("It stays inside the hull of its control points, which is what makes a link readable");
+    TEST_SECTION(TEXT("It stays inside the hull of its control points, which is what makes a link readable"));
     for (const FVector2& Point : Points)
     {
         TEST_EXPECT(Point.X >= -GTolerance && Point.X <= 100.0f + GTolerance);
         TEST_EXPECT(Point.Y >= -GTolerance && Point.Y <= 100.0f + GTolerance);
     }
 
-    TEST_SECTION("A straight control polygon flattens onto the straight line between the ends");
+    TEST_SECTION(TEXT("A straight control polygon flattens onto the straight line between the ends"));
     FDrawCommandList StraightList;
     StraightList.AddBezier(0, FVector2(0.0f, 0.0f), FVector2(25.0f, 0.0f), FVector2(75.0f, 0.0f), FVector2(100.0f, 0.0f), FFloatColor::White, 1.0f, 8);
 
@@ -404,7 +404,7 @@ bool VectorDrawBezier_Test()
         TEST_EXPECT(IsNearly(Point.Y, 0.0f));
     }
 
-    TEST_SECTION("A longer curve earns more segments when the caller does not choose");
+    TEST_SECTION(TEXT("A longer curve earns more segments when the caller does not choose"));
     FDrawCommandList ShortList;
     ShortList.AddBezier(0, FVector2(0.0f, 0.0f), FVector2(2.0f, 0.0f), FVector2(4.0f, 0.0f), FVector2(6.0f, 0.0f), FFloatColor::White, 1.0f);
 
@@ -415,7 +415,7 @@ bool VectorDrawBezier_Test()
     TEST_EXPECT(ShortList[0].PayloadCount >= FDrawCommandList::MinBezierSegments + 1);
     TEST_EXPECT(LongList[0].PayloadCount <= FDrawCommandList::MaxBezierSegments + 1);
 
-    TEST_SECTION("The flattened curve tessellates as an ordinary stroke");
+    TEST_SECTION(TEXT("The flattened curve tessellates as an ordinary stroke"));
     DrawData.BuildFromCommandList(CurveList);
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 17 * 2);
     TEST_EXPECT_EQ(DrawData.GetIndices().Size(), 16 * 6);
@@ -432,7 +432,7 @@ bool VectorDrawPerCornerRounding_Test()
 
     const FRectangle Bounds(FIntVector2(0, 0), 100, 40);
 
-    TEST_SECTION("A box rounded on the top two corners keeps the bottom two square");
+    TEST_SECTION(TEXT("A box rounded on the top two corners keeps the bottom two square"));
     FDrawCommandList TitleBarList;
     TitleBarList.AddBox(0, Bounds, FFloatColor::White, FCornerRadii::Top(8.0f));
     DrawData.BuildFromCommandList(TitleBarList);
@@ -444,7 +444,7 @@ bool VectorDrawPerCornerRounding_Test()
     TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusBL, 0.0f);
     TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusBR, 0.0f);
 
-    TEST_SECTION("A uniformly rounded box still uses one quad, with every radius set");
+    TEST_SECTION(TEXT("A uniformly rounded box still uses one quad, with every radius set"));
     FDrawCommandList UniformList;
     UniformList.AddBox(0, Bounds, FFloatColor::White, FCornerRadii(8.0f));
     DrawData.BuildFromCommandList(UniformList);
@@ -453,14 +453,14 @@ bool VectorDrawPerCornerRounding_Test()
     TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusTL, 8.0f);
     TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusBR, 8.0f);
 
-    TEST_SECTION("The shape still fills the whole rectangle");
+    TEST_SECTION(TEXT("The shape still fills the whole rectangle"));
     const FGeometryExtent Extent = MeasureGeometry(DrawData);
     TEST_EXPECT(IsNearly(Extent.MinX, 0.0f));
     TEST_EXPECT(IsNearly(Extent.MinY, 0.0f));
     TEST_EXPECT(IsNearly(Extent.MaxX, 100.0f));
     TEST_EXPECT(IsNearly(Extent.MaxY, 40.0f));
 
-    TEST_SECTION("A radius past half the shorter side is clamped rather than turned inside out");
+    TEST_SECTION(TEXT("A radius past half the shorter side is clamped rather than turned inside out"));
     FDrawCommandList OversizedList;
     OversizedList.AddBox(0, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White, FCornerRadii(0.0f, 50.0f, 0.0f, 0.0f));
     DrawData.BuildFromCommandList(OversizedList);
@@ -484,7 +484,7 @@ bool VectorDrawBoxOutline_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    TEST_SECTION("A square outline is one SDF stroke quad");
+    TEST_SECTION(TEXT("A square outline is one SDF stroke quad"));
     FDrawCommandList OutlineList;
     OutlineList.AddBoxOutline(0, FRectangle(FIntVector2(0, 0), 100, 40), FFloatColor::White, 2.0f);
     DrawData.BuildFromCommandList(OutlineList);
@@ -494,18 +494,18 @@ bool VectorDrawBoxOutline_Test()
     TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].Thickness, 2.0f);
     TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].ShapeKind, FUIDrawData::ShapeKindStroke);
 
-    TEST_SECTION("The stroke stays inside the rectangle it was asked to outline");
+    TEST_SECTION(TEXT("The stroke stays inside the rectangle it was asked to outline"));
     const FGeometryExtent Extent = MeasureGeometry(DrawData);
     TEST_EXPECT(Extent.MinX >= -GTolerance);
     TEST_EXPECT(Extent.MinY >= -GTolerance);
     TEST_EXPECT(Extent.MaxX <= 100.0f + GTolerance);
     TEST_EXPECT(Extent.MaxY <= 40.0f + GTolerance);
 
-    TEST_SECTION("It reaches the edges rather than hugging the middle");
+    TEST_SECTION(TEXT("It reaches the edges rather than hugging the middle"));
     TEST_EXPECT(IsNearly(Extent.MinX, 0.0f));
     TEST_EXPECT(IsNearly(Extent.MaxX, 100.0f));
 
-    TEST_SECTION("A one pixel outline lands on the outermost row rather than straddling the edge");
+    TEST_SECTION(TEXT("A one pixel outline lands on the outermost row rather than straddling the edge"));
     FDrawCommandList HairlineList;
     HairlineList.AddBoxOutline(0, FRectangle(FIntVector2(0, 0), 100, 40), FFloatColor::White, 1.0f);
     DrawData.BuildFromCommandList(HairlineList);
@@ -518,7 +518,7 @@ bool VectorDrawBoxOutline_Test()
     TEST_EXPECT(IsNearly(HairlineExtent.MinX, 0.0f));
     TEST_EXPECT(IsNearly(HairlineExtent.MaxY, 40.0f));
 
-    TEST_SECTION("A rounded outline follows the same corners the fill does");
+    TEST_SECTION(TEXT("A rounded outline follows the same corners the fill does"));
     FDrawCommandList RoundedList;
     RoundedList.AddBoxOutline(0, FRectangle(FIntVector2(0, 0), 100, 40), FFloatColor::White, 2.0f, FCornerRadii(6.0f));
     DrawData.BuildFromCommandList(RoundedList);
@@ -526,7 +526,7 @@ bool VectorDrawBoxOutline_Test()
     TEST_EXPECT_EQ(GetShapeVertices(DrawData).Size(), 4);
     TEST_EXPECT_EQ(GetShapeVertices(DrawData)[0].RadiusTL, 6.0f);
 
-    TEST_SECTION("An outline thicker than the rectangle fills it instead of folding through itself");
+    TEST_SECTION(TEXT("An outline thicker than the rectangle fills it instead of folding through itself"));
     FDrawCommandList ThickList;
     ThickList.AddBoxOutline(0, FRectangle(FIntVector2(0, 0), 10, 10), FFloatColor::White, 40.0f);
     DrawData.BuildFromCommandList(ThickList);
@@ -544,7 +544,7 @@ bool VectorDrawClipCulling_Test()
     FUIDrawData DrawData;
     DrawData.SetAntiAliasingEnabled(false);
 
-    TEST_SECTION("A stroke that misses the region is dropped rather than scissored away");
+    TEST_SECTION(TEXT("A stroke that misses the region is dropped rather than scissored away"));
     const FVector2 FarPath[2] = { FVector2(500.0f, 500.0f), FVector2(600.0f, 600.0f) };
 
     FDrawCommandList CulledList;
@@ -555,7 +555,7 @@ bool VectorDrawClipCulling_Test()
     DrawData.BuildFromCommandList(CulledList);
     TEST_EXPECT(DrawData.IsEmpty());
 
-    TEST_SECTION("One that only overlaps it is kept whole, since the scissor takes care of the rest");
+    TEST_SECTION(TEXT("One that only overlaps it is kept whole, since the scissor takes care of the rest"));
     const FVector2 NearPath[2] = { FVector2(40.0f, 40.0f), FVector2(140.0f, 140.0f) };
 
     FDrawCommandList OverlappingList;
@@ -567,7 +567,7 @@ bool VectorDrawClipCulling_Test()
     TEST_EXPECT_EQ(DrawData.GetVertices().Size(), 4);
     TEST_EXPECT(DrawData.GetBatches()[0].bIsClipped);
 
-    TEST_SECTION("A polygon is culled the same way");
+    TEST_SECTION(TEXT("A polygon is culled the same way"));
     const FVector2 FarTriangle[3] = { FVector2(500.0f, 500.0f), FVector2(520.0f, 500.0f), FVector2(510.0f, 520.0f) };
 
     FDrawCommandList PolygonList;
@@ -578,7 +578,7 @@ bool VectorDrawClipCulling_Test()
     DrawData.BuildFromCommandList(PolygonList);
     TEST_EXPECT(DrawData.IsEmpty());
 
-    TEST_SECTION("A stroke just outside the edge survives, since half its width spills back over");
+    TEST_SECTION(TEXT("A stroke just outside the edge survives, since half its width spills back over"));
     const FVector2 EdgePath[2] = { FVector2(10.0f, -2.0f), FVector2(40.0f, -2.0f) };
 
     FDrawCommandList EdgeList;

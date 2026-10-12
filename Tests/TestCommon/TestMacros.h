@@ -9,7 +9,7 @@
     { \
         if (!(Condition)) \
         { \
-            LOG_ERROR("[TEST FAILED] Condition='%s' (%s:%d)", #Condition, __FILE__, __LINE__); \
+            LOG_ERROR("[TEST FAILED] Condition='%s' (%s:%d)", TEXT(#Condition), TEXT(__FILE__), __LINE__); \
             return false; \
         } \
     } while (false)
@@ -20,7 +20,7 @@
     { \
         if (!((Lhs) == (Rhs))) \
         { \
-            LOG_ERROR("[TEST FAILED] '%s' != '%s' (%s:%d)", #Lhs, #Rhs, __FILE__, __LINE__); \
+            LOG_ERROR("[TEST FAILED] '%s' != '%s' (%s:%d)", TEXT(#Lhs), TEXT(#Rhs), TEXT(__FILE__), __LINE__); \
             return false; \
         } \
     } while (false)
@@ -29,11 +29,11 @@
 #define TEST_FAILED() \
     do \
     { \
-        LOG_ERROR("[TEST FAILED] (%s:%d)", __FILE__, __LINE__); \
+        LOG_ERROR("[TEST FAILED] (%s:%d)", TEXT(__FILE__), __LINE__); \
         return false; \
     } while (false)
 
-#define TEST_BEGIN()       bool _bTestPassed = true; const CHAR_T* _TestSection = ""
+#define TEST_BEGIN()       bool _bTestPassed = true; const CHAR_T* _TestSection = TEXT("")
 #define TEST_SECTION(Name) _TestSection = (Name)
 #define TEST_END()         return _bTestPassed
 
@@ -42,7 +42,7 @@
     { \
         if (!(Condition)) \
         { \
-            LOG_ERROR("[FAIL] %s : '%s' (%s:%d)", _TestSection, #Condition, __FILE__, __LINE__); \
+            LOG_ERROR("[FAIL] %s : '%s' (%s:%d)", _TestSection, TEXT(#Condition), TEXT(__FILE__), __LINE__); \
             _bTestPassed = false; \
         } \
     } while (false)
@@ -52,7 +52,7 @@
     { \
         if (!(Condition)) \
         { \
-            LOG_ERROR("[FAIL] %s : '%s' (%s:%d)", _TestSection, #Condition, __FILE__, __LINE__); \
+            LOG_ERROR("[FAIL] %s : '%s' (%s:%d)", _TestSection, TEXT(#Condition), TEXT(__FILE__), __LINE__); \
             _bTestPassed = false; \
             return; \
         } \
@@ -63,7 +63,7 @@
     { \
         if (!((Lhs) == (Rhs))) \
         { \
-            LOG_ERROR("[FAIL] %s : '%s' != '%s' (%s:%d)", _TestSection, #Lhs, #Rhs, __FILE__, __LINE__); \
+            LOG_ERROR("[FAIL] %s : '%s' != '%s' (%s:%d)", _TestSection, TEXT(#Lhs), TEXT(#Rhs), TEXT(__FILE__), __LINE__); \
             _bTestPassed = false; \
         } \
     } while (false)

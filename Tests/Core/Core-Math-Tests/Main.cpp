@@ -24,32 +24,32 @@ bool TestCameraBasis();
 
 static int32 RunMathTests()
 {
-    TestHarness::Initialize("TestResults_Core.log");
+    TestHarness::Initialize(TEXT("TestResults_Core.log"));
     LOG_INFO("=== Math Library Tests ===");
 
-    RUN_TEST("IntPoint2", TestIntPoint2());
-    RUN_TEST("IntPoint3", TestIntPoint3());
+    RUN_TEST(TEXT("IntVector2"), TestIntPoint2());
+    RUN_TEST(TEXT("IntVector3"), TestIntPoint3());
 
-    RUN_TEST("Int16Vector2", TestInt16Vector2());
-    RUN_TEST("Int16Vector3", TestInt16Vector3());
+    RUN_TEST(TEXT("Int16Vector2"), TestInt16Vector2());
+    RUN_TEST(TEXT("Int16Vector3"), TestInt16Vector3());
 
-    RUN_TEST("Vector2", TestVector2());
-    RUN_TEST("Vector3", TestVector3());
-    RUN_TEST("Vector4", TestVector4());
+    RUN_TEST(TEXT("Vector2"), TestVector2());
+    RUN_TEST(TEXT("Vector3"), TestVector3());
+    RUN_TEST(TEXT("Vector4"), TestVector4());
 
-    RUN_TEST("Matrix2", TestMatrix2());
-    RUN_TEST("Matrix3", TestMatrix3());
-    RUN_TEST("Matrix4", TestMatrix4());
+    RUN_TEST(TEXT("Matrix2"), TestMatrix2());
+    RUN_TEST(TEXT("Matrix3"), TestMatrix3());
+    RUN_TEST(TEXT("Matrix4"), TestMatrix4());
 
-    RUN_TEST("Quaternion", TestQuaternion());
+    RUN_TEST(TEXT("Quaternion"), TestQuaternion());
 
-    RUN_TEST("FormatStructs", TestFormatStructs());
+    RUN_TEST(TEXT("FormatStructs"), TestFormatStructs());
 
-    RUN_TEST("CameraBasis", TestCameraBasis());
+    RUN_TEST(TEXT("CameraBasis"), TestCameraBasis());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();
     return ExitCode;
 }
 
-IMPLEMENT_PROGRAM_MAIN("Core-Math-Tests", RunMathTests);
+IMPLEMENT_PROGRAM_MAIN(TEXT("Core-Math-Tests"), RunMathTests);
