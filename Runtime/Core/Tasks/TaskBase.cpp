@@ -1,5 +1,6 @@
 #include "Core/Tasks/TaskBase.h"
 #include "Core/Tasks/TaskEvent.h"
+#include "Core/Memory/MemoryProfiler.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
@@ -10,6 +11,10 @@ FGraphTask::FGraphTask(const CHAR* InDebugName, TFunction<void()>&& InBody, ENam
     , Lane(InLane)
     , Priority(InPriority)
     , CompletionEvent(MakeSharedPtr<FTaskEvent>())
+#if ENABLE_MEMORY_PROFILER
+    , MemoryTag(FMemoryProfiler::Get().GetCurrentTag())
+    , MemoryScope(FMemoryProfiler::Get().GetCurrentScope())
+#endif
 {
 }
 
@@ -23,6 +28,11 @@ void FGraphTask::Execute()
     if (Body)
     {
         TRACE_SCOPE(DebugName);
+
+        #if ENABLE_MEMORY_PROFILER
+        FMemoryContextScope MemoryContext(MemoryTag, MemoryScope);
+        #endif
+
         Body();
     }
 

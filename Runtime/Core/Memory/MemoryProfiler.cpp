@@ -152,6 +152,15 @@ void FMemoryProfiler::PopScope(FMemoryScopeId PreviousScope)
     }
 }
 
+FMemoryScopeId FMemoryProfiler::SetCurrentScope(FMemoryScopeId Scope)
+{
+    FMemoryThreadState& State = *ThreadState;
+
+    const FMemoryScopeId PreviousScope = State.ScopeNode;
+    State.ScopeNode = Scope;
+    return PreviousScope;
+}
+
 FMemoryNameId FMemoryProfiler::GetCurrentTag()
 {
     const FMemoryThreadState* State = ThreadState.TryGet();

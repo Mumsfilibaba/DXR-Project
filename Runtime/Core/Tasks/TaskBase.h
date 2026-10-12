@@ -3,6 +3,7 @@
 #include "Core/Tasks/TaskTypes.h"
 #include "Core/Containers/Function.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Memory/MemoryProfilerTypes.h"
 #include "Core/Threading/Atomic/AtomicInt.h"
 
 class FTaskEvent;
@@ -41,4 +42,9 @@ private:
     ENamedThread::Type     Lane;
     ETaskPriority::Type    Priority;
     TSharedPtr<FTaskEvent> CompletionEvent;
+
+#if ENABLE_MEMORY_PROFILER
+    FMemoryNameId          MemoryTag;
+    FMemoryScopeId         MemoryScope;
+#endif
 };

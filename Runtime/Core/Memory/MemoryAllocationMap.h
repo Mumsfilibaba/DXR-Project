@@ -30,11 +30,13 @@ enum class EMemoryMapInsertResult : uint8
 class CORE_API FMemoryAllocationMap
 {
 public:
-    FMemoryAllocationMap(const FMemoryAllocationMap&) = delete;
-    FMemoryAllocationMap& operator=(const FMemoryAllocationMap&) = delete;
 
     /** @brief How many independently locked shards the blocks are spread over */
     static constexpr int32 NumShards = 64;
+
+public:
+    FMemoryAllocationMap(const FMemoryAllocationMap&) = delete;
+    FMemoryAllocationMap& operator=(const FMemoryAllocationMap&) = delete;
 
     /** @brief Creates an empty map whose tables are mapped from OS pages as each shard first needs one */
     constexpr FMemoryAllocationMap() noexcept

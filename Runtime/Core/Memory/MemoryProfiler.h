@@ -46,6 +46,10 @@ struct CORE_API FMemoryProfilerStateAllocator
     static int32 GetNumLiveStates();
 };
 
+class FMemoryProfiler;
+
+extern CORE_API FMemoryProfiler GMemoryProfiler;
+
 struct FMemoryReallocTicket
 {
     /** @brief The entry taken out of the map for the block being reallocated */
@@ -61,13 +65,16 @@ struct FMemoryReallocTicket
 class CORE_API FMemoryProfiler
 {
 public:
-    FMemoryProfiler(const FMemoryProfiler&) = delete;
-    FMemoryProfiler& operator=(const FMemoryProfiler&) = delete;
 
     /** @return Returns the process-wide profiler, which is constant-initialized and so usable before main */
-    static FMemoryProfiler& Get();
+    static FORCEINLINE FMemoryProfiler& Get()
+    {
+        return GMemoryProfiler;
+    }
 
 public:
+    FMemoryProfiler(const FMemoryProfiler&) = delete;
+    FMemoryProfiler& operator=(const FMemoryProfiler&) = delete;
 
     /** @brief Creates the profiler with no state, so it can be constant-initialized */
     constexpr FMemoryProfiler() noexcept
@@ -80,12 +87,6 @@ public:
         , ScopeCounters(nullptr)
         , bTrackingEnabled(ENABLE_MEMORY_PROFILER != 0)
     {
-    }
-
-    /** @return Returns whether allocations are tracked, which costs Memory one relaxed load when they are not */
-    FORCEINLINE bool IsTrackingEnabled() const
-    {
-        return bTrackingEnabled.Load(EMemoryOrder::Relaxed);
     }
 
     /**
@@ -177,6 +178,15 @@ public:
      */
     void PopScope(FMemoryScopeId PreviousScope);
 
+    /**
+     * @brief Makes an existing scope node the calling thread's current scope, which is how work queued on one thread
+     * keeps the scope it was queued in when another thread runs it.
+     *
+     * @param Scope The node to make current
+     * @return Returns the scope that was current before, which a later call restores
+     */
+    FMemoryScopeId SetCurrentScope(FMemoryScopeId Scope);
+
     /** @return Returns the calling thread's current module tag, MEMORY_NAME_UNTAGGED when none is pushed */
     FMemoryNameId GetCurrentTag();
 
@@ -190,6 +200,12 @@ public:
      * @return Returns the name's id
      */
     FMemoryNameId InternDynamic(const CHAR* Name);
+
+    /** @return Returns whether allocations are tracked, which costs Memory one relaxed load when they are not */
+    FORCEINLINE bool IsTrackingEnabled() const
+    {
+        return bTrackingEnabled.Load(EMemoryOrder::Relaxed);
+    }
 
     /** @return Returns the registry that holds every name and scope path */
     FORCEINLINE FMemoryTagRegistry& GetRegistry()
@@ -215,12 +231,32 @@ private:
     AtomicBool                                                      bTrackingEnabled;
 };
 
-extern CORE_API FMemoryProfiler GMemoryProfiler;
-
-FORCEINLINE FMemoryProfiler& FMemoryProfiler::Get()
+class FMemoryContextScope : FNonCopyAndNonMovable
 {
-    return GMemoryProfiler;
-}
+public:
+
+    /**
+     * @brief Makes a tag and a scope node current for the lifetime of the object, so work runs under the tag and scope
+     * of the thread that queued it.
+     *
+     * @param Tag The tag to push
+     * @param Scope The scope node to make current
+     */
+    FMemoryContextScope(FMemoryNameId Tag, FMemoryScopeId Scope)
+        : PreviousScope(FMemoryProfiler::Get().SetCurrentScope(Scope))
+    {
+        FMemoryProfiler::Get().PushTag(Tag);
+    }
+
+    ~FMemoryContextScope()
+    {
+        FMemoryProfiler::Get().PopTag();
+        FMemoryProfiler::Get().SetCurrentScope(PreviousScope);
+    }
+
+private:
+    FMemoryScopeId PreviousScope;
+};
 
 class FMemoryModuleScope : FNonCopyAndNonMovable
 {

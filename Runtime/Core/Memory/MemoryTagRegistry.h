@@ -5,8 +5,6 @@
 class CORE_API FMemoryTagRegistry
 {
 public:
-    FMemoryTagRegistry(const FMemoryTagRegistry&) = delete;
-    FMemoryTagRegistry& operator=(const FMemoryTagRegistry&) = delete;
 
     /** @brief The most names the registry holds before handing out MEMORY_NAME_OVERFLOW */
     static constexpr int32 MaxNames = 4096;
@@ -15,6 +13,8 @@ public:
     static constexpr int32 MaxScopeNodes = 16384;
 
 public:
+    FMemoryTagRegistry(const FMemoryTagRegistry&) = delete;
+    FMemoryTagRegistry& operator=(const FMemoryTagRegistry&) = delete;
 
     /** @brief Creates an empty registry whose storage is mapped from OS pages on first use */
     constexpr FMemoryTagRegistry() noexcept
