@@ -1,18 +1,43 @@
 #include "CommandLineTests.h"
 
+#include <Core/Containers/Array.h>
 #include <Core/Containers/String.h>
 #include <Core/Containers/StringView.h>
 #include <Core/Misc/CommandLine.h>
 #include <Core/Templates/CString.h>
 
+#if PLATFORM_WINDOWS
+    #include <Core/Windows/WindowsPlatformMisc.h>
+#endif
+
 #include "TestCommon/TestMacros.h"
 
-// Windows passes the whole command line as a single unsplit argument 
-// (NumArgs == 1), which is the shape most of these cases exercise.
 static bool InitializeFromLine(const CHAR_T* Line)
 {
-    const CHAR_T* Args[] = { Line };
-    return CommandLine::Initialize(Args, 1);
+    TArray<FString> Arguments;
+    for (const CHAR_T* Start = Line; *Start != '\0';)
+    {
+        const CHAR_T* End = Start;
+        while (*End != '\0' && *End != ' ')
+        {
+            ++End;
+        }
+
+        if (End != Start)
+        {
+            Arguments.Emplace(Start, static_cast<int32>(End - Start));
+        }
+
+        Start = (*End == ' ') ? End + 1 : End;
+    }
+
+    TArray<const CHAR_T*> ArgumentPointers;
+    for (const FString& Argument : Arguments)
+    {
+        ArgumentPointers.Add(*Argument);
+    }
+
+    return CommandLine::Initialize(ArgumentPointers.Data(), ArgumentPointers.Size());
 }
 
 // Real CVar names taken from across the engine, covering every name shape currently in use.
@@ -86,16 +111,56 @@ bool CommandLine_Test()
         TEST_EXPECT(Value.Equals(TEXT("C:/foo/bar.txt")));
     }
 
-    TEST_SECTION(TEXT("Quoted values may contain spaces"));
+    TEST_SECTION(TEXT("A value runs to the end of its argument, spaces included"));
     {
-        InitializeFromLine(TEXT("-A.B=\"Hello World\" -C.D=2"));
+        const CHAR_T* Args[] = { TEXT("-A.B=Hello World"), TEXT("-engine=C:/My Engine/"), TEXT("-C.D=2") };
+        TEST_EXPECT(CommandLine::Initialize(Args, 3));
 
         FStringView Value;
         TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
         TEST_EXPECT(Value.Equals(TEXT("Hello World")));
 
+        TEST_EXPECT(CommandLine::FindOption(TEXT("engine"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("C:/My Engine/")));
+
         TEST_EXPECT(CommandLine::FindOption(TEXT("C.D"), Value));
         TEST_EXPECT(Value.Equals(TEXT("2")));
+    }
+
+    TEST_SECTION(TEXT("An argument is one option, even when it looks like several"));
+    {
+        const CHAR_T* Args[] = { TEXT("-A.B=1 -C.D=2") };
+        TEST_EXPECT(CommandLine::Initialize(Args, 1));
+
+        FStringView Value;
+        TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("1 -C.D=2")));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("C.D")));
+    }
+
+    TEST_SECTION(TEXT("Quotes inside a value are kept, since only the operating system's splitting removes quotes"));
+    {
+        const CHAR_T* Args[] = { TEXT("-ExecuteCommands=Echo \"Hello World\"") };
+        TEST_EXPECT(CommandLine::Initialize(Args, 1));
+
+        FStringView Value;
+        TEST_EXPECT(CommandLine::FindOption(TEXT("ExecuteCommands"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Echo \"Hello World\"")));
+    }
+
+    TEST_SECTION(TEXT("An argument that is not an option is skipped, wherever a dash sits in it"));
+    {
+        const CHAR_T* Args[] = { TEXT("Positional"), TEXT("C:/some-file.txt"), TEXT("-"), TEXT("--A.B=1"), TEXT("-Bad:Name=1"), TEXT("-C.D=2") };
+        TEST_EXPECT(CommandLine::Initialize(Args, 6));
+
+        FStringView Value;
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("file.txt")));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("A.B")));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("Bad")));
+        TEST_EXPECT(CommandLine::FindOption(TEXT("C.D"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("2")));
+
+        TEST_EXPECT(FStringView(CommandLine::GetOriginal()).Equals(TEXT("Positional C:/some-file.txt - --A.B=1 -Bad:Name=1 -C.D=2")));
     }
 
     TEST_SECTION(TEXT("Several options on one line"));
@@ -213,20 +278,12 @@ bool CommandLine_Test()
         TEST_EXPECT(!CommandLine::FindOption(TEXT("B.Another")));
     }
 
-    TEST_SECTION(TEXT("An unterminated quote does not assert"));
-    {
-        InitializeFromLine(TEXT("-A.B=\"Unterminated"));
-
-        FStringView Value;
-        TEST_EXPECT(CommandLine::FindOption(TEXT("A.B"), Value));
-        TEST_EXPECT(Value.Equals(TEXT("Unterminated")));
-    }
-
     TEST_SECTION(TEXT("A null argument is rejected"));
     {
-        const CHAR_T* Args[] = { nullptr };
-        TEST_EXPECT(!CommandLine::Initialize(Args, 1));
+        const CHAR_T* Args[] = { TEXT("-A.B=1"), nullptr };
+        TEST_EXPECT(!CommandLine::Initialize(Args, 2));
         TEST_EXPECT(!CommandLine::Initialize(nullptr, 1));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("A.B")));
     }
 
     TEST_SECTION(TEXT("Every CVar name shape round-trips"));
@@ -277,16 +334,83 @@ bool CommandLine_Test()
 
         TEST_EXPECT(InitializeFromLine(*LongLine));
 
-        const uint64 Length         = static_cast<uint64>(CString::Strlen(CommandLine::Get()));
         const uint64 OriginalLength = static_cast<uint64>(CString::Strlen(CommandLine::GetOriginal()));
-        TEST_EXPECT(Length < CommandLine::MaxCommandLineLength);
         TEST_EXPECT(OriginalLength < CommandLine::MaxCommandLineLength);
 
-        // Whatever did fit has to still be readable
+        // Whatever did fit has to still be readable, and an option that did not is dropped whole rather than cut short
         FStringView Value;
         TEST_EXPECT(CommandLine::FindOption(TEXT("Long.Option0"), Value));
         TEST_EXPECT(Value.Equals(TEXT("Value0")));
+        TEST_EXPECT(!CommandLine::FindOption(TEXT("Long.Option199")));
+
+        int32 NumFound = 0;
+        for (int32 Index = 0; Index < 200; ++Index)
+        {
+            const FString Name = FString::Printf(TEXT("Long.Option%d"), Index);
+            if (CommandLine::FindOption(*Name, Value))
+            {
+                TEST_EXPECT(Value.Equals(*FString::Printf(TEXT("Value%d"), Index)));
+                ++NumFound;
+            }
+        }
+
+        TEST_EXPECT(NumFound > 0 && NumFound < 200);
     }
+
+#if PLATFORM_WINDOWS
+    TEST_SECTION(TEXT("Windows' own splitting takes a value quoted on its own and a whole quoted argument the same way"));
+    {
+        TArray<FString> Arguments;
+        FWindowsPlatformMisc::SplitCommandLine(
+            L"\"C:/Program Files/Editor.exe\" -engine=\"C:/My Engine\" \"-project=C:/My Projects/Game.dxrproject\" "
+            L"-Test.String=\"Hello World\" \"-Test.Other=Hello World\" -Test.Switch -Test.Plain=1", Arguments);
+
+        TEST_EXPECT_EQ(Arguments.Size(), 6);
+
+        TArray<const CHAR_T*> ArgumentPointers;
+        for (const FString& Argument : Arguments)
+        {
+            ArgumentPointers.Add(*Argument);
+        }
+
+        TEST_EXPECT(CommandLine::Initialize(ArgumentPointers.Data(), ArgumentPointers.Size()));
+
+        FStringView Value;
+        TEST_EXPECT(CommandLine::FindOption(TEXT("engine"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("C:/My Engine")));
+
+        TEST_EXPECT(CommandLine::FindOption(TEXT("project"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("C:/My Projects/Game.dxrproject")));
+
+        TEST_EXPECT(CommandLine::FindOption(TEXT("Test.String"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Hello World")));
+
+        TEST_EXPECT(CommandLine::FindOption(TEXT("Test.Other"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("Hello World")));
+
+        TEST_EXPECT(CommandLine::FindOption(TEXT("Test.Switch"), Value));
+        TEST_EXPECT(Value.IsEmpty());
+
+        TEST_EXPECT(CommandLine::FindOption(TEXT("Test.Plain"), Value));
+        TEST_EXPECT(Value.Equals(TEXT("1")));
+    }
+
+    TEST_SECTION(TEXT("Windows' splitting keeps non-ASCII text and escaped quotes"));
+    {
+        TArray<FString> Arguments;
+        FWindowsPlatformMisc::SplitCommandLine(L"Editor.exe \"-engine=E:/Motor \u00E5\u00E4\u00F6 \u65E5\u672C\" -ExecuteCommands=\"Echo \\\"Hi\\\"\"", Arguments);
+
+        TEST_EXPECT_EQ(Arguments.Size(), 2);
+        if (Arguments.Size() == 2)
+        {
+            TEST_EXPECT(Arguments[0].Equals(TEXT("-engine=E:/Motor åäö 日本")));
+            TEST_EXPECT(Arguments[1].Equals(TEXT("-ExecuteCommands=Echo \"Hi\"")));
+        }
+
+        FWindowsPlatformMisc::SplitCommandLine(L"Editor.exe", Arguments);
+        TEST_EXPECT(Arguments.IsEmpty());
+    }
+#endif
 
     TEST_END();
 }

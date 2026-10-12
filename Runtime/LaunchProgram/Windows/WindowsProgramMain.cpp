@@ -2,6 +2,7 @@
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Windows/Windows.h"
+#include "Core/Windows/WindowsPlatformMisc.h"
 #include "Core/Containers/StringConversion.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -71,10 +72,15 @@ int WINAPI wWinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPWSTR CmdLine, 
 {
     InitCRunTime();
 
-    const FString CommandLineText  = StringCast<CHAR_T>(CmdLine).ToString();
-    const CHAR_T* LocalCommandLine = *CommandLineText;
+    FWindowsPlatformMisc::SplitCommandLine(::GetCommandLineW(), GProgramArgs);
 
-    CommandLine::Initialize(&LocalCommandLine, 1);
+    TArray<const CHAR_T*> ArgumentPointers;
+    for (const FString& Argument : GProgramArgs)
+    {
+        ArgumentPointers.Add(*Argument);
+    }
+
+    CommandLine::Initialize(ArgumentPointers.Data(), ArgumentPointers.Size());
     return RunProgram();
 }
 

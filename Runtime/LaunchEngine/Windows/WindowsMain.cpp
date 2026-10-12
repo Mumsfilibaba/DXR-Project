@@ -1,5 +1,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Windows/Windows.h"
+#include "Core/Windows/WindowsPlatformMisc.h"
+#include "Core/Containers/Array.h"
 #include "Core/Containers/StringConversion.h"
 
 extern int32 EngineMain(const CHAR_T* Args[], int32 NumArgs);
@@ -31,9 +33,16 @@ int WINAPI wWinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPWSTR CommandLi
 {
     InitCRunTime();
 
-    const FString CommandLineText  = StringCast<CHAR_T>(CommandLine).ToString();
-    const CHAR_T* LocalCommandLine = *CommandLineText;
-    return EngineMain(&LocalCommandLine, 1);
+    TArray<FString> Arguments;
+    FWindowsPlatformMisc::SplitCommandLine(::GetCommandLineW(), Arguments);
+
+    TArray<const CHAR_T*> ArgumentPointers;
+    for (const FString& Argument : Arguments)
+    {
+        ArgumentPointers.Add(*Argument);
+    }
+
+    return EngineMain(ArgumentPointers.Data(), ArgumentPointers.Size());
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

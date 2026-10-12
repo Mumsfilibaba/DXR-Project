@@ -6,6 +6,12 @@
 
 struct FWindowsPlatformMisc final : public IPlatformMisc
 {
+    static CORE_API void InstallCrashHandler();
+
+    NODISCARD static CORE_API FGuid CreateGuid();
+
+    static CORE_API void SplitCommandLine(const WIDECHAR* CommandLineText, TArray<FString>& OutArguments);
+
     static FORCEINLINE void OutputDebugString(const CHAR_T* Message)
     {
         ::OutputDebugStringW(StringCast<WIDECHAR>(Message).Get());
@@ -119,18 +125,21 @@ struct FWindowsPlatformMisc final : public IPlatformMisc
         return ::SetEnvironmentVariableW(StringCast<WIDECHAR>(Name).Get(), Value ? StringCast<WIDECHAR>(Value).Get() : nullptr) != FALSE;
     }
 
-    static CORE_API void InstallCrashHandler();
-
-    NODISCARD static CORE_API FGuid CreateGuid();
-
     static FORCEINLINE int32 GetLastErrorString(FString& OutErrorString)
     {
         const int32 LastError = ::GetLastError();
         const int32 Flags     = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
         LPWSTR MessageBuffer = nullptr;
+        const uint32 MessageLength = ::FormatMessageW(
+            Flags,
+            nullptr,
+            LastError,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            reinterpret_cast<LPWSTR>(&MessageBuffer),
+            0,
+            nullptr);
 
-        const uint32 MessageLength = ::FormatMessageW(Flags, nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&MessageBuffer), 0, nullptr);
         OutErrorString = StringCast<CHAR_T>(MessageBuffer, static_cast<int32>(MessageLength)).ToString();
         ::LocalFree(MessageBuffer);
         return LastError;

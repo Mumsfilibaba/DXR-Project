@@ -3,18 +3,20 @@
 #include "Core/Misc/Parse.h"
 #include "Core/Templates/CString.h"
 
-CHAR_T CommandLine::CommandLineBuffer[CommandLine::MaxCommandLineLength]   = { 0 };
+CHAR_T CommandLine::Options[CommandLine::MaxCommandLineLength]             = { 0 };
 CHAR_T CommandLine::OriginalCommandLine[CommandLine::MaxCommandLineLength] = { 0 };
 
-static void AppendChecked(CHAR_T*& It, CHAR_T* End, const CHAR_T* Source, UPTR_INT Length)
+static bool AppendChecked(CHAR_T*& It, CHAR_T* End, const CHAR_T* Source, UPTR_INT Length)
 {
     const UPTR_INT Available = static_cast<UPTR_INT>(End - It);
     const UPTR_INT ToCopy    = (Length < Available) ? Length : Available;
+
     CString::Strncpy(It, Source, ToCopy);
     It += ToCopy;
+    return ToCopy == Length;
 }
 
-static const CHAR_T* FindOptionToken(const CHAR_T* Buffer, const CHAR_T* Name)
+static const CHAR_T* FindOptionNameEnd(const CHAR_T* Options, const CHAR_T* Name)
 {
     const int32 NameLength = CString::Strlen(Name);
     if (NameLength <= 0)
@@ -22,23 +24,12 @@ static const CHAR_T* FindOptionToken(const CHAR_T* Buffer, const CHAR_T* Name)
         return nullptr;
     }
 
-    for (const CHAR_T* Match = CString::Stristr(Buffer, Name); Match; Match = CString::Stristr(Match + 1, Name))
+    for (const CHAR_T* Option = Options; *Option != '\0'; Option += CString::Strlen(Option) + 1)
     {
-        const CHAR_T* Dash = Match - 1;
-        if ((Match == Buffer) || (*Dash != '-'))
+        const CHAR_T* NameEnd = Option + NameLength;
+        if (CString::Strnicmp(Option, Name, static_cast<SIZE_T>(NameLength)) == 0 && (*NameEnd == '=' || *NameEnd == '\0'))
         {
-            continue;
-        }
-
-        if ((Dash != Buffer) && (*(Dash - 1) != ' '))
-        {
-            continue;
-        }
-
-        const CHAR_T Terminator = *(Match + NameLength);
-        if ((Terminator == '=') || (Terminator == ' ') || (Terminator == '\0'))
-        {
-            return Match;
+            return NameEnd;
         }
     }
 
@@ -47,147 +38,92 @@ static const CHAR_T* FindOptionToken(const CHAR_T* Buffer, const CHAR_T* Name)
 
 bool CommandLine::Initialize(const CHAR_T** Args, int32 NumArgs)
 {
+    // Emptied up front so that a repeated or failed Initialize cannot leave stale options behind
+    Options[0]             = '\0';
+    OriginalCommandLine[0] = '\0';
+
     if (!Args)
     {
         return false;
     }
 
-    CHAR_T* CommandLineIt          = CommandLineBuffer;
-    CHAR_T* CommandLineEnd         = CommandLineBuffer + MaxCommandLineLength - 1;
-    CHAR_T* OriginalCommandLineIt  = OriginalCommandLine;
-    CHAR_T* OriginalCommandLineEnd = OriginalCommandLine + MaxCommandLineLength - 1;
+    // The last character of the options is kept for the empty option that ends them
+    CHAR_T* OptionsIt   = Options;
+    CHAR_T* OptionsEnd  = Options + MaxCommandLineLength - 1;
+    CHAR_T* OriginalIt  = OriginalCommandLine;
+    CHAR_T* OriginalEnd = OriginalCommandLine + MaxCommandLineLength - 1;
 
-    // Terminate up front so a repeated Initialize cannot leave a stale tail behind
-    *CommandLineIt         = '\0';
-    *OriginalCommandLineIt = '\0';
+    bool bIsTruncated = false;
+    bool bIsValid     = true;
 
     for (int32 Index = 0; Index < NumArgs; ++Index)
     {
-        const CHAR_T* CurrentArg = Args[Index];
-        if (!CurrentArg)
+        const CHAR_T* Argument = Args[Index];
+        if (!Argument)
         {
-            return false;
+            bIsValid = false;
+            break;
         }
 
+        const UPTR_INT Length = static_cast<UPTR_INT>(CString::Strlen(Argument));
         if (Index > 0)
         {
-            AppendChecked(OriginalCommandLineIt, OriginalCommandLineEnd, TEXT(" "), 1);
+            bIsTruncated |= !AppendChecked(OriginalIt, OriginalEnd, TEXT(" "), 1);
         }
 
-        AppendChecked(OriginalCommandLineIt, OriginalCommandLineEnd, CurrentArg, CString::Strlen(CurrentArg));
+        bIsTruncated |= !AppendChecked(OriginalIt, OriginalEnd, Argument, Length);
 
-        while (CurrentArg && *CurrentArg && (CommandLineIt < CommandLineEnd))
+        if (Argument[0] != '-')
         {
-            const CHAR_T* Option = CString::Strchr(CurrentArg, '-');
-            if (!Option)
-            {
-                // No further options in this argument
-                break;
-            }
-
-            const CHAR_T* Iterator = Option + 1;
-            Parse::ParseOptionName(&Iterator);
-
-            AppendChecked(CommandLineIt, CommandLineEnd, Option, static_cast<UPTR_INT>(Iterator - Option));
-
-            // Where the scan resumes; the '=' branch moves this past the value
-            const CHAR_T* NextArg = Iterator;
-
-            Parse::ParseWhiteSpace(&Iterator);
-
-            if (*Iterator == '=')
-            {
-                AppendChecked(CommandLineIt, CommandLineEnd, TEXT("="), 1);
-
-                ++Iterator;
-                Parse::ParseWhiteSpace(&Iterator);
-
-                // Special case for string-values
-                const CHAR_T* ValueEnd = nullptr;
-                if (*Iterator == '\"')
-                {
-                    ValueEnd = CString::Strchr(Iterator + 1, '\"');
-                    if (ValueEnd)
-                    {
-                        ++ValueEnd;
-                    }
-                }
-                else
-                {
-                    ValueEnd = CString::Strchr(Iterator, ' ');
-                }
-
-                // Unquoted and last on the line: the value runs to the end of the argument
-                if (!ValueEnd)
-                {
-                    ValueEnd = Iterator;
-                    Parse::ParseValue(&ValueEnd);
-                }
-
-                AppendChecked(CommandLineIt, CommandLineEnd, Iterator, static_cast<UPTR_INT>(ValueEnd - Iterator));
-                NextArg = ValueEnd;
-            }
-
-            AppendChecked(CommandLineIt, CommandLineEnd, TEXT(" "), 1);
-
-            // Resume after the value, so a '-' inside it cannot start a phantom option
-            CurrentArg = NextArg;
+            continue;
         }
+
+        const CHAR_T* NameEnd = Argument + 1;
+        Parse::ParseOptionName(&NameEnd);
+
+        if (NameEnd == Argument + 1 || (*NameEnd != '=' && *NameEnd != '\0'))
+        {
+            continue;
+        }
+
+        // An option that does not fit is dropped whole, since a value cut short would be worse than none
+        const UPTR_INT OptionLength = Length - 1;
+        if (OptionLength + 1 > static_cast<UPTR_INT>(OptionsEnd - OptionsIt))
+        {
+            bIsTruncated = true;
+            continue;
+        }
+
+        CString::Strncpy(OptionsIt, Argument + 1, OptionLength);
+        OptionsIt[OptionLength] = '\0';
+        OptionsIt += OptionLength + 1;
+        *OptionsIt = '\0';
     }
 
-    *CommandLineIt         = '\0';
-    *OriginalCommandLineIt = '\0';
+    *OriginalIt = '\0';
 
-    if ((CommandLineIt == CommandLineEnd) || (OriginalCommandLineIt == OriginalCommandLineEnd))
+    if (bIsTruncated)
     {
-        LOG_WARNING("CommandLine was truncated at %d characters", static_cast<int32>(MaxCommandLineLength));
+        LOG_WARNING("CommandLine is longer than %d characters, and what did not fit was dropped", static_cast<int32>(MaxCommandLineLength));
     }
 
-    return true;
+    return bIsValid;
 }
 
-bool CommandLine::FindOption(const CHAR_T* Value)
+bool CommandLine::FindOption(const CHAR_T* Name)
 {
-    return FindOptionToken(CommandLineBuffer, Value) != nullptr;
+    return FindOptionNameEnd(Options, Name) != nullptr;
 }
 
-bool CommandLine::FindOption(const CHAR_T* Value, FStringView& OutValue)
+bool CommandLine::FindOption(const CHAR_T* Name, FStringView& OutValue)
 {
-    const CHAR_T* Result = FindOptionToken(CommandLineBuffer, Value);
-    if (!Result)
+    const CHAR_T* NameEnd = FindOptionNameEnd(Options, Name);
+    if (!NameEnd)
     {
         return false;
     }
 
-    Result += CString::Strlen(Value);
-
-    // A bare switch: report it as found, with an empty but valid view
-    if (*Result != '=')
-    {
-        OutValue = FStringView(Result, 0);
-        return true;
-    }
-
-    ++Result;
-
-    const CHAR_T* StringEnd = Result;
-    if (*Result == '\"')
-    {
-        ++Result;
-
-        StringEnd = CString::Strchr(Result, '\"');
-        if (!StringEnd)
-        {
-            // Unterminated quote: take the rest of the token rather than asserting
-            StringEnd = Result;
-            Parse::ParseValue(&StringEnd);
-        }
-    }
-    else
-    {
-        Parse::ParseValue(&StringEnd);
-    }
-
-    OutValue = FStringView(Result, static_cast<int32>(StringEnd - Result));
+    // A bare switch is reported as found, with an empty but valid view
+    OutValue = (*NameEnd == '=') ? FStringView(NameEnd + 1) : FStringView(NameEnd, 0);
     return true;
 }

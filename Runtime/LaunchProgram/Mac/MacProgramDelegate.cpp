@@ -8,8 +8,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-static FString GMacCommandLine;
-static int32   GProgramMainResult = 0;
+static int32 GProgramMainResult = 0;
 
 @implementation FMacProgramDelegate
 
@@ -21,8 +20,13 @@ static int32   GProgramMainResult = 0;
 
 - (void)runAppThread
 {
-    const CHAR_T* CommandLine = *GMacCommandLine;
-    CommandLine::Initialize(&CommandLine, 1);
+    TArray<const CHAR_T*> ArgumentPointers;
+    for (const FString& Argument : GProgramArgs)
+    {
+        ArgumentPointers.Add(*Argument);
+    }
+
+    CommandLine::Initialize(ArgumentPointers.Data(), ArgumentPointers.Size());
     GProgramMainResult = FProgramLoop::Run(GProgramTitle, GProgramBody);
 
     FMacThreadManager::Get().MainThreadDispatch(^
@@ -52,26 +56,6 @@ int main(int NumArgs, const CHAR_T** Args)
     for (int32 Index = 1; Index < NumArgs; Index++)
     {
         GProgramArgs.Emplace(Args[Index]);
-
-        GMacCommandLine += TEXT(" ");
-        FString CurrentArg(Args[Index]);
-
-        if (CurrentArg.Contains(' '))
-        {
-            if (CurrentArg.Contains('='))
-            {
-                FString Argument;
-                FString ArgumentValue;
-                CurrentArg.Split('=', Argument, ArgumentValue);
-                CurrentArg = FString::Printf(TEXT("%s=\"%s\""), *Argument, *ArgumentValue);
-            }
-            else
-            {
-                CurrentArg = FString::Printf(TEXT("\"%s\""), *CurrentArg);
-            }
-        }
-
-        GMacCommandLine += CurrentArg;
     }
 
     [NSApplication sharedApplication];

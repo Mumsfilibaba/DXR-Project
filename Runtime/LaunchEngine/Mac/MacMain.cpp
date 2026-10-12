@@ -11,8 +11,8 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 extern int32 EngineMain(const CHAR_T* Args[], int32 NumArgs);
 
-static FString GMacCommandLine;
-static int32   GEngineMainResult = 0;
+static TArray<FString> GMacArguments;
+static int32           GEngineMainResult = 0;
 
 @interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>
 
@@ -36,8 +36,13 @@ static int32   GEngineMainResult = 0;
 
 - (void)runAppThread
 {
-    const CHAR_T* CommandLine = *GMacCommandLine;
-    GEngineMainResult = EngineMain(&CommandLine, 1);
+    TArray<const CHAR_T*> ArgumentPointers;
+    for (const FString& Argument : GMacArguments)
+    {
+        ArgumentPointers.Add(*Argument);
+    }
+
+    GEngineMainResult = EngineMain(ArgumentPointers.Data(), ArgumentPointers.Size());
     
     if (GEngineMainResult == 0)
     {
@@ -96,26 +101,7 @@ int main(int NumArgs, const CHAR_T** Args)
     // The first argument is always the path to the application, so start processing from index 1
     for (int32 Index = 1; Index < NumArgs; Index++)
     {
-        GMacCommandLine += TEXT(" ");
-        FString CurrentArg(Args[Index]);
-        
-        if (CurrentArg.Contains(' '))
-        {
-            if (CurrentArg.Contains('='))
-            {
-                FString Argument;
-                FString ArgumentValue;
-                CurrentArg.Split('=', Argument, ArgumentValue);
-                
-                CurrentArg = FString::Printf(TEXT("%s=\"%s\""), *Argument, *ArgumentValue);
-            }
-            else
-            {
-                CurrentArg = FString::Printf(TEXT("\"%s\""), *CurrentArg);
-            }
-        }
-        
-        GMacCommandLine += CurrentArg;
+        GMacArguments.Emplace(Args[Index]);
     }
     
     [NSApplication sharedApplication];

@@ -9,6 +9,7 @@
 #include <eh.h>
 #include <intrin.h>
 #include <objbase.h>
+#include <shellapi.h>
 #include <stdlib.h>
 
 // Not in winnt.h, which only carries the codes the SEH macros name
@@ -288,4 +289,23 @@ FGuid FWindowsPlatformMisc::CreateGuid()
 
     const uint32 B = (static_cast<uint32>(Guid.Data2) << 16) | Guid.Data3;
     return FGuid(Guid.Data1, B, ReadBigEndian32(Guid.Data4), ReadBigEndian32(Guid.Data4 + 4));
+}
+
+void FWindowsPlatformMisc::SplitCommandLine(const WIDECHAR* CommandLineText, TArray<FString>& OutArguments)
+{
+    OutArguments.Clear();
+
+    int32      NumArguments = 0;
+    WIDECHAR** Arguments    = ::CommandLineToArgvW(CommandLineText, &NumArguments);
+    if (!Arguments)
+    {
+        return;
+    }
+
+    for (int32 Index = 1; Index < NumArguments; ++Index)
+    {
+        OutArguments.Emplace(StringCast<CHAR_T>(Arguments[Index]).ToString());
+    }
+
+    ::LocalFree(Arguments);
 }

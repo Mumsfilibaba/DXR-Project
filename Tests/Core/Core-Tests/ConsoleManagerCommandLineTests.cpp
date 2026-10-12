@@ -1,5 +1,6 @@
 #include "ConsoleManagerCommandLineTests.h"
 
+#include <Core/Containers/Array.h>
 #include <Core/Containers/String.h>
 #include <Core/Misc/CommandLine.h>
 #include <Core/Misc/ConsoleManager.h>
@@ -9,8 +10,30 @@
 
 static bool InitializeFromLine(const CHAR_T* Line)
 {
-    const CHAR_T* Args[] = { Line };
-    return CommandLine::Initialize(Args, 1);
+    TArray<FString> Arguments;
+    for (const CHAR_T* Start = Line; *Start != '\0';)
+    {
+        const CHAR_T* End = Start;
+        while (*End != '\0' && *End != ' ')
+        {
+            ++End;
+        }
+
+        if (End != Start)
+        {
+            Arguments.Emplace(Start, static_cast<int32>(End - Start));
+        }
+
+        Start = (*End == ' ') ? End + 1 : End;
+    }
+
+    TArray<const CHAR_T*> ArgumentPointers;
+    for (const FString& Argument : Arguments)
+    {
+        ArgumentPointers.Add(*Argument);
+    }
+
+    return CommandLine::Initialize(ArgumentPointers.Data(), ArgumentPointers.Size());
 }
 
 static EConsoleVariableFlags GetSetByFlag(const IConsoleVariable* Variable)
@@ -52,6 +75,18 @@ bool ConsoleManagerCommandLine_Test()
         TEST_EXPECT_EQ(CVarInt.GetValue(), 42);
         TEST_EXPECT_EQ(CVarFloat.GetValue(), 0.25f);
         TEST_EXPECT(CVarString.GetValue().Equals(TEXT("Vulkan")));
+    }
+
+    TEST_SECTION(TEXT("A string variable takes a value with spaces whole"));
+    {
+        const CHAR_T* Args[] = { TEXT("-Test.Spaced=C:/My Engine/Saved Games"), TEXT("-Test.Bool=true") };
+        CommandLine::Initialize(Args, 2);
+
+        TAutoConsoleVariable<FString> CVarSpaced(TEXT("Test.Spaced"), TEXT(""), TEXT("Unknown"));
+        TAutoConsoleVariable<bool>    CVarBool(TEXT("Test.Bool"), TEXT(""), false);
+
+        TEST_EXPECT(CVarSpaced.GetValue().Equals(TEXT("C:/My Engine/Saved Games")));
+        TEST_EXPECT_EQ(CVarBool.GetValue(), true);
     }
 
     TEST_SECTION(TEXT("A command-line set is tagged SetByCommandLine"));
