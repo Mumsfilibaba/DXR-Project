@@ -87,6 +87,9 @@ public:
     /** @return Returns Path normalized and, when relative, resolved against the current working directory */
     static FString MakeAbsolute(const FString& Path);
 
+    /** @return Returns true if Path starts at a root, such as "/", "C:/" or a UNC "//", so it doesn't depend on any current directory */
+    static bool IsAbsolutePath(const FString& Path);
+
     /**
      * @brief Express Path relative to BaseDirectory, e.g. "/Engine/Content/A.png" from "/Engine/Saved" is "../Content/A.png"
      * @return Returns the relative path, "." for the directory itself, or the absolute Path when the two have different

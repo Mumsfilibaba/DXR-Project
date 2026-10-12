@@ -29,6 +29,7 @@
 #include "GuidTests.h"
 #include "PlatformProcessTests.h"
 #include "ProjectDescriptorTests.h"
+#include "EngineRegistryTests.h"
 #include "PathsTests.h"
 #include "CharTypeTests.h"
 #include "UnicodePathTests.h"
@@ -79,6 +80,8 @@ static int32 RunCoreTests()
     RUN_TEST(TEXT("Guid"), Guid_Test());
     RUN_TEST(TEXT("PlatformProcess"), PlatformProcess_Test());
     RUN_TEST(TEXT("ProjectDescriptor"), ProjectDescriptor_Test());
+    RUN_TEST(TEXT("EngineDescriptor"), EngineDescriptor_Test());
+    RUN_TEST(TEXT("EngineRegistry"), EngineRegistry_Test());
     RUN_TEST(TEXT("Paths"), Paths_Test());
     RUN_TEST(TEXT("ProjectPaths"), ProjectPaths_Test());
     RUN_TEST(TEXT("CharType"), CharType_Test());

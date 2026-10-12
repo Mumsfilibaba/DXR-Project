@@ -14,6 +14,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Misc/EngineRegistry.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/FileOutputDevice.h"
@@ -435,6 +436,14 @@ int32 FEngineLoop::Init()
         }
 
         LogStartupInformation();
+
+    #if EDITOR_BUILD
+        FString RegistryError;
+        if (!FEngineRegistry::RegisterRunningEngine(RegistryError))
+        {
+            LOG_WARNING("Could not register this engine in the per-user engine registry: %s", *RegistryError);
+        }
+    #endif
 
         CoreDelegates::PreEngineInitDelegate.Broadcast();
 

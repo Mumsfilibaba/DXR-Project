@@ -490,6 +490,11 @@ FString File::MakeAbsolute(const FString& Path)
     return NormalizePath(CombinePath(FPlatformFile::GetCurrentWorkingDirectory(), Path));
 }
 
+bool File::IsAbsolutePath(const FString& Path)
+{
+    return SplitPath(Path).Root.EndsWith(TEXT("/"));
+}
+
 FString File::MakeRelative(const FString& Path, const FString& BaseDirectory)
 {
     const FPathParts PathParts = SplitPath(MakeAbsolute(Path));
