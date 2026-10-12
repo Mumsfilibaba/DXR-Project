@@ -1,22 +1,11 @@
 #include "Application/Text/TrueTypeFontFace.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/TypeHash.h"
-
-static FORCEINLINE int32 ToCodepoint(CHAR_T Character)
-{
-    if constexpr (sizeof(CHAR_T) == sizeof(uint8))
-    {
-        return static_cast<int32>(static_cast<uint8>(Character));
-    }
-    else
-    {
-        return static_cast<int32>(Character);
-    }
-}
 
 TSharedPtr<FTrueTypeFontFace> FTrueTypeFontFace::CreateFromFile(const FString& Filename, int32 PixelHeight)
 {
@@ -119,11 +108,21 @@ void FTrueTypeFontFace::ShapeRun(const FStringView& Text, FShapedRun& OutRun) co
         OutRun.Glyphs.Clear();
         OutRun.Glyphs.Reserve(Text.Length());
 
-        int32 Pen = 0;
-        for (int32 Index = 0; Index < Text.Length(); ++Index)
+        const CHAR_T* Characters = Text.Data();
+        const int32   Length     = Text.Length();
+
+        int32 Pen       = 0;
+        int32 Index     = 0;
+        int32 NumUnits  = 0;
+        int32 Codepoint = (Length > 0) ? static_cast<int32>(FStringConversion::DecodeCodePoint(Characters, Length, NumUnits)) : 0;
+
+        while (Index < Length)
         {
-            const int32   Codepoint = ToCodepoint(Text[Index]);
-            const FGlyph& Glyph     = Atlas.GetGlyph(Codepoint);
+            const int32 NextIndex     = Index + NumUnits;
+            int32       NextNumUnits  = 0;
+            const int32 NextCodepoint = (NextIndex < Length) ? static_cast<int32>(FStringConversion::DecodeCodePoint(Characters + NextIndex, Length - NextIndex, NextNumUnits)) : 0;
+
+            const FGlyph& Glyph = Atlas.GetGlyph(Codepoint);
 
             FShapedGlyph& Shaped = OutRun.Glyphs.Emplace();
             Shaped.Offset      = Pen;
@@ -131,12 +130,16 @@ void FTrueTypeFontFace::ShapeRun(const FStringView& Text, FShapedRun& OutRun) co
             Shaped.Codepoint   = Codepoint;
             Shaped.Advance     = Glyph.Advance;
 
-            if (Index + 1 < Text.Length())
+            if (NextIndex < Length)
             {
-                Shaped.Advance += Atlas.GetKerning(Codepoint, ToCodepoint(Text[Index + 1]));
+                Shaped.Advance += Atlas.GetKerning(Codepoint, NextCodepoint);
             }
 
             Pen += Shaped.Advance;
+
+            Index     = NextIndex;
+            NumUnits  = NextNumUnits;
+            Codepoint = NextCodepoint;
         }
 
         OutRun.Width = Pen;

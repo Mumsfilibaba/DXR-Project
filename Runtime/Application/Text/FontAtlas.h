@@ -44,8 +44,8 @@ public:
     /** @brief How many codepoints a page covers, which is the unit anything past the built range arrives in. */
     static constexpr int32 CodepointsPerPage = 128;
 
-    /** @brief One past the highest codepoint that can be asked for, which is the end of the Basic Multilingual Plane. */
-    static constexpr int32 MaxCodepoint = 0x10000;
+    /** @brief One past the highest codepoint that can be asked for, which is one past the last Unicode code point. */
+    static constexpr int32 MaxCodepoint = 0x110000;
 
 public:
     FFontAtlas();
@@ -71,8 +71,12 @@ public:
      * where it does not fit it lays every page out again on a bigger sheet. That last case moves the
      * glyphs, so a reference from an earlier call is only good until the next call that packs a page.
      *
+     * A codepoint the face lacks is drawn from a font installed with the operating system that has it, sized to
+     * the same em, which is how the editor's fonts show Chinese, Japanese and Korean. One that no font has gets the
+     * face's missing-glyph box.
+     *
      * @param Codepoint The codepoint to look up.
-     * @return The glyph, or the glyph for space when the codepoint has none in this face.
+     * @return The glyph, or the glyph for space when the codepoint is out of range or could not be packed.
      */
     NODISCARD const FGlyph& GetGlyph(int32 Codepoint) const;
 

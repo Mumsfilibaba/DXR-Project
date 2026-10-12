@@ -1,5 +1,6 @@
 #include "Application/InputLogger.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceManager.h"
 
@@ -77,7 +78,10 @@ bool FInputLogger::OnKeyChar(const FKeyEvent& KeyTypedEvent)
 {
     if (CVarLogKeyEvents.GetValue())
     {
-        LOG_INFO("[FInputLogger]: KeyChar 0x%02x '%c', modifiers %s", KeyTypedEvent.GetAnsiChar(), KeyTypedEvent.GetAnsiChar(), *DescribeModifiers(KeyTypedEvent.GetModifierKeys()));
+        CHAR_T Encoded[FStringConversion::MaxCodeUnitsPerCodePoint];
+        const int32 NumUnits = FStringConversion::EncodeCodePoint(KeyTypedEvent.GetCharacter(), Encoded);
+
+        LOG_INFO("[FInputLogger]: KeyChar U+%04X '%s', modifiers %s", KeyTypedEvent.GetCharacter(), *FString(Encoded, NumUnits), *DescribeModifiers(KeyTypedEvent.GetModifierKeys()));
     }
 
     return false;

@@ -4,6 +4,7 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Input/Keys.h"
 #include "Application/Style/UIStyle.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Math/Math.h"
 #include "Core/Platform/PlatformSystemClipboard.h"
 /** @brief The share of a blink the text cursor is drawn for, which is ImGui's 0.8s out of 1.2s. */
@@ -187,10 +188,10 @@ double FEditableText::GetSecondsSinceTextCursorBlinkReset() const
 
 FEventResponse FEditableText::OnKeyChar(const FKeyEvent& KeyEvent)
 {
-    const CHAR_T Character = KeyEvent.GetAnsiChar();
+    const uint32 Character = KeyEvent.GetCharacter();
 
     // Control characters arrive as key-down events instead, so they are dropped here
-    if (Character < ' ' || Character == 0x7F)
+    if (Character < ' ' || (Character >= 0x7F && Character < 0xA0))
     {
         return FEventResponse::Unhandled();
     }
@@ -485,20 +486,12 @@ void FEditableText::ClearText()
     NotifyTextChanged();
 }
 
-void FEditableText::InsertCharacter(CHAR_T Character)
+void FEditableText::InsertCharacter(uint32 Codepoint)
 {
-    if (HasSelection())
-    {
-        const int32 SelectionStart = GetSelectionStart();
-        ReplaceRange(SelectionStart, GetSelectionEnd() - SelectionStart, FStringView(&Character, 1));
-        return;
-    }
+    CHAR_T Encoded[FStringConversion::MaxCodeUnitsPerCodePoint];
+    const int32 NumUnits = FStringConversion::EncodeCodePoint(Codepoint, Encoded);
 
-    Text.Insert(Character, TextCursorPosition);
-    TextCursorPosition++;
-
-    ClearSelection();
-    NotifyTextChanged();
+    InsertText(FStringView(Encoded, NumUnits));
 }
 
 void FEditableText::InsertText(const FStringView& InText)
@@ -550,8 +543,10 @@ bool FEditableText::DeleteBackward()
         return false;
     }
 
-    Text.Remove(TextCursorPosition - 1, 1);
-    TextCursorPosition--;
+    const int32 PreviousPosition = FStringConversion::FindPreviousCodePoint(Text.Data(), TextCursorPosition);
+
+    Text.Remove(PreviousPosition, TextCursorPosition - PreviousPosition);
+    TextCursorPosition = PreviousPosition;
 
     ClearSelection();
     NotifyTextChanged();
@@ -565,7 +560,7 @@ bool FEditableText::DeleteForward()
         return false;
     }
 
-    Text.Remove(TextCursorPosition, 1);
+    Text.Remove(TextCursorPosition, FStringConversion::FindNextCodePoint(Text.Data(), Text.Length(), TextCursorPosition) - TextCursorPosition);
 
     ClearSelection();
     NotifyTextChanged();
@@ -579,12 +574,12 @@ void FEditableText::SetTextCursorPosition(int32 InTextCursorPosition)
 
 void FEditableText::MoveTextCursorLeft(bool bExtendSelection)
 {
-    MoveTextCursor(TextCursorPosition - 1, bExtendSelection);
+    MoveTextCursor(FStringConversion::FindPreviousCodePoint(Text.Data(), TextCursorPosition), bExtendSelection);
 }
 
 void FEditableText::MoveTextCursorRight(bool bExtendSelection)
 {
-    MoveTextCursor(TextCursorPosition + 1, bExtendSelection);
+    MoveTextCursor(FStringConversion::FindNextCodePoint(Text.Data(), Text.Length(), TextCursorPosition), bExtendSelection);
 }
 
 void FEditableText::MoveTextCursorToStart(bool bExtendSelection)

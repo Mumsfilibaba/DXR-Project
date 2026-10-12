@@ -432,3 +432,38 @@ bool TextLayoutDraw_Test()
 
     TEST_END();
 }
+
+bool TextLayoutUnicodeWrapping_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<FFixedWidthFontFace> Font = CreateFont();
+
+    TEST_SECTION(TEXT("Text without spaces is cut between characters, never through one"));
+    FTextLayout Layout;
+    Layout.AppendRun(FTextRun(FString(TEXT("日本語😀日本")), Font.Get(), FFloatColor::White));
+    Layout.WrapToWidth(4 * GAdvance);
+
+    TEST_EXPECT_EQ(Layout.GetLines().Size(), 2);
+    TEST_EXPECT(LineText(Layout, 0) == TEXT("日本語😀"));
+    TEST_EXPECT(LineText(Layout, 1) == TEXT("日本"));
+    TEST_EXPECT(ConcatenateRuns(Layout) == TEXT("日本語😀日本"));
+
+    TEST_SECTION(TEXT("A line too narrow for one character still takes a whole one"));
+    Layout.WrapToWidth(GAdvance / 2);
+
+    TEST_EXPECT_EQ(Layout.GetLines().Size(), 6);
+    TEST_EXPECT(LineText(Layout, 3) == TEXT("😀"));
+    TEST_EXPECT(ConcatenateRuns(Layout) == TEXT("日本語😀日本"));
+
+    TEST_SECTION(TEXT("Words of accented letters break at the space between them"));
+    FTextLayout AccentedLayout;
+    AccentedLayout.AppendRun(FTextRun(FString(TEXT("Åäö åäö")), Font.Get(), FFloatColor::White));
+    AccentedLayout.WrapToWidth(5 * GAdvance);
+
+    TEST_EXPECT_EQ(AccentedLayout.GetLines().Size(), 2);
+    TEST_EXPECT(LineText(AccentedLayout, 0) == TEXT("Åäö "));
+    TEST_EXPECT(LineText(AccentedLayout, 1) == TEXT("åäö"));
+
+    TEST_END();
+}

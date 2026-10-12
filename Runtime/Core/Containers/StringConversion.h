@@ -9,25 +9,6 @@
  * surrogate, becomes U+FFFD instead of failing, so a conversion always produces something printable.
  */
 
-struct CORE_API FStringConversion
-{
-    /** @brief The character every invalid sequence is replaced by */
-    static constexpr uint32 ReplacementCharacter = 0xFFFD;
-
-    /**
-     * @brief Convert SourceLength code units of Source into Dest, without a null-terminator
-     * @param Dest Where to write the result, or nullptr to only count it
-     * @param DestLength The number of code units Dest has room for. A code point that does not fit is not written in part.
-     * @return Returns the number of code units written, or the number needed when Dest is nullptr
-     */
-    static int32 Convert(char16_t* Dest, int32 DestLength, const UTF8CHAR* Source, int32 SourceLength);
-    static int32 Convert(char32_t* Dest, int32 DestLength, const UTF8CHAR* Source, int32 SourceLength);
-    static int32 Convert(UTF8CHAR* Dest, int32 DestLength, const char16_t* Source, int32 SourceLength);
-    static int32 Convert(char32_t* Dest, int32 DestLength, const char16_t* Source, int32 SourceLength);
-    static int32 Convert(UTF8CHAR* Dest, int32 DestLength, const char32_t* Source, int32 SourceLength);
-    static int32 Convert(char16_t* Dest, int32 DestLength, const char32_t* Source, int32 SourceLength);
-};
-
 template<typename CharType>
 struct TUnicodeCharType;
 
@@ -47,6 +28,92 @@ template<>
 struct TUnicodeCharType<WIDECHAR>
 {
     using Type = typename TConditional<sizeof(WIDECHAR) == sizeof(char16_t), char16_t, char32_t>::Type;
+};
+
+struct CORE_API FStringConversion
+{
+    /** @brief The character every invalid sequence is replaced by */
+    static constexpr uint32 ReplacementCharacter = 0xFFFD;
+
+    /** @brief The most code units one code point takes in any encoding, which is four UTF-8 bytes */
+    static constexpr int32 MaxCodeUnitsPerCodePoint = 4;
+
+    /**
+     * @brief Convert SourceLength code units of Source into Dest, without a null-terminator
+     * @param Dest Where to write the result, or nullptr to only count it
+     * @param DestLength The number of code units Dest has room for. A code point that does not fit is not written in part.
+     * @return Returns the number of code units written, or the number needed when Dest is nullptr
+     */
+    static int32 Convert(char16_t* Dest, int32 DestLength, const UTF8CHAR* Source, int32 SourceLength);
+    static int32 Convert(char32_t* Dest, int32 DestLength, const UTF8CHAR* Source, int32 SourceLength);
+    static int32 Convert(UTF8CHAR* Dest, int32 DestLength, const char16_t* Source, int32 SourceLength);
+    static int32 Convert(char32_t* Dest, int32 DestLength, const char16_t* Source, int32 SourceLength);
+    static int32 Convert(UTF8CHAR* Dest, int32 DestLength, const char32_t* Source, int32 SourceLength);
+    static int32 Convert(char16_t* Dest, int32 DestLength, const char32_t* Source, int32 SourceLength);
+
+    /**
+     * @brief Decode the code point that starts at Source
+     * @param SourceLength The number of code units left in Source, which must be at least one
+     * @param OutNumUnits Receives the number of code units the code point took, which is at least one even when it was invalid
+     * @return Returns the code point, or ReplacementCharacter for an invalid sequence
+     */
+    static uint32 DecodeCodePoint(const UTF8CHAR* Source, int32 SourceLength, int32& OutNumUnits);
+    static uint32 DecodeCodePoint(const char16_t* Source, int32 SourceLength, int32& OutNumUnits);
+    static uint32 DecodeCodePoint(const char32_t* Source, int32 SourceLength, int32& OutNumUnits);
+
+    /**
+     * @brief Encode a code point, writing ReplacementCharacter in place of one that is a surrogate or past U+10FFFF
+     * @param Dest Where to write the result, with room for MaxCodeUnitsPerCodePoint code units
+     * @return Returns the number of code units written
+     */
+    static int32 EncodeCodePoint(uint32 CodePoint, UTF8CHAR* Dest);
+    static int32 EncodeCodePoint(uint32 CodePoint, char16_t* Dest);
+    static int32 EncodeCodePoint(uint32 CodePoint, char32_t* Dest);
+
+    /**
+     * @brief Find where the code point that ends at Index starts, stepping back the way DecodeCodePoint steps forward
+     * @param Index A code unit index greater than zero that is the start of a code point or the end of the text
+     * @return Returns the index of the code point before Index
+     */
+    static int32 FindPreviousCodePoint(const UTF8CHAR* Source, int32 Index);
+    static int32 FindPreviousCodePoint(const char16_t* Source, int32 Index);
+    static int32 FindPreviousCodePoint(const char32_t* Source, int32 Index);
+
+    /** @brief The versions of the above for ANSICHAR and WIDECHAR text, such as CHAR_T, in the encoding TUnicodeCharType gives them */
+    template<typename CharType>
+    NODISCARD static FORCEINLINE uint32 DecodeCodePoint(const CharType* Source, int32 SourceLength, int32& OutNumUnits)
+    {
+        return DecodeCodePoint(reinterpret_cast<const typename TUnicodeCharType<CharType>::Type*>(Source), SourceLength, OutNumUnits);
+    }
+
+    template<typename CharType>
+    static FORCEINLINE int32 EncodeCodePoint(uint32 CodePoint, CharType* Dest)
+    {
+        return EncodeCodePoint(CodePoint, reinterpret_cast<typename TUnicodeCharType<CharType>::Type*>(Dest));
+    }
+
+    template<typename CharType>
+    NODISCARD static FORCEINLINE int32 FindPreviousCodePoint(const CharType* Source, int32 Index)
+    {
+        return FindPreviousCodePoint(reinterpret_cast<const typename TUnicodeCharType<CharType>::Type*>(Source), Index);
+    }
+
+    /**
+     * @param Index A code unit index that is the start of a code point, or past the end of the text
+     * @return Returns the index of the code point after the one at Index, which is Length at the last one
+     */
+    template<typename CharType>
+    NODISCARD static FORCEINLINE int32 FindNextCodePoint(const CharType* Source, int32 Length, int32 Index)
+    {
+        if (Index >= Length)
+        {
+            return Length;
+        }
+
+        int32 NumUnits = 0;
+        (void)DecodeCodePoint(Source + Index, Length - Index, NumUnits);
+        return Index + NumUnits;
+    }
 };
 
 template<typename ToCharType, typename FromCharType>

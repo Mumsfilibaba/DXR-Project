@@ -23,7 +23,7 @@ struct FShapedGlyph
     /** @brief How far the pen moves over this glyph, with the kerning against the one after it folded in. */
     int32 Advance;
 
-    /** @brief The index in the source text this glyph came from. */
+    /** @brief The index in the source text of the first code unit of the code point this glyph came from. */
     int32 SourceIndex;
 
     /** @brief The codepoint drawn, which is looked up in the face's atlas when the run is tessellated. */
@@ -40,7 +40,10 @@ struct FShapedRun
     {
     }
 
-    /** @brief The glyphs in the order they are drawn, one for every character of the source text. */
+    /**
+     * @brief The glyphs in the order they are drawn, one for every code point of the source text, so a character
+     * that takes several code units (any non-ASCII one in UTF-8, or one past U+FFFF in UTF-16) is still one glyph.
+     */
     TArray<FShapedGlyph> Glyphs;
 
     /** @brief How far the pen moved over the whole run, in pixels. */
@@ -133,13 +136,15 @@ struct IFontFace
             return FString();
         }
 
-        int32 NumCharacters = 0;
-        while (NumCharacters < Run.Glyphs.Size() && Run.Glyphs[NumCharacters].Offset <= Budget)
+        int32 NumGlyphs = 0;
+        while (NumGlyphs < Run.Glyphs.Size() && Run.Glyphs[NumGlyphs].Offset <= Budget)
         {
-            ++NumCharacters;
+            ++NumGlyphs;
         }
 
-        return FString(Text.Data(), Math::Max(0, NumCharacters - 1)) + Ellipsis;
+        // The last glyph that starts inside the budget may end past it, so the cut is before it
+        const int32 NumKept = Math::Max(0, NumGlyphs - 1);
+        return FString(Text.Data(), Run.Glyphs[NumKept].SourceIndex) + Ellipsis;
     }
 
     /**
@@ -172,8 +177,9 @@ struct IFontFace
      * caret on it.
      *
      * @param Text           The text the character belongs to.
-     * @param CharacterIndex The index of the character, which may be one past the last for the caret that
-     *                       sits at the end of the text.
+     * @param CharacterIndex The code unit index of the character, which may be the length of the text for
+     *                       the caret that sits at its end. An index inside a character that takes several
+     *                       code units gives that character.
      * @param OutOffset      Set to the distance from the start of the run to the character, in pixels.
      * @param OutAdvance     Set to how far the pen moves over the character, in pixels, and to zero for
      *                       the position past the end.
@@ -182,16 +188,31 @@ struct IFontFace
     {
         const FShapedRun& Run = ShapeText(Text);
 
-        if (CharacterIndex >= Run.Glyphs.Size())
+        if (CharacterIndex >= Text.Length() || Run.Glyphs.IsEmpty())
         {
             OutOffset  = Run.Width;
             OutAdvance = 0;
             return;
         }
 
-        const int32 ClampedIndex = Math::Max(CharacterIndex, 0);
-        OutOffset  = Run.Glyphs[ClampedIndex].Offset;
-        OutAdvance = Run.Glyphs[ClampedIndex].Advance;
+        // The last glyph that starts at or before the index, found by bisecting since the source indices only grow
+        int32 First = 0;
+        int32 Last  = Run.Glyphs.Size() - 1;
+        while (First < Last)
+        {
+            const int32 Middle = (First + Last + 1) / 2;
+            if (Run.Glyphs[Middle].SourceIndex <= CharacterIndex)
+            {
+                First = Middle;
+            }
+            else
+            {
+                Last = Middle - 1;
+            }
+        }
+
+        OutOffset  = Run.Glyphs[First].Offset;
+        OutAdvance = Run.Glyphs[First].Advance;
     }
 
     /**

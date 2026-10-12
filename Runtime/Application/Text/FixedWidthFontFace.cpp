@@ -1,4 +1,5 @@
 #include "Application/Text/FixedWidthFontFace.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Math/Math.h"
 
 FFixedWidthFontFace::FFixedWidthFontFace(int32 InCharacterAdvance, int32 InLineHeight)
@@ -40,14 +41,20 @@ const FShapedRun& FFixedWidthFontFace::ShapeText(const FStringView& Text) const
     ShapedRun.Glyphs.Clear();
     ShapedRun.Glyphs.Reserve(Text.Length());
 
-    for (int32 Index = 0; Index < Text.Length(); ++Index)
+    int32 Index = 0;
+    while (Index < Text.Length())
     {
+        int32 NumUnits = 0;
+
         FShapedGlyph& Shaped = ShapedRun.Glyphs.Emplace();
-        Shaped.Offset      = Index * CharacterAdvance;
+        Shaped.Codepoint   = static_cast<int32>(FStringConversion::DecodeCodePoint(Text.Data() + Index, Text.Length() - Index, NumUnits));
+        Shaped.Offset      = (ShapedRun.Glyphs.Size() - 1) * CharacterAdvance;
         Shaped.Advance     = CharacterAdvance;
         Shaped.SourceIndex = Index;
+
+        Index += NumUnits;
     }
 
-    ShapedRun.Width = Text.Length() * CharacterAdvance;
+    ShapedRun.Width = ShapedRun.Glyphs.Size() * CharacterAdvance;
     return ShapedRun;
 }

@@ -356,7 +356,7 @@ bool FImGuiEventHandler::ProcessMouseButtonEvent(const FCursorEvent& CursorEvent
 bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)
 {
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddInputCharacter(KeyTypedEvent.GetAnsiChar());
+    UIState.AddInputCharacter(KeyTypedEvent.GetCharacter());
     return false;
 }
 

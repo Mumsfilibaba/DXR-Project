@@ -3,6 +3,7 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include <Core/Containers/StringConversion.h>
 #include <Core/Misc/Paths.h>
 #include <Application/Draw/DrawCommandList.h>
 #include <Application/Draw/UIDrawData.h>
@@ -34,14 +35,14 @@ static FKeyEvent CreateKeyDownEvent(FKey Key, EModifierFlag Modifiers)
     return FKeyEvent(EInputEventType::KeyDown, Key, FModifierKeyState(Modifiers), false, true);
 }
 
-static FKeyEvent CreateCharEvent(CHAR_T Character)
+static FKeyEvent CreateCharEvent(uint32 Character)
 {
-    return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(), static_cast<uint32>(Character), false, true);
+    return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(), Character, false, true);
 }
 
-static FKeyEvent CreateCharEvent(CHAR_T Character, EModifierFlag Modifiers)
+static FKeyEvent CreateCharEvent(uint32 Character, EModifierFlag Modifiers)
 {
-    return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(Modifiers), static_cast<uint32>(Character), false, true);
+    return FKeyEvent(EInputEventType::KeyChar, Keys::Unknown, FModifierKeyState(Modifiers), Character, false, true);
 }
 
 static FCursorEvent CreateMouseButtonEvent(const FIntVector2& ClientPosition, bool bIsDown)
@@ -135,6 +136,69 @@ bool EditableTextEditing_Test()
     Watched->SetTextSilently(TEXT("Silent"));
     TEST_EXPECT_EQ(NumChanges, 1);
     TEST_EXPECT(Watched->GetText().Equals(TEXT("Silent")));
+
+    TEST_END();
+}
+
+bool EditableTextUnicode_Test()
+{
+    TEST_BEGIN();
+
+    TSharedPtr<IFontFace> Font = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+
+    TSharedPtr<FEditableText> Editable = CreateEditableText(TEXT(""), Font);
+
+    TEST_SECTION(TEXT("Typing a character outside ASCII inserts all of its code units"));
+    TEST_EXPECT(Editable->OnKeyChar(CreateCharEvent(0xC5)).IsEventHandled());
+    TEST_EXPECT(Editable->OnKeyChar(CreateCharEvent(0x65E5)).IsEventHandled());
+    TEST_EXPECT(Editable->OnKeyChar(CreateCharEvent(0x1F600)).IsEventHandled());
+    TEST_EXPECT(Editable->GetText().Equals(TEXT("Å日😀")));
+    TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), Editable->GetText().Length());
+
+    TEST_SECTION(TEXT("A C1 control character is not typed"));
+    TEST_EXPECT(!Editable->OnKeyChar(CreateCharEvent(0x85)).IsEventHandled());
+    TEST_EXPECT(Editable->GetText().Equals(TEXT("Å日😀")));
+
+    TEST_SECTION(TEXT("Left and right step over whole characters"));
+    const int32 EmojiStart = FString(TEXT("Å日")).Length();
+    const int32 SunStart   = FString(TEXT("Å")).Length();
+
+    Editable->MoveTextCursorLeft();
+    TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), EmojiStart);
+    Editable->MoveTextCursorLeft();
+    TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), SunStart);
+    Editable->MoveTextCursorLeft();
+    TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 0);
+    Editable->MoveTextCursorRight();
+    TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), SunStart);
+
+    TEST_SECTION(TEXT("Selecting with shift takes whole characters"));
+    Editable->MoveTextCursorRight(true);
+    TEST_EXPECT(Editable->GetSelectedText().Equals(TEXT("日")));
+
+    TEST_SECTION(TEXT("Backspace and delete remove whole characters"));
+    Editable->MoveTextCursorToEnd();
+    TEST_EXPECT(Editable->DeleteBackward());
+    TEST_EXPECT(Editable->GetText().Equals(TEXT("Å日")));
+
+    Editable->MoveTextCursorToStart();
+    TEST_EXPECT(Editable->DeleteForward());
+    TEST_EXPECT(Editable->GetText().Equals(TEXT("日")));
+    TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), 0);
+
+    TEST_SECTION(TEXT("Pasted text goes in whole and leaves the text cursor after it"));
+    Editable->MoveTextCursorToEnd();
+    Editable->InsertText(FStringView(TEXT(" åäö 本語")));
+    TEST_EXPECT(Editable->GetText().Equals(TEXT("日 åäö 本語")));
+    TEST_EXPECT_EQ(Editable->GetTextCursorPosition(), Editable->GetText().Length());
+
+    TEST_SECTION(TEXT("A click lands between characters"));
+    const FString Text = Editable->GetText();
+    for (int32 OffsetX = 0; OffsetX < 10 * 8; ++OffsetX)
+    {
+        const int32 Index = Font->FindCharacterIndexAtOffset(FStringView(Text.Data(), Text.Length()), OffsetX);
+        TEST_EXPECT(Index == 0 || Index == Text.Length() || FStringConversion::FindNextCodePoint(Text.Data(), Text.Length(), FStringConversion::FindPreviousCodePoint(Text.Data(), Index)) == Index);
+    }
 
     TEST_END();
 }

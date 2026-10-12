@@ -86,9 +86,9 @@ public:
     /**
      * @brief Inserts one character at the text cursor, which ends up just after it.
      *
-     * @param Character The character to insert.
+     * @param Codepoint The Unicode code point to insert, which takes as many code units of the text as its encoding needs.
      */
-    void InsertCharacter(CHAR_T Character);
+    void InsertCharacter(uint32 Codepoint);
 
     /**
      * @brief Inserts text at the text cursor, which ends up after the inserted text.

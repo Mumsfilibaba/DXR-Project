@@ -3,6 +3,7 @@
 #include "TestCommon/TestHarness.h"
 #include "TestCommon/TestMacros.h"
 
+#include <Core/Containers/StringConversion.h>
 #include <Core/Misc/Paths.h>
 #include <Application/Text/FontAtlas.h>
 #include <Application/Text/FixedWidthFontFace.h>
@@ -18,6 +19,40 @@ static TSharedPtr<FTrueTypeFontFace> CreateTrueTypeFont(int32 PixelHeight = GTes
 static TSharedPtr<FTrueTypeFontFace> CreateProportionalFont(int32 PixelHeight = GTestPixelHeight)
 {
     return FTrueTypeFontFace::CreateFromFile(Paths::GetAssetDir() + TEXT("/Editor/Fonts/segoeui.ttf"), PixelHeight);
+}
+
+static TArray<int32> FindCharacterStarts(const FString& Text)
+{
+    TArray<int32> Starts;
+    for (int32 Index = 0; Index < Text.Length(); Index = FStringConversion::FindNextCodePoint(Text.Data(), Text.Length(), Index))
+    {
+        Starts.Add(Index);
+    }
+
+    return Starts;
+}
+
+static bool HaveSameCoverage(const FFontAtlas& Atlas, const FGlyph& First, const FGlyph& Second)
+{
+    if (First.AtlasRectangle.Width != Second.AtlasRectangle.Width || First.AtlasRectangle.Height != Second.AtlasRectangle.Height)
+    {
+        return false;
+    }
+
+    for (int32 Row = 0; Row < First.AtlasRectangle.Height; ++Row)
+    {
+        for (int32 Column = 0; Column < First.AtlasRectangle.Width; ++Column)
+        {
+            const int32 FirstTexel  = ((First.AtlasRectangle.Position.Y + Row) * Atlas.GetWidth()) + First.AtlasRectangle.Position.X + Column;
+            const int32 SecondTexel = ((Second.AtlasRectangle.Position.Y + Row) * Atlas.GetWidth()) + Second.AtlasRectangle.Position.X + Column;
+            if (Atlas.GetPixels()[(FirstTexel * 4) + 3] != Atlas.GetPixels()[(SecondTexel * 4) + 3])
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 bool FontAtlasPacking_Test()
@@ -343,6 +378,132 @@ bool FontElision_Test()
     TEST_EXPECT(Font->ElideText(Text, EllipsisWidth).IsEmpty());
     TEST_EXPECT(Font->ElideText(Text, 0).IsEmpty());
     TEST_EXPECT(Font->ElideText(Text, -10).IsEmpty());
+
+    TEST_END();
+}
+
+bool FontUnicodeShaping_Test()
+{
+    TEST_BEGIN();
+
+    const FString       Text = TEXT("Åäö 日本語 😀");
+    const FStringView   TextView(Text.Data(), Text.Length());
+    const TArray<int32> Starts = FindCharacterStarts(Text);
+
+    const int32 ExpectedCodepoints[] = { 0xC5, 0xE4, 0xF6, ' ', 0x65E5, 0x672C, 0x8A9E, ' ', 0x1F600 };
+
+    TSharedPtr<FTrueTypeFontFace> Font = CreateProportionalFont();
+    TEST_EXPECT(Font != nullptr);
+    if (!Font)
+    {
+        TEST_END();
+    }
+
+    TSharedPtr<FFixedWidthFontFace> FixedFont = MakeSharedPtr<FFixedWidthFontFace>(8, 16);
+
+    TEST_SECTION(TEXT("A run has one glyph per character, however many code units each takes"));
+    TEST_EXPECT_EQ(Starts.Size(), 9);
+
+    for (const IFontFace* Face : { static_cast<const IFontFace*>(Font.Get()), static_cast<const IFontFace*>(FixedFont.Get()) })
+    {
+        const FShapedRun& Run = Face->ShapeText(TextView);
+        TEST_EXPECT_EQ(Run.Glyphs.Size(), Starts.Size());
+
+        if (Run.Glyphs.Size() == Starts.Size())
+        {
+            for (int32 Index = 0; Index < Starts.Size(); ++Index)
+            {
+                TEST_EXPECT_EQ(Run.Glyphs[Index].SourceIndex, Starts[Index]);
+                TEST_EXPECT_EQ(Run.Glyphs[Index].Codepoint, ExpectedCodepoints[Index]);
+            }
+        }
+    }
+
+    TEST_EXPECT_EQ(FixedFont->MeasureWidth(TextView), 9 * 8);
+
+    TEST_SECTION(TEXT("A caret anywhere inside a character sits where the character starts"));
+    const FShapedRun& Run = Font->ShapeText(TextView);
+    TArray<int32> GlyphOffsets;
+    for (const FShapedGlyph& Glyph : Run.Glyphs)
+    {
+        GlyphOffsets.Add(Glyph.Offset);
+    }
+
+    for (int32 Character = 0; Character < Starts.Size(); ++Character)
+    {
+        const int32 End = (Character + 1 < Starts.Size()) ? Starts[Character + 1] : Text.Length();
+        for (int32 Index = Starts[Character]; Index < End; ++Index)
+        {
+            int32 Offset  = -1;
+            int32 Advance = -1;
+            Font->GetCharacterPlacement(TextView, Index, Offset, Advance);
+            TEST_EXPECT_EQ(Offset, GlyphOffsets[Character]);
+        }
+    }
+
+    TEST_SECTION(TEXT("A click resolves to the start of a character, never into the middle of one"));
+    const int32 TextWidth = Font->MeasureWidth(TextView);
+    for (int32 OffsetX = -2; OffsetX <= TextWidth + 2; ++OffsetX)
+    {
+        const int32 Index = Font->FindCharacterIndexAtOffset(TextView, OffsetX);
+        TEST_EXPECT(Starts.Contains(Index) || Index == Text.Length());
+    }
+
+    TEST_SECTION(TEXT("Elision cuts between characters, never through one"));
+    const int32 EllipsisLength = FStringView(IFontFace::Ellipsis).Length();
+    for (int32 MaxWidth = 1; MaxWidth < TextWidth; ++MaxWidth)
+    {
+        const FString Elided = Font->ElideText(TextView, MaxWidth);
+        if (!Elided.IsEmpty())
+        {
+            TEST_EXPECT(Elided.EndsWith(IFontFace::Ellipsis));
+            TEST_EXPECT(Starts.Contains(Elided.Length() - EllipsisLength));
+        }
+    }
+
+    TEST_END();
+}
+
+bool FontFallback_Test()
+{
+    TEST_BEGIN();
+
+#if PLATFORM_WINDOWS
+    TSharedPtr<FTrueTypeFontFace> Font = CreateProportionalFont();
+    TEST_EXPECT(Font != nullptr);
+    if (!Font || !Font->GetAtlas())
+    {
+        TEST_END();
+    }
+
+    const FFontAtlas& Atlas = *Font->GetAtlas();
+
+    const int32 Codepoints[] = { 0x65E5, 0x672C, 0x0378, 0x0379, 'a' };
+    for (int32 Codepoint : Codepoints)
+    {
+        (void)Atlas.GetGlyph(Codepoint);
+    }
+
+    const FGlyph Sun      = Atlas.GetGlyph(0x65E5);
+    const FGlyph Book     = Atlas.GetGlyph(0x672C);
+    const FGlyph Missing  = Atlas.GetGlyph(0x0378);
+    const FGlyph Missing2 = Atlas.GetGlyph(0x0379);
+    const FGlyph LetterA  = Atlas.GetGlyph('a');
+
+    TEST_SECTION(TEXT("Ideographs the editor's font lacks are drawn from a font installed with Windows"));
+    TEST_EXPECT(!Sun.AtlasRectangle.IsEmpty());
+    TEST_EXPECT(!Book.AtlasRectangle.IsEmpty());
+    TEST_EXPECT(!HaveSameCoverage(Atlas, Sun, Book));
+
+    TEST_SECTION(TEXT("They are sized to the same em, which makes them wider than a Latin letter but no wider than the line is tall"));
+    TEST_EXPECT(Sun.Advance > LetterA.Advance);
+    TEST_EXPECT(Sun.Advance <= Font->GetLineHeight());
+    TEST_EXPECT(Sun.AtlasRectangle.Height <= Font->GetAscent() + Font->GetDescent());
+
+    TEST_SECTION(TEXT("A code point that no font has draws the editor font's missing-glyph box"));
+    TEST_EXPECT(!Missing.AtlasRectangle.IsEmpty());
+    TEST_EXPECT(HaveSameCoverage(Atlas, Missing, Missing2));
+#endif
 
     TEST_END();
 }

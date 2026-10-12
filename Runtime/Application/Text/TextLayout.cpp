@@ -2,6 +2,7 @@
 #include "Application/Draw/DrawCommandList.h"
 #include "Application/Style/UIStyle.h"
 #include "Application/Text/IFontFace.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Math/Math.h"
 
 void DrawTextWithSearchHighlight(FDrawCommandList& OutCommandList, int32 LayerId, const FRectangle& LabelBounds,
@@ -253,9 +254,10 @@ void FTextLayout::WrapSegment(const FTextRun& Style, const CHAR_T* Characters, i
 
         while (FitCount > 0 && Style.Font->MeasureWidth(FStringView(Characters + PieceStart, FitCount)) > Available)
         {
-            FitCount--;
+            FitCount = FStringConversion::FindPreviousCodePoint(Characters + PieceStart, FitCount);
         }
 
+        // Spaces and tabs are single code units in every encoding, so stepping back by code unit to one stays on a character boundary
         int32 BreakCount = FitCount;
         while (BreakCount > 0 && Characters[PieceStart + BreakCount - 1] != ' ' && Characters[PieceStart + BreakCount - 1] != '\t')
         {
@@ -275,7 +277,7 @@ void FTextLayout::WrapSegment(const FTextRun& Style, const CHAR_T* Characters, i
         }
         else
         {
-            const int32 CharacterCount = Math::Max(FitCount, 1);
+            const int32 CharacterCount = (FitCount > 0) ? FitCount : FStringConversion::FindNextCodePoint(Characters + PieceStart, Remaining, 0);
             AppendPiece(Style, Characters + PieceStart, CharacterCount, SourceOffset + PieceStart);
             PieceStart += CharacterCount;
         }

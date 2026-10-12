@@ -2,6 +2,7 @@
 
 bool EditableTextEditing_Test();
 bool EditableTextCursor_Test();
+bool EditableTextUnicode_Test();
 bool EditableTextKeyInterceptor_Test();
 bool EditableTextSelection_Test();
 bool EditableTextMouseSelection_Test();

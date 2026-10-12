@@ -776,6 +776,16 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
                         if (FirstCharacter != NSDeleteCharacter)
                         {
                             NewDeferredEvent.Character = static_cast<uint32>(FirstCharacter);
+
+                            // A character past U+FFFF arrives as a UTF-16 surrogate pair
+                            if (FirstCharacter >= 0xD800 && FirstCharacter <= 0xDBFF && NumCharacters > 1)
+                            {
+                                const unichar SecondCharacter = [[CurrentEvent characters] characterAtIndex:1];
+                                if (SecondCharacter >= 0xDC00 && SecondCharacter <= 0xDFFF)
+                                {
+                                    NewDeferredEvent.Character = 0x10000 + ((static_cast<uint32>(FirstCharacter) - 0xD800) << 10) + (static_cast<uint32>(SecondCharacter) - 0xDC00);
+                                }
+                            }
                         }
                     }
                 

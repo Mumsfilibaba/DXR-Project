@@ -74,6 +74,8 @@ static int32 RunApplicationTests()
     RUN_TEST(TEXT("FontKerning"), FontKerning_Test());
     RUN_TEST(TEXT("FontMeasurement"), FontMeasurement_Test());
     RUN_TEST(TEXT("FontElision"), FontElision_Test());
+    RUN_TEST(TEXT("FontUnicodeShaping"), FontUnicodeShaping_Test());
+    RUN_TEST(TEXT("FontFallback"), FontFallback_Test());
 
     RUN_TEST(TEXT("UIDrawDataLayerOrder"), UIDrawDataLayerOrder_Test());
     RUN_TEST(TEXT("UIDrawDataBatching"), UIDrawDataBatching_Test());
@@ -123,6 +125,7 @@ static int32 RunApplicationTests()
     RUN_TEST(TEXT("TextLayoutBasics"), TextLayoutBasics_Test());
     RUN_TEST(TEXT("TextLayoutNewlines"), TextLayoutNewlines_Test());
     RUN_TEST(TEXT("TextLayoutWrapping"), TextLayoutWrapping_Test());
+    RUN_TEST(TEXT("TextLayoutUnicodeWrapping"), TextLayoutUnicodeWrapping_Test());
     RUN_TEST(TEXT("TextLayoutHitTesting"), TextLayoutHitTesting_Test());
     RUN_TEST(TEXT("TextLayoutDraw"), TextLayoutDraw_Test());
 
@@ -259,6 +262,7 @@ static int32 RunApplicationTests()
 
     RUN_TEST(TEXT("EditableTextEditing"), EditableTextEditing_Test());
     RUN_TEST(TEXT("EditableTextCursor"), EditableTextCursor_Test());
+    RUN_TEST(TEXT("EditableTextUnicode"), EditableTextUnicode_Test());
     RUN_TEST(TEXT("EditableTextKeyInterceptor"), EditableTextKeyInterceptor_Test());
     RUN_TEST(TEXT("EditableTextSelection"), EditableTextSelection_Test());
     RUN_TEST(TEXT("EditableTextMouseSelection"), EditableTextMouseSelection_Test());

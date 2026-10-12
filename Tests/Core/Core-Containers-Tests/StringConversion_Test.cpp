@@ -35,6 +35,43 @@ static bool ConvertsTo(const FromCharType (&Source)[NumSource], const ToCharType
     return ConvertsTo(Source, NumSource, Expected, NumExpected);
 }
 
+template<typename CharType>
+static bool StepsThrough(const CharType* Text, int32 Length, const int32* ExpectedStarts, int32 NumStarts)
+{
+    int32 Index = 0;
+    for (int32 Position = 0; Position < NumStarts; ++Position)
+    {
+        if (Index != ExpectedStarts[Position])
+        {
+            return false;
+        }
+
+        Index = FStringConversion::FindNextCodePoint(Text, Length, Index);
+    }
+
+    if (Index != Length || FStringConversion::FindNextCodePoint(Text, Length, Index) != Length)
+    {
+        return false;
+    }
+
+    for (int32 Position = NumStarts - 1; Position >= 0; --Position)
+    {
+        Index = FStringConversion::FindPreviousCodePoint(Text, Index);
+        if (Index != ExpectedStarts[Position])
+        {
+            return false;
+        }
+    }
+
+    return FStringConversion::FindPreviousCodePoint(Text, 0) == 0;
+}
+
+template<typename CharType, int32 Length, int32 NumStarts>
+static bool StepsThrough(const CharType (&Text)[Length], const int32 (&ExpectedStarts)[NumStarts])
+{
+    return StepsThrough(Text, Length, ExpectedStarts, NumStarts);
+}
+
 bool TStringConversion_Test()
 {
     TEST_BEGIN();
@@ -103,6 +140,75 @@ bool TStringConversion_Test()
         UTF8CHAR Buffer[8] = {};
         TEST_EXPECT_EQ(FStringConversion::Convert(Buffer, 4, u"日本", 2), 3);
         TEST_EXPECT(Buffer[0] == 0xE6 && Buffer[1] == 0x97 && Buffer[2] == 0xA5 && Buffer[3] == 0);
+    }
+
+    TEST_SECTION(TEXT("Decoding one code point gives its value and how many code units it took"));
+    {
+        int32 NumUnits = 0;
+        TEST_EXPECT(FStringConversion::DecodeCodePoint(Utf8 + 7, 14, NumUnits) == 0x65E5 && NumUnits == 3);
+        TEST_EXPECT(FStringConversion::DecodeCodePoint(Utf8 + 17, 4, NumUnits) == 0x1F600 && NumUnits == 4);
+        TEST_EXPECT(FStringConversion::DecodeCodePoint(Utf16 + 8, 2, NumUnits) == 0x1F600 && NumUnits == 2);
+        TEST_EXPECT(FStringConversion::DecodeCodePoint(Utf32 + 4, 5, NumUnits) == 0x65E5 && NumUnits == 1);
+
+        // A sequence the text ends in the middle of is one invalid code point
+        TEST_EXPECT(FStringConversion::DecodeCodePoint(Utf8 + 7, 2, NumUnits) == FStringConversion::ReplacementCharacter && NumUnits == 2);
+        TEST_EXPECT(FStringConversion::DecodeCodePoint(Utf16 + 8, 1, NumUnits) == FStringConversion::ReplacementCharacter && NumUnits == 1);
+    }
+
+    TEST_SECTION(TEXT("Encoding one code point writes all of its code units, and U+FFFD for one that is not valid"));
+    {
+        UTF8CHAR Utf8Units[FStringConversion::MaxCodeUnitsPerCodePoint] = {};
+        TEST_EXPECT_EQ(FStringConversion::EncodeCodePoint(0x1F600, Utf8Units), 4);
+        TEST_EXPECT(Utf8Units[0] == 0xF0 && Utf8Units[1] == 0x9F && Utf8Units[2] == 0x98 && Utf8Units[3] == 0x80);
+
+        TEST_EXPECT_EQ(FStringConversion::EncodeCodePoint(0xD800, Utf8Units), 3);
+        TEST_EXPECT(Utf8Units[0] == 0xEF && Utf8Units[1] == 0xBF && Utf8Units[2] == 0xBD);
+
+        char16_t Utf16Units[FStringConversion::MaxCodeUnitsPerCodePoint] = {};
+        TEST_EXPECT_EQ(FStringConversion::EncodeCodePoint(0x1F600, Utf16Units), 2);
+        TEST_EXPECT(Utf16Units[0] == 0xD83D && Utf16Units[1] == 0xDE00);
+
+        char32_t Utf32Units[FStringConversion::MaxCodeUnitsPerCodePoint] = {};
+        TEST_EXPECT_EQ(FStringConversion::EncodeCodePoint(0x110000, Utf32Units), 1);
+        TEST_EXPECT(Utf32Units[0] == 0xFFFD);
+
+        CHAR_T Units[FStringConversion::MaxCodeUnitsPerCodePoint] = {};
+        const int32 NumUnits = FStringConversion::EncodeCodePoint(0x65E5, Units);
+        TEST_EXPECT(FString(Units, NumUnits).Equals(TEXT("日")));
+    }
+
+    TEST_SECTION(TEXT("Stepping forward and back by code point stops at the start of every character"));
+    {
+        const int32 Utf8Starts[]  = { 0, 2, 4, 6, 7, 10, 13, 16, 17 };
+        const int32 Utf16Starts[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+        const int32 Utf32Starts[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+        TEST_EXPECT(StepsThrough(Utf8, Utf8Starts));
+        TEST_EXPECT(StepsThrough(Utf16, Utf16Starts));
+        TEST_EXPECT(StepsThrough(Utf32, Utf32Starts));
+
+        const FString Text = TEXT("Åäö 日本語 😀");
+        int32 NumCharacters = 0;
+        for (int32 Index = 0; Index < Text.Length(); Index = FStringConversion::FindNextCodePoint(Text.Data(), Text.Length(), Index))
+        {
+            NumCharacters++;
+        }
+
+        TEST_EXPECT_EQ(NumCharacters, 9);
+    }
+
+    TEST_SECTION(TEXT("Stepping back over invalid text stops where stepping forward did"));
+    {
+        const UTF8CHAR LoneContinuation[] = { 'A', 0x80, 0x80, 0x80, 0x80, 'B' };
+        const int32 LoneContinuationStarts[] = { 0, 1, 2, 3, 4, 5 };
+        TEST_EXPECT(StepsThrough(LoneContinuation, LoneContinuationStarts));
+
+        const UTF8CHAR Truncated[] = { 'A', 0xE6, 0x97, 'B', 0xE6, 0x97 };
+        const int32 TruncatedStarts[] = { 0, 1, 3, 4 };
+        TEST_EXPECT(StepsThrough(Truncated, TruncatedStarts));
+
+        const char16_t LoneSurrogates[] = { 'A', 0xDC00, 0xD800, 'B', 0xD800 };
+        const int32 LoneSurrogatesStarts[] = { 0, 1, 2, 3, 4 };
+        TEST_EXPECT(StepsThrough(LoneSurrogates, LoneSurrogatesStarts));
     }
 
     TEST_SECTION(TEXT("StringCast between CHAR_T and WIDECHAR"));

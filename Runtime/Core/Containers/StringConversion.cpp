@@ -207,3 +207,92 @@ int32 FStringConversion::Convert(char16_t* Dest, int32 DestLength, const char32_
 {
     return ConvertCodeUnits(Dest, DestLength, Source, SourceLength);
 }
+
+template<typename CharType>
+static uint32 DecodeAt(const CharType* Source, int32 SourceLength, int32& OutNumUnits)
+{
+    const CharType* Cursor = Source;
+    const uint32 CodePoint = Decode(&Cursor, Source + SourceLength);
+
+    OutNumUnits = static_cast<int32>(Cursor - Source);
+    return CodePoint;
+}
+
+template<typename CharType>
+static int32 EncodeValid(uint32 CodePoint, CharType* Dest)
+{
+    return Encode((CodePoint > MaxCodePoint || IsSurrogate(CodePoint)) ? FStringConversion::ReplacementCharacter : CodePoint, Dest);
+}
+
+uint32 FStringConversion::DecodeCodePoint(const UTF8CHAR* Source, int32 SourceLength, int32& OutNumUnits)
+{
+    return DecodeAt(Source, SourceLength, OutNumUnits);
+}
+
+uint32 FStringConversion::DecodeCodePoint(const char16_t* Source, int32 SourceLength, int32& OutNumUnits)
+{
+    return DecodeAt(Source, SourceLength, OutNumUnits);
+}
+
+uint32 FStringConversion::DecodeCodePoint(const char32_t* Source, int32 SourceLength, int32& OutNumUnits)
+{
+    return DecodeAt(Source, SourceLength, OutNumUnits);
+}
+
+int32 FStringConversion::EncodeCodePoint(uint32 CodePoint, UTF8CHAR* Dest)
+{
+    return EncodeValid(CodePoint, Dest);
+}
+
+int32 FStringConversion::EncodeCodePoint(uint32 CodePoint, char16_t* Dest)
+{
+    return EncodeValid(CodePoint, Dest);
+}
+
+int32 FStringConversion::EncodeCodePoint(uint32 CodePoint, char32_t* Dest)
+{
+    return EncodeValid(CodePoint, Dest);
+}
+
+int32 FStringConversion::FindPreviousCodePoint(const UTF8CHAR* Source, int32 Index)
+{
+    if (Index <= 0)
+    {
+        return 0;
+    }
+
+    int32 Start = Index - 1;
+    while (Start > 0 && (Index - Start) < MaxCodeUnitsPerCodePoint && (static_cast<uint8>(Source[Start]) & 0xC0) == 0x80)
+    {
+        --Start;
+    }
+
+    int32 NumUnits = 0;
+    DecodeAt(Source + Start, Index - Start, NumUnits);
+    return (Start + NumUnits == Index) ? Start : Index - 1;
+}
+
+int32 FStringConversion::FindPreviousCodePoint(const char16_t* Source, int32 Index)
+{
+    if (Index <= 0)
+    {
+        return 0;
+    }
+
+    const uint32 Last = Source[Index - 1];
+    if (Index >= 2 && Last >= 0xDC00 && Last <= 0xDFFF)
+    {
+        const uint32 High = Source[Index - 2];
+        if (High >= 0xD800 && High <= 0xDBFF)
+        {
+            return Index - 2;
+        }
+    }
+
+    return Index - 1;
+}
+
+int32 FStringConversion::FindPreviousCodePoint(const char32_t*, int32 Index)
+{
+    return Index > 0 ? Index - 1 : 0;
+}
