@@ -35,7 +35,7 @@ static bool CanRead(const FByteInputStream& Stream, uint64 NumBytes)
 
 FString FShaderManifest::GetFilePath()
 {
-    return Paths::GetAssetDir() + '/' + CVarManifestFileName.GetValue();
+    return Paths::GetEngineCacheDir() + '/' + CVarManifestFileName.GetValue();
 }
 
 bool FShaderManifest::Load()
@@ -202,6 +202,7 @@ bool FShaderManifest::Save() const
     Header.NumEntries = NumEntries;
 
     const FString FilePath = GetFilePath();
+    File::CreateDirectoryTree(File::GetDirectoryOf(FilePath));
 
     TFileRef<IPlatformFile> ManifestFile = FPlatformFile::OpenForWrite(FilePath);
     if (!ManifestFile)

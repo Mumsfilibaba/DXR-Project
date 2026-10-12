@@ -113,9 +113,11 @@ bool ProjectPaths_Test()
     {
         TEST_EXPECT(Paths::GetProjectContentDir().Equals(Paths::GetProjectDir() + TEXT("/Content")));
         TEST_EXPECT(Paths::GetProjectConfigDir().Equals(Paths::GetProjectDir() + TEXT("/Config")));
-        TEST_EXPECT(Paths::GetProjectSavedDir().Equals(Paths::GetProjectDir() + TEXT("/Saved")));
+        TEST_EXPECT(Paths::GetProjectCacheDir().Equals(Paths::GetProjectDir() + TEXT("/Cache")));
+        TEST_EXPECT(Paths::GetProjectLogsDir().Equals(Paths::GetProjectDir() + TEXT("/Logs")));
+        TEST_EXPECT(Paths::GetProjectUserDir().Equals(Paths::GetProjectDir() + TEXT("/User")));
         TEST_EXPECT(Paths::GetEngineContentDir().Equals(Paths::GetEngineDir() + TEXT("/Content")));
-        TEST_EXPECT(Paths::GetEngineSavedDir().Equals(Paths::GetEngineDir() + TEXT("/Saved")));
+        TEST_EXPECT(Paths::GetEngineCacheDir().Equals(Paths::GetEngineDir() + TEXT("/Cache")));
     }
 
     const FString Root        = Paths::GetUserSettingsDir() + TEXT("/Tests/ProjectPathsTests.Scratch");

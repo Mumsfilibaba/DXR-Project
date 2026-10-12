@@ -9,6 +9,7 @@
 #include <Core/Misc/FileOutputDevice.h>
 #include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Misc/Paths.h>
+#include <Core/Filesystem/File.h>
 #include <Core/Modules/ModuleManager.h>
 #include <Core/Platform/PlatformMisc.h>
 #include <Core/PlatformInterface/PlatformEventPool.h>
@@ -95,7 +96,8 @@ struct FConsoleToggleHandler final : public FInputHandler
 
 static void InitializeOutputDevices()
 {
-    GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(Paths::GetProjectDir() + TEXT("/PlaygroundLog.txt"));
+    File::CreateDirectoryTree(Paths::GetProjectLogsDir());
+    GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(Paths::GetProjectLogsDir() + TEXT("/PlaygroundLog.txt"));
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
     {
         FOutputDeviceManager::Get()->RegisterOutputDevice(GFileOutputDevice.Get());

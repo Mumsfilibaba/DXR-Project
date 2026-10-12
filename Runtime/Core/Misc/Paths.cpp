@@ -261,9 +261,9 @@ FString Paths::GetEngineContentDir()
     return Paths::GetEngineDir() + FString(TEXT("/Content"));
 }
 
-FString Paths::GetEngineSavedDir()
+FString Paths::GetEngineCacheDir()
 {
-    return Paths::GetEngineDir() + FString(TEXT("/Saved"));
+    return Paths::GetEngineDir() + FString(TEXT("/Cache"));
 }
 
 static void EnsureProjectResolved()
@@ -326,9 +326,19 @@ FString Paths::GetProjectConfigDir()
     return Paths::GetProjectDir() + FString(TEXT("/Config"));
 }
 
-FString Paths::GetProjectSavedDir()
+FString Paths::GetProjectCacheDir()
 {
-    return Paths::GetProjectDir() + FString(TEXT("/Saved"));
+    return Paths::GetProjectDir() + FString(TEXT("/Cache"));
+}
+
+FString Paths::GetProjectLogsDir()
+{
+    return Paths::GetProjectDir() + FString(TEXT("/Logs"));
+}
+
+FString Paths::GetProjectUserDir()
+{
+    return Paths::GetProjectDir() + FString(TEXT("/User"));
 }
 
 FString Paths::GetProjectModuleName()

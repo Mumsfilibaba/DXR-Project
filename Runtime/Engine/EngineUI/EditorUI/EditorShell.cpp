@@ -7,6 +7,7 @@
 #include "Engine/EngineUI/EditorUI/EditorTitleBar.h"
 #include "Engine/EngineUI/EditorUI/Panels/EditorViewportPanel.h"
 #include "Engine/EditorEngine.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/IniFile.h"
 #include "Core/Misc/OutputDeviceManager.h"
@@ -41,7 +42,12 @@ FEditorShell::~FEditorShell()
 
 FString FEditorShell::GetLayoutFilename()
 {
-    return Paths::GetProjectDir() + TEXT("/EditorLayout.ini");
+    return Paths::GetProjectUserDir() + TEXT("/EditorLayout.ini");
+}
+
+FString FEditorShell::GetDefaultLayoutFilename()
+{
+    return Paths::GetEngineDir() + TEXT("/DefaultEditorLayout.ini");
 }
 
 bool FEditorShell::Initialize()
@@ -133,7 +139,11 @@ bool FEditorShell::InitPostRenderer()
 
 bool FEditorShell::RestoreLayout()
 {
-    const FString LayoutFilename = GetLayoutFilename();
+    return RestoreLayoutFromFile(GetLayoutFilename()) || RestoreLayoutFromFile(GetDefaultLayoutFilename());
+}
+
+bool FEditorShell::RestoreLayoutFromFile(const FString& LayoutFilename)
+{
     if (!FPlatformFile::IsFile(*LayoutFilename))
     {
         return false;
@@ -198,6 +208,7 @@ void FEditorShell::SaveLayout()
     }
 
     const FString LayoutFilename = GetLayoutFilename();
+    File::CreateDirectoryTree(File::GetDirectoryOf(LayoutFilename));
     if (!FDockLayoutFile::Save(LayoutFilename, Windows))
     {
         return;

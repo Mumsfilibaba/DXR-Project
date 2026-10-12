@@ -2178,8 +2178,8 @@ void FEditorProfilerPanel::WriteCapture()
     }
 
     const uint64  Stamp    = FPlatformTime::QueryPerformanceCounter();
-    const FString TxtPath  = File::CombinePath(Paths::GetProjectDir(), FString::Printf(TEXT("Profiling/ProfileCapture_%llu.txt"), Stamp));
-    const FString JsonPath = File::CombinePath(Paths::GetProjectDir(), FString::Printf(TEXT("Profiling/ProfileCapture_%llu.json"), Stamp));
+    const FString TxtPath  = File::CombinePath(Paths::GetProjectLogsDir(), FString::Printf(TEXT("Profiling/ProfileCapture_%llu.txt"), Stamp));
+    const FString JsonPath = File::CombinePath(Paths::GetProjectLogsDir(), FString::Printf(TEXT("Profiling/ProfileCapture_%llu.json"), Stamp));
 
     FProfilerReport::WriteFile(TxtPath, Text);
     FProfilerReport::WriteFile(JsonPath, FProfilerReport::MergeChromeJson(FProfilerReport::BuildChromeCpuJson(), BuildChromeGpuEvents()));

@@ -77,9 +77,11 @@ private:
     static constexpr int32 PanelSetVersion = 2;
 
     NODISCARD static FString GetLayoutFilename();
+    NODISCARD static FString GetDefaultLayoutFilename();
     NODISCARD static FDockNode BuildDefaultLayout();
 
     NODISCARD bool RestoreLayout();
+    NODISCARD bool RestoreLayoutFromFile(const FString& LayoutFilename);
 
     void SaveLayout();
     void OnPanelClosed(const FString& PanelId);

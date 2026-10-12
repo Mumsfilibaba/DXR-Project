@@ -105,8 +105,8 @@ struct CORE_API Paths
     /** @return Returns the engine's Content directory, which holds the engine's own assets */
     static FString GetEngineContentDir();
 
-    /** @return Returns the engine's Saved directory, for caches every project shares */
-    static FString GetEngineSavedDir();
+    /** @return Returns the engine's Cache directory, for the caches every project shares, which can be deleted and rebuilt */
+    static FString GetEngineCacheDir();
 
     /** @return Returns where the project descriptor was found, resolving it first if InitializeProject has not run */
     static EProjectSource GetProjectSource();
@@ -132,8 +132,14 @@ struct CORE_API Paths
     /** @return Returns the project's Config directory */
     static FString GetProjectConfigDir();
 
-    /** @return Returns the project's Saved directory, for logs, layouts and other files that are not checked in */
-    static FString GetProjectSavedDir();
+    /** @return Returns the project's Cache directory, for data that can be deleted and rebuilt, such as thumbnails */
+    static FString GetProjectCacheDir();
+
+    /** @return Returns the project's Logs directory, for the output log and profiling captures */
+    static FString GetProjectLogsDir();
+
+    /** @return Returns the project's User directory, for per-user state such as the editor layout */
+    static FString GetProjectUserDir();
 
     /** @return Returns the name of the project's game module, which is currently the project name */
     static FString GetProjectModuleName();

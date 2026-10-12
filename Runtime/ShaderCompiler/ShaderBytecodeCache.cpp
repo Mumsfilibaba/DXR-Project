@@ -135,7 +135,7 @@ FString FShaderBytecodeCache::GetFilePath()
         return FilePathOverride;
     }
 
-    return Paths::GetAssetDir() + '/' + CVarBytecodeFileName.GetValue();
+    return Paths::GetEngineCacheDir() + '/' + CVarBytecodeFileName.GetValue();
 }
 
 FString FShaderBytecodeCache::CreateAssetRelativePath(const FString& Path)
@@ -547,6 +547,7 @@ bool FShaderBytecodeCache::Save()
     Header.NumEntries = NumEntries;
 
     const FString FilePath = GetFilePath();
+    File::CreateDirectoryTree(File::GetDirectoryOf(FilePath));
 
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(FilePath);
     if (!CacheFile)

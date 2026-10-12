@@ -40,7 +40,7 @@ FRayTracingSceneBuilder::~FRayTracingSceneBuilder()
 
 bool FRayTracingSceneBuilder::Initialize()
 {
-    ASCacheBackend = MakeUniquePtr<FDiskAccelerationStructureCacheBackend>(Paths::GetAssetDir() + TEXT("/RTASCache"));
+    ASCacheBackend = MakeUniquePtr<FDiskAccelerationStructureCacheBackend>(Paths::GetEngineCacheDir() + TEXT("/RTASCache"));
     ASCache.SetBackend(ASCacheBackend.Get());
     return true;
 }

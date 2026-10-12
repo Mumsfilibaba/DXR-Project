@@ -1,6 +1,7 @@
 #include "Core/Json/Json.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Platform/PlatformFile.h"
 #include "ShaderCompiler/ShaderJobFile.h"
 
@@ -23,7 +24,7 @@ static uint64 MakeEntryKey(const FString& RHIName, const FShaderCompileJob& Job)
 
 FString FShaderJobFile::GetDefaultFilePath()
 {
-    return Paths::GetAssetDir() + '/' + CVarJobFileName.GetValue();
+    return Paths::GetEngineCacheDir() + '/' + CVarJobFileName.GetValue();
 }
 
 bool FShaderJobFile::Load(const FString& FilePath, FString& OutError)
@@ -103,6 +104,7 @@ bool FShaderJobFile::Save(const FString& FilePath) const
     FJsonValue Root = FJsonValue::MakeObject();
     Root.AddMember(TEXT("version"), FJsonValue(Version));
     Root.AddMember(TEXT("jobs"), ::Move(Jobs));
+    File::CreateDirectoryTree(File::GetDirectoryOf(FilePath));
     return Json::SaveToFile(FilePath, Root, EJsonWriteFlags::Pretty);
 }
 

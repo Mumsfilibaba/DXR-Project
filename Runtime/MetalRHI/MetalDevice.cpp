@@ -12,6 +12,7 @@
 #include "MetalRHI/MetalResidencySet.h"
 #include "MetalRHI/MetalShaderLibraryCache.h"
 #include "MetalRHI/MetalStats.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -625,7 +626,8 @@ bool FMetalDevice::CreatePipelineCaches()
     BinaryArchive      = new FMetalBinaryArchive(this);
     PipelineCache      = new FMetalPipelineCache(this);
 
-    const FString ArchivePath = Paths::GetAssetDir() + '/' + CVarBinaryArchiveFileName.GetValue();
+    const FString ArchivePath = Paths::GetEngineCacheDir() + '/' + CVarBinaryArchiveFileName.GetValue();
+    File::CreateDirectoryTree(File::GetDirectoryOf(ArchivePath));
     return BinaryArchive->Initialize(FMetalBinaryArchive::ParseMode(CVarBinaryArchiveMode.GetValue()), ArchivePath);
 }
 

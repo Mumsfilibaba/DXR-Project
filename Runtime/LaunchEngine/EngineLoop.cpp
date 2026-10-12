@@ -14,6 +14,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Misc/EngineRegistry.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/BuildInfo.h"
@@ -95,7 +96,10 @@ static bool InitializeOutputDevices()
         FOutputDeviceManager::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 
-    const FString OutputLogPath = Paths::GetProjectDir() + TEXT("/OutputLog.txt");
+    const FString LogsDir       = Paths::GetProjectLogsDir();
+    const FString OutputLogPath = LogsDir + TEXT("/OutputLog.txt");
+    File::CreateDirectoryTree(LogsDir);
+
     GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(OutputLogPath);
     
     if (GFileOutputDevice && GFileOutputDevice->IsValid())

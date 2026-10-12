@@ -5,6 +5,7 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Filesystem/File.h"
 #include "VulkanRHI/VulkanPipelineState.h"
 #include "VulkanRHI/VulkanStats.h"
 #include "VulkanRHI/VulkanDevice.h"
@@ -1366,8 +1367,9 @@ bool FVulkanPipelineStateManager::SaveCacheData()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetEngineCacheDir() + '/' + PipelineCacheFilename;
 
+    File::CreateDirectoryTree(File::GetDirectoryOf(PipelineCacheFilepath));
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
     {
@@ -1444,7 +1446,7 @@ void FVulkanPipelineStateManager::SaveCacheDataAsync()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetEngineCacheDir() + '/' + PipelineCacheFilename;
 
     TSharedPtr<uint8[]> SerializedData;
     SIZE_T SerializedSize = 0;
@@ -1481,6 +1483,7 @@ void FVulkanPipelineStateManager::SaveCacheDataAsync()
 
     Tasks::Async([FilePath = PipelineCacheFilepath, DataHeader, Data = Move(SerializedData), DataSize = SerializedSize]()
     {
+        File::CreateDirectoryTree(File::GetDirectoryOf(FilePath));
         TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(FilePath);
         if (!CacheFile)
         {
@@ -1498,7 +1501,7 @@ void FVulkanPipelineStateManager::SaveCacheDataAsync()
 bool FVulkanPipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetEngineCacheDir() + '/' + PipelineCacheFilename;
     
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
     if (!CacheFile)

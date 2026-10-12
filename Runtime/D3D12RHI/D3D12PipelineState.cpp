@@ -6,6 +6,7 @@
 #include "Core/Containers/StringConversion.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Filesystem/File.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12Stats.h"
 #include "D3D12RHI/D3D12Device.h"
@@ -1603,8 +1604,9 @@ bool FD3D12PipelineStateManager::SaveCacheData()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetEngineCacheDir() + '/' + PipelineCacheFilename;
 
+    File::CreateDirectoryTree(File::GetDirectoryOf(PipelineCacheFilepath));
     TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
     {
@@ -1673,7 +1675,7 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetEngineCacheDir() + '/' + PipelineCacheFilename;
 
     TSharedPtr<uint8[]> SerializedData;
     SIZE_T SerializedSize = 0;
@@ -1721,7 +1723,7 @@ void FD3D12PipelineStateManager::SaveCacheDataAsync()
 bool FD3D12PipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = Paths::GetAssetDir() + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = Paths::GetEngineCacheDir() + '/' + PipelineCacheFilename;
 
     if (!FPlatformFile::IsFile(*PipelineCacheFilepath))
     {

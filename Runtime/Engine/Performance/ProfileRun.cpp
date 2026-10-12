@@ -147,7 +147,7 @@ static void WriteReportsAndExit()
     GReportWritten = true;
 
     const uint64  Stamp    = FPlatformTime::QueryPerformanceCounter();
-    const FString BasePath = File::CombinePath(Paths::GetProjectDir(), FString::Printf(TEXT("Profiling/ProfileRun_%llu"), Stamp));
+    const FString BasePath = File::CombinePath(Paths::GetProjectLogsDir(), FString::Printf(TEXT("Profiling/ProfileRun_%llu"), Stamp));
 
     FProfilerReport::WriteFile(BasePath + TEXT(".txt"), BuildFullProfileReport());
 

@@ -4016,7 +4016,7 @@ static bool ProbePipelinePersistence()
 #endif
     }
 
-    const FString ArchivePath = Paths::GetAssetDir() + TEXT("/RHIBootTests_Probe.metalarchive");
+    const FString ArchivePath = Paths::GetEngineCacheDir() + TEXT("/RHIBootTests_Probe.metalarchive");
     const FString SidecarPath = ArchivePath + TEXT(".version");
     FPlatformFile::DeleteFile(*ArchivePath);
     FPlatformFile::DeleteFile(*SidecarPath);
