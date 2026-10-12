@@ -7,11 +7,12 @@
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Functional.h"
 
-template<typename ElementType, typename AllocatorType = TDefaultArrayAllocator<ElementType>>
+template<typename InElementType, typename AllocatorType = TDefaultArrayAllocator<InElementType>>
 class TArray
 {
 public:
-    typedef int32 SizeType;
+    typedef InElementType ElementType;
+    typedef int32         SizeType;
     static_assert(TIsSigned<SizeType>::Value, "TArray only supports a SizeType that's signed");
 
     typedef TArrayIterator<TArray, ElementType>                    IteratorType;

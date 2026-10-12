@@ -321,7 +321,7 @@ void FVulkanBarrierStats::EndFrame()
         PerFrame(GBarrierStats.NumSameLayoutImageBarriers), PerFrame(GBarrierStats.NumRenderPassPauses));
 
     TScopedLock Lock(GBarrierStats.PauseReasonsCS);
-    for (const auto& Reason : GBarrierStats.PauseReasons)
+    for (const TPair<const FString&, int32&>& Reason : GBarrierStats.PauseReasons)
     {
         VULKAN_INFO("[BarrierStats]   Pause caused by %s: %.2f per frame", *Reason.First, static_cast<float>(Reason.Second) * InvFrames);
     }

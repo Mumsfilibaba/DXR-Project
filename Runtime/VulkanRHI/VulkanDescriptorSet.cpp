@@ -315,7 +315,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             }
         }
 
-        for (auto TypePair : DescriptorCountMap)
+        for (TPair<const VkDescriptorType&, uint32&> TypePair : DescriptorCountMap)
         {
             PoolInfo.DescriptorSizes.Emplace(TypePair.First, TypePair.Second);
         }
@@ -988,7 +988,7 @@ FVulkanDescriptorPoolManager::FVulkanDescriptorPoolManager(FVulkanDevice* InDevi
 FVulkanDescriptorPoolManager::~FVulkanDescriptorPoolManager()
 {
     TScopedLock Lock(PoolCS);
-    for (auto Entry : FreePools)
+    for (TPair<const FVulkanDescriptorPoolInfo&, TArray<FFreePool>&> Entry : FreePools)
     {
         for (FFreePool& FreePool : Entry.Second)
         {
@@ -1054,7 +1054,7 @@ void FVulkanDescriptorPoolManager::EvictUnusedPools()
     TScopedLock Lock(PoolCS);
     CurrentFrame++;
 
-    for (auto Entry : FreePools)
+    for (TPair<const FVulkanDescriptorPoolInfo&, TArray<FFreePool>&> Entry : FreePools)
     {
         TArray<FFreePool>& FreeList = Entry.Second;
         for (int32 Index = FreeList.Size() - 1; Index >= 0; --Index)
@@ -1078,7 +1078,7 @@ FVulkanTransientDescriptorAllocator::FVulkanTransientDescriptorAllocator(FVulkan
 
 FVulkanTransientDescriptorAllocator::~FVulkanTransientDescriptorAllocator()
 {
-    for (auto Entry : PoolSets)
+    for (TPair<const FVulkanDescriptorPoolInfo&, FPoolSet&> Entry : PoolSets)
     {
         FPoolSet& Set = Entry.Second;
         if (Set.ActivePool)
@@ -1143,7 +1143,7 @@ bool FVulkanTransientDescriptorAllocator::AllocateDescriptorSet(const FVulkanDes
 
 void FVulkanTransientDescriptorAllocator::FlushPools()
 {
-    for (auto Entry : PoolSets)
+    for (TPair<const FVulkanDescriptorPoolInfo&, FPoolSet&> Entry : PoolSets)
     {
         FPoolSet& Set = Entry.Second;
         if (Set.ActivePool)
@@ -1243,7 +1243,7 @@ FVulkanDescriptorSetCache::~FVulkanDescriptorSetCache()
     DescriptorSets.Clear();
 
     // Destroy all cached-pools
-    for (auto CachedPools : Caches)
+    for (TPair<const FVulkanDescriptorPoolInfo&, FCachedPool*&> CachedPools : Caches)
     {
         delete CachedPools.Second;
     }

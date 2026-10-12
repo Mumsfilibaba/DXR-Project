@@ -111,7 +111,7 @@ TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& Fil
     if (bIsExtented)
     {
         // We do not support 3 channel formats, force RGBA
-        const auto NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
+        const int32 NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
         Pixels = TUniquePtr<uint8[]>(reinterpret_cast<uint8*>(stbi_load_16_from_memory(FileData.Data(), FileData.Size(), &Width, &Height, &ChannelCount, NumChannels)));
         Format = GetExtendedFormat(NumChannels);
     }
@@ -119,14 +119,14 @@ TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& Fil
     {
         // We do not support 3 channel formats, force RGBA (NOTE: Due to macOS for now, we might want to revisit this in the future,
         // but since we use these mostly for textures that we later convert into some other format, it should be fine)
-        const auto NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
+        const int32 NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
         Pixels = TUniquePtr<uint8[]>(reinterpret_cast<uint8*>(stbi_loadf_from_memory(FileData.Data(), FileData.Size(), &Width, &Height, &ChannelCount, NumChannels)));
         Format = GetFloatFormat(NumChannels);
     }
     else
     {
         // We do not support 3 channel formats, force RGBA
-        const auto NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
+        const int32 NumChannels = (ChannelCount == 3) ? 4 : ChannelCount;
         Pixels = TUniquePtr<uint8[]>(stbi_load_from_memory(FileData.Data(), FileData.Size(), &Width, &Height, &ChannelCount, NumChannels));
         Format = GetByteFormat(NumChannels);
     }

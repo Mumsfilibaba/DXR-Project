@@ -1038,7 +1038,7 @@ bool FDockingArea::IsPanelVisible(const FString& PanelId) const
 TArray<FString> FDockingArea::GetRegisteredPanelIds() const
 {
     TArray<FString> PanelIds;
-    for (const auto& Pair : PanelsById)
+    for (const TPair<const FString&, const FPanelEntry&>& Pair : PanelsById)
     {
         PanelIds.Add(Pair.First);
     }

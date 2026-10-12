@@ -92,6 +92,25 @@ static bool NameContainsIgnoreCase(const CHAR_T* Name, const FString& Query)
     return Name && CString::Stristr(Name, *Query) != nullptr;
 }
 
+static void FindFirstMatch(const TSharedPtr<FTreeItem>& Item, const FString& Query, TSharedPtr<FTreeItem>& OutFirstMatch)
+{
+    if (!Item || OutFirstMatch)
+    {
+        return;
+    }
+
+    if (NameContainsIgnoreCase(*Item->Label, Query))
+    {
+        OutFirstMatch = Item;
+        return;
+    }
+
+    for (const TSharedPtr<FTreeItem>& Child : Item->Children)
+    {
+        FindFirstMatch(Child, Query, OutFirstMatch);
+    }
+}
+
 static float ToMilliseconds(uint64 Nanoseconds)
 {
     return static_cast<float>(Time::ToMilliseconds(static_cast<double>(Nanoseconds)));
@@ -1539,56 +1558,37 @@ void FEditorProfilerPanel::ApplySearchToHierarchy()
 
     if (SearchQuery.IsEmpty())
     {
-        auto RestoreDefaultExpansion = [&](auto& Self, const TSharedPtr<FTreeItem>& Item) -> void
-        {
-            if (!Item)
-            {
-                return;
-            }
-
-            HierarchyTree->SetItemExpanded(Item, Item->GetDepth() < PROFILER_DEFAULT_EXPAND_DEPTH);
-            for (const TSharedPtr<FTreeItem>& Child : Item->Children)
-            {
-                Self(Self, Child);
-            }
-        };
-
         for (const TSharedPtr<FTreeItem>& Root : HierarchyRoots)
         {
-            RestoreDefaultExpansion(RestoreDefaultExpansion, Root);
+            RestoreDefaultExpansion(Root);
         }
 
         return;
     }
 
     TSharedPtr<FTreeItem> FirstMatch;
-    auto FindFirstMatch = [&](auto& Self, const TSharedPtr<FTreeItem>& Item) -> void
-    {
-        if (!Item || FirstMatch)
-        {
-            return;
-        }
-
-        if (NameContainsIgnoreCase(*Item->Label, SearchQuery))
-        {
-            FirstMatch = Item;
-            return;
-        }
-
-        for (const TSharedPtr<FTreeItem>& Child : Item->Children)
-        {
-            Self(Self, Child);
-        }
-    };
-
     for (const TSharedPtr<FTreeItem>& Root : HierarchyRoots)
     {
-        FindFirstMatch(FindFirstMatch, Root);
+        FindFirstMatch(Root, SearchQuery, FirstMatch);
     }
 
     if (FirstMatch)
     {
         HierarchyTree->ScrollToItem(FirstMatch);
+    }
+}
+
+void FEditorProfilerPanel::RestoreDefaultExpansion(const TSharedPtr<FTreeItem>& Item)
+{
+    if (!Item)
+    {
+        return;
+    }
+
+    HierarchyTree->SetItemExpanded(Item, Item->GetDepth() < PROFILER_DEFAULT_EXPAND_DEPTH);
+    for (const TSharedPtr<FTreeItem>& Child : Item->Children)
+    {
+        RestoreDefaultExpansion(Child);
     }
 }
 
@@ -1922,7 +1922,7 @@ TArray<FProfilerOptimizationTarget> FEditorProfilerPanel::CollectGpuOptimization
     TArray<FHotPass> Sorted;
     Sorted.Reserve(HotPasses.Size());
 
-    for (auto Pair : HotPasses)
+    for (TPair<const FString&, FHotPass&> Pair : HotPasses)
     {
         Sorted.Add(Pair.Second);
     }

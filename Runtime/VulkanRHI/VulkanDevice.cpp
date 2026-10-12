@@ -800,7 +800,7 @@ FVulkanDevice::~FVulkanDevice()
     {
         TScopedLock Lock(SamplerMapCS);
 
-        for (const auto SamplerPair : SamplerMap)
+        for (const TPair<const FVulkanHashableSamplerCreateInfo&, VkSampler&> SamplerPair : SamplerMap)
         {
             if (VULKAN_CHECK_HANDLE(SamplerPair.Second))
             {

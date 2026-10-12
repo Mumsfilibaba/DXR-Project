@@ -28,7 +28,7 @@ FVulkanRenderPassCache::~FVulkanRenderPassCache()
     {
         SCOPED_LOCK(FramebuffersCS);
 
-        for (auto Entry : Framebuffers)
+        for (TPair<const FVulkanFramebufferKey&, FCachedFramebuffer&> Entry : Framebuffers)
         {
             DestroyFramebuffer(GetDevice()->GetVkDevice(), Entry.Second.Handle);
         }
@@ -40,7 +40,7 @@ FVulkanRenderPassCache::~FVulkanRenderPassCache()
         SCOPED_LOCK(RenderPassesCS);
 
         // Destroy all RenderPasses
-        for (auto RenderPass : RenderPasses)
+        for (TPair<const FVulkanRenderPassKey&, VkRenderPass&> RenderPass : RenderPasses)
         {
             if (VULKAN_CHECK_HANDLE(RenderPass.Second))
             {

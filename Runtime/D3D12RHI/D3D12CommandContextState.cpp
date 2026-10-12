@@ -650,7 +650,7 @@ void FD3D12CommandContextState::AccumulateSRVReadStates(FD3D12RootSignature* Roo
         const D3D12_RESOURCE_STATES StageState = D3D12GetShaderStageReadState(QueueType, CurrentStage);
 
         const FD3D12DescriptorTableMapping& SRVMapping = RootSignature->GetDescriptorTableMapping(CurrentStage, EResourceType::SRV);
-        auto& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[CurrentStage];
+        FD3D12ShaderResourceViewCache::FStageViews& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[CurrentStage];
 
         for (uint32 Slot = 0; Slot < NumSRVs[CurrentStage]; Slot++)
         {
@@ -836,7 +836,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
         if (NumCBVs[CurrentStage] > 0)
         {
             const FD3D12DescriptorTableMapping& CBVMapping = RootSignature->GetDescriptorTableMapping(CurrentStage, EResourceType::CBV);
-            auto& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
+            FD3D12ConstantBufferCache::FStageViews& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
             
             bool bAlreadyDirty = CommonState.ConstantBufferCache.IsResourcesDirty(CurrentStage);
             for (uint32 Slot = 0; Slot < NumCBVs[CurrentStage]; Slot++)
@@ -864,7 +864,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
 
         {
             const FD3D12ShaderStage& Stage = RootSignature->GetShaderStage(CurrentStage);
-            auto& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
+            FD3D12ConstantBufferCache::FStageViews& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
 
             bool bAlreadyDirty = CommonState.ConstantBufferCache.IsResourcesDirty(CurrentStage);
             for (uint8 RootCBVIdx = 0; RootCBVIdx < Stage.GetNumRootCBVs() && !bAlreadyDirty; RootCBVIdx++)
@@ -890,7 +890,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
         if (NumSRVs[CurrentStage] > 0)
         {
             const FD3D12DescriptorTableMapping& SRVMapping = RootSignature->GetDescriptorTableMapping(CurrentStage, EResourceType::SRV);
-            auto& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[CurrentStage];
+            FD3D12ShaderResourceViewCache::FStageViews& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[CurrentStage];
 
             bool bAlreadyDirty = CommonState.ShaderResourceViewCache.IsResourcesDirty(CurrentStage);
             for (uint32 Slot = 0; Slot < NumSRVs[CurrentStage]; Slot++)
@@ -916,7 +916,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
         if (NumUAVs[CurrentStage] > 0)
         {
             const FD3D12DescriptorTableMapping& UAVMapping = RootSignature->GetDescriptorTableMapping(CurrentStage, EResourceType::UAV);
-            auto& UAVCache = CommonState.UnorderedAccessViewCache.ResourceViews[CurrentStage];
+            FD3D12UnorderedAccessViewCache::FStageViews& UAVCache = CommonState.UnorderedAccessViewCache.ResourceViews[CurrentStage];
 
             bool bAlreadyDirty = CommonState.UnorderedAccessViewCache.IsResourcesDirty(CurrentStage);
             for (uint32 Slot = 0; Slot < NumUAVs[CurrentStage]; Slot++)
@@ -1021,7 +1021,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
         const FD3D12ShaderStage& Stage = RootSignature->GetShaderStage(CurrentStage);
         if (Stage.GetNumRootCBVs() > 0 && bDescriptorTableDirty)
         {
-            auto& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
+            FD3D12ConstantBufferCache::FStageViews& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
             for (uint8 RootCBVIdx = 0; RootCBVIdx < Stage.GetNumRootCBVs(); RootCBVIdx++)
             {
                 const int8   ParamIndex = Stage.GetRootCBVParameterIndexBySlot(RootCBVIdx);
@@ -1703,7 +1703,7 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12BufferRHI* IndexBuffer, DXG
 
 void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceViewRHI* ShaderResourceView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
-    auto& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[ShaderStage];
+    FD3D12ShaderResourceViewCache::FStageViews& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[ShaderStage];
     if (SRVCache[ResourceIndex] != ShaderResourceView)
     {
         SRVCache[ResourceIndex] = ShaderResourceView;
@@ -1717,7 +1717,7 @@ void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceViewRHI* ShaderResour
 
 void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
-    auto& UAVCache = CommonState.UnorderedAccessViewCache.ResourceViews[ShaderStage];
+    FD3D12UnorderedAccessViewCache::FStageViews& UAVCache = CommonState.UnorderedAccessViewCache.ResourceViews[ShaderStage];
     if (UAVCache[ResourceIndex] != UnorderedAccessView)
     {
         UAVCache[ResourceIndex] = UnorderedAccessView;
@@ -1732,7 +1732,7 @@ void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessViewRHI* UnorderedAc
 
 void FD3D12CommandContextState::SetCBV(FD3D12BufferRHI* Buffer, EShaderVisibility::Type ShaderStage, uint32 ResourceIndex)
 {
-    auto& CBVCache = CommonState.ConstantBufferCache.ResourceViews[ShaderStage];
+    FD3D12ConstantBufferCache::FStageViews& CBVCache = CommonState.ConstantBufferCache.ResourceViews[ShaderStage];
     if (CBVCache[ResourceIndex] != Buffer)
     {
         CBVCache[ResourceIndex] = Buffer;
@@ -1747,7 +1747,7 @@ void FD3D12CommandContextState::SetCBV(FD3D12BufferRHI* Buffer, EShaderVisibilit
 
 void FD3D12CommandContextState::SetSampler(FD3D12SamplerStateRHI* SamplerState, EShaderVisibility::Type ShaderStage, uint32 SamplerIndex)
 {
-    auto& SamplerCache = CommonState.SamplerStateCache.SamplerStates[ShaderStage];
+    FD3D12SamplerStateCache::FStageSamplers& SamplerCache = CommonState.SamplerStateCache.SamplerStates[ShaderStage];
     if (SamplerCache[SamplerIndex] != SamplerState)
     {
         SamplerCache[SamplerIndex] = SamplerState;

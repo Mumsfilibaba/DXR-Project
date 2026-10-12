@@ -131,7 +131,7 @@ TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& File
 
     tinyddsloader::DDSFile File;
 
-    auto Result = File.Load(FileData.Data(), static_cast<size_t>(FileData.Size()));
+    tinyddsloader::Result Result = File.Load(FileData.Data(), static_cast<size_t>(FileData.Size()));
     if (Result != tinyddsloader::Success)
     {
         LOG_ERROR("[FTextureImporterDDS]: Failed to open '%s'", *FileName);

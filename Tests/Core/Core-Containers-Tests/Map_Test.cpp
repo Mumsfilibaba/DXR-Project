@@ -158,7 +158,7 @@ bool TMap_Test()
         TEST_EXPECT_EQ(IterValueSum, 150);
 
         int32 RangeKeySum = 0;
-        for (const auto& Pair : Map)
+        for (const TPair<const int32&, int32&>& Pair : Map)
         {
             RangeKeySum += Pair.First;
         }

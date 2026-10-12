@@ -100,7 +100,7 @@ bool TMultiMap_Test()
         TEST_EXPECT_EQ(IterSum, 41);
 
         int32 RangeSum = 0;
-        for (const auto& Pair : Map)
+        for (const TPair<const int32&, int32&>& Pair : Map)
         {
             RangeSum += Pair.Second;
         }

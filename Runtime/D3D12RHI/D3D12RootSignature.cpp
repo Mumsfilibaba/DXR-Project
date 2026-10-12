@@ -916,7 +916,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
 
     NumStaticSamplers = 0;
 
-    const auto& LayoutStaticSamplers = Layout.GetStaticSamplers();
+    const TArray<FRHIStaticSamplerInfo>& LayoutStaticSamplers = Layout.GetStaticSamplers();
     for (int32 i = 0; i < LayoutStaticSamplers.Size() && NumStaticSamplers < 16; ++i)
     {
         const FRHIStaticSamplerInfo& Entry = LayoutStaticSamplers[i];

@@ -112,6 +112,7 @@ private:
     void RebuildCallers();
     void RebuildNativeStack();
     void ApplySearchToHierarchy();
+    void RestoreDefaultExpansion(const TSharedPtr<FTreeItem>& Item);
     void SelectTreeItemForScope(const FScopeRef& Scope);
     void OnSearchTextChanged(const FString& Text);
 

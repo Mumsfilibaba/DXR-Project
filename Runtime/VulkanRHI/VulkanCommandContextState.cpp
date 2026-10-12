@@ -66,22 +66,22 @@ FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, 
 
 FVulkanCommandContextState::~FVulkanCommandContextState()
 {
-    for (auto Entry : ComputeState.DescriptorStates)
+    for (TPair<FVulkanComputePipelineStateRHI* const&, FCachedDescriptorState&> Entry : ComputeState.DescriptorStates)
     {
         delete Entry.Second.State;
     }
 
-    for (auto Entry : GraphicsState.DescriptorStates)
+    for (TPair<FVulkanGraphicsPipelineStateRHI* const&, FCachedDescriptorState&> Entry : GraphicsState.DescriptorStates)
     {
         delete Entry.Second.State;
     }
 
-    for (auto Entry : MeshletState.DescriptorStates)
+    for (TPair<FVulkanMeshletPipelineStateRHI* const&, FCachedDescriptorState&> Entry : MeshletState.DescriptorStates)
     {
         delete Entry.Second.State;
     }
 
-    for (auto Entry : RayTracingState.DescriptorStates)
+    for (TPair<FVulkanRayTracingPipelineStateRHI* const&, FCachedDescriptorState&> Entry : RayTracingState.DescriptorStates)
     {
         delete Entry.Second.State;
     }

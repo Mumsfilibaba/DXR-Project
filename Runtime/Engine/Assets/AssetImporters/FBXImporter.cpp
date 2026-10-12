@@ -13,7 +13,7 @@
 
 static FString ExtractPath(const FString& FullFilePath)
 {
-    auto Pos = FullFilePath.FindLastChar('/');
+    int32 Pos = FullFilePath.FindLastChar('/');
     if (Pos != FString::InvalidIndex)
     {
         return FullFilePath.SubString(0, Pos);
@@ -53,7 +53,7 @@ static bool DoesFlipHandness(const FMatrix4& Matrix)
 }
 #endif
 
-static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
+static FTexture2DRef LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
     if (MaterialTexture)

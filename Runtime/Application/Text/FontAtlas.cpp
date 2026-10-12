@@ -215,7 +215,7 @@ bool FFontAtlas::PackPage(int32 PageIndex, FRectangle& OutPackedRegion) const
 bool FFontAtlas::PackAtSize(int32 InWidth, int32 InHeight)
 {
     TArray<int32> PageIndices;
-    for (const auto& Page : Pages)
+    for (const TPair<const int32&, TUniquePtr<FPage>&>& Page : Pages)
     {
         PageIndices.Add(Page.First);
     }
@@ -280,7 +280,7 @@ bool FFontAtlas::RasterizePage(int32 PageIndex) const
     }
 
     TArray<int32> PackedPages;
-    for (const auto& Page : Pages)
+    for (const TPair<const int32&, TUniquePtr<FPage>&>& Page : Pages)
     {
         PackedPages.Add(Page.First);
     }

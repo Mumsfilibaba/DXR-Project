@@ -293,7 +293,7 @@ void FD3D12DescriptorCache::PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12
     const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::CBV);
     CHECK(NumCBVs <= Mapping.GetNumSlots());
 
-    auto& CBVCache = Cache.ResourceViews[ShaderStage];
+    FD3D12ConstantBufferCache::FStageViews& CBVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumCBVs; Slot++)
     {
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
@@ -388,7 +388,7 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
     const bool bValidate = CVarValidateDescriptorTables.GetValue() != 0;
 #endif
 
-    auto& SRVCache = Cache.ResourceViews[ShaderStage];
+    FD3D12ShaderResourceViewCache::FStageViews& SRVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumSRVs; Slot++)
     {
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
@@ -498,7 +498,7 @@ void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, F
     const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::UAV);
     CHECK(NumUAVs <= Mapping.GetNumSlots());
 
-    auto& UAVCache = Cache.ResourceViews[ShaderStage];
+    FD3D12UnorderedAccessViewCache::FStageViews& UAVCache = Cache.ResourceViews[ShaderStage];
     for (uint32 Slot = 0; Slot < NumUAVs; Slot++)
     {
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
@@ -590,7 +590,7 @@ void FD3D12DescriptorCache::PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D
     FD3D12UniqueSamplerTable UniqueTable;
 
     const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, EResourceType::Sampler);
-    auto& SamplerStates = Cache.SamplerStates[ShaderStage];
+    FD3D12SamplerStateCache::FStageSamplers& SamplerStates = Cache.SamplerStates[ShaderStage];
     for (uint32 Slot = 0; Slot < NumSamplers; Slot++)
     {
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));

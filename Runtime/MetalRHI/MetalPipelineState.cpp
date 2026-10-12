@@ -6,6 +6,7 @@
 #include "ShaderCore/MSLShaderBindings.h"
 #include "RHI/RHISamplerState.h"
 #include "RHI/RHI.h"
+#include "Core/Containers/Function.h"
 #include "Core/Memory/Memory.h"
 
 static NSString* PipelineDebugLabel(const FString& Name, NSString* Fallback)
@@ -363,7 +364,7 @@ void FMetalPipelineBindingLayout::PruneToReflection(EShaderVisibility::Type Stag
     };
 
     FMetalStageBindPlan& Plan = Stages[Stage];
-    auto PruneTable = [](uint16& Mask, uint8* Slots, auto&& IsUsed)
+    auto PruneTable = [](uint16& Mask, uint8* Slots, TFunctionRef<bool(uint32)> IsUsed)
     {
         for (uint32 Bits = Mask; Bits != 0; Bits &= Bits - 1)
         {

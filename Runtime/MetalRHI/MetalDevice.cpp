@@ -282,7 +282,7 @@ FMetalDevice::~FMetalDevice()
     [DefaultResources.Heap release];
     [DefaultResources.DefaultSampler release];
 
-    for (const auto Pair : DepthStencilStates)
+    for (const TPair<const FRHIDepthStencilStateDesc&, id<MTLDepthStencilState>&> Pair : DepthStencilStates)
     {
         [Pair.Second release];
     }

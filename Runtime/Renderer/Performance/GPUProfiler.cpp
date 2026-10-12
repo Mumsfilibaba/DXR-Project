@@ -60,7 +60,7 @@ void FGPUProfiler::ReleaseQueries()
         bFrameEndRecorded[Index]    = false;
     }
 
-    for (auto ScopeQuery : ScopeQueries)
+    for (TPair<const FString&, FGPUProfileScopeQueries&> ScopeQuery : ScopeQueries)
     {
         for (int32 Index = 0; Index < GPU_PROFILER_BUFFER_COUNT; ++Index)
         {

@@ -239,8 +239,9 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
                 const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::SRV, Register);
                 if (bIsBuffer && ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
-                    const auto&  BufferViewDesc = ShaderResourceView->GetDesc().Buffer;
-                    const uint64 ElementSize    = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
+                    const FRHIShaderResourceViewDesc::FBufferSRV& BufferViewDesc = ShaderResourceView->GetDesc().Buffer;
+
+                    const uint64 ElementSize = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
                     if (ElementSize == 0)
                     {
                         D3D12_ERROR("[FD3D12ShaderBindingTable]: Root SRV at register %u has a zero element size and cannot be addressed.", uint32(Register));
@@ -281,8 +282,9 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
                 const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(EResourceType::UAV, Register);
                 if (bIsBuffer && ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_RECORD_ENTRIES)
                 {
-                    const auto&  BufferViewDesc = UnorderedAccessView->GetDesc().Buffer;
-                    const uint64 ElementSize    = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
+                    const FRHIUnorderedAccessViewDesc::FBufferUAV& BufferViewDesc = UnorderedAccessView->GetDesc().Buffer;
+
+                    const uint64 ElementSize = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
                     if (ElementSize == 0)
                     {
                         D3D12_ERROR("[FD3D12ShaderBindingTable]: Root UAV at register %u has a zero element size and cannot be addressed.", uint32(Register));

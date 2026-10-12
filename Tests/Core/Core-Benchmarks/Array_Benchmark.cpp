@@ -71,7 +71,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
@@ -102,7 +102,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
@@ -140,7 +140,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
@@ -171,7 +171,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
@@ -209,7 +209,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
@@ -240,7 +240,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
@@ -278,7 +278,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
@@ -309,7 +309,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
@@ -349,7 +349,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
@@ -380,7 +380,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
@@ -418,7 +418,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
@@ -449,7 +449,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
@@ -487,7 +487,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
@@ -518,7 +518,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
@@ -556,7 +556,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("std::vector"), Duration, Iterations);
         }
 
@@ -587,7 +587,7 @@ void TArray_Benchmark()
                 }
             }
 
-            auto Duration = Clock.GetTotalDuration() / TestCount;
+            int64 Duration = Clock.GetTotalDuration() / TestCount;
             Benchmark::Report(TEXT("TArray"), Duration, Iterations);
         }
     }
@@ -627,7 +627,7 @@ void TArray_Benchmark()
                 }
             }
 
-            const auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            const int64 Duration = Clock.GetTotalDuration() / SortTestCount;
             LOG_INFO("TArray      Sorting time: %lldns", static_cast<long long>(Duration));
             LOG_INFO("TArray      Sorting time: %lldms", static_cast<long long>(Duration / (1000 * 1000)));
         }
@@ -649,7 +649,7 @@ void TArray_Benchmark()
                 }
             }
 
-            const auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            const int64 Duration = Clock.GetTotalDuration() / SortTestCount;
             LOG_INFO("std::vector Sorting time: %lldns", static_cast<long long>(Duration));
             LOG_INFO("std::vector Sorting time: %lldms", static_cast<long long>(Duration / (1000 * 1000)));
         }
@@ -672,7 +672,7 @@ void TArray_Benchmark()
                 }
             }
 
-            const auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            const int64 Duration = Clock.GetTotalDuration() / SortTestCount;
             LOG_INFO("TArray      Sorting time: %lldns", static_cast<long long>(Duration));
             LOG_INFO("TArray      Sorting time: %lldms", static_cast<long long>(Duration / (1000 * 1000)));
         }
@@ -693,7 +693,7 @@ void TArray_Benchmark()
                 }
             }
 
-            const auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            const int64 Duration = Clock.GetTotalDuration() / SortTestCount;
             LOG_INFO("std::vector Sorting time: %lldns", static_cast<long long>(Duration));
             LOG_INFO("std::vector Sorting time: %lldms", static_cast<long long>(Duration / (1000 * 1000)));
         }

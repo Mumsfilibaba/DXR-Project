@@ -621,7 +621,7 @@ FVulkanPipelineLayoutManager::~FVulkanPipelineLayoutManager()
     {
         TScopedLock Lock(LayoutsCS);
 
-        for (const auto& LayoutPair : Layouts)
+        for (const TPair<const FVulkanPipelineLayoutInfo&, FVulkanPipelineLayout*&>& LayoutPair : Layouts)
         {
             delete LayoutPair.Second;
         }
@@ -632,7 +632,7 @@ FVulkanPipelineLayoutManager::~FVulkanPipelineLayoutManager()
     {
         TScopedLock Lock(SetLayoutsCS);
 
-        for (const auto& SetLayoutPair : SetLayouts)
+        for (const TPair<const FVulkanDescriptorSetLayoutInfo&, VkDescriptorSetLayout&>& SetLayoutPair : SetLayouts)
         {
             if (VULKAN_CHECK_HANDLE(SetLayoutPair.Second))
             {

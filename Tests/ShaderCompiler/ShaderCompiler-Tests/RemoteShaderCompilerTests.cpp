@@ -835,7 +835,7 @@ bool InternalClearBufferUAVReflection_Test()
         { TEXT("CLEAR_ELEMENT_SINT"), TEXT("1") },
     };
 
-    for (const auto& Permutation : Permutations)
+    for (const CHAR_T* const (&Permutation)[2] : Permutations)
     {
         TEST_SECTION(Permutation[0]);
 

@@ -482,7 +482,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
             return false;
         }
 
-        const auto& BufferDesc = InDesc.Buffer;
+        const FRHIShaderResourceViewDesc::FBufferSRV& BufferDesc = InDesc.Buffer;
         switch (BufferDesc.Type)
         {
             case EBufferViewType::Typed:
@@ -547,7 +547,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
         {
             case EViewDimension::Texture1D:
             {
-                const auto& TextureDesc = InDesc.Texture1D;
+                const FRHIShaderResourceViewDesc::FTexture1DSRV& TextureDesc = InDesc.Texture1D;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
                 ViewFormat      = TextureDesc.Format;
                 FirstMipLevel   = TextureDesc.FirstMipLevel;
@@ -557,7 +557,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
             case EViewDimension::Texture1DArray:
             {
-                const auto& TextureDesc = InDesc.Texture1DArray;
+                const FRHIShaderResourceViewDesc::FTexture1DArraySRV& TextureDesc = InDesc.Texture1DArray;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
                 ViewFormat      = TextureDesc.Format;
                 FirstMipLevel   = TextureDesc.FirstMipLevel;
@@ -569,7 +569,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
             case EViewDimension::Texture2D:
             {
-                const auto& TextureDesc = InDesc.Texture2D;
+                const FRHIShaderResourceViewDesc::FTexture2DSRV& TextureDesc = InDesc.Texture2D;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
                 ViewFormat      = TextureDesc.Format;
                 FirstMipLevel   = TextureDesc.FirstMipLevel;
@@ -579,7 +579,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
             case EViewDimension::Texture2DArray:
             {
-                const auto& TextureDesc = InDesc.Texture2DArray;
+                const FRHIShaderResourceViewDesc::FTexture2DArraySRV& TextureDesc = InDesc.Texture2DArray;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
                 ViewFormat      = TextureDesc.Format;
                 FirstMipLevel   = TextureDesc.FirstMipLevel;
@@ -591,7 +591,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
             case EViewDimension::TextureCube:
             {
-                const auto& TextureDesc = InDesc.TextureCube;
+                const FRHIShaderResourceViewDesc::FTextureCubeSRV& TextureDesc = InDesc.TextureCube;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE;
                 ViewFormat      = TextureDesc.Format;
                 FirstMipLevel   = TextureDesc.FirstMipLevel;
@@ -603,7 +603,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
             case EViewDimension::TextureCubeArray:
             {
-                const auto& TextureDesc = InDesc.TextureCubeArray;
+                const FRHIShaderResourceViewDesc::FTextureCubeArraySRV& TextureDesc = InDesc.TextureCubeArray;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
                 ViewFormat      = TextureDesc.Format;
                 FirstMipLevel   = TextureDesc.FirstMipLevel;
@@ -615,7 +615,7 @@ bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FR
 
             case EViewDimension::Texture3D:
             {
-                const auto& TextureDesc = InDesc.Texture3D;
+                const FRHIShaderResourceViewDesc::FTexture3DSRV& TextureDesc = InDesc.Texture3D;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
                 ViewFormat      = TextureDesc.Format;
                 FirstMipLevel   = TextureDesc.FirstMipLevel;
@@ -771,7 +771,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
             return false;
         }
 
-        const auto& BufferDesc = InDesc.Buffer;
+        const FRHIUnorderedAccessViewDesc::FBufferUAV& BufferDesc = InDesc.Buffer;
         switch (BufferDesc.Type)
         {
             case EBufferViewType::Typed:
@@ -835,7 +835,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
         {
             case EViewDimension::Texture1D:
             {
-                const auto& TextureDesc = InDesc.Texture1D;
+                const FRHIUnorderedAccessViewDesc::FTexture1DUAV& TextureDesc = InDesc.Texture1D;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
                 ViewFormat      = TextureDesc.Format;
                 MipLevel        = TextureDesc.MipLevel;
@@ -844,7 +844,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 
             case EViewDimension::Texture1DArray:
             {
-                const auto& TextureDesc = InDesc.Texture1DArray;
+                const FRHIUnorderedAccessViewDesc::FTexture1DArrayUAV& TextureDesc = InDesc.Texture1DArray;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
                 ViewFormat      = TextureDesc.Format;
                 MipLevel        = TextureDesc.MipLevel;
@@ -855,7 +855,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 
             case EViewDimension::Texture2D:
             {
-                const auto& TextureDesc = InDesc.Texture2D;
+                const FRHIUnorderedAccessViewDesc::FTexture2DUAV& TextureDesc = InDesc.Texture2D;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
                 ViewFormat      = TextureDesc.Format;
                 MipLevel        = TextureDesc.MipLevel;
@@ -864,7 +864,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 
             case EViewDimension::Texture2DArray:
             {
-                const auto& TextureDesc = InDesc.Texture2DArray;
+                const FRHIUnorderedAccessViewDesc::FTexture2DArrayUAV& TextureDesc = InDesc.Texture2DArray;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
                 ViewFormat      = TextureDesc.Format;
                 MipLevel        = TextureDesc.MipLevel;
@@ -875,7 +875,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 
             case EViewDimension::TextureCube:
             {
-                const auto& TextureDesc = InDesc.TextureCube;
+                const FRHIUnorderedAccessViewDesc::FTextureCubeUAV& TextureDesc = InDesc.TextureCube;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
                 ViewFormat      = TextureDesc.Format;
                 MipLevel        = TextureDesc.MipLevel;
@@ -886,7 +886,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 
             case EViewDimension::TextureCubeArray:
             {
-                const auto& TextureDesc = InDesc.TextureCubeArray;
+                const FRHIUnorderedAccessViewDesc::FTextureCubeArrayUAV& TextureDesc = InDesc.TextureCubeArray;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
                 ViewFormat      = TextureDesc.Format;
                 MipLevel        = TextureDesc.MipLevel;
@@ -897,7 +897,7 @@ bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const F
 
             case EViewDimension::Texture3D:
             {
-                const auto& TextureDesc = InDesc.Texture3D;
+                const FRHIUnorderedAccessViewDesc::FTexture3DUAV& TextureDesc = InDesc.Texture3D;
                 VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
                 ViewFormat      = TextureDesc.Format;
                 MipLevel        = TextureDesc.MipLevel;
@@ -1033,7 +1033,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
     {
         case EViewDimension::Texture1D:
         {
-            const auto& TextureDesc = InDesc.Texture1D;
+            const FRHIRenderTargetViewDesc::FTexture1DRTV& TextureDesc = InDesc.Texture1D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1042,7 +1042,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
 
         case EViewDimension::Texture1DArray:
         {
-            const auto& TextureDesc = InDesc.Texture1DArray;
+            const FRHIRenderTargetViewDesc::FTexture1DArrayRTV& TextureDesc = InDesc.Texture1DArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1053,7 +1053,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
 
         case EViewDimension::Texture2D:
         {
-            const auto& TextureDesc = InDesc.Texture2D;
+            const FRHIRenderTargetViewDesc::FTexture2DRTV& TextureDesc = InDesc.Texture2D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1062,7 +1062,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
 
         case EViewDimension::Texture2DArray:
         {
-            const auto& TextureDesc = InDesc.Texture2DArray;
+            const FRHIRenderTargetViewDesc::FTexture2DArrayRTV& TextureDesc = InDesc.Texture2DArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1073,7 +1073,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
 
         case EViewDimension::TextureCube:
         {
-            const auto& TextureDesc = InDesc.TextureCube;
+            const FRHIRenderTargetViewDesc::FTextureCubeRTV& TextureDesc = InDesc.TextureCube;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1084,7 +1084,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
 
         case EViewDimension::TextureCubeArray:
         {
-            const auto& TextureDesc = InDesc.TextureCubeArray;
+            const FRHIRenderTargetViewDesc::FTextureCubeArrayRTV& TextureDesc = InDesc.TextureCubeArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1095,7 +1095,7 @@ bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRe
 
         case EViewDimension::Texture3D:
         {
-            const auto& TextureDesc = InDesc.Texture3D;
+            const FRHIRenderTargetViewDesc::FTexture3DRTV& TextureDesc = InDesc.Texture3D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1204,7 +1204,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
     {
         case EViewDimension::Texture1D:
         {
-            const auto& TextureDesc = InDesc.Texture1D;
+            const FRHIDepthStencilViewDesc::FTexture1DDSV& TextureDesc = InDesc.Texture1D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1213,7 +1213,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
         
         case EViewDimension::Texture1DArray:
         {
-            const auto& TextureDesc = InDesc.Texture1DArray;
+            const FRHIDepthStencilViewDesc::FTexture1DArrayDSV& TextureDesc = InDesc.Texture1DArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1224,7 +1224,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
 
         case EViewDimension::Texture2D:
         {
-            const auto& TextureDesc = InDesc.Texture2D;
+            const FRHIDepthStencilViewDesc::FTexture2DDSV& TextureDesc = InDesc.Texture2D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1233,7 +1233,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
 
         case EViewDimension::Texture2DArray:
         {
-            const auto& TextureDesc = InDesc.Texture2DArray;
+            const FRHIDepthStencilViewDesc::FTexture2DArrayDSV& TextureDesc = InDesc.Texture2DArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1244,7 +1244,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
 
         case EViewDimension::TextureCube:
         {
-            const auto& TextureDesc = InDesc.TextureCube;
+            const FRHIDepthStencilViewDesc::FTextureCubeDSV& TextureDesc = InDesc.TextureCube;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;
@@ -1255,7 +1255,7 @@ bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDe
         
         case EViewDimension::TextureCubeArray:
         {
-            const auto& TextureDesc = InDesc.TextureCubeArray;
+            const FRHIDepthStencilViewDesc::FTextureCubeArrayDSV& TextureDesc = InDesc.TextureCubeArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             ViewFormat      = TextureDesc.Format;
             MipLevel        = TextureDesc.MipLevel;

@@ -145,7 +145,9 @@ struct FD3D12ResourceCache
 
 struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
 {
-    FD3D12ConstantBufferCache()
+    typedef FD3D12BufferRHI* FStageViews[D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
+
+FD3D12ConstantBufferCache()
     {
         Clear();
     }
@@ -156,7 +158,7 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
 
         for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
-            auto& StageViews = ResourceViews[Index];
+            FStageViews& StageViews = ResourceViews[Index];
             Memory::Memzero(&StageViews, sizeof(StageViews));
             Memory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumBuffers[Index] = 0;
@@ -170,7 +172,9 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
 
 struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
 {
-    FD3D12ShaderResourceViewCache()
+    typedef FD3D12ShaderResourceViewRHI* FStageViews[D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
+
+FD3D12ShaderResourceViewCache()
     {
         Clear();
     }
@@ -181,7 +185,7 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
 
         for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
-            auto& StageViews = ResourceViews[Index];
+            FStageViews& StageViews = ResourceViews[Index];
             Memory::Memzero(&StageViews, sizeof(StageViews));
             Memory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumViews[Index] = 0;
@@ -195,7 +199,9 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
 
 struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
 {
-    FD3D12UnorderedAccessViewCache()
+    typedef FD3D12UnorderedAccessViewRHI* FStageViews[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
+
+FD3D12UnorderedAccessViewCache()
     {
         Clear();
     }
@@ -206,7 +212,7 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
 
         for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
-            auto& StageViews = ResourceViews[Index];
+            FStageViews& StageViews = ResourceViews[Index];
             Memory::Memzero(&StageViews, sizeof(StageViews));
             Memory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumViews[Index] = 0;
@@ -271,7 +277,9 @@ struct THash<FD3D12UniqueSamplerTable>
 
 struct FD3D12SamplerStateCache : public FD3D12ResourceCache
 {
-    FD3D12SamplerStateCache()
+    typedef FD3D12SamplerStateRHI* FStageSamplers[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
+
+FD3D12SamplerStateCache()
     {
         Clear();
     }
@@ -282,7 +290,7 @@ struct FD3D12SamplerStateCache : public FD3D12ResourceCache
 
         for (int32 Index = 0; Index < EShaderVisibility::Count; Index++)
         {
-            auto& StageSamplers = SamplerStates[Index];
+            FStageSamplers& StageSamplers = SamplerStates[Index];
             NumSamplers[Index] = 0;
             Memory::Memzero(&StageSamplers, sizeof(StageSamplers));
         }

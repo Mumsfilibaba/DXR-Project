@@ -223,7 +223,7 @@ void TMap_Benchmark()
             for (uint32 i = 0; i < TestCount; ++i)
             {
                 FScopedClock ScopedClock(Clock);
-                for (const auto& Pair : StdMap)
+                for (const std::pair<const int32, int32>& Pair : StdMap)
                 {
                     Sink += Pair.second;
                 }
@@ -238,7 +238,7 @@ void TMap_Benchmark()
             for (uint32 i = 0; i < TestCount; ++i)
             {
                 FScopedClock ScopedClock(Clock);
-                for (const auto& Pair : NativeMap)
+                for (const TPair<const int32&, int32&>& Pair : NativeMap)
                 {
                     Sink += Pair.Second;
                 }

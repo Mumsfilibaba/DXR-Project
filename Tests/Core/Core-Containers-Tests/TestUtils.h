@@ -31,7 +31,7 @@
         std::initializer_list InitList = MAKE_VAR(__VA_ARGS__); \
  \
         int32 Index = 0; \
-        for (auto Element : InitList) \
+        for (const decltype(InitList)::value_type& Element : InitList) \
         { \
             if ((Index >= static_cast<int32>(Array.Size())) || (Array[Index] != Element)) \
             { \

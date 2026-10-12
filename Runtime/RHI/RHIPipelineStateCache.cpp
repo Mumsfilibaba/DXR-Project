@@ -470,10 +470,10 @@ template<typename CacheMapType>
 static uint32 RemoveUnreferencedEntries(CacheMapType& Map)
 {
     uint32 NumRemoved = 0;
-    Map.Foreach([&NumRemoved](const uint64& /* Hash */, auto& Bucket)
+    Map.Foreach([&NumRemoved](const uint64& /* Hash */, typename CacheMapType::ValueType& Bucket)
     {
         const int32 NumEntries = Bucket.Size();
-        Bucket.RemoveAllSwap([](const auto& Entry)
+        Bucket.RemoveAllSwap([](const typename CacheMapType::ValueType::ElementType& Entry)
         {
             return Entry.Second->GetRefCount() == 1;
         });

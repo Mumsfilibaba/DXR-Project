@@ -95,7 +95,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
 
     bDefaultsCaptured = true;
 
-    auto& Console = FConsoleManager::Get();
+    FConsoleManager& Console = FConsoleManager::Get();
 
     const auto CaptureBool = [&](const CHAR_T* Name)
     {

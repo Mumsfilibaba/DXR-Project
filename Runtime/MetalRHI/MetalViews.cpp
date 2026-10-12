@@ -18,58 +18,60 @@ struct FMetalSubresourceRange
     uint32 NumSlices  = 1;
 };
 
+template<typename ViewDescType, typename DimensionDescType>
+static void ResolveMips(const DimensionDescType& DimensionDesc, FMetalSubresourceRange& OutRange)
+{
+    if constexpr (TIsSame<ViewDescType, FRHIShaderResourceViewDesc>::Value)
+    {
+        OutRange.FirstMip = DimensionDesc.FirstMipLevel;
+        OutRange.NumMips  = DimensionDesc.NumMips;
+    }
+    else
+    {
+        OutRange.FirstMip = DimensionDesc.MipLevel;
+    }
+}
+
 template<typename ViewDescType>
 static FMetalSubresourceRange ResolveViewRange(const ViewDescType& InDesc)
 {
     FMetalSubresourceRange Range;
-    auto ResolveMips = [&Range](const auto& DimensionDesc)
-    {
-        if constexpr (TIsSame<ViewDescType, FRHIShaderResourceViewDesc>::Value)
-        {
-            Range.FirstMip = DimensionDesc.FirstMipLevel;
-            Range.NumMips  = DimensionDesc.NumMips;
-        }
-        else
-        {
-            Range.FirstMip = DimensionDesc.MipLevel;
-        }
-    };
 
     switch (InDesc.ViewDimension)
     {
         case EViewDimension::Texture1D:
-            ResolveMips(InDesc.Texture1D);
+            ResolveMips<ViewDescType>(InDesc.Texture1D, Range);
             break;
 
         case EViewDimension::Texture1DArray:
-            ResolveMips(InDesc.Texture1DArray);
+            ResolveMips<ViewDescType>(InDesc.Texture1DArray, Range);
             Range.FirstSlice = InDesc.Texture1DArray.FirstArraySlice;
             Range.NumSlices  = InDesc.Texture1DArray.NumSlices;
             break;
 
         case EViewDimension::Texture2D:
-            ResolveMips(InDesc.Texture2D);
+            ResolveMips<ViewDescType>(InDesc.Texture2D, Range);
             break;
 
         case EViewDimension::Texture2DArray:
-            ResolveMips(InDesc.Texture2DArray);
+            ResolveMips<ViewDescType>(InDesc.Texture2DArray, Range);
             Range.FirstSlice = InDesc.Texture2DArray.FirstArraySlice;
             Range.NumSlices  = InDesc.Texture2DArray.NumSlices;
             break;
 
         case EViewDimension::TextureCube:
-            ResolveMips(InDesc.TextureCube);
+            ResolveMips<ViewDescType>(InDesc.TextureCube, Range);
             Range.NumSlices = RHI_NUM_CUBE_FACES;
             break;
 
         case EViewDimension::TextureCubeArray:
-            ResolveMips(InDesc.TextureCubeArray);
+            ResolveMips<ViewDescType>(InDesc.TextureCubeArray, Range);
             Range.FirstSlice = InDesc.TextureCubeArray.FirstCube * RHI_NUM_CUBE_FACES;
             Range.NumSlices  = InDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES;
             break;
 
         case EViewDimension::Texture3D:
-            ResolveMips(InDesc.Texture3D);
+            ResolveMips<ViewDescType>(InDesc.Texture3D, Range);
             break;
 
         default:

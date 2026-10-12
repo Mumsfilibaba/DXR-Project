@@ -2,6 +2,7 @@
 
 #include "TestCommon/TestMacros.h"
 
+#include <Core/Containers/Function.h>
 #include <Core/Memory/Memory.h>
 #include <Core/Misc/ConsoleManager.h>
 #include <Core/Misc/Paths.h>
@@ -1481,7 +1482,7 @@ static bool ProbeDispatchMesh()
         return bRed;
     };
 
-    auto RecordMeshPass = [&](FRHICommandList& CommandList, FRHITexture* RenderTarget, auto&& DispatchFn)
+    auto RecordMeshPass = [&](FRHICommandList& CommandList, FRHITexture* RenderTarget, TFunctionRef<void(FRHICommandList&)> DispatchFn)
     {
         FRHIBeginRenderPassDesc::FRenderTargetAttachments Attachments;
         Attachments[0] = FRHIRenderTargetAttachment(
@@ -2150,7 +2151,7 @@ static bool ProbeDefaultResourcesAndClears()
         return Fence->Wait(5ull * 1000ull * 1000ull * 1000ull);
     };
 
-    auto DispatchAndRead = [&SubmitAndWait](FRHIComputePipelineState* Pipeline, FRHIComputeShader* Shader, uint32 NumValues, uint32* OutValues, auto&& Prepare, auto&& Bind) -> bool
+    auto DispatchAndRead = [&SubmitAndWait](FRHIComputePipelineState* Pipeline, FRHIComputeShader* Shader, uint32 NumValues, uint32* OutValues, TFunctionRef<void(FRHICommandList&)> Prepare, TFunctionRef<void(FRHICommandList&)> Bind) -> bool
     {
         const uint64 ByteSize = static_cast<uint64>(NumValues) * sizeof(uint32);
         FRHIBufferRef Output   = RHI::CreateBuffer(FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32), ByteSize));
@@ -2318,7 +2319,7 @@ static bool ProbeDefaultResourcesAndClears()
         }
     }
 
-    auto ReadRenderTarget = [&SubmitAndWait](FRHITexture* RenderTarget, auto&& Record, uint8* OutPixel) -> bool
+    auto ReadRenderTarget = [&SubmitAndWait](FRHITexture* RenderTarget, TFunctionRef<void(FRHICommandList&)> Record, uint8* OutPixel) -> bool
     {
         FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(256));
         if (!Readback)
