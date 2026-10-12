@@ -247,15 +247,22 @@ bool FVulkanDeviceRHI::Initialize()
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
     
+    // Optional, so that a machine without the Vulkan SDK still runs, only without validation
     if (bEnableDebugLayer)
     {
-        InstanceCreateInfo.RequiredLayerNames.Add(VULKAN_VALIDATION_LAYER_NAME);
+        InstanceCreateInfo.OptionalLayerNames.Add(VULKAN_VALIDATION_LAYER_NAME);
     }
 
     if (!Instance.Initialize(InstanceCreateInfo))
     {
         VULKAN_ERROR_CRITICAL("Failed to initialize VulkanInstance");
         return false;
+    }
+
+    if (bEnableDebugLayer && !Instance.IsLayerEnabled(VULKAN_VALIDATION_LAYER_NAME))
+    {
+        VULKAN_WARNING("RHI.EnableDebugLayer is set but the validation layer '%s' is not installed (it comes with the Vulkan SDK), so Vulkan runs without validation",
+            StringCast<CHAR_T>(VULKAN_VALIDATION_LAYER_NAME).Get());
     }
     
     if (!VulkanLoader::LoadInstanceFunctions(&Instance))
@@ -1674,7 +1681,7 @@ VkAccessFlags2KHR FVulkanDeviceRHI::ResourceStateToAccessFlags(ERHIResourceState
 {
     if (ResourceState == ERHIResourceState::Common)
     {
-        return VK_ACCESS_2_NONE_KHR;
+        return VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
     }
 
     VkAccessFlags2KHR Access = VK_ACCESS_2_NONE_KHR;

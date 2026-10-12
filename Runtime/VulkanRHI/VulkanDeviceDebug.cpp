@@ -1,5 +1,6 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CRC.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
@@ -7,6 +8,8 @@
 #include "VulkanRHI/VulkanRHI.h"
 
 VULKANRHI_API bool GVulkanSupportsDebugUtils = false;
+
+static FAtomicInt32 GVulkanValidationErrorCount(0);
 
 static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
     TEXT("VulkanRHI.BreakOnValidationError"),
@@ -72,6 +75,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugLayerCallback(VkDebugUtilsMessa
 
     if (Severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
+        GVulkanValidationErrorCount.Increment();
         LOG_ERROR("[Vulkan Validation layer] %s", StringCast<CHAR_T>(CallbackData->pMessage).Get());
 
         if (CVarBreakOnValidationError.GetValue() && !VulkanIsMessageSuppressed(CallbackData))
@@ -131,6 +135,16 @@ void VulkanCreateDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& O
         VULKAN_ERROR("Failed to create DebugMessenger");
     }
 #endif
+}
+
+void VulkanResetValidationErrors()
+{
+    GVulkanValidationErrorCount.Store(0);
+}
+
+bool VulkanHasValidationErrors()
+{
+    return GVulkanValidationErrorCount.Load() != 0;
 }
 
 void VulkanDestroyDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& InOutMessenger)

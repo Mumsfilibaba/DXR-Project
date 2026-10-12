@@ -187,8 +187,17 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     const VkBufferUsageFlags    GeometryUsage    = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     const VkBufferUsageFlags    ScratchUsage     = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
+    if (VULKAN_CHECK_HANDLE(AccelerationStructure))
+    {
+        FVulkanDeviceRHI::DeferDeletion(AccelerationStructure);
+        AccelerationStructure = VK_NULL_HANDLE;
+    }
+
+    GeometryLocation.ReleaseMemory();
+    ScratchLocation.ReleaseMemory();
+
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, GeometryUsage, AllocateFlags, 
+    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, GeometryUsage, AllocateFlags,
         AccelerationStructureBuildSizesInfo.accelerationStructureSize, 256, GeometryLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate geometry buffer memory");

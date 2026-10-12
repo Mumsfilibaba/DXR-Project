@@ -50,6 +50,9 @@ FORCEINLINE VkResult VulkanSetObjectName(VkDevice Device, const CHAR_T* Name, Ha
 void VulkanCreateDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& OutMessenger);
 void VulkanDestroyDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& InOutMessenger);
 
+VULKANRHI_API void VulkanResetValidationErrors();
+VULKANRHI_API bool VulkanHasValidationErrors();
+
 // -------------------------------------------------------------------------------------------
 // Device Lost Check
 // -------------------------------------------------------------------------------------------

@@ -1475,10 +1475,43 @@ void FVulkanCommandContext::ClearBufferUnorderedAccessView(FVulkanUnorderedAcces
         VULKAN_WARNING("Clear of a '%s' buffer UAV cannot be expressed as a 32-bit fill; using the first component", ToString(BufferUAV.Format));
     }
 
-    RequireBufferState(View, ERHIResourceState::CopyDest);
+    FVulkanBufferRHI* Buffer   = FVulkanDeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(View->GetResource()));
+    const bool        bIsManual = Buffer && Buffer->GetDesc().TrackingMode == ERHIResourceStateTrackingMode::Manual;
+
+    const auto AddFillBarrier = [this, &Region](ERHIResourceState BeforeState, ERHIResourceState AfterState)
+    {
+        VkBufferMemoryBarrier2KHR BufferBarrier = {};
+        BufferBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
+        BufferBarrier.srcAccessMask       = FVulkanDeviceRHI::ResourceStateToAccessFlags(BeforeState);
+        BufferBarrier.srcStageMask        = FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(BeforeState);
+        BufferBarrier.dstAccessMask       = FVulkanDeviceRHI::ResourceStateToAccessFlags(AfterState);
+        BufferBarrier.dstStageMask        = FVulkanDeviceRHI::ResourceStateToPipelineStageFlags(AfterState);
+        BufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        BufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        BufferBarrier.buffer              = Region.Buffer;
+        BufferBarrier.offset              = Region.Offset;
+        BufferBarrier.size                = Region.Size;
+        BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);
+    };
+
+    if (bIsManual)
+    {
+        AddFillBarrier(ERHIResourceState::UnorderedAccess, ERHIResourceState::CopyDest);
+    }
+    else
+    {
+        RequireBufferState(View, ERHIResourceState::CopyDest);
+    }
+
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     GetCommandBuffer()->FillBuffer(Region.Buffer, Region.Offset, Region.Size, Pattern);
+
+    if (bIsManual)
+    {
+        AddFillBarrier(ERHIResourceState::CopyDest, ERHIResourceState::UnorderedAccess);
+        BarrierBatcher.FlushBarriers(GetCommandBuffer());
+    }
 }
 
 void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)

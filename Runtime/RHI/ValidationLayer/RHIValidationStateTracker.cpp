@@ -189,7 +189,19 @@ bool FRHIValidationStateTracker::ValidateState(const FRHIResource* Resource, ERH
 
     if (State->CurrentState == ERHIResourceState::Common)
     {
-        return true;
+        static constexpr ERHIResourceState PromotableTextureStates = 
+            ERHIResourceState::ShaderResource | 
+            ERHIResourceState::CopySource | 
+            ERHIResourceState::CopyDest;
+
+        if (Resource->GetResourceType() != ERHIResourceType::Texture || (AcceptedStates & PromotableTextureStates) != ERHIResourceState::Common)
+        {
+            return true;
+        }
+
+        RHI_VALIDATION_ERROR("%s: %s requires the texture to be in %s (0x%X) but it is in Common, which a texture is not implicitly promoted to. A barrier is missing.",
+            *RHIValidationInternal::GetResourceIdentity(Resource), Caller, ToString(AcceptedStates), uint32(AcceptedStates));
+        return false;
     }
 
     if ((State->CurrentState & AcceptedStates) == ERHIResourceState::Common)

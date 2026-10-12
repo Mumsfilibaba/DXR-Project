@@ -4,6 +4,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/String.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
+#include "Core/Threading/Atomic/AtomicInt.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "D3D12RHI/D3D12DeviceDebug.h"
 #include "D3D12RHI/D3D12Device.h"
@@ -377,14 +378,33 @@ void FD3D12Device::RegisterDeviceRemovedEvent()
 // D3D12 debug message callback
 // -------------------------------------------------------------------------------------------
 
-#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
-static void __stdcall D3D12DebugMessageCallback(D3D12_MESSAGE_CATEGORY, D3D12_MESSAGE_SEVERITY Severity, D3D12_MESSAGE_ID, LPCSTR pDescription, void*)
+static FAtomicInt32 GD3D12ValidationErrorCount(0);
+
+void D3D12ResetValidationErrors()
 {
+    GD3D12ValidationErrorCount.Store(0);
+}
+
+bool D3D12HasValidationErrors()
+{
+    return GD3D12ValidationErrorCount.Load() != 0;
+}
+
+#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
+static void __stdcall D3D12DebugMessageCallback(D3D12_MESSAGE_CATEGORY, D3D12_MESSAGE_SEVERITY Severity, D3D12_MESSAGE_ID MessageID, LPCSTR pDescription, void*)
+{
+    // The live-object report at shutdown always lists the device, which is still held while it reports. Only other live objects are leaks
+    if (MessageID == D3D12_MESSAGE_ID_LIVE_DEVICE)
+    {
+        Severity = D3D12_MESSAGE_SEVERITY_INFO;
+    }
+
     switch (Severity)
     {
         case D3D12_MESSAGE_SEVERITY_CORRUPTION:
         case D3D12_MESSAGE_SEVERITY_ERROR:
         {
+            GD3D12ValidationErrorCount.Increment();
             D3D12_ERROR("[D3D12 Debug Layer] %s", StringCast<CHAR_T>(pDescription).Get());
             break;
         }

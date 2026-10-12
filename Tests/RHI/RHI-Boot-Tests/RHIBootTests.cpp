@@ -19,8 +19,14 @@
 #include <RHI/RHISamplerState.h>
 #include <RHI/RHIStats.h>
 #include <RHI/RHITexture.h>
+#include <RHI/RHIValidation.h>
 #include <ShaderCompiler/ShaderCompiler.h>
 #include <ShaderCore/ShaderCode.h>
+#include <VulkanRHI/VulkanDeviceDebug.h>
+
+#if PLATFORM_WINDOWS
+#include <D3D12RHI/D3D12DeviceDebug.h>
+#endif
 
 #if PLATFORM_MACOS
 #include <MetalRHI/MetalBinaryArchive.h>
@@ -548,7 +554,7 @@ static bool ProbeCommandRecording()
     TEST_SECTION(TEXT("ClearDepthStencilView records without crashing"));
     {
         FRHITextureRef DepthTarget = RHI::CreateTexture(FRHITextureDesc::CreateTexture2D(
-            EFormat::D32_Float, 8, 8, 1, 1, ETextureUsageFlags::DepthStencil));
+            EFormat::D32_Float, 8, 8, 1, 1, ETextureUsageFlags::DepthStencil, FClearValue(EFormat::D32_Float, 1.0f, 0)), ERHIResourceState::DepthWrite);
         TEST_EXPECT(DepthTarget != nullptr);
         TEST_EXPECT(DepthTarget && DepthTarget->GetDepthStencilView() != nullptr);
 
@@ -2905,7 +2911,11 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
                 const FRHISceneAccelerationStructureBuildDesc SceneBuildDesc(Instances, ARRAY_COUNT(Instances), true);
 
                 FRHICommandList CommandList;
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                    Geometry.VertexBuffer.Get(), ERHIResourceState::Common, ERHIResourceState::CopyDest));
                 CommandList.UpdateBuffer(Geometry.VertexBuffer.Get(), FBufferRegion(0, sizeof(MovedVertices)), MovedVertices);
+                CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(
+                    Geometry.VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::NonPixelShaderResource));
                 CommandList.BuildGeometryAccelerationStructure(Geometry.Geometry.Get(), GetProbeGeometryBuildDesc(Geometry, true));
                 CommandList.UnorderedAccessBarrier(Geometry.Geometry.Get());
                 CommandList.BuildSceneAccelerationStructure(Scene.Get(), SceneBuildDesc);
@@ -4792,14 +4802,29 @@ static bool BootRHI(ERHIType ExpectedType)
     SetConsoleVariable(TEXT("RHI.EnableValidation"), true);
     SetConsoleVariable(TEXT("RHI.EnableValidationDebugBreak"), false);
     SetConsoleVariable(TEXT("TaskGraph.EnableRHIThread"), false);
+
+    SetConsoleVariable(TEXT("RHI.EnableDebugLayer"), true);
+    RHIValidation::ResetErrorCount();
+
     if (ExpectedType == ERHIType::Metal)
     {
-        SetConsoleVariable(TEXT("RHI.EnableDebugLayer"), true);
         SetConsoleVariable(TEXT("MetalRHI.BinaryArchiveFileName"), TEXT("RHIBootTests.metalarchive"));
 #if PLATFORM_MACOS
         FPlatformMisc::PrepareMetalDebugLayerEnvironment(true);
         MetalResetValidationErrors();
 #endif
+    }
+#if PLATFORM_WINDOWS
+    else if (ExpectedType == ERHIType::D3D12)
+    {
+        SetConsoleVariable(TEXT("D3D12RHI.BreakOnError"), false);
+        D3D12ResetValidationErrors();
+    }
+#endif
+    else if (ExpectedType == ERHIType::Vulkan)
+    {
+        SetConsoleVariable(TEXT("VulkanRHI.BreakOnValidationError"), false);
+        VulkanResetValidationErrors();
     }
 
     const bool bInitialized = RHI::Initialize();
@@ -4854,6 +4879,19 @@ static bool BootRHI(ERHIType ExpectedType)
 
         RHI::Release();
         TEST_EXPECT(RHI::Device == nullptr);
+
+        TEST_SECTION(TEXT("No validation layer reported an error"));
+        TEST_EXPECT_EQ(RHIValidation::GetErrorCount(), 0);
+#if PLATFORM_WINDOWS
+        if (ExpectedType == ERHIType::D3D12)
+        {
+            TEST_EXPECT(!D3D12HasValidationErrors());
+        }
+#endif
+        if (ExpectedType == ERHIType::Vulkan)
+        {
+            TEST_EXPECT(!VulkanHasValidationErrors());
+        }
     }
 
     TEST_END();

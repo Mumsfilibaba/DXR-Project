@@ -1,6 +1,7 @@
 #include "LaunchProgram/ProgramLoop.h"
 #include "LaunchProgram/ProgramEntry.h"
 #include "Core/Containers/UniquePtr.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
@@ -53,6 +54,8 @@ int32 FProgramLoop::Run(const CHAR_T* ConsoleTitle, const TFunction<int32()>& Bo
     
     FOutputDeviceManager::Get()->RegisterOutputDevice(Console.Get());
     FOutputDeviceManager::Get()->FlushPendingLines();
+
+    FConsoleManager::Get().LoadFromCommandLine();
 
     int32 Result = 0;
     if (Body)
