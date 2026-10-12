@@ -1,6 +1,7 @@
 #include "ProjectDescriptorTests.h"
 
 #include <Core/Misc/ProjectDescriptor.h>
+#include <Core/Misc/Paths.h>
 #include <Core/Filesystem/File.h>
 #include <Core/Containers/String.h>
 #include <Core/Platform/PlatformFile.h>
@@ -128,6 +129,22 @@ bool ProjectDescriptor_Test()
         TEST_EXPECT(!FirstText.IsEmpty());
         TEST_EXPECT(FirstText.Equals(ReadText(Second)));
         TEST_EXPECT(FirstText.Find(TEXT("\"EnginePath\": \"../DXR-Project\"")) != FString::InvalidIndex);
+    }
+
+    TEST_SECTION(TEXT("Sandbox's descriptor loads and is written the way the engine writes it"));
+    {
+        const FString SandboxFile = Paths::GetEngineDir() + TEXT("/Sandbox/Sandbox.dxrproject");
+        const FString Resaved     = Root + TEXT("/Sandbox.dxrproject");
+
+        FProjectDescriptor Descriptor;
+        FString Error;
+        TEST_EXPECT(Descriptor.LoadFromFile(SandboxFile, Error));
+        TEST_EXPECT(Descriptor.Name.Equals(TEXT("Sandbox")));
+        TEST_EXPECT(Descriptor.EngineAssociation.Equals(TEXT("DXR-Engine")));
+        TEST_EXPECT(Descriptor.Modules.Size() == 1 && Descriptor.Modules[0].Name.Equals(TEXT("Sandbox")));
+
+        TEST_EXPECT(Descriptor.SaveToFile(Resaved));
+        TEST_EXPECT(ReadText(Resaved).Equals(ReadText(SandboxFile)));
     }
 
     TEST_SECTION(TEXT("A missing file fails and names the file"));

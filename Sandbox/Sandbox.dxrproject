@@ -1,0 +1,11 @@
+{
+    "Version": 1,
+    "Name": "Sandbox",
+    "EngineAssociation": "DXR-Engine",
+    "EnginePath": "..",
+    "Modules": [
+        {
+            "Name": "Sandbox"
+        }
+    ]
+}
