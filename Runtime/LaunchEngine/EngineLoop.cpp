@@ -597,7 +597,10 @@ void FEngineLoop::Release()
 
     FRemoteConsoleServer::Release();
 
-    FApplication::Get().SetOnWindowLiveResize(FOnWindowLiveResize());
+    if (FApplication::IsInitialized())
+    {
+        FApplication::Get().SetOnWindowLiveResize(FOnWindowLiveResize());
+    }
 
     if (IRendererModule* RendererModule = IRendererModule::Get())
     {

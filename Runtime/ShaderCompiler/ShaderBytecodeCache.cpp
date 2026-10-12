@@ -1,4 +1,5 @@
 #include "Core/Containers/Stream.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Filesystem/File.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -43,7 +44,7 @@ struct FShaderBytecodeHeader
     uint32   Version;
     uint32   DataCRC;  // CRC of everything after this header
     uint32   DataSize; // Size of everything after this header
-    uint32 NumEntries;
+    uint32   NumEntries;
 };
 
 static bool CanRead(const FByteInputStream& Stream, uint64 NumBytes)
@@ -65,20 +66,21 @@ static bool ReadString(FByteInputStream& Stream, FString& OutString)
         return false;
     }
 
-    TArray<CHAR_T> Characters;
+    TArray<ANSICHAR> Characters;
     Characters.Resize(static_cast<int32>(Length));
     Stream.Read(Characters.Data(), Characters.Size());
 
-    OutString = FString(Characters.Data(), Characters.Size());
+    OutString = StringCast<CHAR_T>(Characters.Data(), Characters.Size()).ToString();
     return true;
 }
 
 static void WriteString(FByteOutputStream& Stream, const FString& Value)
 {
-    const uint32 Length = static_cast<uint32>(Value.Size());
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8Value = StringCast<ANSICHAR>(Value);
+    const uint32 Length = static_cast<uint32>(Utf8Value.Length());
 
     Stream.Add(Length);
-    Stream.Add(Value.Data(), static_cast<int32>(Length));
+    Stream.Add(Utf8Value.Get(), static_cast<int32>(Length));
 }
 
 FShaderBytecodeCache* FShaderBytecodeCache::BytecodeCache = nullptr;
@@ -410,9 +412,11 @@ bool FShaderBytecodeCache::Load()
         return false;
     }
 
-    int32 NumStale   = 0;
-    int32 NumInvalid = 0;
-    for (uint32 Index = 0; Index < Header.NumEntries; ++Index)
+    int32  NumStale   = 0;
+    int32  NumInvalid = 0;
+    uint32 Index      = 0;
+
+    for (; Index < Header.NumEntries; ++Index)
     {
         uint64 CompileHash     = 0;
         uint64 DependencyHash  = 0;
@@ -480,6 +484,12 @@ bool FShaderBytecodeCache::Load()
         }
 
         Entries.Add(CompileHash, ::Move(NewEntry));
+    }
+
+    if (Index < Header.NumEntries)
+    {
+        LOG_WARNING("[FShaderBytecodeCache]: '%s' could not be read past entry %u of %u, so the rest recompiles", *FilePath, Index, Header.NumEntries);
+        NumInvalid += static_cast<int32>(Header.NumEntries - Index);
     }
 
     // The stale entries are gone from memory, so the file is rewritten without them even if this run compiles nothing.
