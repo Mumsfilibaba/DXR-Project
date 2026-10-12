@@ -3,15 +3,15 @@
 
 namespace AlgorithmIntegerSortDetail
 {
-    template<typename ElementType, typename KeyFnType>
-    FORCEINLINE void FindKeyBounds(ElementType* Data, int32 Count, KeyFnType&& KeyFn, auto& OutMin, auto& OutMax)
+    template<typename ElementType, typename KeyFnType, typename KeyType>
+FORCEINLINE void FindKeyBounds(ElementType* Data, int32 Count, KeyFnType&& KeyFn, KeyType& OutMin, KeyType& OutMax)
     {
         OutMin = KeyFn(Data[0]);
         OutMax = OutMin;
 
         for (int32 Index = 1; Index < Count; ++Index)
         {
-            const auto Key = KeyFn(Data[Index]);
+            const KeyType Key = KeyFn(Data[Index]);
             if (Key < OutMin)
             {
                 OutMin = Key;
@@ -187,8 +187,8 @@ void Algorithm::CountingSortBy(ElementType* Data, int32 Count, KeyFnType&& KeyFn
 template<typename RangeType, typename KeyFnType>
 void Algorithm::CountingSortBy(RangeType&& Range, KeyFnType&& KeyFn)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     CountingSortBy<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<KeyFnType>(KeyFn));
 }
 
@@ -197,11 +197,12 @@ void Algorithm::CountingSortBy(RangeType&& Range, KeyFnType&& KeyFn, ScratchRang
 {
     const int32 Count = static_cast<int32>(ArrayContainer::Size(Range));
 
-    auto* Data = ArrayContainer::Data(Range);
-    AlgorithmPrivate::TScratchArray<typename TRemoveReference<decltype(*Data)>::Type> Fallback;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
+    AlgorithmPrivate::TScratchArray<ElementType> Fallback;
 
-    auto* ScratchData = AlgorithmIntegerSortDetail::ResolveScratch(Forward<ScratchRangeType>(Scratch), Count, Fallback);
-    CountingSortBy<typename TRemoveReference<decltype(*Data)>::Type>(Data, Count, Forward<KeyFnType>(KeyFn), ScratchData);
+    ElementType* ScratchData = AlgorithmIntegerSortDetail::ResolveScratch(Forward<ScratchRangeType>(Scratch), Count, Fallback);
+    CountingSortBy<ElementType>(Data, Count, Forward<KeyFnType>(KeyFn), ScratchData);
 }
 
 template<typename ElementType, typename KeyFnType>
@@ -224,8 +225,8 @@ void Algorithm::RadixSortBy(ElementType* Data, int32 Count, KeyFnType&& KeyFn, E
 template<typename RangeType, typename KeyFnType>
 void Algorithm::RadixSortBy(RangeType&& Range, KeyFnType&& KeyFn)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     RadixSortBy<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<KeyFnType>(KeyFn));
 }
 
@@ -234,11 +235,12 @@ void Algorithm::RadixSortBy(RangeType&& Range, KeyFnType&& KeyFn, ScratchRangeTy
 {
     const int32 Count = static_cast<int32>(ArrayContainer::Size(Range));
 
-    auto* Data = ArrayContainer::Data(Range);
-    AlgorithmPrivate::TScratchArray<typename TRemoveReference<decltype(*Data)>::Type> Fallback;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
+    AlgorithmPrivate::TScratchArray<ElementType> Fallback;
 
-    auto* ScratchData = AlgorithmIntegerSortDetail::ResolveScratch(Forward<ScratchRangeType>(Scratch), Count, Fallback);
-    RadixSortBy<typename TRemoveReference<decltype(*Data)>::Type>(Data, Count, Forward<KeyFnType>(KeyFn), ScratchData);
+    ElementType* ScratchData = AlgorithmIntegerSortDetail::ResolveScratch(Forward<ScratchRangeType>(Scratch), Count, Fallback);
+    RadixSortBy<ElementType>(Data, Count, Forward<KeyFnType>(KeyFn), ScratchData);
 }
 
 template<typename ElementType>
@@ -250,8 +252,8 @@ void Algorithm::RadixSort(ElementType* Data, int32 Count)
 template<typename RangeType>
 void Algorithm::RadixSort(RangeType&& Range)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     RadixSort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)));
 }
 
@@ -288,8 +290,8 @@ void Algorithm::IntegerSortBy(ElementType* Data, int32 Count, KeyFnType&& KeyFn,
 template<typename RangeType, typename KeyFnType>
 void Algorithm::IntegerSortBy(RangeType&& Range, KeyFnType&& KeyFn)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     IntegerSortBy<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<KeyFnType>(KeyFn));
 }
 
@@ -298,10 +300,10 @@ void Algorithm::IntegerSortBy(RangeType&& Range, KeyFnType&& KeyFn, ScratchRange
 {
     const int32 Count = static_cast<int32>(ArrayContainer::Size(Range));
 
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     AlgorithmPrivate::TScratchArray<ElementType> Fallback;
 
-    auto* ScratchData = AlgorithmIntegerSortDetail::ResolveScratch(Forward<ScratchRangeType>(Scratch), Count, Fallback);
+    ElementType* ScratchData = AlgorithmIntegerSortDetail::ResolveScratch(Forward<ScratchRangeType>(Scratch), Count, Fallback);
     IntegerSortBy<ElementType>(Data, Count, Forward<KeyFnType>(KeyFn), ScratchData);
 }

@@ -2,6 +2,7 @@
 #include "Core/CoreDefines.h"
 #include "Core/CoreTypes.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Templates/ArrayContainer.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/Utility/NonCopyable.h"
@@ -12,6 +13,12 @@ struct AlgorithmPrivate : public FNonConstructible
     struct TElementFromPointer
     {
         using Type = typename TRemoveCV<typename TRemovePointer<typename TRemoveReference<PointerType>::Type>::Type>::Type;
+    };
+
+    template<typename RangeType>
+    struct TRangeElement
+    {
+        using Type = typename TElementFromPointer<decltype(ArrayContainer::Data(DeclVal<RangeType&>()))>::Type;
     };
 
     template<typename ElementType>

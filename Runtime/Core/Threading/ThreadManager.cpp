@@ -38,7 +38,7 @@ bool FThreadManager::Initialize()
 
 bool FThreadManager::Release()
 {
-    auto& ThreadManager = GetThreadManagerInstance();
+    TOptional<FThreadManager>& ThreadManager = GetThreadManagerInstance();
     ThreadManager.Reset();
 
     FPlatformThreadMisc::Release();

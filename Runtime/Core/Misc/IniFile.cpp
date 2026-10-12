@@ -231,7 +231,7 @@ FIniSection::~FIniSection() = default;
 
 void FIniSection::Restore()
 {
-    for (auto Value : Values)
+    for (TPair<const FString&, FIniValue&> Value : Values)
     {
         Value.Second.Restore();
     }
@@ -239,7 +239,7 @@ void FIniSection::Restore()
 
 void FIniSection::DumpToString(FString& OutString)
 {
-    for (auto ValuePair : Values)
+    for (TPair<const FString&, FIniValue&> ValuePair : Values)
     {
         // Values containing spaces have to be quoted, the parser otherwise stops at the first space
         const FString& Value = ValuePair.Second.CurrentValue;
@@ -372,7 +372,7 @@ DISABLE_UNREACHABLE_CODE_WARNING
 
 FIniValue* FIniFile::FindValue(const CHAR_T* Key)
 {
-    for (auto CurrentSection : Sections)
+    for (TPair<const FString&, FIniSection&> CurrentSection : Sections)
     {
         if (FIniValue* Value = CurrentSection.Second.Values.Find(Key))
         {
@@ -424,7 +424,7 @@ void FIniFile::DumpToString(FString& OutString)
         OutString += '\n';
     }
 
-    for (auto CurrentSection : Sections)
+    for (TPair<const FString&, FIniSection&> CurrentSection : Sections)
     {
         if (CurrentSection.First.IsEmpty())
         {

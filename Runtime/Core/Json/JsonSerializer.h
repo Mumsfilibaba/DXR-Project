@@ -66,7 +66,7 @@ struct TJsonSerializer
             {
                 int32 NumEntries = 0;
 
-                const auto* Entries = TJsonEnumNames<T>::GetEntries(NumEntries);
+                const typename TJsonEnumNames<T>::FEntry* Entries = TJsonEnumNames<T>::GetEntries(NumEntries);
                 for (int32 Index = 0; Index < NumEntries; ++Index)
                 {
                     if (Entries[Index].Value == InValue)
@@ -108,7 +108,7 @@ struct TJsonSerializer
                 {
                     int32 NumEntries = 0;
 
-                    const auto* Entries = TJsonEnumNames<T>::GetEntries(NumEntries);
+                    const typename TJsonEnumNames<T>::FEntry* Entries = TJsonEnumNames<T>::GetEntries(NumEntries);
                     for (int32 Index = 0; Index < NumEntries; ++Index)
                     {
                         if (Name.Equals(Entries[Index].Name))

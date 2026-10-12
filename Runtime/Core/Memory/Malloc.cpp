@@ -96,7 +96,7 @@ void FMallocLeakTracker::DumpAllocations(IOutputDevice* OutputDevice)
         const uint32 NumAllocations = static_cast<uint32>(Allocations.Size());
         OutputDevice->Log(FString::Printf(TEXT("Current Allocations (Num=%u):"), NumAllocations));
 
-        for (auto CurrentAllocation : Allocations)
+        for (TPair<void* const&, FAllocationInfo&> CurrentAllocation : Allocations)
         {
             OutputDevice->Log(FString::Printf(
                 TEXT("    Address=0x%p Size=%llu"),
@@ -226,7 +226,7 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
 
         FPlatformStackTrace::InitializeSymbols();
 
-        for (auto CurrentAllocation : Allocations)
+        for (TPair<void* const&, FAllocationStackTrace&> CurrentAllocation : Allocations)
         {
             FString Message = FString::Printf(
                 TEXT("    Address=0x%p Size=%llu\n"
@@ -235,7 +235,7 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
                 CurrentAllocation.Second.Size);
 
             // Skip first since this is the FPlatformStackTrace::CaptureStackTrace function
-            const auto Current = CurrentAllocation.Second;
+            const FAllocationStackTrace Current = CurrentAllocation.Second;
             for (uint64 Depth = 0; Depth < Current.StackDepth; ++Depth)
             {
                 FStackTraceEntry Entry;

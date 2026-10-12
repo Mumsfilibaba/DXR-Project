@@ -1470,7 +1470,8 @@ private:
         return (RequiredCapacity > FirstAlloc) ? RequiredCapacity : FirstAlloc;
     }
 
-    NODISCARD SizeType FindForward(auto&& Predicate) const
+    template<typename PredicateType>
+    NODISCARD SizeType FindForward(PredicateType&& Predicate) const
     {
         if (ArraySize == 0)
         {
@@ -1492,7 +1493,8 @@ private:
         return InvalidIndex;
     }
 
-    NODISCARD SizeType FindReverse(auto&& Predicate) const
+    template<typename PredicateType>
+    NODISCARD SizeType FindReverse(PredicateType&& Predicate) const
     {
         if (ArraySize == 0)
         {

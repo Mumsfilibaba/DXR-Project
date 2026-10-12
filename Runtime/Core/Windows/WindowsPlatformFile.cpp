@@ -126,7 +126,7 @@ int32 FWindowsFileHandle::Write(const uint8* Src, uint32 BytesToWrite)
     DWORD NumWritten = 0;
     if (!WriteFile(FileHandle, Src, BytesToWrite, &NumWritten, nullptr))
     {
-        const auto Error = GetLastError();
+        const DWORD Error = GetLastError();
 
         // ERROR_IO_PENDING only means the operation has not landed yet
         if (Error != ERROR_IO_PENDING)

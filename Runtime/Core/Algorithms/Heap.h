@@ -73,16 +73,16 @@ void Algorithm::Heapify(ElementType* Data, int32 Count, PredicateType&& Predicat
 template<typename RangeType>
 void Algorithm::Heapify(RangeType&& Range)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     Heapify<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)));
 }
 
 template<typename RangeType, typename PredicateType>
 void Algorithm::Heapify(RangeType&& Range, PredicateType&& Predicate)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     Heapify<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<PredicateType>(Predicate));
 }
 
@@ -111,16 +111,16 @@ void Algorithm::HeapSort(ElementType* Data, int32 Count, PredicateType&& Predica
 template<typename RangeType>
 void Algorithm::HeapSort(RangeType&& Range)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     HeapSort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)));
 }
 
 template<typename RangeType, typename PredicateType>
 void Algorithm::HeapSort(RangeType&& Range, PredicateType&& Predicate)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     HeapSort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<PredicateType>(Predicate));
 }
 
@@ -150,7 +150,8 @@ void Algorithm::HeapPop(RangeType& Range, PredicateType&& Predicate)
     const int32 Count = static_cast<int32>(ArrayContainer::Size(Range));
     CHECK(Count > 0);
 
-    auto* Data = ArrayContainer::Data(Range);
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     if (Count > 1)
     {
         ::Swap(Data[0], Data[Count - 1]);

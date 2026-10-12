@@ -1372,7 +1372,7 @@ FConsoleManager::FConsoleManager()
 
 FConsoleManager::~FConsoleManager()
 {
-    for (auto ConsoleObject : ConsoleObjects)
+    for (TPair<const FString&, IConsoleObject*&> ConsoleObject : ConsoleObjects)
     {
         SAFE_DELETE(ConsoleObject.Second);
     }
@@ -1536,7 +1536,7 @@ bool FConsoleManager::IsConsoleObject(const CHAR_T* InName) const
 
 FString FConsoleManager::FindConsoleObjectName(IConsoleObject* ConsoleObject)
 {
-    for (auto CurrentObject : ConsoleObjects)
+    for (TPair<const FString&, IConsoleObject*&> CurrentObject : ConsoleObjects)
     {
         if (ConsoleObject == CurrentObject.Second)
         {
@@ -1587,7 +1587,7 @@ void FConsoleManager::ClearHistory()
 
 void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates)
 {
-    for (const auto& Object : ConsoleObjects)
+    for (const TPair<const FString&, IConsoleObject*&>& Object : ConsoleObjects)
     {
         int32 Length = CandidateName.Length();
         if (Length <= Object.First.Length())
@@ -1791,7 +1791,7 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR_T* InName, IConsoleOb
 
 void FConsoleManager::LoadFromCommandLine()
 {
-    for (const auto& Pair : ConsoleObjects)
+    for (const TPair<const FString&, IConsoleObject*&>& Pair : ConsoleObjects)
     {
         if (IConsoleVariable* Variable = Pair.Second ? Pair.Second->AsVariable() : nullptr)
         {
@@ -1831,7 +1831,7 @@ void FConsoleManager::GetConsoleObjects(TArray<TPair<FString, IConsoleObject*>>&
     OutObjects.Clear();
     OutObjects.Reserve(ConsoleObjects.Size());
 
-    for (const auto& Pair : ConsoleObjects)
+    for (const TPair<const FString&, IConsoleObject* const&>& Pair : ConsoleObjects)
     {
         OutObjects.Add(TPair<FString, IConsoleObject*>(Pair.First, Pair.Second));
     }

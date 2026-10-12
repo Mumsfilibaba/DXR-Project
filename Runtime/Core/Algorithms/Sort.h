@@ -357,16 +357,16 @@ void Algorithm::Sort(ElementType* Data, int32 Count, PredicateType&& Predicate)
 template<typename RangeType>
 void Algorithm::Sort(RangeType&& Range)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     Sort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)));
 }
 
 template<typename RangeType, typename PredicateType>
 void Algorithm::Sort(RangeType&& Range, PredicateType&& Predicate)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     Sort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<PredicateType>(Predicate));
 }
 
@@ -390,16 +390,16 @@ void Algorithm::InsertionSort(ElementType* Data, int32 Count, PredicateType&& Pr
 template<typename RangeType>
 void Algorithm::InsertionSort(RangeType&& Range)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     InsertionSort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)));
 }
 
 template<typename RangeType, typename PredicateType>
 void Algorithm::InsertionSort(RangeType&& Range, PredicateType&& Predicate)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     InsertionSort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<PredicateType>(Predicate));
 }
 
@@ -431,16 +431,16 @@ bool Algorithm::IsSorted(const ElementType* Data, int32 Count, PredicateType&& P
 template<typename RangeType>
 bool Algorithm::IsSorted(RangeType&& Range)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    const ElementType* Data = ArrayContainer::Data(Range);
     return IsSorted<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)));
 }
 
 template<typename RangeType, typename PredicateType>
 bool Algorithm::IsSorted(RangeType&& Range, PredicateType&& Predicate)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    const ElementType* Data = ArrayContainer::Data(Range);
     return IsSorted<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<PredicateType>(Predicate));
 }
 
@@ -480,15 +480,15 @@ void Algorithm::StableSort(ElementType* Data, int32 Count, PredicateType&& Predi
 template<typename RangeType>
 void Algorithm::StableSort(RangeType&& Range)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     StableSort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)));
 }
 
 template<typename RangeType, typename PredicateType>
 void Algorithm::StableSort(RangeType&& Range, PredicateType&& Predicate)
 {
-    auto* Data = ArrayContainer::Data(Range);
-    using ElementType = typename AlgorithmPrivate::TElementFromPointer<decltype(Data)>::Type;
+    using ElementType = typename AlgorithmPrivate::TRangeElement<RangeType>::Type;
+    ElementType* Data = ArrayContainer::Data(Range);
     StableSort<ElementType>(Data, static_cast<int32>(ArrayContainer::Size(Range)), Forward<PredicateType>(Predicate));
 }

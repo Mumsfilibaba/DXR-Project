@@ -2,7 +2,7 @@
 #include "Core/PlatformInterface/IPlatformAtomic.h"
 
 template<EMemoryOrder Order>
-static constexpr auto GetGCCMemoryOrder()
+static constexpr int32 GetGCCMemoryOrder()
 {
     if constexpr (Order == EMemoryOrder::Relaxed)
     {
@@ -27,7 +27,7 @@ static constexpr auto GetGCCMemoryOrder()
 }
 
 template<EMemoryOrder Order>
-static constexpr auto GetGCCFailureMemoryOrder()
+static constexpr int32 GetGCCFailureMemoryOrder()
 {
     if constexpr (Order == EMemoryOrder::Relaxed)
     {

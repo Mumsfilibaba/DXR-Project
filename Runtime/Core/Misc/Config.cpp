@@ -137,9 +137,9 @@ void FConfig::LoadConsoleVariables()
             continue;
         }
 
-        for (auto Section : File->Sections)
+        for (TPair<const FString&, FIniSection&> Section : File->Sections)
         {
-            for (auto Value : Section.Second.Values)
+            for (TPair<const FString&, FIniValue&> Value : Section.Second.Values)
             {
                 if (IConsoleVariable* Variable = ConsoleManager.FindConsoleVariable(*Value.First))
                 {

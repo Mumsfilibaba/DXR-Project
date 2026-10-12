@@ -231,7 +231,7 @@ SomeStruct Desc = { 0 };
 ```
 
 ### General Code
-* Don't use `auto`. Write the type out, even when it is a long template type, so a reader sees what a variable is without working it out from the right-hand side. This covers local variables, range-based `for` loops, lambda parameters and return types, `decltype(auto)` included. The one exception is a local variable holding a lambda, whose type cannot be written. Anywhere else, use `auto` only when there is genuinely no type to write.
+* Don't use `auto`. Write the type out, even when it is a long template type, so a reader sees what a variable is without working it out from the right-hand side. This covers local variables, range-based `for` loops and lambda parameters. There are two exceptions: a local variable holding a lambda, whose type cannot be written, and the return type of a function template that is deduced from its template parameters (`auto` or `decltype(auto)`, as in `MakeArrayView` or `Invoke`). Anywhere else, use `auto` only when there is genuinely no type to write.
 
 Good:
 

@@ -476,7 +476,7 @@ public:
     /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
-        const auto Count = BitArray.Get().Count();
+        const typename BitArrayType::SizeType Count = BitArray.Get().Count();
         return Index >= 0 && Index <= Count;
     }
 
@@ -625,7 +625,7 @@ public:
     /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
-        const auto Count = BitArray.Get().Count();
+        const typename BitArrayType::SizeType Count = BitArray.Get().Count();
         return Index >= 0 && Index <= Count;
     }
 
@@ -741,6 +741,8 @@ public:
     typedef const typename TRemoveCV<MapType>::Type   ConstMapType;
     typedef typename MapType::SizeType                SizeType;
 
+    typedef typename TConditional<TIsConst<MapType>::Value, const typename MapType::PairType, typename MapType::PairType>::Type PairType;
+
     TMapIterator(const TMapIterator&) = default;
     TMapIterator(TMapIterator&&) = default;
     ~TMapIterator() = default;
@@ -808,13 +810,13 @@ public:
 
     NODISCARD FORCEINLINE TPair<ConstKeyType&, ValueType&> operator*()
     {
-        auto& Pair = Map.Get().GetElement(Index);
+        PairType& Pair = Map.Get().GetElement(Index);
         return TPair<ConstKeyType&, ValueType&>(Pair.First, Pair.Second);
     }
 
     NODISCARD FORCEINLINE TPair<ConstKeyType&, ConstValueType&> operator*() const
     {
-        const auto& Pair = Map.Get().GetElement(Index);
+        const PairType& Pair = Map.Get().GetElement(Index);
         return TPair<ConstKeyType&, ConstValueType&>(Pair.First, Pair.Second);
     }
 

@@ -88,7 +88,7 @@ public:
     {
         for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.Size(); ++Index)
         {
-            auto& CurrentQueue = PriorityQueues[Index];
+            ElementArray& CurrentQueue = PriorityQueues[Index];
             if (!CurrentQueue.IsEmpty())
             {
                 CHECK(OutElement != nullptr);
@@ -121,7 +121,7 @@ public:
     {
         for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.Size(); ++Index)
         {
-            auto& CurrentQueue = PriorityQueues[Index];
+            ElementArray& CurrentQueue = PriorityQueues[Index];
             if (!CurrentQueue.IsEmpty())
             {
                 if (OutPriority)
@@ -155,7 +155,7 @@ public:
     }
 
 private:
-    static constexpr auto NumPriorities = static_cast<int32>(UnderlyingTypeValue(EQueuePriority::Count));
+    static constexpr int32 NumPriorities = static_cast<int32>(UnderlyingTypeValue(EQueuePriority::Count));
 
     using ElementArray   = TArray<ElementType>;
     using ArrayAllocator = TInlineArrayAllocator<ElementArray, NumPriorities + 1>;

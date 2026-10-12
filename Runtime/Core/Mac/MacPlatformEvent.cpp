@@ -140,7 +140,7 @@ void FMacPlatformEvent::Wait(uint64 Milliseconds)
             
             if (Milliseconds == uint64(-1))
             {
-                const auto Result = pthread_cond_wait(&Condition, &Mutex);
+                const int32 Result = pthread_cond_wait(&Condition, &Mutex);
                 CHECK(Result == 0);
             }
             else
@@ -149,7 +149,7 @@ void FMacPlatformEvent::Wait(uint64 Milliseconds)
                 TimeOut.tv_sec  = static_cast<time_t>(Milliseconds / 1000);
                 TimeOut.tv_nsec = static_cast<long>((Milliseconds % 1000) * 1000000);
 
-                const auto Result = pthread_cond_timedwait_relative_np(&Condition, &Mutex, &TimeOut);
+                const int32 Result = pthread_cond_timedwait_relative_np(&Condition, &Mutex, &TimeOut);
                 CHECK((Result == 0) || (Result == ETIMEDOUT));
 
                 struct timespec Now;

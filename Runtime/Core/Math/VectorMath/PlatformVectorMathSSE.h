@@ -92,7 +92,7 @@ struct FPlatformVectorMathSSE
         static_assert(ComponentIndexZ < 4, "ComponentIndexZ out of range");
         static_assert(ComponentIndexW < 4, "ComponentIndexW out of range");
 
-        static constexpr auto ShuffleMask = _MM_SHUFFLE(ComponentIndexW, ComponentIndexZ, ComponentIndexY, ComponentIndexX);
+        static constexpr int32 ShuffleMask = _MM_SHUFFLE(ComponentIndexW, ComponentIndexZ, ComponentIndexY, ComponentIndexX);
 
         if constexpr (ComponentIndexX == 0 && ComponentIndexY == 1 && ComponentIndexZ == 0 && ComponentIndexW == 1)
         {
@@ -124,7 +124,7 @@ struct FPlatformVectorMathSSE
         static_assert(ComponentIndexZ < 4, "ComponentIndexZ out of range");
         static_assert(ComponentIndexW < 4, "ComponentIndexW out of range");
 
-        static constexpr auto ShuffleMask = _MM_SHUFFLE(ComponentIndexW, ComponentIndexZ, ComponentIndexY, ComponentIndexX);
+        static constexpr int32 ShuffleMask = _MM_SHUFFLE(ComponentIndexW, ComponentIndexZ, ComponentIndexY, ComponentIndexX);
 
         if constexpr (ComponentIndexX == 0 && ComponentIndexY == 1 && ComponentIndexZ == 0 && ComponentIndexW == 1)
         {

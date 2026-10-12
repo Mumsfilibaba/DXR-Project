@@ -214,7 +214,7 @@ TArray<FProfilerOptimizationTarget> FProfilerReport::CollectOptimizationTargets(
     CollectHotScopes(HotScopes, CapturedFrameMilliseconds);
 
     TArray<FHotScope> SortedSelf;
-    for (auto Pair : HotScopes)
+    for (TPair<const FString&, FHotScope&> Pair : HotScopes)
     {
         SortedSelf.Add(Pair.Second);
     }
@@ -434,7 +434,7 @@ FString FProfilerReport::BuildCpuAndBootText()
     CollectHotScopes(HotScopes, CapturedFrameMilliseconds);
 
     TArray<FHotScope> SortedHot;
-    for (auto Pair : HotScopes)
+    for (TPair<const FString&, FHotScope&> Pair : HotScopes)
     {
         SortedHot.Add(Pair.Second);
     }

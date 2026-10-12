@@ -62,7 +62,7 @@ namespace SharedPointerInternal
         {
             if constexpr (ThreadAccess == EThreadAccess::Safe)
             {
-                auto StrongReferenceCount = StrongReferences.Load(EMemoryOrder::Relaxed);
+                ReferenceCountType StrongReferenceCount = StrongReferences.Load(EMemoryOrder::Relaxed);
                 while (true)
                 {
                     if (StrongReferenceCount == 0)
@@ -314,12 +314,12 @@ namespace SharedPointerInternal
             }
         }
 
-        NODISCARD FORCEINLINE auto GetStrongReferenceCount() const
+        NODISCARD FORCEINLINE uint32 GetStrongReferenceCount() const
         {
             return ReferenceHandler ? ReferenceHandler->GetStrongReferenceCount() : 0u;
         }
 
-        NODISCARD FORCEINLINE auto GetWeakReferenceCount() const
+        NODISCARD FORCEINLINE uint32 GetWeakReferenceCount() const
         {
             return ReferenceHandler ? ReferenceHandler->GetWeakReferenceCount() : 0u;
         }
@@ -331,8 +331,8 @@ namespace SharedPointerInternal
 
         FSharedReference& operator=(const FSharedReference& Other)
         {
-            auto NewCounter = Other.ReferenceHandler;
-            auto OldCounter = ReferenceHandler;
+            FReferenceHandler<InThreadAccess>* NewCounter = Other.ReferenceHandler;
+            FReferenceHandler<InThreadAccess>* OldCounter = ReferenceHandler;
 
             // Ensure that we don't assign the same counter again
             if (OldCounter != NewCounter)
@@ -354,8 +354,8 @@ namespace SharedPointerInternal
 
         FSharedReference& operator=(FSharedReference&& Other)
         {
-            auto NewCounter = Other.ReferenceHandler;
-            auto OldCounter = ReferenceHandler;
+            FReferenceHandler<InThreadAccess>* NewCounter = Other.ReferenceHandler;
+            FReferenceHandler<InThreadAccess>* OldCounter = ReferenceHandler;
 
             // Ensure that we don't assign the same counter again
             if (OldCounter != NewCounter)
@@ -432,12 +432,12 @@ namespace SharedPointerInternal
             }
         }
 
-        NODISCARD FORCEINLINE auto GetStrongReferenceCount() const
+        NODISCARD FORCEINLINE uint32 GetStrongReferenceCount() const
         {
             return ReferenceHandler ? ReferenceHandler->GetStrongReferenceCount() : 0u;
         }
 
-        NODISCARD FORCEINLINE auto GetWeakReferenceCount() const
+        NODISCARD FORCEINLINE uint32 GetWeakReferenceCount() const
         {
             return ReferenceHandler ? ReferenceHandler->GetWeakReferenceCount() : 0u;
         }
@@ -449,8 +449,8 @@ namespace SharedPointerInternal
 
         FWeakReference& operator=(const FWeakReference& Other)
         {
-            auto NewCounter = Other.ReferenceHandler;
-            auto OldCounter = ReferenceHandler;
+            FReferenceHandler<InThreadAccess>* NewCounter = Other.ReferenceHandler;
+            FReferenceHandler<InThreadAccess>* OldCounter = ReferenceHandler;
 
             // Ensure that we don't assign the same counter again
             if (OldCounter != NewCounter)
@@ -472,8 +472,8 @@ namespace SharedPointerInternal
 
         FWeakReference& operator=(FWeakReference&& Other)
         {
-            auto NewCounter = Other.ReferenceHandler;
-            auto OldCounter = ReferenceHandler;
+            FReferenceHandler<InThreadAccess>* NewCounter = Other.ReferenceHandler;
+            FReferenceHandler<InThreadAccess>* OldCounter = ReferenceHandler;
 
             // Ensure that we don't assign the same counter again
             if (OldCounter != NewCounter)
@@ -756,7 +756,7 @@ public:
      * @brief Returns the number of strong references
      * @return The number of strong references
      */
-    NODISCARD FORCEINLINE auto GetStrongReferenceCount() const
+    NODISCARD FORCEINLINE uint32 GetStrongReferenceCount() const
     {
         return ReferenceHandler.GetStrongReferenceCount();
     }
@@ -765,7 +765,7 @@ public:
      * @brief Returns the number of weak references
      * @return The number of weak references
      */
-    NODISCARD FORCEINLINE auto GetWeakReferenceCount() const
+    NODISCARD FORCEINLINE uint32 GetWeakReferenceCount() const
     {
         return ReferenceHandler.GetWeakReferenceCount();
     }
@@ -1074,7 +1074,7 @@ public:
      * @brief Returns the number of strong references
      * @return The number of strong references
      */
-    NODISCARD FORCEINLINE auto GetStrongReferenceCount() const
+    NODISCARD FORCEINLINE uint32 GetStrongReferenceCount() const
     {
         return ReferenceHandler.GetStrongReferenceCount();
     }
@@ -1083,7 +1083,7 @@ public:
      * @brief Returns the number of weak references
      * @return The number of weak references
      */
-    NODISCARD FORCEINLINE auto GetWeakReferenceCount() const
+    NODISCARD FORCEINLINE uint32 GetWeakReferenceCount() const
     {
         return ReferenceHandler.GetWeakReferenceCount();
     }
@@ -1447,14 +1447,14 @@ NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U
 template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe, typename... ArgTypes>
 NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeSharedPtr(ArgTypes&&... Args) requires(TNot<TIsArray<ObjectType>>::Value)
 {
-    auto NewReferenceCounter = new SharedPointerInternal::TObjectReferenceHandler<ObjectType, ThreadAccess>(Forward<ArgTypes>(Args)...);
+    SharedPointerInternal::TObjectReferenceHandler<ObjectType, ThreadAccess>* NewReferenceCounter = new SharedPointerInternal::TObjectReferenceHandler<ObjectType, ThreadAccess>(Forward<ArgTypes>(Args)...);
     return TSharedPtr<ObjectType, ThreadAccess>(SharedPointerInternal::TSharedReferenceProxy(NewReferenceCounter->GetObjectPointer(), NewReferenceCounter));
 }
 
 template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe>
 NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeSharedPtr() requires(TIsBoundedArray<ObjectType>::Value)
 {
-    auto NewReferenceCounter = new SharedPointerInternal::TObjectReferenceHandler<ObjectType, ThreadAccess>();
+    SharedPointerInternal::TObjectReferenceHandler<ObjectType, ThreadAccess>* NewReferenceCounter = new SharedPointerInternal::TObjectReferenceHandler<ObjectType, ThreadAccess>();
     return TSharedPtr<ObjectType, ThreadAccess>(SharedPointerInternal::TSharedReferenceProxy(NewReferenceCounter->GetObjectPointer(), NewReferenceCounter));
 }
 
