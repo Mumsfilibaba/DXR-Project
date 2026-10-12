@@ -116,7 +116,11 @@ static void LogStartupInformation()
     LOG_INFO("Executable=%s", FPlatformFile::GetExecutablePath());
     LOG_INFO("EngineDir=%s (%s)", *Paths::GetEngineDir(), Paths::GetEngineDirSourceName());
     LOG_INFO("ProjectName=%s", *Paths::GetProjectName());
-    LOG_INFO("ProjectDir=%s", *Paths::GetProjectDir());
+    LOG_INFO("ProjectDir=%s (%s)", *Paths::GetProjectDir(), Paths::GetProjectSourceName());
+    if (!Paths::GetProjectFile().IsEmpty())
+    {
+        LOG_INFO("ProjectFile=%s", *Paths::GetProjectFile());
+    }
 }
 
 FEngineLoop::FEngineLoop()
@@ -192,6 +196,13 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
     {
         FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), FString::Printf(TEXT("Could not find the engine folder. Pass -engine=<path> to a folder "
             "that contains %s, or run the executable from inside one."), Paths::EngineIdentityFilename));
+        return -1;
+    }
+
+    FString ProjectError;
+    if (!Paths::InitializeProject(ProjectError))
+    {
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), FString::Printf(TEXT("Could not load the project: %s"), *ProjectError));
         return -1;
     }
 

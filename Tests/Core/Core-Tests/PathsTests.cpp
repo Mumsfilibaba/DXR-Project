@@ -1,6 +1,8 @@
 #include "PathsTests.h"
 
+#include <Core/Misc/CommandLine.h>
 #include <Core/Misc/Paths.h>
+#include <Core/Misc/ProjectDescriptor.h>
 #include <Core/Filesystem/File.h>
 #include <Core/Containers/String.h>
 #include <Core/Platform/PlatformFile.h>
@@ -75,6 +77,149 @@ bool Paths_Test()
         TEST_EXPECT(Source == EEngineDirSource::None);
         TEST_EXPECT(Paths::FindEngineDir(TEXT(""), Other, TEXT("")).IsEmpty());
     }
+
+    TEST_EXPECT(File::DeleteDirectoryTree(Root));
+    FPlatformFile::RemoveDirectory(*File::GetDirectoryOf(Root));
+
+    TEST_END();
+}
+
+static bool InitializeProjectWith(const CHAR_T* const* Args, int32 NumArgs, FString& OutError)
+{
+    CommandLine::Initialize(const_cast<const CHAR_T**>(Args), NumArgs);
+    return Paths::InitializeProject(OutError);
+}
+
+bool ProjectPaths_Test()
+{
+    TEST_BEGIN();
+
+    const FString CompileTimeDir  = Paths::GetProjectDir();
+    const FString CompileTimeName = Paths::GetProjectName();
+
+    TEST_SECTION(TEXT("Without a descriptor the project is the compile-time one"));
+    {
+        FString Error;
+        TEST_EXPECT(InitializeProjectWith(nullptr, 0, Error));
+        TEST_EXPECT(Paths::GetProjectSource() == EProjectSource::None);
+        TEST_EXPECT(Paths::GetProjectFile().IsEmpty());
+        TEST_EXPECT(Paths::GetProjectDescriptor() == nullptr);
+        TEST_EXPECT(!CompileTimeDir.IsEmpty() && Paths::GetProjectDir().Equals(CompileTimeDir));
+        TEST_EXPECT(!CompileTimeName.IsEmpty() && Paths::GetProjectName().Equals(CompileTimeName));
+        TEST_EXPECT(!CompileTimeDir.Contains('\\'));
+    }
+
+    TEST_SECTION(TEXT("The content, config and saved directories sit under the project and the engine"));
+    {
+        TEST_EXPECT(Paths::GetProjectContentDir().Equals(Paths::GetProjectDir() + TEXT("/Content")));
+        TEST_EXPECT(Paths::GetProjectConfigDir().Equals(Paths::GetProjectDir() + TEXT("/Config")));
+        TEST_EXPECT(Paths::GetProjectSavedDir().Equals(Paths::GetProjectDir() + TEXT("/Saved")));
+        TEST_EXPECT(Paths::GetEngineContentDir().Equals(Paths::GetEngineDir() + TEXT("/Content")));
+        TEST_EXPECT(Paths::GetEngineSavedDir().Equals(Paths::GetEngineDir() + TEXT("/Saved")));
+    }
+
+    const FString Root        = Paths::GetUserSettingsDir() + TEXT("/Tests/ProjectPathsTests.Scratch");
+    const FString Game        = Root + TEXT("/My Projects/Game");
+    const FString GameFile    = Game + TEXT("/Game.dxrproject");
+    const FString Empty       = Root + TEXT("/Empty");
+    const FString Package     = Root + TEXT("/Package");
+    const FString Packaged    = Package + TEXT("/Packaged Game/Packaged Game.dxrproject");
+    const FString Broken      = Root + TEXT("/Broken/Broken.dxrproject");
+    const FString NotAProject = Root + TEXT("/Notes.txt");
+
+    File::DeleteDirectoryTree(Root);
+    TEST_EXPECT(File::CreateDirectoryTree(Game));
+    TEST_EXPECT(File::CreateDirectoryTree(Empty));
+    TEST_EXPECT(File::CreateDirectoryTree(File::GetDirectoryOf(Packaged)));
+    TEST_EXPECT(File::CreateDirectoryTree(File::GetDirectoryOf(Broken)));
+    TEST_EXPECT(WriteText(GameFile, TEXT("{ \"Version\": 1, \"Name\": \"Game\" }")));
+    TEST_EXPECT(WriteText(Packaged, TEXT("{ \"Version\": 1, \"Name\": \"Packaged Game\" }")));
+    TEST_EXPECT(WriteText(Broken, TEXT("{ \"Version\": 1 }")));
+    TEST_EXPECT(WriteText(NotAProject, TEXT("Not a project")));
+    TEST_EXPECT(WriteText(File::CombinePath(Package, Paths::PackageFilename), TEXT("[Package]\nProject=\"Packaged Game/Packaged Game.dxrproject\"\n")));
+
+    TEST_SECTION(TEXT("-project= takes a descriptor, or the folder that holds one named after it"));
+    {
+        EProjectSource Source = EProjectSource::None;
+        TEST_EXPECT(Paths::FindProjectFile(GameFile, Empty, TEXT(""), &Source).Equals(GameFile));
+        TEST_EXPECT(Source == EProjectSource::CommandLine);
+        TEST_EXPECT(Paths::FindProjectFile(Game, Empty, TEXT("")).Equals(GameFile));
+        TEST_EXPECT(Paths::FindProjectFile(Game + TEXT("/../Game/"), Empty, TEXT("")).Equals(GameFile));
+    }
+
+    TEST_SECTION(TEXT("-project= that is not a project finds nothing, instead of falling through"));
+    {
+        EProjectSource Source = EProjectSource::CommandLine;
+        TEST_EXPECT(Paths::FindProjectFile(Empty, Empty, GameFile, &Source).IsEmpty());
+        TEST_EXPECT(Source == EProjectSource::None);
+        TEST_EXPECT(Paths::FindProjectFile(NotAProject, Empty, GameFile).IsEmpty());
+        TEST_EXPECT(Paths::FindProjectFile(Root + TEXT("/Missing.dxrproject"), Empty, GameFile).IsEmpty());
+    }
+
+    TEST_SECTION(TEXT("A packaged layout uses the project its Package.ini names, and never the fallback"));
+    {
+        EProjectSource Source = EProjectSource::None;
+        TEST_EXPECT(Paths::FindProjectFile(TEXT(""), Package, GameFile, &Source).Equals(Packaged));
+        TEST_EXPECT(Source == EProjectSource::PackageFile);
+
+        TEST_EXPECT(WriteText(File::CombinePath(Package, Paths::PackageFilename), TEXT("[Package]\nProject=Missing/Missing.dxrproject\n")));
+        TEST_EXPECT(Paths::FindProjectFile(TEXT(""), Package, GameFile, &Source).IsEmpty());
+        TEST_EXPECT(Source == EProjectSource::None);
+
+        TEST_SECTION(TEXT("-project= wins over Package.ini"));
+        TEST_EXPECT(Paths::FindProjectFile(GameFile, Package, TEXT(""), &Source).Equals(GameFile));
+        TEST_EXPECT(Source == EProjectSource::CommandLine);
+    }
+
+    TEST_SECTION(TEXT("Otherwise the compile-time descriptor is used when it exists"));
+    {
+        EProjectSource Source = EProjectSource::None;
+        TEST_EXPECT(Paths::FindProjectFile(TEXT(""), Empty, GameFile, &Source).Equals(GameFile));
+        TEST_EXPECT(Source == EProjectSource::CompileTimeFallback);
+        TEST_EXPECT(Paths::FindProjectFile(TEXT(""), Empty, Root + TEXT("/Missing.dxrproject"), &Source).IsEmpty());
+        TEST_EXPECT(Source == EProjectSource::None);
+    }
+
+    TEST_SECTION(TEXT("-project= loads the descriptor, which then names and places the project"));
+    {
+        const FString ProjectArgument = FString(TEXT("-project=")) + Game;
+        const CHAR_T* Args[]          = { *ProjectArgument };
+
+        FString Error;
+        TEST_EXPECT(InitializeProjectWith(Args, 1, Error));
+        TEST_EXPECT(Error.IsEmpty());
+        TEST_EXPECT(Paths::GetProjectSource() == EProjectSource::CommandLine);
+        TEST_EXPECT(Paths::GetProjectFile().Equals(GameFile));
+        TEST_EXPECT(Paths::GetProjectDir().Equals(Game));
+        TEST_EXPECT(Paths::GetProjectName().Equals(TEXT("Game")));
+        TEST_EXPECT(Paths::GetProjectDescriptor() != nullptr && Paths::GetProjectDescriptor()->Name.Equals(TEXT("Game")));
+        TEST_EXPECT(Paths::GetProjectContentDir().Equals(Game + TEXT("/Content")));
+    }
+
+    TEST_SECTION(TEXT("A -project= that names no project, or a descriptor that does not load, fails with a reason"));
+    {
+        const FString EmptyArgument  = FString(TEXT("-project=")) + Empty;
+        const FString BrokenArgument = FString(TEXT("-project=")) + Broken;
+        const CHAR_T* NoValueArgs[]  = { TEXT("-project=") };
+        const CHAR_T* EmptyArgs[]    = { *EmptyArgument };
+        const CHAR_T* BrokenArgs[]   = { *BrokenArgument };
+
+        FString Error;
+        TEST_EXPECT(!InitializeProjectWith(NoValueArgs, 1, Error));
+        TEST_EXPECT(!Error.IsEmpty());
+
+        Error.Clear();
+        TEST_EXPECT(!InitializeProjectWith(EmptyArgs, 1, Error));
+        TEST_EXPECT(Error.Contains(Empty));
+
+        Error.Clear();
+        TEST_EXPECT(!InitializeProjectWith(BrokenArgs, 1, Error));
+        TEST_EXPECT(Error.Contains(TEXT("has no Name")));
+    }
+
+    FString RestoreError;
+    TEST_EXPECT(InitializeProjectWith(nullptr, 0, RestoreError));
+    TEST_EXPECT(Paths::GetProjectDir().Equals(CompileTimeDir));
 
     TEST_EXPECT(File::DeleteDirectoryTree(Root));
     FPlatformFile::RemoveDirectory(*File::GetDirectoryOf(Root));

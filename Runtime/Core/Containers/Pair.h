@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Templates/Utility/Swap.h"
 
 template<typename FirstType, typename SecondType>
 struct TPair
