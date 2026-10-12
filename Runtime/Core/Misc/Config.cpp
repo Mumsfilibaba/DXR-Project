@@ -3,6 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/BuildInfo.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Platform/PlatformFile.h"
 
 FConfig* GConfig = nullptr;
 
@@ -38,14 +39,19 @@ void FConfig::Release()
 FIniFile* FConfig::LoadFile(const FString& Filename)
 {
     // Get a config file, if the file already exists the values will be overwritten
-    FIniFile& ConfigFile = ConfigFiles.FindOrAdd(Filename);
-    if (!ConfigFile.LoadFromFile(Filename))
+    TUniquePtr<FIniFile>& ConfigFile = ConfigFiles.FindOrAdd(Filename);
+    if (!ConfigFile)
+    {
+        ConfigFile = MakeUniquePtr<FIniFile>();
+    }
+
+    if (!ConfigFile->LoadFromFile(Filename))
     {
         ConfigFiles.Remove(Filename);
         return nullptr;
     }
 
-    return &ConfigFile;
+    return ConfigFile.Get();
 }
 
 FIniFile* FConfig::GetFile(EConfigFile::Type ConfigFile)
@@ -158,7 +164,7 @@ void FConfig::LoadConsoleVariables()
 
 FIniFile* FConfig::AddLayer(EConfigFile::Type ConfigFile, const FString& Filename)
 {
-    FIniFile* File = LoadFile(Filename);
+    FIniFile* File = FPlatformFile::IsFile(*Filename) ? LoadFile(Filename) : nullptr;
     if (File)
     {
         SetFile(ConfigFile, File);
@@ -186,4 +192,14 @@ void FConfig::AddDefaultLayers()
 #endif
 
     AddLayer(EConfigFile::Platform, FString::Printf(TEXT("%s/%s.ini"), *ConfigDir, BuildInfo::GetPlatformName()));
+
+    const FString ProjectConfigDir = Paths::GetProjectConfigDir();
+    AddLayer(EConfigFile::ProjectEngine, FString::Printf(TEXT("%s/Engine.ini"), *ProjectConfigDir));
+    AddLayer(EConfigFile::ProjectGame, FString::Printf(TEXT("%s/Game.ini"), *ProjectConfigDir));
+
+#if EDITOR_BUILD
+    AddLayer(EConfigFile::ProjectEditor, FString::Printf(TEXT("%s/Editor.ini"), *ProjectConfigDir));
+#endif
+
+    AddLayer(EConfigFile::ProjectPlatform, FString::Printf(TEXT("%s/%s.ini"), *ProjectConfigDir, BuildInfo::GetPlatformName()));
 }

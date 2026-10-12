@@ -1,7 +1,9 @@
 #pragma once
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Misc/IniFile.h"
 
-// Declaration order is priority order, every layer overrides the ones declared before it
+// Declaration order is priority order, every layer overrides the ones declared before it. The engine's layers come first and
+// the project's after them, so a project can override anything the engine sets, the engine's platform files included.
 struct EConfigFile
 {
     enum Type : uint8
@@ -15,8 +17,20 @@ struct EConfigFile
         /** Editor-only, overrides the game and engine layers */
         Editor,
 
-        /** Named after the platform, and has the last word over every other layer */
+        /** Named after the platform, and has the last word over the engine's other layers */
         Platform,
+
+        /** The project's Config/Engine.ini, which overrides every engine layer */
+        ProjectEngine,
+
+        /** The project's Config/Game.ini */
+        ProjectGame,
+
+        /** The project's Config/Editor.ini, read by editor builds only */
+        ProjectEditor,
+
+        /** The project's Config/<Platform>.ini, which has the last word over every other layer */
+        ProjectPlatform,
 
         Count,
     };
@@ -31,6 +45,9 @@ public:
 public:
     FConfig();
     ~FConfig();
+
+    FConfig(const FConfig&) = delete;
+    FConfig& operator=(const FConfig&) = delete;
 
     /** @brief Loads a file and keeps it open, without making it part of any layer */
     FIniFile* LoadFile(const FString& Filename);
@@ -63,8 +80,8 @@ private:
     FIniFile* AddLayer(EConfigFile::Type ConfigFile, const FString& Filename);
     void AddDefaultLayers();
 
-    TMap<FString, FIniFile> ConfigFiles;
-    FIniFile*               LayerFiles[EConfigFile::Count];
+    TMap<FString, TUniquePtr<FIniFile>> ConfigFiles;
+    FIniFile*                           LayerFiles[EConfigFile::Count];
 };
 
 extern CORE_API FConfig* GConfig;

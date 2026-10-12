@@ -4,6 +4,9 @@
 #include <Core/Containers/String.h>
 #include <Core/Misc/Config.h>
 #include <Core/Misc/ConsoleManager.h>
+#include <Core/Misc/Paths.h>
+#include <Core/Filesystem/File.h>
+#include <Core/Platform/PlatformFile.h>
 #include <Core/Templates/CString.h>
 
 #include "TestCommon/TestMacros.h"
@@ -48,6 +51,73 @@ bool Config_Test()
         ConfigStack.SetFile(EConfigFile::Platform, &PlatformFile);
         TEST_EXPECT(ConfigStack.GetString(TEXT("Test"), TEXT("Contested"), Value));
         TEST_EXPECT(Value == TEXT("FromPlatform"));
+    }
+
+    TEST_SECTION(TEXT("Every project layer overrides every engine layer, the engine's platform file included"));
+    {
+        FIniFile PlatformFile        = ParseIni(TEXT("[RHI]\nRHI.Type = D3D12\n[Test]\nContested = FromPlatform\n"));
+        FIniFile ProjectEngineFile   = ParseIni(TEXT("[RHI]\nRHI.Type = Vulkan\n[Test]\nContested = FromProjectEngine\n"));
+        FIniFile ProjectGameFile     = ParseIni(TEXT("[Test]\nContested = FromProjectGame\n"));
+        FIniFile ProjectEditorFile   = ParseIni(TEXT("[Test]\nContested = FromProjectEditor\n"));
+        FIniFile ProjectPlatformFile = ParseIni(TEXT("[Test]\nContested = FromProjectPlatform\n"));
+
+        FConfig ConfigStack;
+        FString Value;
+
+        ConfigStack.SetFile(EConfigFile::Platform, &PlatformFile);
+        ConfigStack.SetFile(EConfigFile::ProjectEngine, &ProjectEngineFile);
+        TEST_EXPECT(ConfigStack.GetString(TEXT("RHI"), TEXT("RHI.Type"), Value));
+        TEST_EXPECT(Value == TEXT("Vulkan"));
+        TEST_EXPECT(ConfigStack.GetString(TEXT("Test"), TEXT("Contested"), Value));
+        TEST_EXPECT(Value == TEXT("FromProjectEngine"));
+
+        ConfigStack.SetFile(EConfigFile::ProjectGame, &ProjectGameFile);
+        TEST_EXPECT(ConfigStack.GetString(TEXT("Test"), TEXT("Contested"), Value));
+        TEST_EXPECT(Value == TEXT("FromProjectGame"));
+
+        ConfigStack.SetFile(EConfigFile::ProjectEditor, &ProjectEditorFile);
+        TEST_EXPECT(ConfigStack.GetString(TEXT("Test"), TEXT("Contested"), Value));
+        TEST_EXPECT(Value == TEXT("FromProjectEditor"));
+
+        ConfigStack.SetFile(EConfigFile::ProjectPlatform, &ProjectPlatformFile);
+        TEST_EXPECT(ConfigStack.GetString(TEXT("Test"), TEXT("Contested"), Value));
+        TEST_EXPECT(Value == TEXT("FromProjectPlatform"));
+
+        TEST_EXPECT(ConfigStack.GetString(TEXT("RHI"), TEXT("RHI.Type"), Value));
+        TEST_EXPECT(Value == TEXT("Vulkan"));
+        ConfigStack.SetFile(EConfigFile::ProjectEngine, nullptr);
+        TEST_EXPECT(ConfigStack.GetString(TEXT("RHI"), TEXT("RHI.Type"), Value));
+        TEST_EXPECT(Value == TEXT("D3D12"));
+    }
+
+    TEST_SECTION(TEXT("A loaded file stays where it is while more files are loaded after it"));
+    {
+        const FString Root = Paths::GetUserSettingsDir() + TEXT("/Tests/ConfigTests.Scratch");
+        File::DeleteDirectoryTree(Root);
+        TEST_EXPECT(File::CreateDirectoryTree(Root));
+
+        FConfig          ConfigStack;
+        TArray<FIniFile*> Loaded;
+        for (int32 Index = 0; Index < 9; ++Index)
+        {
+            const FString Filename = FString::Printf(TEXT("%s/Layer%d.ini"), *Root, Index);
+            {
+                TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(Filename);
+                TEST_EXPECT(FileHandle && File::WriteTextFile(FileHandle.Get(), FString::Printf(TEXT("[Test]\nIndex = %d\n"), Index)));
+            }
+
+            Loaded.Add(ConfigStack.LoadFile(Filename));
+            TEST_EXPECT(Loaded.Last() != nullptr);
+        }
+
+        for (int32 Index = 0; Index < Loaded.Size(); ++Index)
+        {
+            const FIniValue* Value = Loaded[Index] ? Loaded[Index]->FindValue(TEXT("Test"), TEXT("Index")) : nullptr;
+            TEST_EXPECT(Value && Value->CurrentValue.Equals(*FString::Printf(TEXT("%d"), Index)));
+        }
+
+        TEST_EXPECT(File::DeleteDirectoryTree(Root));
+        FPlatformFile::RemoveDirectory(*File::GetDirectoryOf(Root));
     }
 
     TEST_SECTION(TEXT("A key that only the lowest layer has stays visible"));
