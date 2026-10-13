@@ -12,6 +12,8 @@
 #include "Core/Containers/String.h"
 #include "Core/Math/Math.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Filesystem/File.h"
+#include "Core/Misc/Paths.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
@@ -43,7 +45,7 @@ static TAutoConsoleVariable<bool> CVarEncoderExecutionStatus(
 
 static TAutoConsoleVariable<FString> CVarFaultReportFilePath(
     TEXT("MetalRHI.FaultReportFilePath"),
-    TEXT("File a failed command buffer's report is also written to, or empty to only log it"),
+    TEXT("File a failed command buffer's report is also written to, under the project's Logs directory unless absolute, or empty to only log it"),
     TEXT("MetalFaultReport.txt"));
 
 #if METAL_ENABLE_DEBUG_LAYER
@@ -116,9 +118,10 @@ static void ReportCommandBufferError(id<MTLCommandBuffer> CommandBuffer, const F
     const FString Label(CommandBuffer.label ? CommandBuffer.label : @"<unnamed>");
 
     TFileRef<IPlatformFile> File;
-    const FString FaultReportFilePath = CVarFaultReportFilePath.GetValue();
+    const FString FaultReportFilePath = Paths::ResolveOutputPath(CVarFaultReportFilePath.GetValue());
     if (!FaultReportFilePath.IsEmpty())
     {
+        File::CreateDirectoryTree(File::GetDirectoryOf(FaultReportFilePath));
         File = FPlatformFile::OpenForWrite(FaultReportFilePath);
     }
 

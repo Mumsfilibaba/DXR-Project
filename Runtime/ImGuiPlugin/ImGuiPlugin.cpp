@@ -3,6 +3,8 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Platform/PlatformSystemClipboard.h"
+#include "Core/Filesystem/File.h"
+#include "Core/Misc/Paths.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Application/Application.h"
 #include "Application/Elements/Viewport.h"
@@ -81,6 +83,7 @@ FImGuiPlugin::FImGuiPlugin()
     : IImguiPlugin()
     , PluginImGuiIO(nullptr)
     , PluginImGuiContext(nullptr)
+    , IniFilenameUtf8()
     , Renderer(nullptr)
     , EventHandler(nullptr)
     , MainWindow(nullptr)
@@ -116,6 +119,11 @@ bool FImGuiPlugin::Load()
         LOG_ERROR("Failed to create ImGuiContext");
         return false;
     }
+
+    const FString IniFilename = Paths::GetProjectUserDir() + TEXT("/ImGui.ini");
+    File::CreateDirectoryTree(File::GetDirectoryOf(IniFilename));
+    IniFilenameUtf8 = StringCast<ANSICHAR>(IniFilename).ToString();
+    PluginImGuiIO->IniFilename = *IniFilenameUtf8;
     
     // Set the global-instance
     GImGuiPlugin = this;

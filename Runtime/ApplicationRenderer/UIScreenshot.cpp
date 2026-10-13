@@ -8,6 +8,7 @@
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceManager.h"
+#include "Core/Misc/Paths.h"
 #include "Core/Image/PngWriter.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
@@ -24,7 +25,7 @@ constexpr uint64 ROW_OFFSET_ALIGNMENT  = 512ull;
 
 static FAutoConsoleCommand CCmdUIScreenshot(
     TEXT("UI.Screenshot"),
-    TEXT("Writes a PNG of the main window's UI. Takes the path to write, defaulting to Screenshots/Current/UI.png"),
+    TEXT("Writes a PNG of the main window's UI. Takes the path to write, under the project's Logs directory unless absolute, defaulting to Screenshots/Current/UI.png"),
     FConsoleCommandDelegate::CreateLambda([](FStringView Arguments)
     {
         const FString Filename = Arguments.IsEmpty() ? FString(TEXT("Screenshots/Current/UI.png")) : FString(Arguments);
@@ -226,7 +227,7 @@ bool UIScreenshot::CapturePrimaryWindow(const FString& Filename)
         return false;
     }
 
-    return CaptureWindow(Windows[0], Filename);
+    return CaptureWindow(Windows[0], Paths::ResolveOutputPath(Filename));
 }
 
 void UIScreenshot::RequestAtFrame(int32 FramesFromNow, const FString& Filename, bool bExitAfter)

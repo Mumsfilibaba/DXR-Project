@@ -95,6 +95,7 @@ public:
 private:
     ImGuiIO*                       PluginImGuiIO;
     ImGuiContext*                  PluginImGuiContext;
+    FAnsiString                    IniFilenameUtf8;
     TSharedPtr<FImGuiRenderer>     Renderer;
     TSharedPtr<FImGuiEventHandler> EventHandler;
     TSharedPtr<FWindow>            MainWindow;

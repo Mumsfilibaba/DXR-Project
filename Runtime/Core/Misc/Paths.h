@@ -96,6 +96,17 @@ struct CORE_API Paths
      */
     static FString FindProjectBinariesDir(const FString& ProjectDir, const FString& ExecutablePath);
 
+    /**
+     * @brief Find the folder logs, user state and caches are written under: the project directory in development, and a
+     * folder named after the project in the per-user settings directory in a packaged layout, which may be read-only
+     * @param ProjectDir The project directory
+     * @param ProjectName The project name, which names the per-user folder
+     * @param bIsPackaged Whether the game runs from a packaged layout
+     * @param UserSettingsDir The engine's per-user settings directory, see GetUserSettingsDir
+     * @return Returns the folder, or ProjectDir when a packaged game has no per-user settings directory to write to
+     */
+    static FString FindWritableDir(const FString& ProjectDir, const FString& ProjectName, bool bIsPackaged, const FString& UserSettingsDir);
+
     /** @return Returns where the engine directory was found, resolving it first if Initialize has not run */
     static EEngineDirSource GetEngineDirSource();
 
@@ -114,7 +125,10 @@ struct CORE_API Paths
     /** @return Returns the engine's Content directory, which holds the engine's own assets */
     static FString GetEngineContentDir();
 
-    /** @return Returns the engine's Cache directory, for the caches every project shares, which can be deleted and rebuilt */
+    /**
+     * @return Returns the engine's Cache directory, for the caches every project shares, which can be deleted and rebuilt. In
+     * a packaged layout it is the project's Cache directory instead, since the package may be read-only.
+     */
     static FString GetEngineCacheDir();
 
     /** @return Returns where the project descriptor was found, resolving it first if InitializeProject has not run */
@@ -141,6 +155,12 @@ struct CORE_API Paths
     /** @return Returns the project's Config directory */
     static FString GetProjectConfigDir();
 
+    /** @return Returns whether the game runs from a packaged layout, where the project was found through Package.ini */
+    static bool IsPackaged();
+
+    /** @return Returns the folder the project's Logs, User and Cache directories are in, see FindWritableDir */
+    static FString GetWritableDir();
+
     /** @return Returns the project's Cache directory, for data that can be deleted and rebuilt, such as thumbnails */
     static FString GetProjectCacheDir();
 
@@ -149,6 +169,12 @@ struct CORE_API Paths
 
     /** @return Returns the project's User directory, for per-user state such as the editor layout */
     static FString GetProjectUserDir();
+
+    /**
+     * @return Returns Path when it is absolute, and otherwise Path under the project's Logs directory. Used for output files
+     * that a console variable or command names, such as dumps and screenshots.
+     */
+    static FString ResolveOutputPath(const FString& Path);
 
     /**
      * @return Returns the name of the first Game module in the project descriptor, PROJECT_NAME when the project has no

@@ -121,6 +121,24 @@ bool ProjectPaths_Test()
         TEST_EXPECT(Paths::GetEngineCacheDir().Equals(Paths::GetEngineDir() + TEXT("/Cache")));
     }
 
+    TEST_SECTION(TEXT("Outside a package, logs, user state and caches are written in the project"));
+    {
+        TEST_EXPECT(!Paths::IsPackaged());
+        TEST_EXPECT(Paths::GetWritableDir().Equals(Paths::GetProjectDir()));
+        TEST_EXPECT(Paths::ResolveOutputPath(TEXT("Dumps/Dump.txt")).Equals(Paths::GetProjectLogsDir() + TEXT("/Dumps/Dump.txt")));
+        TEST_EXPECT(Paths::ResolveOutputPath(TEXT("C:/Dumps/Dump.txt")).Equals(TEXT("C:/Dumps/Dump.txt")));
+        TEST_EXPECT(Paths::ResolveOutputPath(TEXT("")).IsEmpty());
+    }
+
+    TEST_SECTION(TEXT("A packaged game writes to a folder named after it in the per-user settings directory"));
+    {
+        const FString Project = TEXT("D:/Package/Game");
+        const FString User    = TEXT("C:/Users/Someone/AppData/Local/DXR-Engine");
+        TEST_EXPECT(Paths::FindWritableDir(Project, TEXT("My Game"), false, User).Equals(Project));
+        TEST_EXPECT(Paths::FindWritableDir(Project, TEXT("My Game"), true, User).Equals(User + TEXT("/My Game")));
+        TEST_EXPECT(Paths::FindWritableDir(Project, TEXT("My Game"), true, TEXT("")).Equals(Project));
+    }
+
     const FString Root        = Paths::GetUserSettingsDir() + TEXT("/Tests/ProjectPathsTests.Scratch");
     const FString Game        = Root + TEXT("/My Projects/Game");
     const FString GameFile    = Game + TEXT("/Game.dxrproject");
@@ -201,6 +219,35 @@ bool ProjectPaths_Test()
         TEST_EXPECT(Paths::GetProjectName().Equals(TEXT("Game")));
         TEST_EXPECT(Paths::GetProjectDescriptor() != nullptr && Paths::GetProjectDescriptor()->Name.Equals(TEXT("Game")));
         TEST_EXPECT(Paths::GetProjectContentDir().Equals(Game + TEXT("/Content")));
+        TEST_EXPECT(!Paths::IsPackaged() && Paths::GetWritableDir().Equals(Game));
+    }
+
+    TEST_SECTION(TEXT("Next to a Package.ini, the project's and the engine's writes go to the per-user folder"));
+    {
+        const FString ExecutableDir     = File::GetDirectoryOf(FPlatformFile::GetExecutablePath());
+        const FString ExecutablePackage = File::CombinePath(ExecutableDir, Paths::PackageFilename);
+        const FString PackagedDir       = File::CombinePath(ExecutableDir, TEXT("ProjectPathsTests.Packaged"));
+
+        TEST_EXPECT(!FPlatformFile::IsFile(*ExecutablePackage));
+        TEST_EXPECT(File::CreateDirectoryTree(PackagedDir));
+        TEST_EXPECT(WriteText(PackagedDir + TEXT("/Packaged.dxrproject"), TEXT("{ \"Version\": 1, \"Name\": \"Packaged\" }")));
+        TEST_EXPECT(WriteText(ExecutablePackage, TEXT("[Package]\nProject=\"ProjectPathsTests.Packaged/Packaged.dxrproject\"\n")));
+
+        FString Error;
+        const bool bInitialized = InitializeProjectWith(nullptr, 0, Error);
+        FPlatformFile::DeleteFile(*ExecutablePackage);
+
+        const FString Expected = Paths::GetUserSettingsDir() + TEXT("/Packaged");
+        TEST_EXPECT(bInitialized && Paths::IsPackaged());
+        TEST_EXPECT(Paths::GetProjectDir().Equals(File::NormalizePath(PackagedDir)));
+        TEST_EXPECT(Paths::GetWritableDir().Equals(Expected));
+        TEST_EXPECT(Paths::GetProjectLogsDir().Equals(Expected + TEXT("/Logs")));
+        TEST_EXPECT(Paths::GetProjectUserDir().Equals(Expected + TEXT("/User")));
+        TEST_EXPECT(Paths::GetProjectCacheDir().Equals(Expected + TEXT("/Cache")));
+        TEST_EXPECT(Paths::GetEngineCacheDir().Equals(Expected + TEXT("/Cache")));
+        TEST_EXPECT(Paths::ResolveOutputPath(TEXT("Dump.txt")).Equals(Expected + TEXT("/Logs/Dump.txt")));
+
+        TEST_EXPECT(File::DeleteDirectoryTree(PackagedDir));
     }
 
     TEST_SECTION(TEXT("The game module is the descriptor's first Game module, and a descriptor without one names none"));

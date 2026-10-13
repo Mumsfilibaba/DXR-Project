@@ -1,5 +1,7 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Filesystem/File.h"
+#include "Core/Misc/Paths.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/String.h"
@@ -31,7 +33,7 @@ static TAutoConsoleVariable<bool> CVarEnableDRED(
 
 static TAutoConsoleVariable<FString> CVarDeviceRemovedDumpFilePath(
     TEXT("D3D12RHI.DeviceRemovedDumpFilePath"),
-    TEXT("File path for DRED device removed dump output"),
+    TEXT("File path for DRED device removed dump output, under the project's Logs directory unless absolute"),
     TEXT("D3D12DeviceRemovedDump.txt"));
 
 static FAutoConsoleCommand CCmdForceDeviceRemoved(
@@ -144,9 +146,9 @@ static const CHAR_T* ToString(D3D12_DRED_ALLOCATION_TYPE AllocationType)
     }
 }
 
-static const CHAR_T* GetDeviceRemovedDumpFilePath()
+static FString GetDeviceRemovedDumpFilePath()
 {
-    return *CVarDeviceRemovedDumpFilePath.GetValue();
+    return Paths::ResolveOutputPath(CVarDeviceRemovedDumpFilePath.GetValue());
 }
 
 // -------------------------------------------------------------------------------------------
@@ -183,7 +185,10 @@ static void D3D12RHIWriteDeviceRemovedDump(ID3D12Device* D3DDevice, HRESULT Reas
         return;
     }
 
-    TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(GetDeviceRemovedDumpFilePath());
+    const FString DumpFilePath = GetDeviceRemovedDumpFilePath();
+    File::CreateDirectoryTree(File::GetDirectoryOf(DumpFilePath));
+
+    TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(DumpFilePath);
 
     const auto WriteLine = [&File](const FString& Line)
     {

@@ -34,7 +34,7 @@ struct APPLICATIONRENDERER_API UIScreenshot
     /**
      * @brief Captures the first window the application holds, which is the shell in a normal run.
      *
-     * @param Filename Where to write.
+     * @param Filename Where to write, under the project's Logs directory unless absolute.
      * @return True when the file was written.
      */
     static bool CapturePrimaryWindow(const FString& Filename);
@@ -48,7 +48,7 @@ struct APPLICATIONRENDERER_API UIScreenshot
      * would see.
      *
      * @param FramesFromNow How many frames to let pass first. Zero or less captures on the next one.
-     * @param Filename      Where to write.
+     * @param Filename      Where to write, under the project's Logs directory unless absolute.
      * @param bExitAfter    True to ask the engine to quit once the file is written, which is what an
      *                      unattended run wants so the process does not sit there.
      */

@@ -248,6 +248,16 @@ FString Paths::FindProjectBinariesDir(const FString& ProjectDir, const FString& 
     return File::CombinePath(File::NormalizePath(ProjectDir), FString(TEXT("Build/bin/")) + Configuration);
 }
 
+FString Paths::FindWritableDir(const FString& ProjectDir, const FString& ProjectName, bool bIsPackaged, const FString& UserSettingsDir)
+{
+    if (!bIsPackaged || UserSettingsDir.IsEmpty() || ProjectName.IsEmpty())
+    {
+        return ProjectDir;
+    }
+
+    return File::CombinePath(UserSettingsDir, ProjectName);
+}
+
 EEngineDirSource Paths::GetEngineDirSource()
 {
     GetEngineDir();
@@ -287,7 +297,7 @@ FString Paths::GetEngineContentDir()
 
 FString Paths::GetEngineCacheDir()
 {
-    return Paths::GetEngineDir() + FString(TEXT("/Cache"));
+    return IsPackaged() ? Paths::GetWritableDir() + FString(TEXT("/Cache")) : Paths::GetEngineDir() + FString(TEXT("/Cache"));
 }
 
 static void EnsureProjectResolved()
@@ -350,19 +360,34 @@ FString Paths::GetProjectConfigDir()
     return Paths::GetProjectDir() + FString(TEXT("/Config"));
 }
 
+bool Paths::IsPackaged()
+{
+    return GetProjectSource() == EProjectSource::PackageFile;
+}
+
+FString Paths::GetWritableDir()
+{
+    return FindWritableDir(GetProjectDir(), GetProjectName(), IsPackaged(), GetUserSettingsDir());
+}
+
 FString Paths::GetProjectCacheDir()
 {
-    return Paths::GetProjectDir() + FString(TEXT("/Cache"));
+    return Paths::GetWritableDir() + FString(TEXT("/Cache"));
 }
 
 FString Paths::GetProjectLogsDir()
 {
-    return Paths::GetProjectDir() + FString(TEXT("/Logs"));
+    return Paths::GetWritableDir() + FString(TEXT("/Logs"));
 }
 
 FString Paths::GetProjectUserDir()
 {
-    return Paths::GetProjectDir() + FString(TEXT("/User"));
+    return Paths::GetWritableDir() + FString(TEXT("/User"));
+}
+
+FString Paths::ResolveOutputPath(const FString& Path)
+{
+    return (Path.IsEmpty() || File::IsAbsolutePath(Path)) ? Path : File::CombinePath(GetProjectLogsDir(), Path);
 }
 
 FString Paths::GetProjectModuleName()
