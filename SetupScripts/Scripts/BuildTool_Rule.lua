@@ -194,6 +194,7 @@ function BuildRules(Name)
         ForceIncludes = {},
         LibraryPaths = {},
         Defines = {},
+        DevelopmentDefines = {},
         Frameworks = {},
 
         Files = {
@@ -280,6 +281,8 @@ function BuildRules(Name)
     function self.AddExcludeFiles(InExcludeFiles) AddUniqueElements(InExcludeFiles, self.ExcludeFiles) end
     function self.RemoveExcludeFiles(InExcludeFiles) self.ExcludeFiles = ExcludeElements(self.ExcludeFiles, InExcludeFiles) end
     function self.AddDefines(InDefines) AddUniqueElements(InDefines, self.Defines) end
+    -- Defines left out of Shipping configurations, such as the compile-time paths that are only a development fallback
+    function self.AddDevelopmentDefines(InDefines) AddUniqueElements(InDefines, self.DevelopmentDefines) end
     function self.AddModules(InModules) AddUniqueElements(InModules, self.Modules) end
     function self.AddExtraEmbedNames(InExtraEmbedNames) AddUniqueElements(InExtraEmbedNames, self.ExtraEmbedNames) end
     function self.AddExtraRuntimeLibraries(InExtraRuntimeLibraries) AddUniqueElements(InExtraRuntimeLibraries, self.ExtraRuntimeLibraries) end
@@ -532,6 +535,10 @@ function BuildRules(Name)
                 PrintTable("  Using define '%s'", self.Defines)
             end
 
+            if #self.DevelopmentDefines > 0 then
+                PrintTable("  Using define '%s' outside Shipping", self.DevelopmentDefines)
+            end
+
             LogInfo("--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
             if #self.IncludeDirs > 0 then
                 PrintTable("  Using Includes '%s'", self.IncludeDirs)
@@ -614,6 +621,9 @@ function BuildRules(Name)
             includedirs(self.IncludeDirs)
             externalincludedirs(self.ExternalIncludeDirs)
             defines(self.Defines)
+            filter({ "configurations:not *Shipping*" })
+                defines(self.DevelopmentDefines)
+            filter({})
             libdirs(self.LibraryPaths)
             files(self.Files)
             prebuildcommands(self.PreBuildCommands)

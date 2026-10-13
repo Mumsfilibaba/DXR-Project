@@ -98,6 +98,9 @@ end
 -- Global defines for the whole workspace
 local gGlobalDefines = {}
 
+-- Global defines left out of Shipping configurations
+local gGlobalDevelopmentDefines = {}
+
 -- Helper function for adding defines
 function AddGlobalDefines(InDefine)
     AddUniqueElements(InDefine, gGlobalDefines)
@@ -253,6 +256,10 @@ function GenerateSolutionFiles()
 
     defines(gGlobalDefines)
 
+    filter { "configurations:not *Shipping*" }
+        defines(gGlobalDevelopmentDefines)
+    filter {}
+
     -- Debug configs
     filter { "configurations:*Debug*" }
         symbols "On"
@@ -385,9 +392,7 @@ function GenerateWorkspace()
     -- Define the workspace location. We do this with a Unix path since the engine (C++ side) expects this currently.
     local UnixEnginePath = path.translate(GetEnginePath(), "/")
     local EngineLocation = 'ENGINE_LOCATION="' .. UnixEnginePath .. '"'
-    AddGlobalDefines({
-        EngineLocation
-    })
+    AddUniqueElements({ EngineLocation }, gGlobalDevelopmentDefines)
 
     -- Must run before the file globs so the generated header ends up in the Core project
     GenerateBuildStampHeader()

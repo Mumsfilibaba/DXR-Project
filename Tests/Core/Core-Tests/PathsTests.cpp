@@ -68,6 +68,33 @@ bool Paths_Test()
         TEST_EXPECT(Source == EEngineDirSource::None);
     }
 
+    TEST_SECTION(TEXT("A packaged executable only uses the engine its Package.ini names, by default the Engine folder next to it"));
+    {
+        const FString Package = Inside + TEXT("/Package");
+        const FString Staged  = Package + TEXT("/Staged Engine");
+        TEST_EXPECT(File::CreateDirectoryTree(Package + TEXT("/Engine")));
+        TEST_EXPECT(File::CreateDirectoryTree(Staged));
+        TEST_EXPECT(WriteText(Package + TEXT("/Engine/") + Paths::EngineIdentityFilename, TEXT("{ \"Version\": 1, \"Name\": \"Test\" }")));
+        TEST_EXPECT(WriteText(Staged + TEXT("/") + Paths::EngineIdentityFilename, TEXT("{ \"Version\": 1, \"Name\": \"Test\" }")));
+
+        EEngineDirSource Source = EEngineDirSource::None;
+        TEST_EXPECT(WriteText(File::CombinePath(Package, Paths::PackageFilename), TEXT("[Package]\nProject=\"Game/Game.dxrproject\"\n")));
+        TEST_EXPECT(Paths::FindEngineDir(TEXT(""), Package, Engine, &Source).Equals(Package + TEXT("/Engine")));
+        TEST_EXPECT(Source == EEngineDirSource::PackageFile);
+
+        TEST_EXPECT(WriteText(File::CombinePath(Package, Paths::PackageFilename), TEXT("[Package]\nEngine=\"Staged Engine\"\n")));
+        TEST_EXPECT(Paths::FindEngineDir(TEXT(""), Package, Engine, &Source).Equals(Staged));
+        TEST_EXPECT(Source == EEngineDirSource::PackageFile);
+
+        TEST_EXPECT(WriteText(File::CombinePath(Package, Paths::PackageFilename), TEXT("[Package]\nEngine=Missing\n")));
+        TEST_EXPECT(Paths::FindEngineDir(TEXT(""), Package, Engine, &Source).IsEmpty());
+        TEST_EXPECT(Source == EEngineDirSource::None);
+
+        TEST_SECTION(TEXT("-engine= wins over Package.ini"));
+        TEST_EXPECT(Paths::FindEngineDir(Engine, Package, TEXT(""), &Source).Equals(Engine));
+        TEST_EXPECT(Source == EEngineDirSource::CommandLine);
+    }
+
     TEST_SECTION(TEXT("An executable outside any engine folder uses the fallback, if it is one"));
     {
         EEngineDirSource Source = EEngineDirSource::None;

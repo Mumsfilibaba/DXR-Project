@@ -4,6 +4,7 @@
 #include "GameComponents.h"
 #include <Core/Math/Math.h>
 #include <Core/Misc/OutputDeviceManager.h>
+#include <Core/Misc/Paths.h>
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/Assets/MeshFactory.h>
@@ -133,7 +134,7 @@ void FSandbox::Tick(float)
 bool FSandbox::CreateSponza(FWorld* InWorld)
 {
     // Load Scene
-    TSharedRef<FModel> Sponza = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/Sponza/Sponza.obj"));
+    TSharedRef<FModel> Sponza = FAssetManager::Get().LoadModel(Paths::GetAssetDir() + TEXT("/Scenes/Sponza/Sponza.obj"));
     if (!Sponza)
     {
         return false;
@@ -293,12 +294,12 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
-            FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Albedo.png")));
-            FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Normal.png")));
-            FTexture2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_AO.png")));
-            FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Roughness.png")));
-            FTexture2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Height.png")));
-            FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/Gate_Metallic.png")));
+            FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/Gate_Albedo.png")));
+            FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/Gate_Normal.png")));
+            FTexture2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/Gate_AO.png")));
+            FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/Gate_Roughness.png")));
+            FTexture2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/Gate_Height.png")));
+            FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/Gate_Metallic.png")));
 
             FRHITextureRef PackedMaterial;
             FTextureFactory::Get().PackMaterialParamsTexture(AOMap->GetRHITexture(), RoughnessMap->GetRHITexture(), MetallicMap->GetRHITexture(), PackedMaterial);
@@ -520,13 +521,13 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         }
     }
 
-    TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Models/Street_Light.obj"));
+    TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel(Paths::GetAssetDir() + TEXT("/Models/Street_Light.obj"));
     if (StreetLightModel)
     {
-        FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/StreetLight/BaseColor.jpg")));
-        FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/StreetLight/Normal.jpg")));
-        FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/StreetLight/Roughness.jpg")));
-        FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(TEXT(ENGINE_LOCATION "/Assets/Textures/StreetLight/Metallic.jpg")));
+        FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/StreetLight/BaseColor.jpg")));
+        FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/StreetLight/Normal.jpg")));
+        FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/StreetLight/Roughness.jpg")));
+        FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Paths::GetAssetDir() + TEXT("/Textures/StreetLight/Metallic.jpg")));
 
         FRHITextureRef StreetLightPackedMaterial;
         FTextureFactory::Get().PackMaterialParamsTexture(FEngine::Get()->BaseTexture, RoughnessMap->GetRHITexture(), MetallicMap->GetRHITexture(), StreetLightPackedMaterial);
@@ -627,7 +628,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     InWorld->SetCurrentFilter(nullptr);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Textures/arches.hdr"));
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Textures/arches.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -755,7 +756,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
 bool FSandbox::CreateBistro(FWorld* InWorld)
 {
-    TSharedRef<FModel> BistroInterior = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/Bistro/BistroInterior.fbx"));
+    TSharedRef<FModel> BistroInterior = FAssetManager::Get().LoadModel(Paths::GetAssetDir() + TEXT("/Scenes/Bistro/BistroInterior.fbx"));
     if (!BistroInterior)
     {
         return false;
@@ -773,7 +774,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
 
     BistroInterior->AddToWorld(InWorld);
 
-    TSharedRef<FModel> BistroExterior = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/Bistro/BistroExterior.fbx"));
+    TSharedRef<FModel> BistroExterior = FAssetManager::Get().LoadModel(Paths::GetAssetDir() + TEXT("/Scenes/Bistro/BistroExterior.fbx"));
     if (!BistroExterior)
     {
         return false;
@@ -792,7 +793,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     BistroExterior->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/Bistro/san_giuseppe_bridge_4k.hdr"));
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/Bistro/san_giuseppe_bridge_4k.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -823,7 +824,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
 bool FSandbox::CreateSunTemple(FWorld* InWorld)
 {
     const EMeshImportFlags ImportFlags = EMeshImportFlags::InvertAxisX;
-    TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/SunTemple/SunTemple.fbx"), ImportFlags);
+    TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple.fbx"), ImportFlags);
     if (!SunTemple)
     {
         return false;
@@ -842,7 +843,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     SunTemple->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/SunTemple/SunTemple_Skybox.hdr"));
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Skybox.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -858,7 +859,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     InWorld->SpawnActor<FSkyLightActor>(Skybox);
 
     // Load Reflection Probe
-    FRHITextureRef ReflectionProbeExterior = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/SunTemple/SunTemple_Reflection.hdr"));
+    FRHITextureRef ReflectionProbeExterior = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Reflection.hdr"));
     if (!ReflectionProbeExterior)
     {
         DEBUG_BREAK();
@@ -875,7 +876,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     }
 
     // Load Reflection Probe
-    FRHITextureRef ReflectionProbeInterior = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr"));
+    FRHITextureRef ReflectionProbeInterior = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr"));
     if (!ReflectionProbeInterior)
     {
         DEBUG_BREAK();
@@ -907,7 +908,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
 bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
 {
     const EMeshImportFlags ImportFlags = EMeshImportFlags::RecalculateTangents | EMeshImportFlags::Default;
-    TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel(TEXT(ENGINE_LOCATION "/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), ImportFlags);
+    TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel(Paths::GetAssetDir() + TEXT("/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), ImportFlags);
     if (!EmeraldSquare_Day)
     {
         return false;
@@ -926,7 +927,7 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     EmeraldSquare_Day->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr"));
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -1114,7 +1115,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     }
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(TEXT(ENGINE_LOCATION "/Assets/Textures/arches.hdr"));
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Textures/arches.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();

@@ -197,10 +197,10 @@ bool FEngineLoop::LoadCoreModules()
 int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
 {
     const bool bIsCommandLineValid = CommandLine::Initialize(Args, NumArgs);
-    if (!Paths::Initialize())
+    FString EngineError;
+    if (!Paths::Initialize(EngineError))
     {
-        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), FString::Printf(TEXT("Could not find the engine folder. Pass -engine=<path> to a folder "
-            "that contains %s, or run the executable from inside one."), Paths::EngineIdentityFilename));
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), EngineError);
         return -1;
     }
 

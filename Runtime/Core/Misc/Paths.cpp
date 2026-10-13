@@ -16,6 +16,45 @@ static FString            GProjectName;
 static EProjectSource     GProjectSource      = EProjectSource::None;
 static bool               GIsProjectResolved  = false;
 
+static FString GetCompileTimeEngineDir()
+{
+#if WITH_COMPILE_TIME_PATHS
+    return File::NormalizePath(FString(TEXT(ENGINE_LOCATION)));
+#else
+    return FString();
+#endif
+}
+
+static FString GetCompileTimeProjectDir()
+{
+#if WITH_COMPILE_TIME_PATHS
+    return File::NormalizePath(FString(TEXT(PROJECT_LOCATION)));
+#else
+    return FString();
+#endif
+}
+
+static FString GetCompileTimeProjectName()
+{
+#if WITH_COMPILE_TIME_PATHS
+    return FString(TEXT(PROJECT_NAME));
+#else
+    return FString();
+#endif
+}
+
+static FString ReadPackageValue(const FString& PackageFile, const CHAR_T* Key)
+{
+    FIniFile Package;
+    if (!Package.LoadFromFile(PackageFile))
+    {
+        return FString();
+    }
+
+    const FIniValue* Value = Package.FindValue(TEXT("Package"), Key);
+    return Value ? Value->CurrentValue : FString();
+}
+
 static bool IsEngineDir(const FString& Directory)
 {
     return !Directory.IsEmpty() && FPlatformFile::IsFile(*File::CombinePath(Directory, Paths::EngineIdentityFilename));
@@ -50,7 +89,7 @@ static FString ResolveProjectFile(const FString& Path)
     return FString();
 }
 
-bool Paths::Initialize()
+bool Paths::Initialize(FString& OutError)
 {
     FString     EngineOption;
     FStringView EngineOptionValue;
@@ -63,6 +102,7 @@ bool Paths::Initialize()
             GEngineDirSource     = EEngineDirSource::None;
 
             GEngineDir.Clear();
+            OutError = FString(TEXT("-engine= needs the path of an engine folder"));
             return false;
         }
 
@@ -71,10 +111,30 @@ bool Paths::Initialize()
 
     const FString ExecutableDir = File::GetDirectoryOf(FPlatformFile::GetExecutablePath());
 
-    GEngineDir           = FindEngineDir(EngineOption, ExecutableDir, FString(TEXT(ENGINE_LOCATION)), &GEngineDirSource);
+    GEngineDir           = FindEngineDir(EngineOption, ExecutableDir, GetCompileTimeEngineDir(), &GEngineDirSource);
     GIsEngineDirResolved = true;
 
-    return !GEngineDir.IsEmpty();
+    if (!GEngineDir.IsEmpty())
+    {
+        return true;
+    }
+
+    const FString PackageFile = File::CombinePath(ExecutableDir, PackageFilename);
+    if (!EngineOption.IsEmpty())
+    {
+        OutError = FString::Printf(TEXT("-engine=%s is not an engine folder, since it has no %s"), *EngineOption, EngineIdentityFilename);
+    }
+    else if (FPlatformFile::IsFile(*PackageFile))
+    {
+        OutError = FString::Printf(TEXT("%s next to the executable names no engine folder. Stage the engine, with its %s, in an Engine folder next to the executable, or name its folder relative to the executable with [Package] Engine=\"<path>\"."),
+            PackageFilename, EngineIdentityFilename);
+    }
+    else
+    {
+        OutError = FString::Printf(TEXT("Could not find the engine folder. Pass -engine=<path> to a folder that contains %s, or run the executable from inside one."), EngineIdentityFilename);
+    }
+
+    return false;
 }
 
 FString Paths::FindEngineDir(
@@ -92,6 +152,17 @@ FString Paths::FindEngineDir(
         if (IsEngineDir(Directory))
         {
             Source = EEngineDirSource::CommandLine;
+            Result = Directory;
+        }
+    }
+    else if (!ExecutableDir.IsEmpty() && FPlatformFile::IsFile(*File::CombinePath(File::MakeAbsolute(ExecutableDir), PackageFilename)))
+    {
+        const FString AbsoluteExecutableDir = File::MakeAbsolute(ExecutableDir);
+        const FString EngineValue           = ReadPackageValue(File::CombinePath(AbsoluteExecutableDir, PackageFilename), TEXT("Engine"));
+        const FString Directory             = File::NormalizePath(File::CombinePath(AbsoluteExecutableDir, EngineValue.IsEmpty() ? FString(TEXT("Engine")) : EngineValue));
+        if (IsEngineDir(Directory))
+        {
+            Source = EEngineDirSource::PackageFile;
             Result = Directory;
         }
     }
@@ -125,8 +196,8 @@ bool Paths::InitializeProject(FString& OutError)
     GIsProjectResolved = true;
     GProjectDescriptor = FProjectDescriptor();
     GProjectFile.Clear();
-    GProjectDir        = File::NormalizePath(FString(TEXT(PROJECT_LOCATION)));
-    GProjectName       = FString(TEXT(PROJECT_NAME));
+    GProjectDir        = GetCompileTimeProjectDir();
+    GProjectName       = GetCompileTimeProjectName();
     GProjectSource     = EProjectSource::None;
 
     FString     ProjectOption;
@@ -145,7 +216,7 @@ bool Paths::InitializeProject(FString& OutError)
     }
 
     const FString ExecutableDir = File::GetDirectoryOf(FPlatformFile::GetExecutablePath());
-    const FString FallbackFile  = File::CombinePath(FString(TEXT(PROJECT_LOCATION)), FString(TEXT(PROJECT_NAME)) + FProjectDescriptor::FileExtension);
+    const FString FallbackFile  = GProjectDir.IsEmpty() ? FString() : File::CombinePath(GProjectDir, GProjectName + FProjectDescriptor::FileExtension);
 
     EProjectSource Source      = EProjectSource::None;
     const FString  ProjectFile = FindProjectFile(ProjectOption, ExecutableDir, FallbackFile, &Source);
@@ -160,6 +231,14 @@ bool Paths::InitializeProject(FString& OutError)
         if (FPlatformFile::IsFile(*File::CombinePath(ExecutableDir, PackageFilename)))
         {
             OutError = FString::Printf(TEXT("%s next to the executable names no project that exists. Its [Package] section needs Project=\"<path relative to the executable>\"."), PackageFilename);
+            return false;
+        }
+
+        // Without a compile-time project there is nothing to fall back to
+        if (GProjectDir.IsEmpty())
+        {
+            OutError = FString::Printf(TEXT("There is no project to run. Pass -project=<path to a %s file>, or put a %s naming one next to the executable."),
+                FProjectDescriptor::FileExtension, PackageFilename);
             return false;
         }
 
@@ -199,15 +278,11 @@ FString Paths::FindProjectFile(
     else if (!PackageFile.IsEmpty() && FPlatformFile::IsFile(*PackageFile))
     {
         // A packaged game only ever looks where its Package.ini points, never at a compile-time path
-        FIniFile Package;
-        if (Package.LoadFromFile(PackageFile))
+        const FString ProjectValue = ReadPackageValue(PackageFile, TEXT("Project"));
+        if (!ProjectValue.IsEmpty())
         {
-            const FIniValue* ProjectValue = Package.FindValue(TEXT("Package"), TEXT("Project"));
-            if (ProjectValue && !ProjectValue->CurrentValue.IsEmpty())
-            {
-                Result = ResolveProjectFile(File::NormalizePath(File::CombinePath(File::GetDirectoryOf(PackageFile), ProjectValue->CurrentValue)));
-                Source = Result.IsEmpty() ? EProjectSource::None : EProjectSource::PackageFile;
-            }
+            Result = ResolveProjectFile(File::NormalizePath(File::CombinePath(File::GetDirectoryOf(PackageFile), ProjectValue)));
+            Source = Result.IsEmpty() ? EProjectSource::None : EProjectSource::PackageFile;
         }
     }
     else if (!FallbackFile.IsEmpty())
@@ -270,6 +345,7 @@ const CHAR_T* Paths::GetEngineDirSourceName()
     {
         case EEngineDirSource::CommandLine:         return TEXT("-engine=");
         case EEngineDirSource::ExecutableLocation:  return TEXT("found above the executable");
+        case EEngineDirSource::PackageFile:         return TEXT("named in Package.ini");
         case EEngineDirSource::CompileTimeFallback: return TEXT("compile-time fallback");
         default:                                    return TEXT("not found");
     }
@@ -279,10 +355,11 @@ FString Paths::GetEngineDir()
 {
     if (!GIsEngineDirResolved)
     {
-        Initialize();
+        FString Error;
+        Initialize(Error);
     }
 
-    return GEngineDir.IsEmpty() ? File::NormalizePath(FString(TEXT(ENGINE_LOCATION))) : GEngineDir;
+    return GEngineDir.IsEmpty() ? GetCompileTimeEngineDir() : GEngineDir;
 }
 
 FString Paths::GetAssetDir()
@@ -395,7 +472,7 @@ FString Paths::GetProjectModuleName()
     const FProjectDescriptor* Descriptor = GetProjectDescriptor();
     if (!Descriptor)
     {
-        return FString(TEXT(PROJECT_NAME));
+        return GetCompileTimeProjectName();
     }
 
     for (const FProjectModuleDescriptor& Module : Descriptor->Modules)

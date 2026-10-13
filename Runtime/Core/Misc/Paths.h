@@ -1,6 +1,12 @@
 #pragma once
 #include "Core/Containers/String.h"
 
+// The engine and project folders baked in at compile time (ENGINE_LOCATION, PROJECT_LOCATION and PROJECT_NAME) are only a
+// development fallback for an executable started without -engine=, -project= or a Package.ini, and Shipping leaves them out
+#ifndef WITH_COMPILE_TIME_PATHS
+    #define WITH_COMPILE_TIME_PATHS (!SHIPPING_BUILD)
+#endif
+
 struct FProjectDescriptor;
 
 enum class EEngineDirSource : uint8
@@ -13,6 +19,9 @@ enum class EEngineDirSource : uint8
 
     /** @brief A folder above the running executable */
     ExecutableLocation,
+
+    /** @brief The folder the Package.ini next to the executable names, in a packaged layout */
+    PackageFile,
 
     /** @brief The ENGINE_LOCATION baked in at compile time */
     CompileTimeFallback,
@@ -42,17 +51,19 @@ struct CORE_API Paths
     static constexpr const CHAR_T* PackageFilename = TEXT("Package.ini");
 
     /**
-     * @brief Resolve the engine directory from -engine=, the executable's location and the compile-time fallback. Called
-     * once the command line is parsed.
+     * @brief Resolve the engine directory from -engine=, the Package.ini next to the executable, the executable's location
+     * and the compile-time fallback. Called once the command line is parsed.
+     * @param OutError Receives why no engine folder was found, naming what was tried
      * @return Returns false if none of them is an engine folder, or if -engine= is given without a value
      */
-    static bool Initialize();
+    static bool Initialize(FString& OutError);
 
     /**
-     * @brief Find the engine directory, trying EngineOption first, then ExecutableDir and every folder above it, then
-     * FallbackDir. A directory is an engine folder when it holds EngineIdentityFilename.
+     * @brief Find the engine directory, trying EngineOption first, then the Package.ini in ExecutableDir, then ExecutableDir
+     * and every folder above it, then FallbackDir. A directory is an engine folder when it holds EngineIdentityFilename.
      * @param EngineOption The value of -engine=, or empty when it was not given. When set, it is the only directory tried.
-     * @param ExecutableDir The directory of the running executable
+     * @param ExecutableDir The directory of the running executable. When it holds a Package.ini, the folder that names in
+     * [Package] Engine, relative to ExecutableDir and "Engine" by default, is the only directory tried.
      * @param FallbackDir The directory to use when nothing above ExecutableDir is an engine folder
      * @param OutSource Set to where the directory was found, or EEngineDirSource::None on failure. May be nullptr.
      * @return Returns the normalized, absolute engine directory, or an empty string if none was found

@@ -26,7 +26,7 @@ function CoreModule.Generate()
 
     -- TODO: We should set the name of the project and not rely on the target name
     local TargetName = GetCurrentTargetName()
-    CoreModule.AddDefines({
+    CoreModule.AddDevelopmentDefines({
         'PROJECT_NAME="' .. TargetName .. '"'
     })
 
@@ -36,7 +36,7 @@ function CoreModule.Generate()
     local TargetPath      = TargetRule and TargetRule.GetPath() or JoinPath(GetEnginePath(), TargetName)
     local UnixProjectPath = path.translate(TargetPath, "/")
     local ProjectLocation = 'PROJECT_LOCATION="' .. UnixProjectPath .. '"'
-    CoreModule.AddDefines({
+    CoreModule.AddDevelopmentDefines({
         ProjectLocation
     })
 
