@@ -6,7 +6,6 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/EngineModule.h"
-#include "Core/RefCounted.h"
 #include "Engine/Assets/MeshData.h"
 #include "Engine/Assets/ModelData.h"
 #include "RendererCore/VertexDeclaration.h"
@@ -129,10 +128,10 @@ struct TAssetTypeOf<FMesh>
     static constexpr EAssetType Value = EAssetType::Mesh;
 };
 
-class ENGINE_API FModel : public FRefCounted, public FAsset
+class ENGINE_API FModel : public FAsset
 {
 public:
-    static TSharedRef<FModel> Create(const FModelData& ModelData);
+    static TSharedPtr<FModel> Create(const FModelData& ModelData);
 
 public:
     FModel();

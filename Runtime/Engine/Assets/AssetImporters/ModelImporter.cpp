@@ -129,7 +129,7 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
     }
 
     // Load Textures
-    TArray<FTextureRef> LoadedTextures;
+    TArray<TSharedPtr<FTexture>> LoadedTextures;
     LoadedTextures.Resize(ModelHeader->NumTextures);
 
     // 5) Textures
@@ -156,15 +156,15 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
     {
         if (TextureIdx < 0 || TextureIdx >= LoadedTextures.Size())
         {
-            return FTexture2DRef(nullptr);
+            return TSharedPtr<FTexture2D>(nullptr);
         }
 
-        if (const FTextureRef& Texture = LoadedTextures[TextureIdx])
+        if (const TSharedPtr<FTexture>& Texture = LoadedTextures[TextureIdx])
         {
-            return MakeSharedRef<FTexture2D>(Texture->GetTexture2D());
+            return StaticCastSharedPtr<FTexture2D>(Texture);
         }
 
-        return FTexture2DRef(nullptr);
+        return TSharedPtr<FTexture2D>(nullptr);
     };
 
     // Construct Materials
@@ -336,7 +336,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelData& Mode
     ModelHeader.TextureDataOffset = OutputStream.WriteOffset();
     ModelHeader.NumTextures       = 0;
 
-    const auto CreateTextureIndex = [&](const FTexture2DRef& Texture)
+    const auto CreateTextureIndex = [&](const TSharedPtr<FTexture2D>& Texture)
     {
         if (Texture)
         {

@@ -2,17 +2,12 @@
 #include "AssetCore/Asset.h"
 #include "RHI/RHIResources.h"
 #include "Engine/EngineModule.h"
-#include "Core/RefCounted.h"
-#include "Core/Containers/SharedRef.h"
+#include "Core/Containers/SharedPtr.h"
 #include "RendererCore/TextureResourceData.h"
 
-class FTexture;
 class FTexture2D;
 
-typedef TSharedRef<FTexture>   FTextureRef;
-typedef TSharedRef<FTexture2D> FTexture2DRef;
-
-class ENGINE_API FTexture : public FRefCounted, public FAsset
+class ENGINE_API FTexture : public FAsset
 {
 public:
     virtual ~FTexture() = default;

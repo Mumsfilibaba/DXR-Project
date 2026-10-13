@@ -68,7 +68,7 @@ static bool LoadIconImage(const CHAR_T* RelativePath, FIconImage& OutImage)
 
     FTextureImporterBase Importer;
 
-    TSharedRef<FTexture> Texture   = Importer.ImportFromFile(FStringView(FullPath));
+    TSharedPtr<FTexture> Texture   = Importer.ImportFromFile(FStringView(FullPath));
     FTexture2D*          Texture2D = Texture ? Texture->GetTexture2D() : nullptr;
 
     if (!Texture2D)

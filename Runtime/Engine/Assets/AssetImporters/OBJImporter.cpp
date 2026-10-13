@@ -101,14 +101,14 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
     {
-        const auto LoadMaterialTexture = [&](const std::string& TexName) -> FTexture2DRef
+        const auto LoadMaterialTexture = [&](const std::string& TexName) -> TSharedPtr<FTexture2D>
         {
             if (TexName.empty())
             {
                 return nullptr;
             }
 
-            return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + StringCast<CHAR_T>(TexName.c_str()).ToString()));
+            return StaticCastSharedPtr<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + StringCast<CHAR_T>(TexName.c_str()).ToString()));
         };
 
         // Create new material with default properties

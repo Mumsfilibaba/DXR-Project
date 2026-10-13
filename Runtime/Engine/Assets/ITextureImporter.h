@@ -13,7 +13,7 @@ struct ITextureImporter
      * @brief Imports a texture with the specified filename
      * @return Returns a pointer to the imported texture. Returns nullptr on failure.
      */
-    virtual TSharedRef<FTexture> ImportFromFile(const FStringView& FileName) = 0;
+    virtual TSharedPtr<FTexture> ImportFromFile(const FStringView& FileName) = 0;
 
     /** @Return: Returns true if the FileName matches extension for this importer */
     virtual bool MatchExtenstion(const FStringView& FileName) = 0;

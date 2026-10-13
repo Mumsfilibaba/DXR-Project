@@ -889,7 +889,7 @@ static bool LoadEditorIconImage(const CHAR_T* InRelativePath, FEditorIconImage& 
 
     const FStringView FullPathView(FullPath);
 
-    TSharedRef<FTexture> Texture   = Importer.ImportFromFile(FullPathView);
+    TSharedPtr<FTexture> Texture   = Importer.ImportFromFile(FullPathView);
     FTexture2D*          Texture2D = Texture ? Texture->GetTexture2D() : nullptr;
 
     if (!Texture2D)

@@ -35,6 +35,7 @@ FAssetManager* FAssetManager::AssetManager = nullptr;
 
 FAssetManager::FAssetManager()
     : AssetRegistry()
+    , AssetLoader(AssetRegistry)
     , ModelSerializer(nullptr)
     , ModelImporters()
     , ModelImportersCS()
@@ -119,7 +120,7 @@ FAssetManager& FAssetManager::Get()
     return *AssetManager;
 }
 
-TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bGenerateMips)
+TSharedPtr<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bGenerateMips)
 {
     SCOPED_LOCK(TexturesCS);
 
@@ -127,12 +128,12 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
     FString FinalPath = Filename;
     FinalPath.ReplaceAll('\\', '/');
     
-    if (TSharedRef<FTexture>* ExistingTexture = Textures.Find(FinalPath))
+    if (TSharedPtr<FTexture>* ExistingTexture = Textures.Find(FinalPath))
     {
         return *ExistingTexture;
     }
 
-    TSharedRef<FTexture> NewTexture;
+    TSharedPtr<FTexture> NewTexture;
     
     {
         SCOPED_LOCK(TextureImportersCS);
@@ -179,7 +180,7 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
     return NewTexture;
 }
 
-TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImportFlags Flags)
+TSharedPtr<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImportFlags Flags)
 {
     SCOPED_LOCK(ModelsCS);
 
@@ -187,7 +188,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     FString FinalPath = Filename;
     FinalPath.ReplaceAll('\\', '/');
 
-    if (TSharedRef<FModel>* ExistingModel = Models.Find(FinalPath))
+    if (TSharedPtr<FModel>* ExistingModel = Models.Find(FinalPath))
     {
         return *ExistingModel;
     }
@@ -195,17 +196,17 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     // Insert the a new model into the AssetManager
     const auto InsertModel = [this](const FString& Filename, const FModelData& InModelData)
     {
-        TSharedRef<FModel> NewModel = FModel::Create(InModelData);
+        TSharedPtr<FModel> NewModel = FModel::Create(InModelData);
         if (!NewModel)
         {
-            return TSharedRef<FModel>(nullptr);
+            return TSharedPtr<FModel>(nullptr);
         }
 
         Models.Add(Filename, NewModel);
         return NewModel;
     };
 
-    TSharedRef<FModel> NewModel;
+    TSharedPtr<FModel> NewModel;
     FModelData NewModelData;
 
     const bool    bEnableAssetConversion = CVarEnableAssetConversion.GetValue();
@@ -263,14 +264,14 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     return NewModel;
 }
 
-void FAssetManager::UnloadModel(const TSharedRef<FModel>& InModel)
+void FAssetManager::UnloadModel(const TSharedPtr<FModel>& InModel)
 {
     SCOPED_LOCK(ModelsCS);
 
     FString ModelPath;
     bool    bFound = false;
 
-    Models.Foreach([&](const FString& Path, const TSharedRef<FModel>& Model)
+    Models.Foreach([&](const FString& Path, const TSharedPtr<FModel>& Model)
     {
         if (Model == InModel)
         {
@@ -285,7 +286,7 @@ void FAssetManager::UnloadModel(const TSharedRef<FModel>& InModel)
     }
 }
 
-void FAssetManager::UnloadTexture(const FTextureRef& Texture)
+void FAssetManager::UnloadTexture(const TSharedPtr<FTexture>& Texture)
 {
     SCOPED_LOCK(TexturesCS);
     Textures.Remove(Texture->GetFilename());

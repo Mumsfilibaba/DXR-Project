@@ -74,7 +74,7 @@ static EFormat GetFloatFormat(int32 Channels)
     }
 }
 
-TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& FileName)
+TSharedPtr<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& FileName)
 {
     TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(FString(FileName));
     if (!File)
@@ -142,7 +142,7 @@ TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& Fil
     const int64 RowPitch   = Width * GetByteStrideFromFormat(Format);
     const int64 SlicePitch = RowPitch * Height;
 
-    TSharedRef<FTexture2D> NewTexture = new FTexture2D(Format, Width, Height, 1);
+    TSharedPtr<FTexture2D> NewTexture = MakeSharedPtr<FTexture2D>(Format, Width, Height, 1);
     NewTexture->CreateData();
 
     FTextureResourceData* TextureData = NewTexture->GetTextureResourceData();

@@ -53,7 +53,7 @@ static bool DoesFlipHandness(const FMatrix4& Matrix)
 }
 #endif
 
-static FTexture2DRef LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
+static TSharedPtr<FTexture2D> LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
     if (MaterialTexture)
@@ -65,10 +65,10 @@ static FTexture2DRef LoadMaterialTexture(const FString& Path, const ofbx::Materi
         FString Filename = Path + '/' + StringCast<CHAR_T>(StringBuffer).ToString();
         Filename.ReplaceAll('\\', '/');
 
-        return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
+        return StaticCastSharedPtr<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
     }
 
-    return FTexture2DRef();
+    return TSharedPtr<FTexture2D>();
 }
 
 bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags, FModelData& OutModelData)

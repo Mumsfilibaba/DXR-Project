@@ -117,7 +117,7 @@ constexpr EFormat ConvertFormat(tinyddsloader::DDSFile::DXGIFormat Format)
     }
 }
 
-TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
+TSharedPtr<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
 {
     TArray<uint8> FileData;
     {
@@ -154,7 +154,7 @@ TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& File
         return nullptr;
     }
 
-    TSharedRef<FTexture2D> NewTexture = new FTexture2D(Format, File.GetWidth(), File.GetHeight(), File.GetMipCount());
+    TSharedPtr<FTexture2D> NewTexture = MakeSharedPtr<FTexture2D>(Format, File.GetWidth(), File.GetHeight(), File.GetMipCount());
     NewTexture->CreateData();
 
     FTextureResourceData* TextureData = NewTexture->GetTextureResourceData();

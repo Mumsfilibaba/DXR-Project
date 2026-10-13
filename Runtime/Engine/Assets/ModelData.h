@@ -57,14 +57,14 @@ struct FMaterialData
         Routes[EMaterialScalar::Opacity] = FMaterialSourceRoute(EMaterialTexture::Diffuse, ETextureChannel::A);
     }
 
-    FString              Name;
-    FTexture2DRef        Textures[EMaterialTexture::Count];
-    FMaterialSourceRoute Routes[EMaterialScalar::Count];
-    FVector3             Diffuse;
-    float                AmbientFactor;
-    float                Roughness;
-    float                Metallic;
-    EMaterialFlags       MaterialFlags;
+    FString                Name;
+    TSharedPtr<FTexture2D> Textures[EMaterialTexture::Count];
+    FMaterialSourceRoute   Routes[EMaterialScalar::Count];
+    FVector3               Diffuse;
+    float                  AmbientFactor;
+    float                  Roughness;
+    float                  Metallic;
+    EMaterialFlags         MaterialFlags;
 };
 
 struct FModelData

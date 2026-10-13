@@ -69,6 +69,6 @@ private:
     uint32                      CurrentSERHitGroupCapacity;
     uint32                      CurrentHitGroupCapacity;
     uint32                      CurrentBindlessHitGroupCapacity;
-    FTextureRef                 ReflectionNoiseTexture;
+    TSharedPtr<FTexture>        ReflectionNoiseTexture;
     uint32                      ReflectionNoiseSize;
 };

@@ -304,9 +304,9 @@ FModel::~FModel()
 {
 }
 
-TSharedRef<FModel> FModel::Create(const FModelData& ModelData)
+TSharedPtr<FModel> FModel::Create(const FModelData& ModelData)
 {
-    TSharedRef<FModel> Model = new FModel();
+    TSharedPtr<FModel> Model = MakeSharedPtr<FModel>();
     if (!Model->Initialize(ModelData))
     {
         return nullptr;
@@ -344,7 +344,7 @@ bool FModel::Initialize(const FModelData& ModelData)
     
     const auto GetRHITexture = [=](const FModelData& InModelData, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
     {
-        const FTexture2DRef Texture = InModelData.Materials[MaterialIndex].Textures[MaterialTexture];
+        const TSharedPtr<FTexture2D> Texture = InModelData.Materials[MaterialIndex].Textures[MaterialTexture];
         return Texture ? Texture->GetRHITexture() : FEngine::Get()->BaseTexture;
     };
     
@@ -371,7 +371,7 @@ bool FModel::Initialize(const FModelData& ModelData)
         }
 
         FMaterialMaskSlots Masks(*Material);
-        const auto SlotForSourceTexture = [&](EMaterialTexture::Type SourceTexture, const FTexture2DRef& Texture) -> EMaterialTextureSlot::Type
+        const auto SlotForSourceTexture = [&](EMaterialTexture::Type SourceTexture, const TSharedPtr<FTexture2D>& Texture) -> EMaterialTextureSlot::Type
         {
             switch (SourceTexture)
             {
