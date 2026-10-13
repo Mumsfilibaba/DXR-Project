@@ -11,6 +11,7 @@
 #include "AssetFileTests.h"
 #include "ContentMountsTests.h"
 #include "AssetRegistryTests.h"
+#include "AssetRefTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -27,6 +28,7 @@ static int32 RunAssetCoreTests()
     RUN_TEST(TEXT("AssetFile"), AssetFile_Test());
     RUN_TEST(TEXT("ContentMounts"), ContentMounts_Test());
     RUN_TEST(TEXT("AssetRegistry"), AssetRegistry_Test());
+    RUN_TEST(TEXT("AssetRef"), AssetRef_Test());
 
     if (CommandLine::FindOption(TEXT("LargeFiles")))
     {
