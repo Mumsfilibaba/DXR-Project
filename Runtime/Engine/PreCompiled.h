@@ -8,7 +8,6 @@
 #include "Engine/Assets/VertexFormat.h"
 
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
-#include "Engine/Assets/AssetImporters/ModelImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
 #include "Engine/Assets/AssetImporters/TextureImporterDDS.h"

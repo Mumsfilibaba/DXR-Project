@@ -50,8 +50,6 @@ struct FSourceVertex
     FVector2 TexCoord;
 };
 
-static_assert(sizeof(FSourceVertex) == 48, "FSourceVertex must match the layout the .dxrmesh cache writes");
-
 template<>
 struct THash<FSourceVertex>
 {

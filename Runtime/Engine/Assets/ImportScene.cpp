@@ -42,6 +42,50 @@ FMatrix4 ImportScenes::MirrorTransform(const FMatrix4& Transform, int32 Axis)
     return Result;
 }
 
+FMeshData ImportScenes::BakeNodeMesh(const FImportScene& Scene, int32 NodeIndex)
+{
+    const FImportNode& Node = Scene.Nodes[NodeIndex];
+    CHECK(Node.Mesh >= 0 && Node.Mesh < Scene.Meshes.Size());
+
+    FMeshData Mesh = Scene.Meshes[Node.Mesh];
+    Mesh.Name = Node.Name;
+
+    const FMatrix4 World = GetWorldTransform(Scene, NodeIndex);
+    if (!(World == FMatrix4::Identity()))
+    {
+        const FMatrix4 NormalTransform = World.GetInverse().GetTranspose();
+        const bool     bMirrors        = World.GetDeterminant() < 0.0f;
+
+        for (FSourceVertex& Vertex : Mesh.Vertices)
+        {
+            Vertex.Position = World.Transform(Vertex.Position);
+            Vertex.Normal   = NormalTransform.TransformNormal(Vertex.Normal).GetNormalized();
+            Vertex.Tangent  = World.TransformNormal(Vertex.Tangent).GetNormalized();
+
+            if (bMirrors)
+            {
+                Vertex.TangentSign = -Vertex.TangentSign;
+            }
+        }
+
+        if (bMirrors)
+        {
+            for (int32 Index = 0; Index + 2 < Mesh.Indices.Size(); Index += 3)
+            {
+                Swap(Mesh.Indices[Index + 1], Mesh.Indices[Index + 2]);
+            }
+        }
+    }
+
+    for (FSubMesh& SubMesh : Mesh.SubMeshes)
+    {
+        const int32 Slot = SubMesh.MaterialIndex;
+        SubMesh.MaterialIndex = (Slot >= 0 && Slot < Node.Materials.Size()) ? Node.Materials[Slot] : -1;
+    }
+
+    return Mesh;
+}
+
 bool ImportScenes::BakeToModelData(const FImportScene& Scene, FModelData& OutModelData, TFunction<TSharedPtr<FTexture2D>(const FString&)> LoadTexture)
 {
     FModelData ModelData;
@@ -87,41 +131,7 @@ bool ImportScenes::BakeToModelData(const FImportScene& Scene, FModelData& OutMod
             return false;
         }
 
-        FMeshData& Mesh = ModelData.Meshes.Emplace(Scene.Meshes[Node.Mesh]);
-        Mesh.Name = Node.Name;
-
-        const FMatrix4 World = GetWorldTransform(Scene, NodeIndex);
-        if (!(World == FMatrix4::Identity()))
-        {
-            const FMatrix4 NormalTransform = World.GetInverse().GetTranspose();
-            const bool     bMirrors        = World.GetDeterminant() < 0.0f;
-
-            for (FSourceVertex& Vertex : Mesh.Vertices)
-            {
-                Vertex.Position = World.Transform(Vertex.Position);
-                Vertex.Normal   = NormalTransform.TransformNormal(Vertex.Normal).GetNormalized();
-                Vertex.Tangent  = World.TransformNormal(Vertex.Tangent).GetNormalized();
-
-                if (bMirrors)
-                {
-                    Vertex.TangentSign = -Vertex.TangentSign;
-                }
-            }
-
-            if (bMirrors)
-            {
-                for (int32 Index = 0; Index + 2 < Mesh.Indices.Size(); Index += 3)
-                {
-                    Swap(Mesh.Indices[Index + 1], Mesh.Indices[Index + 2]);
-                }
-            }
-        }
-
-        for (FSubMesh& SubMesh : Mesh.SubMeshes)
-        {
-            const int32 Slot = SubMesh.MaterialIndex;
-            SubMesh.MaterialIndex = (Slot >= 0 && Slot < Node.Materials.Size()) ? Node.Materials[Slot] : -1;
-        }
+        ModelData.Meshes.Add(BakeNodeMesh(Scene, NodeIndex));
     }
 
     OutModelData = ::Move(ModelData);

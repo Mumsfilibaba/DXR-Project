@@ -65,9 +65,13 @@ struct ENGINE_API ImportScenes
     NODISCARD static FMatrix4 MirrorTransform(const FMatrix4& Transform, int32 Axis);
 
     /**
-     * @brief Bake the scene into the legacy FModelData that LoadModel and the .dxrmesh cache use until 3.6: a mesh for each node that
-     * has one, named after the node, with the node's transform relative to the scene applied and its submeshes' materials picked
-     * through the node's slots.
+     * @return Returns the mesh the node places, named after the node, with the node's transform relative to the scene applied and
+     * its submeshes' MaterialIndex turned from the node's slots into scene materials
+     */
+    NODISCARD static FMeshData BakeNodeMesh(const FImportScene& Scene, int32 NodeIndex);
+
+    /**
+     * @brief Bake the scene into the FModelData LoadModel uses: a mesh for each node that has one, from BakeNodeMesh
      * @param LoadTexture Loads a scene texture's source file, or returns nullptr to leave it out
      */
     static bool BakeToModelData(const FImportScene& Scene, FModelData& OutModelData, TFunction<TSharedPtr<FTexture2D>(const FString&)> LoadTexture);

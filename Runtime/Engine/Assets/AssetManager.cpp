@@ -11,31 +11,12 @@
 #include "Engine/Assets/ImportScene.h"
 #include "Engine/Assets/MaterialAsset.h"
 #include "Engine/Assets/MeshAsset.h"
+#include "Engine/Assets/ModelAssetFactory.h"
 #include "Engine/Assets/TextureAssetLoader.h"
 #include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
-#include "Engine/Assets/AssetImporters/ModelImporter.h"
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
-
-static TAutoConsoleVariable<bool> CVarEnableAssetConversion(
-    TEXT("Engine.AssetManager.EnableAssetConversion"),
-    TEXT("Enable conversion and serialization to the engine's custom format instead of loading from source"),
-    true,
-    EConsoleVariableFlags::Default);
-
-static FString ReplaceExtension(const FString& Filename, const FString& NewExtension)
-{
-    const int32 Position = Filename.FindLastChar('.');
-    if (Position == FString::InvalidIndex)
-    {
-        return Filename;
-    }
-    
-    FString NewFilename = Filename.SubString(0, Position);
-    NewFilename += NewExtension;
-    return NewFilename;
-}
 
 FAssetManager* FAssetManager::AssetManager = nullptr;
 
@@ -43,7 +24,6 @@ FAssetManager::FAssetManager()
     : AssetRegistry()
     , AssetLoader(AssetRegistry)
     , AssetImporter(FContentMounts::CreateDefault())
-    , ModelSerializer(nullptr)
     , ModelImporters()
     , ModelImportersCS()
     , Models()
@@ -53,8 +33,6 @@ FAssetManager::FAssetManager()
     , Textures()
     , TexturesCS()
 {
-    ModelImporter   = MakeUniquePtr<FModelImporter>();
-    ModelSerializer = MakeUniquePtr<FModelSerializer>();
 }
 
 FAssetManager::~FAssetManager()
@@ -85,7 +63,9 @@ bool FAssetManager::Initialize()
         AssetManager->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
         AssetManager->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
 
-        AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FTextureAssetFactory>(MakeSharedPtr<FGPUTextureBlockCompressor>()));
+        TSharedPtr<FTextureAssetFactory> TextureFactory = MakeSharedPtr<FTextureAssetFactory>(MakeSharedPtr<FGPUTextureBlockCompressor>());
+        AssetManager->AssetImporter.RegisterFactory(TextureFactory);
+        AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FModelAssetFactory>(TextureFactory));
         AssetManager->AssetLoader.RegisterLoader<FTexture>(&TextureAssetLoader::Load);
         AssetManager->AssetLoader.RegisterLoader<FMaterial>(&MaterialAssets::Load);
         AssetManager->AssetLoader.RegisterLoader<FMesh>(&MeshAssets::Load);
@@ -220,25 +200,6 @@ TSharedPtr<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     TSharedPtr<FModel> NewModel;
     FModelData NewModelData;
 
-    const bool    bEnableAssetConversion = CVarEnableAssetConversion.GetValue();
-    const FString ConvertedPath          = ReplaceExtension(FinalPath, TEXT(".dxrmesh"));
-
-    if (bEnableAssetConversion && FPlatformFile::IsFile(*ConvertedPath))
-    {
-        const FStringView FileNameView(ConvertedPath);
-        if (ModelImporter->ImportFromFile(FileNameView, NewModelData))
-        {
-            NewModel = InsertModel(FinalPath, NewModelData);
-        }
-
-        if (NewModel)
-        {
-            LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);
-            return NewModel;
-        }
-    }
-
-    // If we did not load custom format, reload source file
     bool bResult = false;
 
     {
@@ -269,11 +230,6 @@ TSharedPtr<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     {
         LOG_ERROR("[FAssetManager]: Unsupported mesh format. Failed to load '%s'.", *FinalPath);
         return nullptr;
-    }
-
-    if (bEnableAssetConversion)
-    {
-        ModelSerializer->Serialize(ConvertedPath, NewModelData);
     }
 
     LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);

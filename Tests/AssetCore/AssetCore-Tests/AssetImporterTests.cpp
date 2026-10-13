@@ -64,7 +64,7 @@ public:
         FImportedAsset& Image = OutAssets.Emplace();
         Image.Name = Context.GetImportName();
         Image.Type = EAssetType::Texture;
-        Image.Guid = Context.GetGuid(Image.Name);
+        Image.Guid = Context.GetGuid(Image.Name, Image.Type);
         Image.Data = ReadBytes(Context.GetSourcePath());
         Image.Data.Add(static_cast<uint8>(Scale));
         Image.Thumbnail = { 0x89, 'P', 'N', 'G' };
@@ -75,7 +75,7 @@ public:
             Second.Name = Context.GetImportName() + TEXT("_Second");
             Second.Type = EAssetType::Texture;
             Second.Data = { 1, 2, 3 };
-            Second.Dependencies.Add(Context.GetGuid(Context.GetImportName()));
+            Second.Dependencies.Add(Context.GetGuid(Context.GetImportName(), EAssetType::Texture));
         }
 
         return true;
@@ -121,6 +121,92 @@ public:
         return Lines;
     }
 };
+
+class FTestBundleFactory final : public IAssetFactory
+{
+public:
+    virtual const CHAR_T* GetName() const override
+    {
+        return TEXT("TestBundle");
+    }
+
+    virtual TArray<FString> GetExtensions() const override
+    {
+        return { FString(TEXT(".testbundle")) };
+    }
+
+    virtual TArray<EAssetType> GetAssetTypes() const override
+    {
+        return { EAssetType::Texture, EAssetType::Material };
+    }
+
+    virtual bool Import(FAssetImportContext& Context, TArray<FImportedAsset>& OutAssets, FJsonValue& OutSettings, FString& OutError) override
+    {
+        const TArray<FString> Lines = FTestImageFactory::ReadLines(Context.GetSourcePath());
+        if (Lines.IsEmpty())
+        {
+            OutError = TEXT("the test bundle is empty");
+            return false;
+        }
+
+        const FString Name = Lines.Contains(FString(TEXT("badname"))) ? FString(TEXT("../Escape")) : Context.GetImportName();
+
+        FImportedAsset& Image = OutAssets.Emplace();
+        Image.Name = FString(TEXT("Images/")) + Name;
+        Image.Type = EAssetType::Texture;
+        Image.Guid = Context.GetGuid(Image.Name, Image.Type);
+        Image.Data = { 1, 2, 3 };
+
+        FImportedAsset& Material = OutAssets.Emplace();
+        Material.Name = FString(TEXT("Materials/")) + Name;
+        Material.Type = EAssetType::Material;
+        Material.Guid = Context.GetGuid(Material.Name, Material.Type);
+
+        FJsonValue Document = FJsonValue::MakeObject();
+        Document.AddMember(TEXT("Version"), FJsonValue(int64(1)));
+        Document.AddMember(TEXT("Guid"), FJsonValue(Material.Guid.ToString()));
+        Document.AddMember(TEXT("Type"), FJsonValue(TEXT("Material")));
+        Document.AddMember(TEXT("Value"), FJsonValue(Lines[0]));
+
+        const FString Text = Json::ToString(Document);
+        const TStringConversion<ANSICHAR, CHAR_T> Utf8 = StringCast<ANSICHAR>(Text);
+        Material.Data.Reset(reinterpret_cast<const uint8*>(Utf8.Get()), Utf8.Length());
+
+        Context.AddWarning(TEXT("the test bundle has a warning"));
+        OutSettings = FJsonValue::MakeObject();
+        return true;
+    }
+};
+
+static FString ReadValue(const FString& DiskPath, FGuid& OutGuid)
+{
+    FJsonValue Document;
+    FString    Value;
+    FString    GuidText;
+
+    if (Json::LoadFromFile(DiskPath, Document) && Document.IsObject() && Document.Find(TEXT("Value")) && Document.Find(TEXT("Guid")))
+    {
+        if (!Document.Find(TEXT("Value"))->TryGetString(Value) || !Document.Find(TEXT("Guid"))->TryGetString(GuidText) || !FGuid::Parse(GuidText, OutGuid))
+        {
+            Value.Clear();
+        }
+    }
+
+    return Value;
+}
+
+static bool SetValue(const FString& DiskPath, const FString& Value)
+{
+    FJsonValue Document;
+    if (!Json::LoadFromFile(DiskPath, Document) || !Document.IsObject())
+    {
+        return false;
+    }
+
+    Document.RemoveMember(TEXT("Value"));
+    Document.AddMember(TEXT("Value"), FJsonValue(Value));
+    return Json::SaveToFile(DiskPath, Document);
+}
 
 static bool WriteText(const FString& Filename, const FString& Text)
 {
@@ -353,6 +439,49 @@ bool AssetImporter_Test()
         const FAssetImportResult Result = Importer.ImportFile(ProjectDir + TEXT("/Sources/Bad.testimage"), TEXT("/Project"));
         TEST_EXPECT(Result.Error == EAssetImportError::ImportFailed && Result.Message.Contains(TEXT("the test image says to fail")));
         TEST_EXPECT(!FPlatformFile::IsFile(*(ProjectDir + TEXT("/Content/Bad.dxrasset"))));
+    }
+
+    TEST_SECTION(TEXT("An import writes text assets and assets in folders, and a reimport keeps the text assets edited since"));
+    {
+        Importer.RegisterFactory(MakeSharedPtr<FTestBundleFactory>());
+        TEST_EXPECT(WriteText(ProjectDir + TEXT("/Sources/Kit.testbundle"), TEXT("first\n")));
+
+        const FString ImagePath    = TEXT("/Project/Kit/Images/Kit.dxrasset");
+        const FString MaterialPath = TEXT("/Project/Kit/Materials/Kit.dxrmaterial");
+        const FString MaterialFile = ProjectDir + TEXT("/Content/Kit/Materials/Kit.dxrmaterial");
+
+        const FAssetImportResult Imported = Importer.ImportFile(ProjectDir + TEXT("/Sources/Kit.testbundle"), TEXT("/Project/Kit"));
+        TEST_EXPECT(Imported.Error == EAssetImportError::None && Imported.WrittenAssets.Size() == 2);
+        TEST_EXPECT(Imported.WrittenAssets.Size() == 2 && Imported.WrittenAssets[0].Equals(ImagePath) && Imported.WrittenAssets[1].Equals(MaterialPath));
+        TEST_EXPECT(Imported.Warnings.Size() == 1 && Imported.Warnings[0].Contains(TEXT("warning")));
+        TEST_EXPECT(FPlatformFile::IsFile(*MaterialFile) && !FAssetImporter::IsEditedTextAsset(MaterialFile));
+
+        FGuid MaterialGuid;
+        TEST_EXPECT(ReadValue(MaterialFile, MaterialGuid).Equals(TEXT("first")) && MaterialGuid.IsValid());
+
+        const FAssetImportResult Reimported = Importer.Reimport(ImagePath);
+        TEST_EXPECT(Reimported.Error == EAssetImportError::None && Reimported.WrittenAssets.Size() == 2 && Reimported.KeptAssets.IsEmpty());
+        TEST_EXPECT(!FPlatformFile::IsFile(*(ProjectDir + TEXT("/Content/Kit/Images/Images/Kit.dxrasset"))));
+
+        TEST_EXPECT(SetValue(MaterialFile, TEXT("edited")) && FAssetImporter::IsEditedTextAsset(MaterialFile));
+        TEST_EXPECT(WriteText(ProjectDir + TEXT("/Sources/Kit.testbundle"), TEXT("second\n")));
+
+        const FAssetImportResult Kept = Importer.Reimport(ImagePath);
+        TEST_EXPECT(Kept.Error == EAssetImportError::None && Kept.WrittenAssets.Size() == 1 && Kept.WrittenAssets[0].Equals(ImagePath));
+        TEST_EXPECT(Kept.KeptAssets.Size() == 1 && Kept.KeptAssets[0].Equals(MaterialPath));
+
+        FGuid KeptGuid;
+        TEST_EXPECT(ReadValue(MaterialFile, KeptGuid).Equals(TEXT("edited")) && KeptGuid == MaterialGuid);
+
+        const FAssetImportResult Overwritten = Importer.Reimport(ImagePath, FString(), true);
+        TEST_EXPECT(Overwritten.Error == EAssetImportError::None && Overwritten.WrittenAssets.Size() == 2 && Overwritten.KeptAssets.IsEmpty());
+
+        FGuid OverwrittenGuid;
+        TEST_EXPECT(ReadValue(MaterialFile, OverwrittenGuid).Equals(TEXT("second")) && OverwrittenGuid == MaterialGuid);
+        TEST_EXPECT(!FAssetImporter::IsEditedTextAsset(MaterialFile));
+
+        TEST_EXPECT(WriteText(ProjectDir + TEXT("/Sources/Escape.testbundle"), TEXT("x\nbadname\n")));
+        TEST_EXPECT(Importer.ImportFile(ProjectDir + TEXT("/Sources/Escape.testbundle"), TEXT("/Project/Kit")).Error == EAssetImportError::ImportFailed);
     }
 
     TEST_SECTION(TEXT("The source hash is 64-bit FNV-1a"));

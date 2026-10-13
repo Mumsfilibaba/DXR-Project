@@ -1,40 +1,76 @@
 #include "AssetCore/AssetFactory.h"
 #include "AssetCore/AssetFile.h"
 #include "Core/Filesystem/File.h"
+#include "Core/Json/Json.h"
 #include "Core/Platform/PlatformFile.h"
 
-FAssetImportContext::FAssetImportContext(const FString& InSourcePath, const FString& InDestinationDirectory, const FJsonValue& InSettings, const FString& InImportName)
+FAssetImportContext::FAssetImportContext(const FString& InSourcePath, const FString& InDestinationFolder, const FString& InDestinationDirectory, const FJsonValue& InSettings, const FString& InImportName)
     : SourcePath(InSourcePath)
+    , DestinationFolder(InDestinationFolder)
     , DestinationDirectory(InDestinationDirectory)
     , Settings(InSettings)
     , ImportName(InImportName)
     , Guids()
+    , Warnings()
 {
 }
 
 FAssetImportContext::~FAssetImportContext() = default;
 
-FGuid FAssetImportContext::GetGuid(const FString& Name)
+FGuid FAssetImportContext::GetGuid(const FString& Name, EAssetType Type)
 {
-    if (const FGuid* Known = Guids.Find(Name))
+    const CHAR_T* TextExtension = AssetTypes::GetTextExtension(Type);
+    const FString FileName      = Name + (TextExtension ? TextExtension : FAssetFile::FileExtension);
+
+    if (const FGuid* Known = Guids.Find(FileName))
     {
         return *Known;
     }
 
-    FGuid            Guid;
-    FAssetFileReader Reader;
-    FString          Error;
-    
-    const FString AssetFile = File::CombinePath(DestinationDirectory, Name + FAssetFile::FileExtension);
-    if (FPlatformFile::IsFile(*AssetFile) && Reader.Open(AssetFile, Error) && Reader.GetGuid().IsValid())
+    FGuid Guid;
+
+    const FString AssetFile = File::CombinePath(DestinationDirectory, FileName);
+    if (FPlatformFile::IsFile(*AssetFile))
     {
-        Guid = Reader.GetGuid();
+        if (TextExtension)
+        {
+            FJsonValue        Document;
+            FString           GuidText;
+            const FJsonValue* GuidValue = Json::LoadFromFile(AssetFile, Document) && Document.IsObject() ? Document.Find(TEXT("Guid")) : nullptr;
+
+            if (!GuidValue || !GuidValue->TryGetString(GuidText) || !FGuid::Parse(GuidText, Guid))
+            {
+                Guid = FGuid();
+            }
+        }
+        else
+        {
+            FAssetFileReader Reader;
+            FString          Error;
+
+            if (Reader.Open(AssetFile, Error))
+            {
+                Guid = Reader.GetGuid();
+            }
+        }
     }
-    else
+
+    if (!Guid.IsValid())
     {
         Guid = FGuid::Create();
     }
 
-    Guids.Add(Name, Guid);
+    Guids.Add(FileName, Guid);
     return Guid;
+}
+
+FString FAssetImportContext::GetAssetPath(const FString& Name, EAssetType Type) const
+{
+    const CHAR_T* TextExtension = AssetTypes::GetTextExtension(Type);
+    return File::CombinePath(DestinationFolder, Name + (TextExtension ? TextExtension : FAssetFile::FileExtension));
+}
+
+void FAssetImportContext::AddWarning(const FString& Warning)
+{
+    Warnings.Add(Warning);
 }

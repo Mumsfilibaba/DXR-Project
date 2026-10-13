@@ -35,6 +35,17 @@ EAssetType AssetTypes::FindByName(const FString& Name)
     return EAssetType::Unknown;
 }
 
+const CHAR_T* AssetTypes::GetTextExtension(EAssetType Type)
+{
+    switch (Type)
+    {
+        case EAssetType::Material: return MaterialExtension;
+        case EAssetType::Model:    return ModelExtension;
+        case EAssetType::Scene:    return SceneExtension;
+        default:                   return nullptr;
+    }
+}
+
 EAssetType AssetTypes::FindByTextExtension(const FString& Extension)
 {
     if (Extension.Equals(MaterialExtension, EStringCaseType::NoCase))

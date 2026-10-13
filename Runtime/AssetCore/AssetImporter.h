@@ -42,6 +42,9 @@ struct FAssetImportOptions
 
     /** @brief Replace assets that exist already, keeping their GUIDs so references to them stay valid */
     bool bReplaceExisting = false;
+
+    /** @brief Also replace text assets, such as materials, that were edited since they were imported; otherwise they are kept */
+    bool bOverwriteEditedAssets = false;
 };
 
 struct FAssetImportResult
@@ -53,6 +56,12 @@ struct FAssetImportResult
 
     /** @brief The virtual paths of the assets written */
     TArray<FString> WrittenAssets;
+
+    /** @brief The virtual paths of text assets left as they were, because they were edited since they were imported */
+    TArray<FString> KeptAssets;
+
+    /** @brief What the factory left out or worked around, such as a texture it couldn't read */
+    TArray<FString> Warnings;
 };
 
 class ASSETCORE_API FAssetImporter : public FNonCopyable
@@ -60,8 +69,17 @@ class ASSETCORE_API FAssetImporter : public FNonCopyable
 public:
     static constexpr const CHAR_T* ContentSourcesFolder = TEXT("ContentSources");
 
+    /** @brief The member an imported text asset records the hash of the rest of its JSON in, to tell whether it was edited since */
+    static constexpr const CHAR_T* ImportHashMember = TEXT("ImportHash");
+
     /** @brief Hash a file for SourceHash: 64-bit FNV-1a over its bytes, as 16 lowercase hex digits */
     static bool ComputeSourceHash(const FString& DiskPath, FString& OutHash);
+
+    /** @return Returns the 64-bit FNV-1a hash of a JSON object as it is written, without its ImportHash member, as 16 lowercase hex digits */
+    NODISCARD static FString ComputeImportHash(const FJsonValue& Document);
+
+    /** @return Returns true if the text asset at DiskPath was edited since it was imported, or wasn't imported: its ImportHash is missing or doesn't match */
+    NODISCARD static bool IsEditedTextAsset(const FString& DiskPath);
 
     explicit FAssetImporter(const FContentMounts& InMounts);
     ~FAssetImporter();
@@ -77,11 +95,12 @@ public:
     FAssetImportResult ImportFile(const FString& SourcePath, const FString& DestinationFolder, const FAssetImportOptions& Options = FAssetImportOptions());
 
     /**
-     * @brief Import an asset again from the source and with the settings its META records, keeping its GUID
+     * @brief Import an asset again from the source and with the settings its META records, keeping its GUID, along with every
+     * other asset of the same import. Text assets edited since they were imported are kept unless bOverwriteEditedAssets.
      * @param LocatedSourcePath Where the source is now, when its recorded path no longer exists; recorded from then on
      * @return Returns EAssetImportError::SourceMissing, naming the recorded path, when the source can't be found
      */
-    FAssetImportResult Reimport(const FString& AssetPath, const FString& LocatedSourcePath = FString());
+    FAssetImportResult Reimport(const FString& AssetPath, const FString& LocatedSourcePath = FString(), bool bOverwriteEditedAssets = false);
 
     /** @return Returns the factory that imports SourcePath's extension, or nullptr */
     NODISCARD IAssetFactory* FindFactory(const FString& SourcePath) const;
@@ -94,7 +113,7 @@ public:
 
 private:
     FAssetImportResult CopyToContentSources(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, FString& OutCopiedSource) const;
-    FAssetImportResult RunImport(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, const FJsonValue& Settings, const FString& ImportName, bool bReplaceExisting) const;
+    FAssetImportResult RunImport(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, const FJsonValue& Settings, const FString& ImportName, bool bReplaceExisting, bool bOverwriteEditedAssets) const;
 
     FContentMounts                    Mounts;
     TArray<TSharedPtr<IAssetFactory>> Factories;

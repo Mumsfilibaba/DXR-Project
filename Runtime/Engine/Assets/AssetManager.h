@@ -12,9 +12,6 @@
 #include "Engine/Resources/Texture.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 
-struct FModelImporter;
-struct FModelSerializer;
-
 class ENGINE_API FAssetManager : public FNonCopyable
 {
 public:
@@ -77,8 +74,6 @@ private:
     FAssetRegistry                       AssetRegistry;
     FAssetLoader                         AssetLoader;
     FAssetImporter                       AssetImporter;
-    TUniquePtr<FModelSerializer>         ModelSerializer;
-    TUniquePtr<FModelImporter>           ModelImporter;
     // Meshes
     TArray<TSharedPtr<IModelImporter>>   ModelImporters;
     FCriticalSection                     ModelImportersCS;

@@ -9,7 +9,10 @@
 
 struct FImportedAsset
 {
-    /** @brief The file name without its extension, which names the .dxrasset in the destination folder */
+    /**
+     * @brief The file name without its extension, which names the file in the destination folder, such as "Brick", or in a folder under
+     * it, such as "Textures/Brick"
+     */
     FString Name;
 
     EAssetType Type = EAssetType::Unknown;
@@ -17,7 +20,7 @@ struct FImportedAsset
     /** @brief From FAssetImportContext::GetGuid, which the importer also fills in when it is left unset */
     FGuid Guid;
 
-    /** @brief The payload, written as the DATA chunk */
+    /** @brief The payload, written as the DATA chunk, or for a text asset such as a material the whole file: a JSON object in UTF-8 */
     TArray<uint8> Data;
 
     /** @brief A PNG thumbnail, written as the THMB chunk, or empty for none */
@@ -30,16 +33,26 @@ struct FImportedAsset
 class ASSETCORE_API FAssetImportContext : public FNonCopyable
 {
 public:
-    FAssetImportContext(const FString& InSourcePath, const FString& InDestinationDirectory, const FJsonValue& InSettings, const FString& InImportName);
+    FAssetImportContext(const FString& InSourcePath, const FString& InDestinationFolder, const FString& InDestinationDirectory, const FJsonValue& InSettings, const FString& InImportName);
     ~FAssetImportContext();
 
     /**
-     * @return Returns the GUID for the asset named Name: the GUID of the .dxrasset already in the destination folder when
-     * reimporting or replacing, so references to it stay valid, and otherwise a new one. The same name always gives the
-     * same GUID within an import, so one asset can reference another before either is written.
+     * @return Returns the GUID for the asset of Type named Name: the GUID of the file already in the destination folder when
+     * reimporting or replacing, so references to it stay valid, and otherwise a new one. The same name and type always give
+     * the same GUID within an import, so one asset can reference another before either is written.
      */
-    FGuid GetGuid(const FString& Name);
+    FGuid GetGuid(const FString& Name, EAssetType Type);
 
+    /** @return Returns the virtual path the asset of Type named Name is written to, such as "/Project/Textures/Brick.dxrasset" */
+    NODISCARD FString GetAssetPath(const FString& Name, EAssetType Type) const;
+
+    /** @brief Report something the import left out or worked around, such as a texture that couldn't be read */
+    void AddWarning(const FString& Warning);
+
+    FORCEINLINE const TArray<FString>& GetWarnings() const
+    {
+        return Warnings;
+    }
 
     /**
      * @return Returns the base name to name the imported assets after: the source's file name on a first import, and the
@@ -64,10 +77,12 @@ public:
 
 private:
     FString              SourcePath;
+    FString              DestinationFolder;
     FString              DestinationDirectory;
     FJsonValue           Settings;
     FString              ImportName;
     TMap<FString, FGuid> Guids;
+    TArray<FString>      Warnings;
 };
 
 struct IAssetFactory

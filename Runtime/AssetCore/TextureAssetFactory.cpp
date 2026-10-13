@@ -577,7 +577,7 @@ bool FTextureAssetFactory::Import(FAssetImportContext& Context, TArray<FImported
     FImportedAsset& Asset = OutAssets.Emplace();
     Asset.Name      = Context.GetImportName();
     Asset.Type      = EAssetType::Texture;
-    Asset.Guid      = Context.GetGuid(Asset.Name);
+    Asset.Guid      = Context.GetGuid(Asset.Name, Asset.Type);
     Asset.Data      = ::Move(Jobs[0].Data);
     Asset.Thumbnail = ::Move(Jobs[0].Thumbnail);
 

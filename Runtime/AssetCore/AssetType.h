@@ -25,4 +25,7 @@ struct ASSETCORE_API AssetTypes
 
     /** @return Returns the type a text asset with Extension holds, such as Material for ".dxrmaterial", or EAssetType::Unknown */
     NODISCARD static EAssetType FindByTextExtension(const FString& Extension);
+
+    /** @return Returns the extension of the text files assets of Type are, such as ".dxrmaterial", or nullptr when they are .dxrasset files */
+    NODISCARD static const CHAR_T* GetTextExtension(EAssetType Type);
 };

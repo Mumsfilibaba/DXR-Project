@@ -1,7 +1,9 @@
 #include "AssetCore/AssetImporter.h"
 #include "AssetCore/AssetFile.h"
 #include "AssetCore/AssetMetadata.h"
+#include "Core/Containers/StringConversion.h"
 #include "Core/Filesystem/File.h"
+#include "Core/Json/Json.h"
 #include "Core/Platform/PlatformFile.h"
 
 static constexpr uint64 FnvOffsetBasis = 0xcbf29ce484222325ull;
@@ -28,7 +30,27 @@ static FString GetMountRootDirectory(const FContentMount& Mount)
 
 static bool IsValidAssetName(const FString& Name)
 {
-    return !Name.IsEmpty() && !Name.Contains('/') && !Name.Contains('\\') && !Name.Contains(':') && !Name.Equals(TEXT(".")) && !Name.Equals(TEXT(".."));
+    if (Name.IsEmpty() || Name.StartsWith(TEXT("/")) || Name.EndsWith(TEXT("/")) || Name.Contains(TEXT("//")))
+    {
+        return false;
+    }
+
+    for (const CHAR_T Char : { '\\', ':', '*', '?', '"', '<', '>', '|' })
+    {
+        if (Name.Contains(Char))
+        {
+            return false;
+        }
+    }
+
+    const FString Wrapped = FString(TEXT("/")) + Name + TEXT("/");
+    return !Wrapped.Contains(TEXT("/./")) && !Wrapped.Contains(TEXT("/../"));
+}
+
+static const CHAR_T* GetFileExtension(EAssetType Type)
+{
+    const CHAR_T* TextExtension = AssetTypes::GetTextExtension(Type);
+    return TextExtension ? TextExtension : FAssetFile::FileExtension;
 }
 
 bool FAssetImporter::ComputeSourceHash(const FString& DiskPath, FString& OutHash)
@@ -63,6 +85,40 @@ bool FAssetImporter::ComputeSourceHash(const FString& DiskPath, FString& OutHash
 
     OutHash = FString::Printf(TEXT("%016llx"), Hash);
     return true;
+}
+
+FString FAssetImporter::ComputeImportHash(const FJsonValue& Document)
+{
+    FJsonValue Hashed = Document;
+    if (Hashed.IsObject())
+    {
+        Hashed.RemoveMember(ImportHashMember);
+    }
+
+    const FString                             Text = Json::ToString(Hashed);
+    const TStringConversion<ANSICHAR, CHAR_T> Utf8 = StringCast<ANSICHAR>(Text);
+
+    uint64 Hash = FnvOffsetBasis;
+    for (int32 Index = 0; Index < Utf8.Length(); ++Index)
+    {
+        Hash = (Hash ^ static_cast<uint8>(Utf8.Get()[Index])) * FnvPrime;
+    }
+
+    return FString::Printf(TEXT("%016llx"), Hash);
+}
+
+bool FAssetImporter::IsEditedTextAsset(const FString& DiskPath)
+{
+    FJsonValue Document;
+    FString    RecordedHash;
+
+    const FJsonValue* HashValue = Json::LoadFromFile(DiskPath, Document) && Document.IsObject() ? Document.Find(ImportHashMember) : nullptr;
+    if (!HashValue || !HashValue->TryGetString(RecordedHash))
+    {
+        return true;
+    }
+
+    return !RecordedHash.Equals(ComputeImportHash(Document));
 }
 
 FAssetImporter::FAssetImporter(const FContentMounts& InMounts)
@@ -175,10 +231,10 @@ FAssetImportResult FAssetImporter::ImportFile(const FString& SourcePath, const F
     }
 
     const FJsonValue Settings = Options.Settings.IsObject() ? Options.Settings : FJsonValue::MakeObject();
-    return RunImport(*Factory, ImportSource, DestinationFolder, Settings, File::ExtractFilenameWithoutExtension(AbsoluteSource), Options.bReplaceExisting);
+    return RunImport(*Factory, ImportSource, DestinationFolder, Settings, File::ExtractFilenameWithoutExtension(AbsoluteSource), Options.bReplaceExisting, Options.bOverwriteEditedAssets);
 }
 
-FAssetImportResult FAssetImporter::Reimport(const FString& AssetPath, const FString& LocatedSourcePath)
+FAssetImportResult FAssetImporter::Reimport(const FString& AssetPath, const FString& LocatedSourcePath, bool bOverwriteEditedAssets)
 {
     FString AssetFile;
     if (!Mounts.ToDiskPath(AssetPath, AssetFile))
@@ -209,8 +265,16 @@ FAssetImportResult FAssetImporter::Reimport(const FString& AssetPath, const FStr
         return MakeError(EAssetImportError::NoFactory, FString::Printf(TEXT("Nothing imports '%s' files, such as '%s'"), *File::ExtractExtension(SourcePath), *SourcePath));
     }
 
-    const FString ImportName = Metadata.ImportName.IsEmpty() ? Metadata.Name : Metadata.ImportName;
-    return RunImport(*Factory, SourcePath, File::GetDirectoryOf(AssetPath), Metadata.ImportSettings, ImportName, true);
+    // The asset's name can hold folders under the import's destination, such as "Textures/Brick"
+    const FString NamedPath = FString(TEXT("/")) + Metadata.Name + FAssetFile::FileExtension;
+    if (Metadata.Name.IsEmpty() || !AssetPath.EndsWith(NamedPath, EStringCaseType::NoCase))
+    {
+        return MakeError(EAssetImportError::InvalidDestination, FString::Printf(TEXT("'%s' records the name '%s', which isn't where it is"), *AssetPath, *Metadata.Name));
+    }
+
+    const FString DestinationFolder = AssetPath.SubString(0, AssetPath.Length() - NamedPath.Length());
+    const FString ImportName        = Metadata.ImportName.IsEmpty() ? Metadata.Name : Metadata.ImportName;
+    return RunImport(*Factory, SourcePath, DestinationFolder, Metadata.ImportSettings, ImportName, true, bOverwriteEditedAssets);
 }
 
 FAssetImportResult FAssetImporter::CopyToContentSources(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, FString& OutCopiedSource) const
@@ -287,7 +351,7 @@ FAssetImportResult FAssetImporter::CopyToContentSources(IAssetFactory& Factory, 
     return FAssetImportResult();
 }
 
-FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, const FJsonValue& Settings, const FString& ImportName, bool bReplaceExisting) const
+FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, const FJsonValue& Settings, const FString& ImportName, bool bReplaceExisting, bool bOverwriteEditedAssets) const
 {
     FString DestinationDirectory;
     if (!Mounts.ToDiskPath(DestinationFolder, DestinationDirectory))
@@ -295,7 +359,7 @@ FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FStri
         return MakeError(EAssetImportError::InvalidDestination, FString::Printf(TEXT("'%s' isn't a folder under a mount"), *DestinationFolder));
     }
 
-    FAssetImportContext    Context(SourcePath, DestinationDirectory, Settings, ImportName);
+    FAssetImportContext    Context(SourcePath, DestinationFolder, DestinationDirectory, Settings, ImportName);
     TArray<FImportedAsset> Assets;
     FJsonValue             UsedSettings;
     FString                Error;
@@ -312,9 +376,14 @@ FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FStri
 
     // Everything is checked before anything is written
     const TArray<EAssetType> AllowedTypes = Factory.GetAssetTypes();
+    TArray<FJsonValue>       TextDocuments;
+    TextDocuments.Resize(Assets.Size());
+
     for (int32 Index = 0; Index < Assets.Size(); ++Index)
     {
-        FImportedAsset& Asset = Assets[Index];
+        FImportedAsset& Asset    = Assets[Index];
+        const FString   FileName = Asset.Name + GetFileExtension(Asset.Type);
+
         if (!IsValidAssetName(Asset.Name) || !AllowedTypes.Contains(Asset.Type))
         {
             return MakeError(EAssetImportError::ImportFailed, FString::Printf(TEXT("The %s factory returned an asset named '%s' of type %s, which it can't produce"), Factory.GetName(), *Asset.Name, AssetTypes::GetName(Asset.Type)));
@@ -322,21 +391,32 @@ FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FStri
 
         for (int32 Previous = 0; Previous < Index; ++Previous)
         {
-            if (Assets[Previous].Name.Equals(Asset.Name, EStringCaseType::NoCase))
+            if ((Assets[Previous].Name + GetFileExtension(Assets[Previous].Type)).Equals(FileName, EStringCaseType::NoCase))
             {
-                return MakeError(EAssetImportError::ImportFailed, FString::Printf(TEXT("The %s factory returned two assets named '%s'"), Factory.GetName(), *Asset.Name));
+                return MakeError(EAssetImportError::ImportFailed, FString::Printf(TEXT("The %s factory returned two assets named '%s'"), Factory.GetName(), *FileName));
             }
         }
 
-        const FString AssetFile = File::CombinePath(DestinationDirectory, Asset.Name + FAssetFile::FileExtension);
-        if (!bReplaceExisting && FPlatformFile::IsFile(*AssetFile))
+        if (!bReplaceExisting && FPlatformFile::IsFile(*File::CombinePath(DestinationDirectory, FileName)))
         {
-            return MakeError(EAssetImportError::DestinationExists, FString::Printf(TEXT("'%s' exists already; reimport it, or replace it"), *File::CombinePath(DestinationFolder, Asset.Name + FAssetFile::FileExtension)));
+            return MakeError(EAssetImportError::DestinationExists, FString::Printf(TEXT("'%s' exists already; reimport it, or replace it"), *File::CombinePath(DestinationFolder, FileName)));
         }
 
         if (!Asset.Guid.IsValid())
         {
-            Asset.Guid = Context.GetGuid(Asset.Name);
+            Asset.Guid = Context.GetGuid(Asset.Name, Asset.Type);
+        }
+
+        if (AssetTypes::GetTextExtension(Asset.Type))
+        {
+            const FString Text = StringCast<CHAR_T>(reinterpret_cast<const ANSICHAR*>(Asset.Data.Data()), Asset.Data.Size()).ToString();
+            if (!Json::Parse(FStringView(Text), TextDocuments[Index]) || !TextDocuments[Index].IsObject())
+            {
+                return MakeError(EAssetImportError::ImportFailed, FString::Printf(TEXT("The %s factory returned '%s', which isn't a JSON object"), Factory.GetName(), *FileName));
+            }
+
+            TextDocuments[Index].RemoveMember(ImportHashMember);
+            TextDocuments[Index].AddMember(ImportHashMember, FJsonValue(ComputeImportHash(TextDocuments[Index])));
         }
     }
 
@@ -352,8 +432,32 @@ FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FStri
     }
 
     FAssetImportResult Result;
-    for (FImportedAsset& Asset : Assets)
+    Result.Warnings = Context.GetWarnings();
+
+    for (int32 Index = 0; Index < Assets.Size(); ++Index)
     {
+        FImportedAsset& Asset       = Assets[Index];
+        const FString   FileName    = Asset.Name + GetFileExtension(Asset.Type);
+        const FString   AssetFile   = File::CombinePath(DestinationDirectory, FileName);
+        const FString   VirtualPath = File::CombinePath(DestinationFolder, FileName);
+
+        if (AssetTypes::GetTextExtension(Asset.Type))
+        {
+            if (!bOverwriteEditedAssets && FPlatformFile::IsFile(*AssetFile) && IsEditedTextAsset(AssetFile))
+            {
+                Result.KeptAssets.Add(VirtualPath);
+                continue;
+            }
+
+            if (!File::CreateDirectoryTree(File::GetDirectoryOf(AssetFile)) || !Json::SaveToFile(AssetFile, TextDocuments[Index]))
+            {
+                return MakeError(EAssetImportError::WriteFailed, FString::Printf(TEXT("Could not write '%s'"), *AssetFile));
+            }
+
+            Result.WrittenAssets.Add(VirtualPath);
+            continue;
+        }
+
         Metadata.Name         = Asset.Name;
         Metadata.Dependencies = Asset.Dependencies;
 
@@ -366,15 +470,12 @@ FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FStri
             Writer.SetChunk(AssetChunk::Thumbnail, ::Move(Asset.Thumbnail));
         }
 
-        const FString AssetFile = File::CombinePath(DestinationDirectory, Asset.Name + FAssetFile::FileExtension);
-        if (!Writer.SaveToFile(AssetFile, Error))
+        if (!File::CreateDirectoryTree(File::GetDirectoryOf(AssetFile)) || !Writer.SaveToFile(AssetFile, Error))
         {
-            Result.Error   = EAssetImportError::WriteFailed;
-            Result.Message = Error;
-            return Result;
+            return MakeError(EAssetImportError::WriteFailed, Error.IsEmpty() ? FString::Printf(TEXT("Could not write '%s'"), *AssetFile) : Error);
         }
 
-        Result.WrittenAssets.Add(File::CombinePath(DestinationFolder, Asset.Name + FAssetFile::FileExtension));
+        Result.WrittenAssets.Add(VirtualPath);
     }
 
     return Result;
