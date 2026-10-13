@@ -1,5 +1,6 @@
 #pragma once
 #include "AssetCore/Asset.h"
+#include "AssetCore/AssetRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Math/AABB.h"
@@ -8,9 +9,18 @@
 #include "Engine/EngineModule.h"
 #include "Engine/Assets/MeshData.h"
 #include "Engine/Assets/ModelData.h"
+#include "Engine/Resources/Material.h"
 #include "RendererCore/VertexDeclaration.h"
 
 struct FVertexStreamBinding;
+
+struct FMeshMaterialSlot
+{
+    /** @brief The source's name for the material, such as "Bricks" */
+    FString Name;
+
+    TAssetRef<FMaterial> Material;
+};
 
 class ENGINE_API FMesh : public FAsset
 {
@@ -97,6 +107,17 @@ public:
     {
         return MeshName;
     }
+
+    /** @return Returns the materials the submeshes' MaterialIndex picks from, when the mesh was loaded from an asset */
+    const TArray<FMeshMaterialSlot>& GetMaterialSlots() const
+    {
+        return MaterialSlots;
+    }
+
+    void SetMaterialSlots(const TArray<FMeshMaterialSlot>& InMaterialSlots)
+    {
+        MaterialSlots = InMaterialSlots;
+    }
     
 private:
     bool Initialize(const FMeshData& MeshData, bool bCreateRayTracingResources);
@@ -120,6 +141,7 @@ private:
     int32                                VertexCount;
     FAABB                                BoundingBox;
     TArray<FSubMesh>                     SubMeshes;
+    TArray<FMeshMaterialSlot>            MaterialSlots;
 };
 
 template<>

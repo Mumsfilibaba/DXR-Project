@@ -20,6 +20,7 @@ FMesh::FMesh()
     , VertexCount(0)
     , BoundingBox()
     , SubMeshes()
+    , MaterialSlots()
 {
 }
 

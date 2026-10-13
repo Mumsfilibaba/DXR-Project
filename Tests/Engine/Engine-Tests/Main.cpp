@@ -8,6 +8,7 @@
 #include "LaunchProgram/ProgramEntry.h"
 
 #include "MaterialAssetTests.h"
+#include "MeshAssetTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -22,6 +23,7 @@ static int32 RunEngineTests()
     LOG_INFO("=== Engine Tests ===");
 
     RUN_TEST(TEXT("MaterialAsset"), MaterialAsset_Test());
+    RUN_TEST(TEXT("MeshAsset"), MeshAsset_Test());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();
