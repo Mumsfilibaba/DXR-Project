@@ -88,6 +88,11 @@ struct FMaterialTextureRoute
         return Slot < EMaterialTextureSlot::Count;
     }
 
+    bool operator==(const FMaterialTextureRoute& Other) const
+    {
+        return Slot == Other.Slot && Channel == Other.Channel && bInvert == Other.bInvert;
+    }
+
     EMaterialTextureSlot::Type Slot    = EMaterialTextureSlot::Count;
     ETextureChannel            Channel = ETextureChannel::R;
     bool                       bInvert = false; // Lets a gloss map feed roughness

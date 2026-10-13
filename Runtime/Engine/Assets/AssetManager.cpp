@@ -8,6 +8,7 @@
 #include "AssetCore/TextureAssetFactory.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/GPUTextureBlockCompressor.h"
+#include "Engine/Assets/MaterialAsset.h"
 #include "Engine/Assets/TextureAssetLoader.h"
 #include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
@@ -85,6 +86,7 @@ bool FAssetManager::Initialize()
 
         AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FTextureAssetFactory>(MakeSharedPtr<FGPUTextureBlockCompressor>()));
         AssetManager->AssetLoader.RegisterLoader<FTexture>(&TextureAssetLoader::Load);
+        AssetManager->AssetLoader.RegisterLoader<FMaterial>(&MaterialAssets::Load);
 
         FAssetRegistry& Registry = AssetManager->AssetRegistry;
         Registry.SetMounts(FContentMounts::CreateDefault());

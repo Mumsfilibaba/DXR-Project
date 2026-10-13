@@ -29,7 +29,7 @@ public:
     // Descends into a nested object for the lifetime of the scope. The unnamed form takes the next
     // element of the enclosing array, appending one when saving and stepping through the existing
     // ones when loading, so the same loop body works either way.
-    struct FObjectScope : public FNonCopyable
+    struct CORE_API FObjectScope : public FNonCopyable
     {
         FObjectScope(FJsonArchive& InArchive, const CHAR_T* Name);
         explicit FObjectScope(FJsonArchive& InArchive);
@@ -42,7 +42,7 @@ public:
         FJsonArchive& Archive;
     };
 
-    struct FArrayScope : public FNonCopyable
+    struct CORE_API FArrayScope : public FNonCopyable
     {
         FArrayScope(FJsonArchive& InArchive, const CHAR_T* Name);
         ~FArrayScope();
@@ -57,7 +57,7 @@ public:
         FJsonArchive& Archive;
     };
 
-    struct FPathScope : public FNonCopyable
+    struct CORE_API FPathScope : public FNonCopyable
     {
         FPathScope(FJsonArchive& InArchive, const FString& Segment);
         ~FPathScope();
