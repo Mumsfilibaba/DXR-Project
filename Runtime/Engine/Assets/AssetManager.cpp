@@ -5,7 +5,10 @@
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/Paths.h"
 #include "RHI/RHICommandList.h"
+#include "AssetCore/TextureAssetFactory.h"
 #include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/GPUTextureBlockCompressor.h"
+#include "Engine/Assets/TextureAssetLoader.h"
 #include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
 #include "Engine/Assets/AssetImporters/ModelImporter.h"
@@ -79,6 +82,9 @@ bool FAssetManager::Initialize()
         AssetManager->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
         AssetManager->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
         AssetManager->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
+
+        AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FTextureAssetFactory>(MakeSharedPtr<FGPUTextureBlockCompressor>()));
+        AssetManager->AssetLoader.RegisterLoader<FTexture>(&TextureAssetLoader::Load);
 
         FAssetRegistry& Registry = AssetManager->AssetRegistry;
         Registry.SetMounts(FContentMounts::CreateDefault());

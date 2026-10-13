@@ -36,15 +36,19 @@ public:
     bool CompressCubeMapBC6(const FRHITextureRef& SrcCubeMap, FRHITextureRef& OutCubeMap);
     bool CompressCubeMapBC6(FRHICommandList& CommandList, const FRHITextureRef& SrcCubeMap, FRHITextureRef& OutCubeMap);
 
+    bool EncodeBlocks(FRHICommandList& CommandList, EFormat Format, const FRHITextureRef& SrcTexture, FRHITextureRef& OutBlocks);
+
 private:
     bool InitializeBC1ToBC5();
     bool InitializeBC6H();
     bool InitializeBC7();
 
-    bool CompressSinglePass64(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture, 
-        FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat OutputFormat);
-    bool CompressSinglePass128(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture,
-        FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat OutputFormat);
+    bool Compress(FRHICommandList& CommandList, EFormat Format, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture);
+    bool Encode(FRHICommandList& CommandList, EFormat Format, const FRHITextureRef& SrcTexture, uint32 NumMips, FRHITextureRef& OutBlocks);
+
+    bool CreateBlockTexture(const FRHITextureRef& SrcTexture, uint32 NumMips, EFormat BlockFormat, FRHITextureRef& OutBlocks, TArray<FRHIShaderResourceViewRef>& OutSourceSRVs, TArray<FRHIUnorderedAccessViewRef>& OutBlockUAVs);
+    bool EncodeSinglePass(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, uint32 NumMips, FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat BlockFormat, FRHITextureRef& OutBlocks);
+    bool EncodeBC7(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, uint32 NumMips, FRHITextureRef& OutBlocks);
 
     // BC1-BC5 (single-pass)
     FRHIComputeShaderRef        BC1CompressionShader;
