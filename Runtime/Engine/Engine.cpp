@@ -4,6 +4,7 @@
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Memory/MemoryProfiler.h"
 #include "Application/Application.h"
 #include "Application/IApplicationRenderer.h"
 #include "Application/Elements/Window.h"
@@ -55,6 +56,10 @@ static TAutoConsoleVariable<int32> CVarViewportHeight(
     1080,
     EConsoleVariableFlags::Default);
 
+
+#if ENABLE_MEMORY_PROFILER
+static CONST_INIT FMemoryNameId GGameModuleMemoryTag = MEMORY_NAME_UNTAGGED;
+#endif
 
 FEngine* FEngine::Engine = nullptr;
 
@@ -364,7 +369,17 @@ bool FEngine::Init()
         return false;
     }
 
-    if (!GameModule->Init())
+#if ENABLE_MEMORY_PROFILER
+    GGameModuleMemoryTag = FMemoryProfiler::Get().InternDynamic(*GameModuleName);
+#endif
+
+    bool bGameModuleInitialized = false;
+    {
+        MEMORY_MODULE_SCOPE_ID(GGameModuleMemoryTag);
+        bGameModuleInitialized = GameModule->Init();
+    }
+
+    if (!bGameModuleInitialized)
     {
         LOG_ERROR("Failed to initialize GameModule");
         return false;
@@ -453,11 +468,13 @@ void FEngine::Tick(float DeltaTime)
     // The game module is game code, so it is held back until the world is actually running
     if (IsPlaying())
     {
+        MEMORY_MODULE_SCOPE_ID(GGameModuleMemoryTag);
         GameModule->Tick(DeltaTime);
     }
 
     if (World)
     {
+        MEMORY_MODULE_SCOPE("Engine");
         World->Tick(DeltaTime);
     }
 
@@ -497,10 +514,13 @@ void FEngine::Release()
     // Unload the GameModule
     if (GameModule)
     {
-        GameModule->Release();
+        {
+            MEMORY_MODULE_SCOPE_ID(GGameModuleMemoryTag);
+            GameModule->Release();
+        }
 
-        const CHAR* GameModuleName = *Paths::GetProjectModuleName();
-        FModuleManager::Get().UnloadModule(GameModuleName);
+        const String GameModuleName = Paths::GetProjectModuleName();
+        FModuleManager::Get().UnloadModule(*GameModuleName);
         GameModule = nullptr;
     }
 

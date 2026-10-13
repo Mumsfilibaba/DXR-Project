@@ -1,6 +1,7 @@
 #include "LaunchEngine/EngineLoop.h"
 #include "Core/CoreGlobals.h"
 #include "Core/Memory/MemoryPagePool.h"
+#include "Core/Memory/MemoryProfiler.h"
 #include "Core/PlatformInterface/PlatformEventPool.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
@@ -213,6 +214,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("Config");
+        MEMORY_MODULE_SCOPE("Core");
 
         if (!FConfig::Initialize())
         {
@@ -226,6 +228,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("ThreadManager");
+        MEMORY_MODULE_SCOPE("Core");
 
         if (!FThreadManager::Initialize())
         {
@@ -236,6 +239,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("RemoteConsole");
+        MEMORY_MODULE_SCOPE("RemoteConsole");
 
         if (!FRemoteConsoleServer::Initialize())
         {
@@ -245,6 +249,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("Application");
+        MEMORY_MODULE_SCOPE("Application");
 
         if (!FApplication::Initialize())
         {
@@ -257,6 +262,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("TaskGraph");
+        MEMORY_MODULE_SCOPE("Core");
 
         if (!FTaskGraph::Initialize())
         {
@@ -267,6 +273,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("ShaderCompiler");
+        MEMORY_MODULE_SCOPE("ShaderCompiler");
 
         if (!FShaderCompiler::Initialize(Paths::GetAssetDir()))
         {
@@ -277,6 +284,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("RHI");
+        MEMORY_MODULE_SCOPE("RHI");
 
         if (!RHI::Initialize())
         {
@@ -291,6 +299,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("ShaderCache");
+        MEMORY_MODULE_SCOPE("RendererCore");
 
         if (!FShaderCache::Initialize())
         {
@@ -302,6 +311,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("TextureFactory");
+        MEMORY_MODULE_SCOPE("RendererCore");
 
         if (!FTextureFactory::Initialize())
         {
@@ -311,6 +321,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("VertexStreamCache");
+        MEMORY_MODULE_SCOPE("RendererCore");
         
         if (!FVertexStreamCache::Initialize())
         {
@@ -320,6 +331,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("RenderGraphResourcePool");
+        MEMORY_MODULE_SCOPE("RendererCore");
 
         if (!FRenderGraphResourcePool::Initialize())
         {
@@ -329,6 +341,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     {
         TRACE_BOOT_SCOPE("ShaderPrewarm");
+        MEMORY_MODULE_SCOPE("RendererCore");
         FShaderCache::Get().PrewarmAsync();
     }
 
@@ -378,6 +391,7 @@ int32 FEngineLoop::Init()
 
         {
             TRACE_BOOT_SCOPE("ImGuiPlugin");
+            MEMORY_MODULE_SCOPE("ImGuiPlugin");
 
             IImguiPlugin* ImguiPlugin = FModuleManager::Get().LoadModule<IImguiPlugin>("ImGuiPlugin");
             if (!ImguiPlugin)
@@ -389,6 +403,7 @@ int32 FEngineLoop::Init()
 
         {
             TRACE_BOOT_SCOPE("ApplicationRenderer");
+            MEMORY_MODULE_SCOPE("ApplicationRenderer");
 
             if (!CreateApplicationRenderer())
             {
@@ -404,6 +419,7 @@ int32 FEngineLoop::Init()
 
         {
             TRACE_BOOT_SCOPE("Engine");
+            MEMORY_MODULE_SCOPE("Engine");
 
             if (!FEngine::Initialize())
             {
@@ -418,6 +434,7 @@ int32 FEngineLoop::Init()
 
         {
             TRACE_BOOT_SCOPE("RendererModule");
+            MEMORY_MODULE_SCOPE("Renderer");
 
             RendererModule = IRendererModule::Get();
             if (!RendererModule->Initialize())
@@ -434,6 +451,7 @@ int32 FEngineLoop::Init()
 
         {
             TRACE_BOOT_SCOPE("ShaderCompileStats");
+            MEMORY_MODULE_SCOPE("ShaderCompiler");
             FShaderCompiler::Get().LogCompileStats();
         }
 
@@ -442,6 +460,7 @@ int32 FEngineLoop::Init()
         if (IImguiPlugin::IsEnabled())
         {
             TRACE_BOOT_SCOPE("ImGuiRHI");
+            MEMORY_MODULE_SCOPE("ImGuiPlugin");
 
             if (!IImguiPlugin::Get().InitializeRHI())
             {
@@ -452,6 +471,7 @@ int32 FEngineLoop::Init()
 
         {
             TRACE_BOOT_SCOPE("InitPostRenderer");
+            MEMORY_MODULE_SCOPE("Engine");
 
             if (!FEngine::Get()->InitPostRenderer())
             {
@@ -461,6 +481,7 @@ int32 FEngineLoop::Init()
 
         {
             TRACE_BOOT_SCOPE("EngineStart");
+            MEMORY_MODULE_SCOPE("Engine");
             
             if (!FEngine::Get()->Start())
             {
@@ -497,7 +518,10 @@ void FEngineLoop::Tick()
         }
 
         const float DeltaTime = static_cast<float>(FrameTimer.GetDeltaTime().AsSeconds());
-        FApplication::Get().Tick(DeltaTime);
+        {
+            MEMORY_MODULE_SCOPE("Application");
+            FApplication::Get().Tick(DeltaTime);
+        }
 
         // The window-close message is pumped above; once exit is requested the surface may already be gone.
         if (IsEngineExitRequested())
@@ -506,50 +530,77 @@ void FEngineLoop::Tick()
         }
 
         IRendererModule* RendererModule = IRendererModule::Get();
-        RendererModule->FinishPreviousFrame();
+        {
+            MEMORY_MODULE_SCOPE("Renderer");
+            RendererModule->FinishPreviousFrame();
+        }
 
         IGPUProfiler& GPUProfiler = RendererModule->GetGPUProfiler();
 
-        UIRenderer->EndFrameAndPresent();
+        {
+            MEMORY_MODULE_SCOPE("ApplicationRenderer");
+            UIRenderer->EndFrameAndPresent();
+        }
+
         {
             TRACE_SCOPE("GPU Profiler End Frame");
+            MEMORY_MODULE_SCOPE("Renderer");
             GPUProfiler.EndGPUFrame();
         }
 
-        FApplication::Get().ProcessDeferredEvents();
+        {
+            MEMORY_MODULE_SCOPE("Application");
+            FApplication::Get().ProcessDeferredEvents();
+        }
 
         {
             TRACE_SCOPE("Engine Tick");
+            MEMORY_MODULE_SCOPE("Engine");
             FEngine::Get()->Tick(DeltaTime);
         }
 
         {
             TRACE_SCOPE("GPU Profiler Begin Frame");
+            MEMORY_MODULE_SCOPE("Renderer");
             GPUProfiler.BeginGPUFrame();
         }
 
-        UIRenderer->BeginFrame();
-        UIRenderer->RecordWindows();
+        {
+            MEMORY_MODULE_SCOPE("ApplicationRenderer");
+            UIRenderer->BeginFrame();
+            UIRenderer->RecordWindows();
+        }
 
         if (IImguiPlugin::IsEnabled())
         {
             TRACE_SCOPE("ImGui Draw");
+            MEMORY_MODULE_SCOPE("ImGuiPlugin");
             IImguiPlugin::Get().Draw(UIRenderer->GetCommandList());
             IImguiPlugin::Get().DrawViewports(UIRenderer->GetCommandList());
         }
 
-        RendererModule->Tick();
+        {
+            MEMORY_MODULE_SCOPE("Renderer");
+            RendererModule->Tick();
+        }
 
-        FSceneRenderPacket Packet = FEngine::Get()->BuildRenderPacket();
-        RendererModule->KickSceneRender(::Move(Packet));
+        {
+            MEMORY_MODULE_SCOPE("Engine");
+            FSceneRenderPacket Packet = FEngine::Get()->BuildRenderPacket();
+
+            MEMORY_MODULE_SCOPE("Renderer");
+            RendererModule->KickSceneRender(::Move(Packet));
+        }
 
         {
             TRACE_SCOPE("Memory Page Pool Tick");
+            MEMORY_MODULE_SCOPE("Core");
             FMemoryPagePool::Get().Tick();
         }
 
         {
             TRACE_SCOPE("Platform Event Pool Tick");
+            MEMORY_MODULE_SCOPE("Core");
             FPlatformEventPool::Get().Tick();
         }
     }
@@ -567,6 +618,7 @@ void FEngineLoop::Tick()
 
     {
         TRACE_SCOPE("RemoteConsole Tick");
+        MEMORY_MODULE_SCOPE("RemoteConsole");
         FRemoteConsoleServer::Tick();
     }
 

@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Memory/MemoryProfiler.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Tasks/Tasks.h"
 #include "Renderer/SceneRenderer.h"
@@ -115,6 +116,7 @@ void FRendererModule::KickSceneRender(FSceneRenderPacket&& Packet)
             [this, Packet = ::Move(Packet)]()
             {
                 CHECK_RENDER_THREAD();
+                MEMORY_MODULE_SCOPE("Renderer");
                 Renderer->RenderThread_RenderSceneFrame(Packet);
             });
     }

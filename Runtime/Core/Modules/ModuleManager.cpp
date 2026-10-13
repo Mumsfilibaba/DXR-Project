@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Memory/MemoryProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 
 static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
@@ -48,6 +49,8 @@ IModule* FModuleManager::LoadModule(const CHAR* ModuleName)
             return ExistingModule;
         }
     }
+
+    MEMORY_MODULE_SCOPE_DYNAMIC(ModuleName);
 
     FModuleData NewModule;
     if (FInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate(ModuleName))
@@ -203,6 +206,7 @@ void FModuleManager::UnloadModule(const CHAR* ModuleName)
         FModuleData& Module = Modules[Index];
         if (IModule* EngineModule = Module.Interface)
         {
+            MEMORY_MODULE_SCOPE_DYNAMIC(*Module.Name);
             EngineModule->Unload();
             SAFE_DELETE(EngineModule);
         }
@@ -229,6 +233,7 @@ void FModuleManager::ReleaseAllModules()
         FModuleData& Module = Modules[Index];
         if (IModule* EngineModule = Module.Interface)
         {
+            MEMORY_MODULE_SCOPE_DYNAMIC(*Module.Name);
             EngineModule->Unload();
             SAFE_DELETE(EngineModule);
         }

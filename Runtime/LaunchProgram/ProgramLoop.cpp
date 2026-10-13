@@ -2,6 +2,7 @@
 #include "LaunchProgram/ProgramEntry.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Misc/OutputDeviceManager.h"
+#include "Core/Memory/MemoryProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 
@@ -58,6 +59,8 @@ int32 FProgramLoop::Run(const CHAR* ConsoleTitle, const TFunction<int32()>& Body
     if (Body)
     {
         TFunction<int32()> BodyCopy = Body;
+
+        MEMORY_MODULE_SCOPE_DYNAMIC(Title);
         Result = BodyCopy();
     }
 

@@ -329,7 +329,15 @@ private:
     #define MEMORY_SCOPE(Name) \
         static CONST_INIT FMemoryName STRING_CONCAT(MemoryScopeName_, __LINE__)(Name); \
         FMemoryScope STRING_CONCAT(MemoryScope_, __LINE__)(STRING_CONCAT(MemoryScopeName_, __LINE__))
+
+    #define MEMORY_MODULE_SCOPE_DYNAMIC(Name) \
+        FMemoryModuleScope STRING_CONCAT(MemoryModuleScope_, __LINE__)(FMemoryProfiler::Get().InternDynamic(Name))
+
+    #define MEMORY_MODULE_SCOPE_ID(Tag) \
+        FMemoryModuleScope STRING_CONCAT(MemoryModuleScope_, __LINE__)(Tag)
 #else
     #define MEMORY_MODULE_SCOPE(Name)
     #define MEMORY_SCOPE(Name)
+    #define MEMORY_MODULE_SCOPE_DYNAMIC(Name)
+    #define MEMORY_MODULE_SCOPE_ID(Tag)
 #endif
