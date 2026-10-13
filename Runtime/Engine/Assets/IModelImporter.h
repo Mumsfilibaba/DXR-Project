@@ -3,7 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 
-struct FModelData;
+struct FImportScene;
 
 enum class EMeshImportFlags : uint8
 {
@@ -23,6 +23,6 @@ struct IModelImporter
 {
     virtual ~IModelImporter() = default;
 
-    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) = 0;
+    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FImportScene& OutScene) = 0;
     virtual bool MatchExtenstion(const FStringView& FileName) = 0;
 };

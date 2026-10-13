@@ -82,26 +82,15 @@ static bool ValidateMesh(const FMeshData& Mesh, int32 NumVertices, int32 NumMate
             OutError = FString::Printf(TEXT("a submesh uses material %d of %d"), SubMesh.MaterialIndex, NumMaterialSlots);
             return false;
         }
-
-        for (uint32 Index = SubMesh.StartIndex; Index < SubMesh.StartIndex + SubMesh.IndexCount; ++Index)
-        {
-            if (uint64(Mesh.Indices[Index]) + SubMesh.BaseVertex >= uint64(NumVertices))
-            {
-                OutError = FString::Printf(TEXT("index %u names vertex %llu of %d"), Index, uint64(Mesh.Indices[Index]) + SubMesh.BaseVertex, NumVertices);
-                return false;
-            }
-        }
     }
 
-    if (Mesh.SubMeshes.IsEmpty())
+    // Indices count from the mesh's first vertex; a submesh's BaseVertex and VertexCount only describe the range it uses
+    for (int32 Index = 0; Index < Mesh.Indices.Size(); ++Index)
     {
-        for (int32 Index = 0; Index < Mesh.Indices.Size(); ++Index)
+        if (Mesh.Indices[Index] >= uint32(NumVertices))
         {
-            if (Mesh.Indices[Index] >= uint32(NumVertices))
-            {
-                OutError = FString::Printf(TEXT("index %d names vertex %u of %d"), Index, Mesh.Indices[Index], NumVertices);
-                return false;
-            }
+            OutError = FString::Printf(TEXT("index %d names vertex %u of %d"), Index, Mesh.Indices[Index], NumVertices);
+            return false;
         }
     }
 

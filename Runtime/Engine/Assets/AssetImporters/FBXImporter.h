@@ -2,11 +2,12 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Engine/Assets/IModelImporter.h"
+#include "Engine/Assets/ImportScene.h"
 
 struct ENGINE_API FFBXImporter : public IModelImporter
 {
     virtual ~FFBXImporter() = default;
 
-    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) override final;
+    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FImportScene& OutScene) override final;
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };

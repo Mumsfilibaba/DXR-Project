@@ -11,7 +11,7 @@
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
-bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags, FModelData& OutModelData)
+bool FModelImporter::ImportFromFile(const FStringView& InFilename, FModelData& OutModelData)
 {
     FByteInputStream InputStream;
 
@@ -197,11 +197,6 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
     }
 
     return true;
-}
-
-bool FModelImporter::MatchExtenstion(const FStringView& FileName)
-{
-    return FileName.EndsWith(TEXT(".dxrmesh"), EStringCaseType::NoCase);
 }
 
 bool FModelSerializer::Serialize(const FString& Filename, const FModelData& ModelData)

@@ -114,12 +114,9 @@ namespace ModelFormat
     }
 }
 
-struct ENGINE_API FModelImporter : public IModelImporter
+struct ENGINE_API FModelImporter
 {
-    virtual ~FModelImporter() = default;
-
-    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelData& OutModelData) override final;
-    virtual bool MatchExtenstion(const FStringView& FileName) override final;
+    bool ImportFromFile(const FStringView& Filename, FModelData& OutModelData);
 };
 
 struct ENGINE_API FModelSerializer

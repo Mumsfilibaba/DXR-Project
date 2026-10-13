@@ -8,6 +8,7 @@
 #include "AssetCore/TextureAssetFactory.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/GPUTextureBlockCompressor.h"
+#include "Engine/Assets/ImportScene.h"
 #include "Engine/Assets/MaterialAsset.h"
 #include "Engine/Assets/MeshAsset.h"
 #include "Engine/Assets/TextureAssetLoader.h"
@@ -83,7 +84,6 @@ bool FAssetManager::Initialize()
         // Importers for models
         AssetManager->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
         AssetManager->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
-        AssetManager->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
 
         AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FTextureAssetFactory>(MakeSharedPtr<FGPUTextureBlockCompressor>()));
         AssetManager->AssetLoader.RegisterLoader<FTexture>(&TextureAssetLoader::Load);
@@ -226,7 +226,7 @@ TSharedPtr<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     if (bEnableAssetConversion && FPlatformFile::IsFile(*ConvertedPath))
     {
         const FStringView FileNameView(ConvertedPath);
-        if (ModelImporter->ImportFromFile(FileNameView, Flags, NewModelData))
+        if (ModelImporter->ImportFromFile(FileNameView, NewModelData))
         {
             NewModel = InsertModel(FinalPath, NewModelData);
         }
@@ -249,7 +249,12 @@ TSharedPtr<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
             const FStringView FileNameView(FinalPath);
             if (Importer->MatchExtenstion(FileNameView))
             {
-                bResult = Importer->ImportFromFile(FileNameView, Flags, NewModelData);
+                FImportScene Scene;
+                bResult = Importer->ImportFromFile(FileNameView, Flags, Scene) && ImportScenes::BakeToModelData(Scene, NewModelData, [this](const FString& TexturePath)
+                {
+                    return StaticCastSharedPtr<FTexture2D>(LoadTexture(TexturePath));
+                });
+
                 break;
             }
         }

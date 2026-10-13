@@ -5,7 +5,6 @@
 #include "Core/Containers/StringConversion.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceManager.h"
-#include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
 #include <tiny_obj_loader.h>
@@ -62,7 +61,7 @@ private:
     FString Directory;
 };
 
-bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags /* Flags */, FModelData& OutModelData)
+bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags /* Flags */, FImportScene& OutScene)
 {
     // Load Scene File
     std::string                      Warning;
@@ -75,7 +74,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     const FString Filename            = FString(InFilename);
     const FString MTLFiledir          = File::GetDirectoryOf(Filename);
     const FString FilenameWithoutPath = File::ExtractFilenameWithoutExtension(Filename);
-    
+
     // Load the OBJ file
     std::string Text;
     if (!ReadText(Filename, Text))
@@ -91,38 +90,51 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         LOG_ERROR("[FOBJImporter]: Failed to load '%s'. Warning: %s Error: %s", *Filename, StringCast<CHAR_T>(Warning.c_str()).Get(), StringCast<CHAR_T>(Error.c_str()).Get());
         return false;
     }
-    
+
     if (!Warning.empty())
     {
         LOG_WARNING("[FOBJImporter]: Loaded '%s' with Warning: %s", *Filename, StringCast<CHAR_T>(Warning.c_str()).Get());
     }
 
+    FImportScene         Scene;
+    TMap<FString, int32> TextureIndices;
+
+    const auto AddTexture = [&](const std::string& TexName) -> int32
+    {
+        if (TexName.empty())
+        {
+            return -1;
+        }
+
+        FString TexturePath = MTLFiledir + '/' + StringCast<CHAR_T>(TexName.c_str()).ToString();
+        TexturePath.ReplaceAll('\\', '/');
+
+        if (const int32* ExistingIndex = TextureIndices.Find(TexturePath))
+        {
+            return *ExistingIndex;
+        }
+
+        const int32 TextureIndex = Scene.Textures.Size();
+        Scene.Textures.Emplace().SourcePath = TexturePath;
+        TextureIndices.Add(TexturePath, TextureIndex);
+        return TextureIndex;
+    };
+
     // Create all Materials in scene
     int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
     {
-        const auto LoadMaterialTexture = [&](const std::string& TexName) -> TSharedPtr<FTexture2D>
-        {
-            if (TexName.empty())
-            {
-                return nullptr;
-            }
-
-            return StaticCastSharedPtr<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + StringCast<CHAR_T>(TexName.c_str()).ToString()));
-        };
-
-        // Create new material with default properties
-        FMaterialData MaterialData;
-        MaterialData.Textures[EMaterialTexture::Metallic]  = LoadMaterialTexture(Mat.ambient_texname);
-        MaterialData.Textures[EMaterialTexture::Diffuse]   = LoadMaterialTexture(Mat.diffuse_texname);
-        MaterialData.Textures[EMaterialTexture::Roughness] = LoadMaterialTexture(Mat.specular_highlight_texname);
-        MaterialData.Textures[EMaterialTexture::Normal]    = LoadMaterialTexture(Mat.bump_texname);
-        MaterialData.Textures[EMaterialTexture::AlphaMask] = LoadMaterialTexture(Mat.alpha_texname);
+        FImportMaterial& MaterialData = Scene.Materials.Emplace();
+        MaterialData.Textures[EMaterialTexture::Metallic]  = AddTexture(Mat.ambient_texname);
+        MaterialData.Textures[EMaterialTexture::Diffuse]   = AddTexture(Mat.diffuse_texname);
+        MaterialData.Textures[EMaterialTexture::Roughness] = AddTexture(Mat.specular_highlight_texname);
+        MaterialData.Textures[EMaterialTexture::Normal]    = AddTexture(Mat.bump_texname);
+        MaterialData.Textures[EMaterialTexture::AlphaMask] = AddTexture(Mat.alpha_texname);
 
         MaterialData.Routes[EMaterialScalar::Roughness] = FMaterialSourceRoute(EMaterialTexture::Roughness, ETextureChannel::R);
         MaterialData.Routes[EMaterialScalar::Metallic]  = FMaterialSourceRoute(EMaterialTexture::Metallic, ETextureChannel::R);
 
-        if (MaterialData.Textures[EMaterialTexture::AlphaMask])
+        if (MaterialData.Textures[EMaterialTexture::AlphaMask] >= 0)
         {
             MaterialData.Routes[EMaterialScalar::Opacity] = FMaterialSourceRoute(EMaterialTexture::AlphaMask, ETextureChannel::R);
         }
@@ -141,12 +153,11 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         {
             MaterialData.Name = StringCast<CHAR_T>(Mat.name.c_str()).ToString();
         }
-        
-        OutModelData.Materials.Add(Move(MaterialData));
+
         SceneMaterialIndex++;
     }
 
-    // Construct Scene
+    // Every object and group becomes a node with an identity transform, placing its own mesh
     TMap<FSourceVertex, uint32> UniqueVertices;
 
     constexpr uint32 NumIndiciesPerTriangle  = 3;
@@ -160,8 +171,9 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         // Start at index zero for each mesh and loop until all indices are processed
         const uint32 IndexCount = static_cast<uint32>(Shape.mesh.indices.size());
 
-        // Start a new mesh
-        FMeshData MeshData;
+        // Start a new mesh, whose submeshes pick their materials through the node's slots
+        FMeshData   MeshData;
+        FImportNode Node;
         MeshData.Indices.Reserve(IndexCount);
         UniqueVertices.Clear();
 
@@ -176,12 +188,17 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             FSubMesh SubMesh;
             SubMesh.BaseVertex = MeshData.Vertices.Size();
             SubMesh.StartIndex = MeshData.Indices.Size();
-            
+
             if (MaterialID >= 0)
             {
-                SubMesh.MaterialIndex = MaterialID;
+                SubMesh.MaterialIndex = Node.Materials.Find(MaterialID);
+                if (SubMesh.MaterialIndex < 0)
+                {
+                    SubMesh.MaterialIndex = Node.Materials.Size();
+                    Node.Materials.Add(MaterialID);
+                }
             }
-            
+
             // Retrieve all vertices/indicies for this partition
             for (; CurrentIndex < IndexCount; ++CurrentIndex)
             {
@@ -225,7 +242,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     UniqueVertices[Vertex] = VertexIndex;
                     MeshData.Vertices.Add(Vertex);
                 }
-                
+
                 MeshData.Indices.Add(VertexIndex);
             }
 
@@ -246,11 +263,15 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             MeshData.Name = StringCast<CHAR_T>(Shape.name.c_str()).ToString();
         }
 
-        OutModelData.Meshes.Add(Move(MeshData));
+        Node.Name = MeshData.Name;
+        Node.Mesh = Scene.Meshes.Size();
+        Scene.Nodes.Add(::Move(Node));
+        Scene.Meshes.Add(::Move(MeshData));
         ShapeIndex++;
     }
 
-    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", *Filename, OutModelData.Meshes.Size(), OutModelData.Materials.Size());
+    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", *Filename, Scene.Meshes.Size(), Scene.Materials.Size());
+    OutScene = ::Move(Scene);
     return true;
 }
 

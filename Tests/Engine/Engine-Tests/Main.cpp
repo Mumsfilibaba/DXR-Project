@@ -9,6 +9,7 @@
 
 #include "MaterialAssetTests.h"
 #include "MeshAssetTests.h"
+#include "ImportSceneTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -24,6 +25,7 @@ static int32 RunEngineTests()
 
     RUN_TEST(TEXT("MaterialAsset"), MaterialAsset_Test());
     RUN_TEST(TEXT("MeshAsset"), MeshAsset_Test());
+    RUN_TEST(TEXT("ImportScene"), ImportScene_Test());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();

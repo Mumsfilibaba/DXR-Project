@@ -23,8 +23,15 @@ static FMeshAssetData MakeCube()
     First.IndexCount    = 12;
     First.MaterialIndex = 0;
 
+    uint32 FirstVertex = Cube.Mesh.Vertices.Size();
+    for (int32 Index = 12; Index < Cube.Mesh.Indices.Size(); ++Index)
+    {
+        FirstVertex = Math::Min(FirstVertex, Cube.Mesh.Indices[Index]);
+    }
+
     FSubMesh& Second = Cube.Mesh.SubMeshes.Emplace();
-    Second.VertexCount   = Cube.Mesh.Vertices.Size();
+    Second.BaseVertex    = FirstVertex;
+    Second.VertexCount   = Cube.Mesh.Vertices.Size() - FirstVertex;
     Second.StartIndex    = 12;
     Second.IndexCount    = Cube.Mesh.Indices.Size() - 12;
     Second.MaterialIndex = 1;
@@ -66,6 +73,7 @@ bool MeshAsset_Test()
         TEST_EXPECT(Read.Mesh.Indices == Cube.Mesh.Indices);
         TEST_EXPECT(Read.Mesh.SubMeshes.Size() == 2);
         TEST_EXPECT(Read.Mesh.SubMeshes.Size() == 2 && Read.Mesh.SubMeshes[1].StartIndex == 12 && Read.Mesh.SubMeshes[1].IndexCount == Cube.Mesh.SubMeshes[1].IndexCount);
+        TEST_EXPECT(Read.Mesh.SubMeshes.Size() == 2 && Read.Mesh.SubMeshes[1].BaseVertex > 0 && Read.Mesh.SubMeshes[1].BaseVertex == Cube.Mesh.SubMeshes[1].BaseVertex);
         TEST_EXPECT(Read.Mesh.SubMeshes.Size() == 2 && Read.Mesh.SubMeshes[0].MaterialIndex == 0 && Read.Mesh.SubMeshes[1].MaterialIndex == 1);
 
         TEST_EXPECT(Read.MaterialSlots.Size() == 2);

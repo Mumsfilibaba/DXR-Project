@@ -4,7 +4,6 @@
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Engine/Assets/VertexFormat.h"
-#include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 
 #include <ofbx.h>
@@ -53,25 +52,7 @@ static bool DoesFlipHandness(const FMatrix4& Matrix)
 }
 #endif
 
-static TSharedPtr<FTexture2D> LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
-{
-    const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
-    if (MaterialTexture)
-    {
-        ANSICHAR StringBuffer[256];
-        MaterialTexture->getRelativeFileName().toString(StringBuffer);
-
-        // Make sure that correct slashes are used
-        FString Filename = Path + '/' + StringCast<CHAR_T>(StringBuffer).ToString();
-        Filename.ReplaceAll('\\', '/');
-
-        return StaticCastSharedPtr<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
-    }
-
-    return TSharedPtr<FTexture2D>();
-}
-
-bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags, FModelData& OutModelData)
+bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags, FImportScene& OutScene)
 {
     const FString Filename = FString(InFilename);
 
@@ -101,31 +82,99 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         return false;
     }
 
-    // Estimate sizes to avoid to many allocations
-    uint32 MaterialCount = 0;
-    for (int32 MeshIndex = 0; MeshIndex < FBXScene->getMeshCount(); ++MeshIndex)
-    {
-        const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIndex);
-        MaterialCount += CurrentMesh->getMaterialCount();
-    }
-
     // Array to store indices in when performing triangulation
     TArray<int32> PartitionIndicies;
 
     // Unique tables
-    TMap<uint64, uint32>  UniqueMaterials;
+    TMap<uint64, int32>         UniqueMaterials;
+    TMap<FString, int32>        UniqueTextures;
+    TMap<uint64, int32>         UniqueNodes;
+    TMap<uint64, int32>         UniqueGeometries;
     TMap<FSourceVertex, uint32> UniqueVertices;
-    UniqueMaterials.Reserve(MaterialCount);
 
-    // Estimate resource count
-    OutModelData.Meshes.Reserve(FBXScene->getMeshCount());
-    OutModelData.Materials.Reserve(MaterialCount);
+    FImportScene Scene;
+    Scene.Meshes.Reserve(FBXScene->getMeshCount());
+    Scene.Nodes.Reserve(FBXScene->getMeshCount());
 
     // Convert data
     const FString Path = ExtractPath(Filename);
 
     // Get the global settings
     const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();
+
+    const bool bApplyScaleFactor    = (InFlags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None;
+    const bool bReverseHandedness   = (InFlags & EMeshImportFlags::ForceLeftHanded) != EMeshImportFlags::None && GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded;
+    const bool bInvertAxisX         = (InFlags & EMeshImportFlags::InvertAxisX) != EMeshImportFlags::None;
+    const bool bRecalculateTangents = (InFlags & EMeshImportFlags::RecalculateTangents) != EMeshImportFlags::None;
+
+    const auto AddTexture = [&](const ofbx::Material* Material, ofbx::Texture::TextureType Type) -> int32
+    {
+        const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
+        if (!MaterialTexture)
+        {
+            return -1;
+        }
+
+        ANSICHAR StringBuffer[256];
+        MaterialTexture->getRelativeFileName().toString(StringBuffer);
+
+        // Make sure that correct slashes are used
+        FString TexturePath = Path + '/' + StringCast<CHAR_T>(StringBuffer).ToString();
+        TexturePath.ReplaceAll('\\', '/');
+
+        if (const int32* ExistingIndex = UniqueTextures.Find(TexturePath))
+        {
+            return *ExistingIndex;
+        }
+
+        const int32 TextureIndex = Scene.Textures.Size();
+        Scene.Textures.Emplace().SourcePath = TexturePath;
+        UniqueTextures.Add(TexturePath, TextureIndex);
+        return TextureIndex;
+    };
+
+    // Parents are added before their children. The scene root isn't a node; its children are the roots.
+    TFunction<int32(const ofbx::Object*)> AddNode = [&](const ofbx::Object* Object) -> int32
+    {
+        if (!Object || Object->getType() == ofbx::Object::Type::ROOT)
+        {
+            return -1;
+        }
+
+        if (const int32* ExistingIndex = UniqueNodes.Find(Object->id))
+        {
+            return *ExistingIndex;
+        }
+
+        const int32 Parent = AddNode(Object->getParent());
+
+        FMatrix4 LocalTransform = FBXConvertMatrix(Object->getLocalTransform());
+        if (Parent < 0 && bApplyScaleFactor)
+        {
+            LocalTransform = LocalTransform * FMatrix4::Scale(GlobalSettings->UnitScaleFactor);
+        }
+
+        // The meshes are mirrored in their own space, so the transforms placing them are mirrored to match
+        if (bReverseHandedness)
+        {
+            LocalTransform = ImportScenes::MirrorTransform(LocalTransform, 2);
+        }
+
+        if (bInvertAxisX)
+        {
+            LocalTransform = ImportScenes::MirrorTransform(LocalTransform, 0);
+        }
+
+        const int32 NodeIndex = Scene.Nodes.Size();
+
+        FImportNode& Node = Scene.Nodes.Emplace();
+        Node.Name           = StringCast<CHAR_T>(Object->name).ToString();
+        Node.Parent         = Parent;
+        Node.LocalTransform = LocalTransform;
+
+        UniqueNodes.Add(Object->id, NodeIndex);
+        return NodeIndex;
+    };
 
     for (int32 MeshIdx = 0; MeshIdx < FBXScene->getMeshCount(); MeshIdx++)
     {
@@ -140,16 +189,16 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
             LOG_INFO("[FFBXImporter] Loading Material '%s'", CurrentMaterial->name);
 
-            FMaterialData MaterialData;
+            FImportMaterial MaterialData;
             MaterialData.Name = StringCast<CHAR_T>(CurrentMaterial->name).ToString();
 
-            MaterialData.Textures[EMaterialTexture::Diffuse]          = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
-            MaterialData.Textures[EMaterialTexture::Normal]           = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
-            MaterialData.Textures[EMaterialTexture::Specular]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
-            MaterialData.Textures[EMaterialTexture::Emissive]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
-            MaterialData.Textures[EMaterialTexture::AmbientOcclusion] = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
+            MaterialData.Textures[EMaterialTexture::Diffuse]          = AddTexture(CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
+            MaterialData.Textures[EMaterialTexture::Normal]           = AddTexture(CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
+            MaterialData.Textures[EMaterialTexture::Specular]         = AddTexture(CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
+            MaterialData.Textures[EMaterialTexture::Emissive]         = AddTexture(CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
+            MaterialData.Textures[EMaterialTexture::AmbientOcclusion] = AddTexture(CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
 
-            if (MaterialData.Textures[EMaterialTexture::Specular])
+            if (MaterialData.Textures[EMaterialTexture::Specular] >= 0)
             {
                 MaterialData.Routes[EMaterialScalar::Occlusion] = FMaterialSourceRoute(EMaterialTexture::Specular, ETextureChannel::R);
                 MaterialData.Routes[EMaterialScalar::Roughness] = FMaterialSourceRoute(EMaterialTexture::Specular, ETextureChannel::G);
@@ -166,24 +215,54 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             MaterialData.Metallic      = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
             // TODO: Other material properties
-            UniqueMaterials[CurrentMaterial->id] = OutModelData.Materials.Size();
-            OutModelData.Materials.Add(Move(MaterialData));
+            UniqueMaterials[CurrentMaterial->id] = Scene.Materials.Size();
+            Scene.Materials.Add(Move(MaterialData));
         }
 
-        const bool bApplyScaleFactor = (InFlags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None;
-
-        const FMatrix4 ScaleMatrix     = FMatrix4::Scale(bApplyScaleFactor ? GlobalSettings->UnitScaleFactor : 1.0f);
-        const FMatrix4 GlobalTransform = FBXConvertMatrix(CurrentMesh->getGlobalTransform());
-        const FMatrix4 GeometricMatrix = FBXConvertMatrix(CurrentMesh->getGeometricMatrix());
-        const FMatrix4 Transform       = GlobalTransform * GeometricMatrix * ScaleMatrix;
+        const int32 NodeIndex = AddNode(CurrentMesh);
 
         const ofbx::GeometryData& GeometryData = CurrentMesh->getGeometryData();
+        const int32 PartitionCount = GeometryData.getPartitionCount();
+
+        // A partition draws with the material of the same index on the node, so nodes sharing a geometry can each have their own
+        TArray<int32> NodeMaterials;
+        for (int32 PartitionIdx = 0; PartitionIdx < PartitionCount; PartitionIdx++)
+        {
+            int32 MaterialIndex = INVALID_MATERIAL_INDEX;
+            if (PartitionIdx < CurrentMesh->getMaterialCount())
+            {
+                if (const int32* ExistingMaterialIndex = UniqueMaterials.Find(CurrentMesh->getMaterial(PartitionIdx)->id))
+                {
+                    MaterialIndex = *ExistingMaterialIndex;
+                }
+            }
+
+            if (MaterialIndex == INVALID_MATERIAL_INDEX)
+            {
+                LOG_WARNING("[FFBXImporter] Partition in Mesh '%s' has no material", CurrentMesh->name);
+            }
+
+            NodeMaterials.Add(MaterialIndex);
+        }
+
+        Scene.Nodes[NodeIndex].Materials = ::Move(NodeMaterials);
+
+        // The geometric transform applies to the geometry alone, not to child nodes, so it is part of the mesh. Geometry shared by
+        // several nodes is imported once, unless their geometric transforms differ.
+        const FMatrix4  GeometricMatrix = FBXConvertMatrix(CurrentMesh->getGeometricMatrix());
+        const ofbx::Geometry* Geometry  = CurrentMesh->getGeometry();
+        const uint64          SharedKey = (Geometry && GeometricMatrix == FMatrix4::Identity()) ? Geometry->id : CurrentMesh->id;
+
+        if (const int32* ExistingMesh = UniqueGeometries.Find(SharedKey))
+        {
+            Scene.Nodes[NodeIndex].Mesh = *ExistingMesh;
+            continue;
+        }
+
         ofbx::Vec3Attributes Positions = GeometryData.getPositions();
         ofbx::Vec3Attributes Normals   = GeometryData.getNormals();
         ofbx::Vec3Attributes Tangents  = GeometryData.getTangents();
         ofbx::Vec2Attributes TexCoords = GeometryData.getUVs();
-
-        const int32 PartitionCount = GeometryData.getPartitionCount();
 
         FMeshData MeshData;
         MeshData.Indices.Reserve(Positions.count);
@@ -221,14 +300,14 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     // Position
                     const ofbx::Vec3 OfbxPosition = Positions.get(VertexIdx);
                     const FVector3 Position(OfbxPosition.x, OfbxPosition.y, OfbxPosition.z);
-                    Vertex.Position = Transform.Transform(Position);
+                    Vertex.Position = GeometricMatrix.Transform(Position);
 
                     // Normal
                     if (Normals.values)
                     {
                         const ofbx::Vec3 OfbxNormal = Normals.get(VertexIdx);
                         const FVector3 Normal(OfbxNormal.x, OfbxNormal.y, OfbxNormal.z);
-                        Vertex.Normal = Transform.TransformNormal(Normal);
+                        Vertex.Normal = GeometricMatrix.TransformNormal(Normal);
                     }
 
                     // Tangents
@@ -236,7 +315,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     {
                         const ofbx::Vec3 OfbxTangent = Tangents.get(VertexIdx);
                         const FVector3 Tangent(OfbxTangent.x, OfbxTangent.y, OfbxTangent.z);
-                        Vertex.Tangent = Transform.TransformNormal(Tangent);
+                        Vertex.Tangent = GeometricMatrix.TransformNormal(Tangent);
                     }
 
                     // TexCoords
@@ -268,39 +347,21 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             SubMesh.VertexCount = MeshData.Vertices.Size() - SubMesh.BaseVertex;
             SubMesh.IndexCount  = MeshData.Indices.Size() - SubMesh.StartIndex;
 
-            // Add material index to the mesh
-            SubMesh.MaterialIndex = INVALID_MATERIAL_INDEX;
-            if (PartitionIdx < CurrentMesh->getMaterialCount())
-            {
-                const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(PartitionIdx);
-                if (uint32* ExistingMaterialIndex = UniqueMaterials.Find(CurrentMaterial->id))
-                {
-                    SubMesh.MaterialIndex = *ExistingMaterialIndex;
-                }
-            }
-
-            if (SubMesh.MaterialIndex == INVALID_MATERIAL_INDEX)
-            {
-                LOG_WARNING("[FFBXImporter] Partition in Mesh '%s' has no material", CurrentMesh->name);
-            }
+            SubMesh.MaterialIndex = PartitionIdx;
         }
 
         // Convert to left-handed
-        if ((InFlags & EMeshImportFlags::ForceLeftHanded) != EMeshImportFlags::None)
+        if (bReverseHandedness)
         {
-            if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
-            {
-                MeshData.ReverseHandedness();
-            }
+            MeshData.ReverseHandedness();
         }
 
-        if ((InFlags & EMeshImportFlags::InvertAxisX) != EMeshImportFlags::None)
+        if (bInvertAxisX)
         {
             MeshData.InvertAxisX();
         }
 
         // If there are no tangents, then we calculate them
-        const bool bRecalculateTangents = (InFlags & EMeshImportFlags::RecalculateTangents) != EMeshImportFlags::None;
         if (!Tangents.values || bRecalculateTangents)
         {
             MeshData.CalculateTangents();
@@ -311,24 +372,31 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         }
 
         // Add the mesh to our scene
+        int32 MeshIndex = -1;
         if (!MeshData.Vertices.IsEmpty())
         {
             LOG_INFO("[FFBXImporter] Loaded Mesh '%s'", StringCast<CHAR_T>(CurrentMesh->name).Get());
             MeshData.Name = StringCast<CHAR_T>(CurrentMesh->name).ToString();
-            OutModelData.Meshes.Add(Move(MeshData));
+
+            MeshIndex = Scene.Meshes.Size();
+            Scene.Meshes.Add(Move(MeshData));
         }
         else
         {
             LOG_WARNING("[FFBXImporter] Tried to load mesh without any data");
         }
+
+        Scene.Nodes[NodeIndex].Mesh = MeshIndex;
+        UniqueGeometries.Add(SharedKey, MeshIndex);
     }
 
-    OutModelData.Meshes.Shrink();
-    OutModelData.Materials.Shrink();
+    Scene.Meshes.Shrink();
+    Scene.Materials.Shrink();
 
     FBXScene->destroy();
 
-    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d meshes and %d materials", *Filename, OutModelData.Meshes.Size(), OutModelData.Materials.Size());
+    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d nodes, %d meshes and %d materials", *Filename, Scene.Nodes.Size(), Scene.Meshes.Size(), Scene.Materials.Size());
+    OutScene = ::Move(Scene);
     return true;
 }
 
