@@ -1,7 +1,9 @@
 #pragma once
+#include "AssetCore/Asset.h"
 #include "RHI/RHIResources.h"
 #include "Engine/EngineModule.h"
-#include "Engine/Resources/Resource.h"
+#include "Core/RefCounted.h"
+#include "Core/Containers/SharedRef.h"
 #include "RendererCore/TextureResourceData.h"
 
 class FTexture;
@@ -10,7 +12,7 @@ class FTexture2D;
 typedef TSharedRef<FTexture>   FTextureRef;
 typedef TSharedRef<FTexture2D> FTexture2DRef;
 
-class ENGINE_API FTexture : public FResource
+class ENGINE_API FTexture : public FRefCounted, public FAsset
 {
 public:
     virtual ~FTexture() = default;
@@ -37,6 +39,12 @@ public:
 
 protected:
     FString Filename;
+};
+
+template<>
+struct TAssetTypeOf<FTexture>
+{
+    static constexpr EAssetType Value = EAssetType::Texture;
 };
 
 class ENGINE_API FTexture2D : public FTexture

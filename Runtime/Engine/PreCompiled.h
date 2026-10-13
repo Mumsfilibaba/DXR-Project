@@ -18,7 +18,6 @@
 
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Model.h"
-#include "Engine/Resources/Resource.h"
 #include "Engine/Resources/Texture.h"
 
 #include "Engine/EngineUI/Editor/EditorFooterWidget.h"

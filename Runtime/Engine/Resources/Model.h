@@ -1,18 +1,19 @@
 #pragma once
+#include "AssetCore/Asset.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Math/AABB.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/EngineModule.h"
-#include "Engine/Resources/Resource.h"
+#include "Core/RefCounted.h"
 #include "Engine/Assets/MeshData.h"
 #include "Engine/Assets/ModelData.h"
 #include "RendererCore/VertexDeclaration.h"
 
 struct FVertexStreamBinding;
 
-class ENGINE_API FMesh
+class ENGINE_API FMesh : public FAsset
 {
 public:
     static TSharedPtr<FMesh> Create(const FMeshData& MeshData, bool bCreateRayTracingResources = false);
@@ -122,7 +123,13 @@ private:
     TArray<FSubMesh>                     SubMeshes;
 };
 
-class ENGINE_API FModel : public FResource
+template<>
+struct TAssetTypeOf<FMesh>
+{
+    static constexpr EAssetType Value = EAssetType::Mesh;
+};
+
+class ENGINE_API FModel : public FRefCounted, public FAsset
 {
 public:
     static TSharedRef<FModel> Create(const FModelData& ModelData);
@@ -171,4 +178,10 @@ private:
     TArray<TSharedPtr<FMaterial>> Materials;
     float                         UniformScale;
     FAABB                         BoundingBox;
+};
+
+template<>
+struct TAssetTypeOf<FModel>
+{
+    static constexpr EAssetType Value = EAssetType::Model;
 };

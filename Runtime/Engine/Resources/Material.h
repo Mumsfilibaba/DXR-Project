@@ -1,4 +1,5 @@
 #pragma once
+#include "AssetCore/Asset.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Color.h"
 #include "Core/Containers/StaticArray.h"
@@ -186,7 +187,7 @@ struct FMaterialHLSL
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL Material layout");
 static_assert(sizeof(FMaterialHLSL) == 96, "FMaterialHLSL must match the HLSL Material layout");
 
-class ENGINE_API FMaterial
+class ENGINE_API FMaterial : public FAsset
 {
 public:
     static EMaterialFlags GetSupportedMaterialFlags(const FVertexDeclaration& Declaration);
@@ -335,6 +336,12 @@ private:
     FMaterialInfo       MaterialInfo;
     int32               BufferIndex = 0;
     FRHISamplerStateRef Sampler;
+};
+
+template<>
+struct TAssetTypeOf<FMaterial>
+{
+    static constexpr EAssetType Value = EAssetType::Material;
 };
 
 class FMaterialMaskSlots

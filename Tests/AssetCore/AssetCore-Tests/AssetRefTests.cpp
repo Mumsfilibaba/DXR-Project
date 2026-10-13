@@ -1,5 +1,6 @@
 #include "AssetRefTests.h"
 
+#include <AssetCore/Asset.h>
 #include <AssetCore/AssetRef.h>
 #include <AssetCore/AssetRegistry.h>
 #include <Core/Filesystem/File.h>
@@ -9,7 +10,7 @@
 
 #include "TestCommon/TestMacros.h"
 
-struct FTestTexture
+class FTestTexture : public FAsset
 {
 };
 
@@ -115,6 +116,21 @@ bool AssetRef_Test()
 
         // Untyped, the same GUID resolves
         TEST_EXPECT(static_cast<const FAssetRef&>(Cube).Resolve(Registry) != nullptr);
+    }
+
+    TEST_SECTION(TEXT("A runtime object remembers the asset it was loaded from, so it can be referenced again"));
+    {
+        FTestTexture Texture;
+        TEST_EXPECT(!Texture.IsAsset() && !Texture.GetAssetRef().IsSet());
+
+        Texture.SetAssetRef(FAssetRef::FromAsset(*Registry.FindByGuid(BrickTexture)));
+        TEST_EXPECT(Texture.IsAsset() && Texture.GetAssetRef().GetGuid() == BrickTexture);
+
+        const TAssetRef<FTestTexture> Saved(Texture.GetAssetRef().GetGuid(), Texture.GetAssetRef().GetPath());
+        TEST_EXPECT(Saved.Resolve(Registry) && Saved.Resolve(Registry)->Path.Equals(TEXT("/Project/Textures/Brick.dxrasset")));
+
+        Texture.SetAssetRef(FAssetRef());
+        TEST_EXPECT(!Texture.IsAsset());
     }
 
     TEST_SECTION(TEXT("References are equal when their GUIDs are"));
