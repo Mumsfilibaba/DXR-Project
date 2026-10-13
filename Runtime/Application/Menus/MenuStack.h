@@ -4,6 +4,7 @@
 #include "Core/Delegates/Delegate.h"
 #include "Application/Elements/Window.h"
 #include "Application/Menus/MenuTypes.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 typedef TSharedPtr<struct FMenuLayer> FMenuHandle;
 
@@ -40,7 +41,7 @@ struct FMenuLayer
     bool bIsInline;
 };
 
-class APPLICATION_API FMenuStack
+class APPLICATION_API FMenuStack : public FNonCopyable
 {
 public:
 
@@ -68,9 +69,6 @@ public:
 public:
     FMenuStack();
     ~FMenuStack();
-
-    FMenuStack(const FMenuStack&) = delete;
-    FMenuStack& operator=(const FMenuStack&) = delete;
 
     /**
      * @brief Opens a menu, closing any sibling already open at that depth. The depth comes from the anchor:

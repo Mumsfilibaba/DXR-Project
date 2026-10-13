@@ -5,6 +5,7 @@
 #include "Application/Elements/CompoundElement.h"
 #include "Application/Elements/Window.h"
 #include "Application/Text/IFontFace.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 enum class EToolTipPlacement : uint8
 {
@@ -106,7 +107,7 @@ private:
     EToolTipPlacement     Placement;
 };
 
-class APPLICATION_API FToolTipService
+class APPLICATION_API FToolTipService : public FNonCopyable
 {
 public:
 
@@ -132,9 +133,6 @@ public:
 public:
     FToolTipService();
     ~FToolTipService();
-
-    FToolTipService(const FToolTipService&) = delete;
-    FToolTipService& operator=(const FToolTipService&) = delete;
 
     /**
      * @brief Asks for a tip once the cursor has rested on an element, replacing any other request.

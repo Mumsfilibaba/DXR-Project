@@ -4,6 +4,7 @@
 #include <CoreApplication/PlatformInterface/IPlatformApplicationMessageHandler.h>
 #include <Application/Application.h>
 #include <Application/Elements/Window.h>
+#include <Core/Templates/Utility/NonCopyable.h>
 
 class FStubPlatformWindow final : public IPlatformWindow, public FRefCountedBase
 {
@@ -227,7 +228,7 @@ inline TSharedPtr<FWindow> CreateStubWindow(const TSharedPtr<FApplication>& Appl
     return Window;
 }
 
-class FScopedStubApplication
+class FScopedStubApplication : public FNonCopyable
 {
 public:
     FScopedStubApplication()
@@ -240,9 +241,6 @@ public:
     {
         FApplication::Release();
     }
-
-    FScopedStubApplication(const FScopedStubApplication&) = delete;
-    FScopedStubApplication& operator=(const FScopedStubApplication&) = delete;
 
     FApplication& GetApplication() const
     {

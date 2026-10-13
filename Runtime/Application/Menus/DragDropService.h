@@ -5,6 +5,7 @@
 #include "Core/Delegates/Delegate.h"
 #include "Application/Draw/DrawTypes.h"
 #include "Application/Elements/VisualElement.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 class FWindow;
 
@@ -61,7 +62,7 @@ DECLARE_DELEGATE(FOnDragDropped, const FDragDropPayload& /*Payload*/, const FInt
 /** @brief Asks a target whether it would take the payload, which is what picks one out of the targets under the cursor. */
 DECLARE_RETURN_DELEGATE(FOnDragOver, bool, const FDragDropPayload& /*Payload*/);
 
-class APPLICATION_API FDragDropService
+class APPLICATION_API FDragDropService : public FNonCopyable
 {
 public:
 
@@ -92,9 +93,6 @@ public:
 public:
     FDragDropService();
     ~FDragDropService();
-
-    FDragDropService(const FDragDropService&) = delete;
-    FDragDropService& operator=(const FDragDropService&) = delete;
 
     /**
      * @brief Starts a drag, which a source does once the cursor has moved far enough to mean one.

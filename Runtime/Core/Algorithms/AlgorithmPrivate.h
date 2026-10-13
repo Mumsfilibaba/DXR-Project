@@ -61,7 +61,7 @@ struct AlgorithmPrivate : public FNonConstructible
     }
 
     template<typename ElementType>
-    struct TScratchArray
+    struct TScratchArray : public FNonCopyable
     {
         ElementType* Data  = nullptr;
         int32        Count = 0;
@@ -90,9 +90,6 @@ struct AlgorithmPrivate : public FNonConstructible
                 Data = static_cast<ElementType*>(Memory::Malloc(static_cast<uint64>(InCount) * sizeof(ElementType)));
             }
         }
-
-        TScratchArray(const TScratchArray&)            = delete;
-        TScratchArray& operator=(const TScratchArray&) = delete;
     };
 
     template<typename KeyType>

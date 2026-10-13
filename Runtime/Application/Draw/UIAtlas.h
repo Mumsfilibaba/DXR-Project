@@ -3,8 +3,9 @@
 #include "Core/Containers/String.h"
 #include "Application/Draw/DrawTypes.h"
 #include "RHI/RHIResources.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
-class APPLICATION_API FUIAtlas
+class APPLICATION_API FUIAtlas : public FNonCopyable
 {
 public:
 
@@ -20,9 +21,6 @@ public:
 public:
     FUIAtlas();
     ~FUIAtlas();
-
-    FUIAtlas(const FUIAtlas&) = delete;
-    FUIAtlas& operator=(const FUIAtlas&) = delete;
 
     /**
      * @brief Packs an image and builds a brush that samples where it landed. The region is reserved and the

@@ -1,8 +1,9 @@
 #pragma once
 #include "Core/Threading/Atomic.h"
 #include "Core/Platform/PlatformThreadMisc.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
-class FSpinLock
+class FSpinLock : public FNonCopyable
 {
     enum class EState : int32
     {
@@ -11,9 +12,6 @@ class FSpinLock
     };
 
 public:
-    FSpinLock(const FSpinLock&) = delete;
-    FSpinLock& operator=(const FSpinLock&) = delete;
-
     ~FSpinLock() = default;
 
     /** @brief Default constructor */

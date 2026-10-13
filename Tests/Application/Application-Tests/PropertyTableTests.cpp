@@ -13,8 +13,9 @@
 #include <Application/Input/Keys.h>
 #include <Application/Menus/ToolTipService.h>
 #include <Application/Text/FixedWidthFontFace.h>
+#include <Core/Templates/Utility/NonCopyable.h>
 
-class FScopedPropertyTableTestServices
+class FScopedPropertyTableTestServices : public FNonCopyable
 {
 public:
     FScopedPropertyTableTestServices() = default;
@@ -23,9 +24,6 @@ public:
     {
         FToolTipService::Shutdown();
     }
-
-    FScopedPropertyTableTestServices(const FScopedPropertyTableTestServices&) = delete;
-    FScopedPropertyTableTestServices& operator=(const FScopedPropertyTableTestServices&) = delete;
 };
 
 static TSharedPtr<IFontFace> CreateFont()

@@ -5,6 +5,7 @@
 #include "Core/Threading/HazardPointer.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformAtomic.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 enum class EQueueType
 {
@@ -17,7 +18,7 @@ enum class EQueueType
 };
 
 template<typename ElementType, EQueueType QueueType = EQueueType::SPSC>
-class TQueue
+class TQueue : public FNonCopyable
 {
     struct FNode
     {
@@ -27,9 +28,6 @@ class TQueue
     };
 
 public:
-    TQueue(const TQueue&) = delete;
-    TQueue& operator=(const TQueue&) = delete;
-
     /**
      * @brief Constructor
      */

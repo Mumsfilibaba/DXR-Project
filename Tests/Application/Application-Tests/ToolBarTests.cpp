@@ -18,9 +18,10 @@
 #include <Application/Menus/ToolTipService.h>
 #include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
+#include <Core/Templates/Utility/NonCopyable.h>
 
 /** @brief Takes the menu stack and the tool tip down while the application is still standing. */
-class FScopedToolBarTestServices
+class FScopedToolBarTestServices : public FNonCopyable
 {
 public:
     FScopedToolBarTestServices() = default;
@@ -30,9 +31,6 @@ public:
         FMenuStack::Shutdown();
         FToolTipService::Shutdown();
     }
-
-    FScopedToolBarTestServices(const FScopedToolBarTestServices&) = delete;
-    FScopedToolBarTestServices& operator=(const FScopedToolBarTestServices&) = delete;
 };
 
 static TSharedPtr<IFontFace> CreateFont()

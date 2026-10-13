@@ -4,6 +4,7 @@
 #include "Core/Containers/Set.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Application/Layout/LayoutTypes.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 struct FGlyph
 {
@@ -28,7 +29,7 @@ struct FGlyph
     int32 Advance;
 };
 
-class APPLICATION_API FFontAtlas
+class APPLICATION_API FFontAtlas : public FNonCopyable
 {
 public:
 
@@ -50,9 +51,6 @@ public:
 public:
     FFontAtlas();
     ~FFontAtlas();
-
-    FFontAtlas(const FFontAtlas&) = delete;
-    FFontAtlas& operator=(const FFontAtlas&) = delete;
 
     /**
      * @brief Rasterizes the printable ASCII range of a font into the atlas, and keeps the font data so that

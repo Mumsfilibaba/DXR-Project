@@ -13,8 +13,9 @@
 #include <Application/Menus/ToolTipService.h>
 #include <Application/Style/UIStyle.h>
 #include <Application/Text/FixedWidthFontFace.h>
+#include <Core/Templates/Utility/NonCopyable.h>
 
-class FScopedItemViewTestServices
+class FScopedItemViewTestServices : public FNonCopyable
 {
 public:
     FScopedItemViewTestServices() = default;
@@ -23,9 +24,6 @@ public:
     {
         FToolTipService::Shutdown();
     }
-
-    FScopedItemViewTestServices(const FScopedItemViewTestServices&) = delete;
-    FScopedItemViewTestServices& operator=(const FScopedItemViewTestServices&) = delete;
 };
 
 static TSharedPtr<IFontFace> CreateFont()

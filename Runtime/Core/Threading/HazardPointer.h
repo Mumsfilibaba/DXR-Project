@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Atomic.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 // Slots a single thread can protect at once. Two is enough for a linked queue: the node it is
 // inspecting and the node it is about to claim.
@@ -11,7 +12,7 @@ constexpr int32 HAZARD_RETIRE_THRESHOLD = 64;
 
 class FHazardPointerGuard;
 
-class FHazardPointerDomain
+class FHazardPointerDomain : public FNonCopyable
 {
     friend class FHazardPointerGuard;
 
@@ -52,9 +53,6 @@ class FHazardPointerDomain
     };
 
 public:
-    FHazardPointerDomain(const FHazardPointerDomain&) = delete;
-    FHazardPointerDomain& operator=(const FHazardPointerDomain&) = delete;
-
     /**
      * @return Returns the process-wide domain. Deliberately never destroyed. A thread returns 
      * its record from a thread_local destructor, and the order of that against static destruction
@@ -236,12 +234,9 @@ private:
 /**
  * @brief Publishes hazards for the calling thread and clears them on scope exit
  */
-class FHazardPointerGuard
+class FHazardPointerGuard : public FNonCopyable
 {
 public:
-    FHazardPointerGuard(const FHazardPointerGuard&) = delete;
-    FHazardPointerGuard& operator=(const FHazardPointerGuard&) = delete;
-
     FORCEINLINE FHazardPointerGuard()
         : Record(FHazardPointerDomain::GetThreadRecord())
     {

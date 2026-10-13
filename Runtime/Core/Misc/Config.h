@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Misc/IniFile.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 // Declaration order is priority order, every layer overrides the ones declared before it. The engine's layers come first and
 // the project's after them, so a project can override anything the engine sets, the engine's platform files included.
@@ -36,7 +37,7 @@ struct EConfigFile
     };
 };
 
-class CORE_API FConfig
+class CORE_API FConfig : public FNonCopyable
 {
 public:
     static bool Initialize();
@@ -45,9 +46,6 @@ public:
 public:
     FConfig();
     ~FConfig();
-
-    FConfig(const FConfig&) = delete;
-    FConfig& operator=(const FConfig&) = delete;
 
     /** @brief Loads a file and keeps it open, without making it part of any layer */
     FIniFile* LoadFile(const FString& Filename);

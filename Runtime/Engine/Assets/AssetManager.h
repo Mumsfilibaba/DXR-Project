@@ -1,4 +1,5 @@
 #pragma once
+#include "AssetCore/AssetRegistry.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Platform/CriticalSection.h"
@@ -6,30 +7,12 @@
 #include "Engine/Assets/IModelImporter.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Texture.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 struct FModelImporter;
 struct FModelSerializer;
 
-class ENGINE_API FAssetRegistry
-{
-public:
-    FAssetRegistry();
-    ~FAssetRegistry();
-
-    FString* FindFile(const FString& SrcFilename);
-    void AddEntry(const FString& SrcFilename, const FString& Filename);
-    void RemoveEntry(const FString& SrcFilename);
-    void LoadRegistryFile();
-    void UpdateRegistryFile();
-
-private:
-
-    // Maps the original   path to the engine file
-    TMap<FString, FString> RegistryMap;
-    FString                RegistryFilename;
-};
-
-class ENGINE_API FAssetManager
+class ENGINE_API FAssetManager : public FNonCopyable
 {
 public:
 
@@ -55,12 +38,16 @@ public:
     void RegisterModelImporter(const TSharedPtr<IModelImporter>& InImporter);
     void UnregisterModelImporter(const TSharedPtr<IModelImporter>& InImporter);
 
+    FORCEINLINE FAssetRegistry& GetAssetRegistry()
+    {
+        return AssetRegistry;
+    }
+
 private:
     FAssetManager();
     ~FAssetManager();
 
-    // Registry of where to find any engine file
-    TUniquePtr<FAssetRegistry>           AssetRegistry;
+    FAssetRegistry                       AssetRegistry;
     TUniquePtr<FModelSerializer>         ModelSerializer;
     TUniquePtr<FModelImporter>           ModelImporter;
     // Meshes

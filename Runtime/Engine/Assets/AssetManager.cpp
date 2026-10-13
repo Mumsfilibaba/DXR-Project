@@ -3,7 +3,6 @@
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/OutputDeviceManager.h"
-#include "Core/Misc/Parse.h"
 #include "Core/Misc/Paths.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/Assets/AssetManager.h"
@@ -32,138 +31,10 @@ static FString ReplaceExtension(const FString& Filename, const FString& NewExten
     return NewFilename;
 }
 
-FAssetRegistry::FAssetRegistry()
-    : RegistryMap()
-    , RegistryFilename()
-{
-    const FString AssetPath   = Paths::GetAssetDir();
-    const FString ProjectName = Paths::GetProjectName();
-    RegistryFilename = AssetPath + TEXT("/") + ProjectName + TEXT(".assetregistry");
-}
-
-FAssetRegistry::~FAssetRegistry()
-{
-}
-
-FString* FAssetRegistry::FindFile(const FString& SrcFilename)
-{
-    return RegistryMap.Find(SrcFilename);
-}
-
-void FAssetRegistry::AddEntry(const FString& SrcFilename, const FString& Filename)
-{
-    RegistryMap.Add(SrcFilename, Filename);
-    UpdateRegistryFile();
-}
-
-void FAssetRegistry::RemoveEntry(const FString& SrcFilename)
-{
-    RegistryMap.Remove(SrcFilename);
-    UpdateRegistryFile();
-}
-
-void FAssetRegistry::LoadRegistryFile()
-{
-    if (!FPlatformFile::IsFile(*RegistryFilename))
-    {
-        return;
-    }
-
-    TArray<CHAR_T> FileContents;
-    {
-        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(RegistryFilename);
-        if (!FileHandle)
-        {
-            return;
-        }
-
-        // Read the full file
-        if (!File::ReadTextFile(FileHandle.Get(), FileContents))
-        {
-            return;
-        }
-    }
-
-    CHAR_T* Start = FileContents.Data();
-    while (Start && (*Start != '\0'))
-    {
-        // Skip newline chars
-        while (*Start == '\n')
-            ++Start;
-
-        CHAR_T* LineStart = Start;
-        Parse::ParseLine(&Start);
-
-        // End string at the end of line
-        if (*Start == '\n')
-        {
-            *(Start++) = '\0';
-        }
-
-        // Skip any spaces at the beginning of the line
-        Parse::ParseWhiteSpace(&LineStart);
-        
-        if (CHAR_T* EqualSign = CString::Strchr(LineStart, '='))
-        {
-            *EqualSign = '\0';
-
-            CHAR_T* KeyEnd = EqualSign - 1;
-            while (*KeyEnd == ' ')
-                *(KeyEnd--) = '\0';
-
-            // The parsed key
-            CHAR_T* Key = LineStart;
-            LineStart = EqualSign + 1;
-            
-            Parse::ParseWhiteSpace(&LineStart);
-
-            // Find the end of the value
-            CHAR_T* Value    = LineStart;
-            CHAR_T* ValueEnd = CString::Strchr(LineStart, ' ');
-
-            // Use line-end as backup
-            if (!ValueEnd)
-            {
-                ValueEnd = Start;
-            }
-
-            while (*ValueEnd == ' ')
-                *(ValueEnd--) = '\0';
-
-            FString NewValue      = Value;
-            FString OriginalValue = Key;
-            RegistryMap.Emplace(Move(OriginalValue), Move(NewValue));
-        }
-    }
-}
-
-void FAssetRegistry::UpdateRegistryFile()
-{
-    FString FileContents;
-    for (TMap<FString, FString>::IteratorType Iterator = RegistryMap.CreateIterator(); !Iterator.IsEnd(); Iterator++)
-    {
-        FileContents.AppendPrintf(TEXT("%s = %s\n"), *Iterator.GetKey(), *Iterator.GetValue());
-    }
-
-    {
-        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(RegistryFilename);
-        if (!FileHandle)
-        {
-            return;
-        }
-
-        // Write the full file
-        if (!File::WriteTextFile(FileHandle.Get(), FileContents))
-        {
-            return;
-        }
-    }
-}
-
 FAssetManager* FAssetManager::AssetManager = nullptr;
 
 FAssetManager::FAssetManager()
-    : AssetRegistry(nullptr)
+    : AssetRegistry()
     , ModelSerializer(nullptr)
     , ModelImporters()
     , ModelImportersCS()
@@ -174,9 +45,6 @@ FAssetManager::FAssetManager()
     , Textures()
     , TexturesCS()
 {
-    AssetRegistry = MakeUniquePtr<FAssetRegistry>();
-    AssetRegistry->LoadRegistryFile();
-    
     ModelImporter   = MakeUniquePtr<FModelImporter>();
     ModelSerializer = MakeUniquePtr<FModelSerializer>();
 }
@@ -209,6 +77,27 @@ bool FAssetManager::Initialize()
         AssetManager->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
         AssetManager->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
         AssetManager->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
+
+        FAssetRegistry& Registry = AssetManager->AssetRegistry;
+        Registry.SetMounts(FContentMounts::CreateDefault());
+
+        const FString PrecomputedFile = File::CombinePath(Paths::GetProjectContentDir(), FAssetRegistry::PrecomputedFilename);
+        FString       RegistryError;
+
+        if (!Paths::IsPackaged() || !FPlatformFile::IsFile(*PrecomputedFile))
+        {
+            Registry.Rescan();
+        }
+        else if (Registry.LoadFromFile(PrecomputedFile, RegistryError))
+        {
+            LOG_INFO("[FAssetManager]: Loaded %d assets from '%s'", Registry.GetNumAssets(), *PrecomputedFile);
+        }
+        else
+        {
+            LOG_WARNING("[FAssetManager]: %s, so the content folders are scanned instead", *RegistryError);
+            Registry.Rescan();
+        }
+
         return true;
     }
 
@@ -319,28 +208,21 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     TSharedRef<FModel> NewModel;
     FModelData NewModelData;
 
-    // If we have enabled serialization then look up the cached model
-    const bool bEnableAssetConversion = CVarEnableAssetConversion.GetValue();
-    if (bEnableAssetConversion)
+    const bool    bEnableAssetConversion = CVarEnableAssetConversion.GetValue();
+    const FString ConvertedPath          = ReplaceExtension(FinalPath, TEXT(".dxrmesh"));
+
+    if (bEnableAssetConversion && FPlatformFile::IsFile(*ConvertedPath))
     {
-        if (FString* ExistingPath = AssetRegistry->FindFile(FinalPath))
+        const FStringView FileNameView(ConvertedPath);
+        if (ModelImporter->ImportFromFile(FileNameView, Flags, NewModelData))
         {
-            const FStringView FileNameView(*ExistingPath);
+            NewModel = InsertModel(FinalPath, NewModelData);
+        }
 
-            if (ModelImporter->ImportFromFile(FileNameView, Flags, NewModelData))
-            {
-                NewModel = InsertModel(FinalPath, NewModelData);
-            }
-
-            if (NewModel)
-            {
-                LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);
-                return NewModel;
-            }
-            else
-            {
-                AssetRegistry->RemoveEntry(FinalPath);
-            }
+        if (NewModel)
+        {
+            LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);
+            return NewModel;
         }
     }
 
@@ -374,11 +256,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
 
     if (bEnableAssetConversion)
     {
-        const FString NewFilename = ReplaceExtension(FinalPath, TEXT(".dxrmesh"));
-        if (ModelSerializer->Serialize(NewFilename, NewModelData))
-        {
-            AssetRegistry->AddEntry(FinalPath, NewFilename);
-        }
+        ModelSerializer->Serialize(ConvertedPath, NewModelData);
     }
 
     LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);
@@ -391,6 +269,7 @@ void FAssetManager::UnloadModel(const TSharedRef<FModel>& InModel)
 
     FString ModelPath;
     bool    bFound = false;
+
     Models.Foreach([&](const FString& Path, const TSharedRef<FModel>& Model)
     {
         if (Model == InModel)

@@ -1,9 +1,11 @@
 #pragma once
+#include "AssetCore/AssetType.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
 #include "Core/Json/JsonValue.h"
 #include "Core/Misc/Guid.h"
 #include "Core/PlatformInterface/IPlatformFileSystem.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 constexpr uint32 MakeAssetChunkId(const ANSICHAR (&Text)[5])
 {
@@ -23,13 +25,6 @@ struct AssetChunk
 
     /** @brief The payload, laid out by the asset type */
     static constexpr uint32 Data = MakeAssetChunkId("DATA");
-};
-
-enum class EAssetType : uint32
-{
-    Unknown = 0,
-    Texture = 1,
-    Mesh    = 2,
 };
 
 struct FAssetFileHeader
@@ -124,12 +119,10 @@ private:
     TArray<FChunk> Chunks;
 };
 
-class ASSETCORE_API FAssetFileReader
+class ASSETCORE_API FAssetFileReader : public FNonCopyable
 {
 public:
     FAssetFileReader() = default;
-    FAssetFileReader(const FAssetFileReader&) = delete;
-    FAssetFileReader& operator=(const FAssetFileReader&) = delete;
 
     /**
      * @brief Open Filename and read its header and chunk table

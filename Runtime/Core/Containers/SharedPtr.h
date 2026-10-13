@@ -3,6 +3,7 @@
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Threading/Atomic.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 
 enum class EThreadAccess
 {
@@ -24,16 +25,11 @@ class TSharedPtr;
 namespace SharedPointerInternal
 {
     template<EThreadAccess ThreadAccess = EThreadAccess::Safe>
-    class FReferenceHandler
+    class FReferenceHandler : public FNonCopyAndNonMovable
     {
     public:
         typedef int32 ReferenceCountType;
         typedef typename TConditional<ThreadAccess == EThreadAccess::Safe, FAtomicInt32, int32>::Type ReferenceType;
-
-        FReferenceHandler(const FReferenceHandler&) = delete;
-        FReferenceHandler(FReferenceHandler&&) = delete;
-        FReferenceHandler& operator=(const FReferenceHandler&) = delete;
-        FReferenceHandler& operator=(FReferenceHandler&&) = delete;
 
         // NOTE: Default constructor initializes references to one
         FReferenceHandler()
@@ -188,11 +184,6 @@ namespace SharedPointerInternal
         typedef typename TRemoveExtent<InObjectType>::Type ObjectType;
 
     public:
-        TPointerReferenceHandler(const TPointerReferenceHandler&) = delete;
-        TPointerReferenceHandler(TPointerReferenceHandler&&) = delete;
-        TPointerReferenceHandler& operator=(const TPointerReferenceHandler&) = delete;
-        TPointerReferenceHandler& operator=(TPointerReferenceHandler&&) = delete;
-
         TPointerReferenceHandler(ObjectType* InObject, DeleterType&& Deleter)
             : TDeleterLocation<DeleterType>(Forward<DeleterType>(Deleter))
             , FReferenceHandler<InThreadAccess>()
@@ -222,11 +213,6 @@ namespace SharedPointerInternal
         typedef typename TRemoveExtent<InObjectType>::Type ObjectType;
 
     public:
-        TObjectReferenceHandler(const TObjectReferenceHandler&) = delete;
-        TObjectReferenceHandler(TObjectReferenceHandler&&) = delete;
-        TObjectReferenceHandler& operator=(const TObjectReferenceHandler&) = delete;
-        TObjectReferenceHandler& operator=(TObjectReferenceHandler&&) = delete;
-
         template<typename... ArgTypes>
         explicit TObjectReferenceHandler(ArgTypes... Args)
             : FReferenceHandler<InThreadAccess>()

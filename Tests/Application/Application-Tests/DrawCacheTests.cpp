@@ -30,8 +30,9 @@
 #include <Application/Text/FixedWidthFontFace.h>
 #include <Application/Text/FontAtlas.h>
 #include <Application/Text/TrueTypeFontFace.h>
+#include <Core/Templates/Utility/NonCopyable.h>
 
-class FScopedMenuServices
+class FScopedMenuServices : public FNonCopyable
 {
 public:
     FScopedMenuServices() = default;
@@ -41,9 +42,6 @@ public:
         FMenuStack::Shutdown();
         FToolTipService::Shutdown();
     }
-
-    FScopedMenuServices(const FScopedMenuServices&) = delete;
-    FScopedMenuServices& operator=(const FScopedMenuServices&) = delete;
 };
 
 class FLayerStepDownElement final : public FVisualElement
