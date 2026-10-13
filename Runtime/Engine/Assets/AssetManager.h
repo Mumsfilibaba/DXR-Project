@@ -1,4 +1,5 @@
 #pragma once
+#include "AssetCore/AssetImporter.h"
 #include "AssetCore/AssetLoader.h"
 #include "AssetCore/AssetRegistry.h"
 #include "Core/Containers/Map.h"
@@ -63,12 +64,19 @@ public:
         return AssetLoader;
     }
 
+    /** @return Returns the importer of source files into assets, where factories for each source format are registered */
+    FORCEINLINE FAssetImporter& GetAssetImporter()
+    {
+        return AssetImporter;
+    }
+
 private:
     FAssetManager();
     ~FAssetManager();
 
     FAssetRegistry                       AssetRegistry;
     FAssetLoader                         AssetLoader;
+    FAssetImporter                       AssetImporter;
     TUniquePtr<FModelSerializer>         ModelSerializer;
     TUniquePtr<FModelImporter>           ModelImporter;
     // Meshes

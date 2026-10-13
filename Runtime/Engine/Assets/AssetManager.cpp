@@ -36,6 +36,7 @@ FAssetManager* FAssetManager::AssetManager = nullptr;
 FAssetManager::FAssetManager()
     : AssetRegistry()
     , AssetLoader(AssetRegistry)
+    , AssetImporter(FContentMounts::CreateDefault())
     , ModelSerializer(nullptr)
     , ModelImporters()
     , ModelImportersCS()

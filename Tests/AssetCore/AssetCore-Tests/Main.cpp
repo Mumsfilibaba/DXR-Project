@@ -13,6 +13,7 @@
 #include "AssetRegistryTests.h"
 #include "AssetRefTests.h"
 #include "AssetLoaderTests.h"
+#include "AssetImporterTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -31,6 +32,7 @@ static int32 RunAssetCoreTests()
     RUN_TEST(TEXT("AssetRegistry"), AssetRegistry_Test());
     RUN_TEST(TEXT("AssetRef"), AssetRef_Test());
     RUN_TEST(TEXT("AssetLoader"), AssetLoader_Test());
+    RUN_TEST(TEXT("AssetImporter"), AssetImporter_Test());
 
     if (CommandLine::FindOption(TEXT("LargeFiles")))
     {
