@@ -15,6 +15,7 @@
 #include <RendererCore/TextureHelpers.h>
 #include <Renderer/Graph/FrameResources.h>
 #include <Application/Application.h>
+#include <Core/Modules/ModuleImplementation.h>
 
 // TODO: Custom random
 #include <random>

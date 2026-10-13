@@ -11,6 +11,7 @@
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include <imgui_internal.h>
+#include "Core/Modules/ModuleImplementation.h"
 
 IMPLEMENT_ENGINE_MODULE(FImGuiPlugin, ImGuiPlugin);
 

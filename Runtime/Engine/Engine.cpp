@@ -357,11 +357,14 @@ bool FEngine::Init()
 
     // Load Game-Module
     const FString GameModuleName = Paths::GetProjectModuleName();
-    GameModule = FModuleManager::Get().LoadModule<FGameModule>(*GameModuleName);
+
+    FString GameModuleError;
+    GameModule = static_cast<FGameModule*>(FModuleManager::Get().LoadModule(*GameModuleName, GameModuleError));
 
     if (!GameModule)
     {
-        LOG_ERROR("Failed to load Game-module, the application may not behave as intended");
+        LOG_ERROR("Failed to load the game module: %s", *GameModuleError);
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), FString::Printf(TEXT("Could not load the game module '%s'.\n\n%s"), *GameModuleName, *GameModuleError));
         return false;
     }
 

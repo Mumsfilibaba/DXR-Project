@@ -31,6 +31,7 @@
 #include "ProjectDescriptorTests.h"
 #include "EngineRegistryTests.h"
 #include "PathsTests.h"
+#include "ModuleBuildStampTests.h"
 #include "CharTypeTests.h"
 #include "UnicodePathTests.h"
 #include "SocketAddressTests.h"
@@ -84,6 +85,7 @@ static int32 RunCoreTests()
     RUN_TEST(TEXT("EngineRegistry"), EngineRegistry_Test());
     RUN_TEST(TEXT("Paths"), Paths_Test());
     RUN_TEST(TEXT("ProjectPaths"), ProjectPaths_Test());
+    RUN_TEST(TEXT("ModuleBuildStamp"), ModuleBuildStamp_Test());
     RUN_TEST(TEXT("CharType"), CharType_Test());
     RUN_TEST(TEXT("UnicodePath"), UnicodePath_Test());
     RUN_TEST(TEXT("SocketAddress"), SocketAddress_Test());

@@ -1,6 +1,7 @@
 #include "Core/Misc/CoreDelegates.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "Engine/EngineModule.h"
+#include "Core/Modules/ModuleImplementation.h"
 
 #include <imgui.h>
 

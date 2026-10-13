@@ -13,6 +13,7 @@
 #include "D3D11RHI/D3D11Shader.h"
 #include "D3D11RHI/D3D11SwapChain.h"
 #include "D3D11RHI/D3D11Texture.h"
+#include "Core/Modules/ModuleImplementation.h"
 
 IMPLEMENT_ENGINE_MODULE(FD3D11ModuleRHI, D3D11RHI);
 

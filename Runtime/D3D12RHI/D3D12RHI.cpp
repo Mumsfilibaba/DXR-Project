@@ -21,6 +21,7 @@
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Stats.h"
 #include "D3D12RHI/RayTracing/D3D12RayTracing.h"
+#include "Core/Modules/ModuleImplementation.h"
 
 #include <dxgidebug.h>
 

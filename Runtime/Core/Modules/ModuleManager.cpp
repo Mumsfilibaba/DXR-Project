@@ -1,5 +1,6 @@
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleImplementation.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Platform/PlatformFile.h"
 
 static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
@@ -36,13 +37,51 @@ void FModuleManager::Shutdown()
 }
 
 
+static bool CheckBuildStamp(const CHAR_T* ModuleName, const FString& ModuleFile, FString& OutError)
+{
+    FString ModuleStamp;
+    if (!FPlatformLibrary::ReadStringExport(*ModuleFile, FModuleManager::BuildStampSymbol, ModuleStamp))
+    {
+        OutError = FString::Printf(TEXT("Module '%s' at '%s' has no build stamp, so it was built before modules had one or not by this engine. Rebuild it with this engine."),
+            ModuleName, *ModuleFile);
+        return false;
+    }
+
+    const FString EngineStamp = FModuleManager::GetBuildStamp();
+    if (!ModuleStamp.Equals(EngineStamp))
+    {
+        OutError = FString::Printf(TEXT("Module '%s' at '%s' was built by another engine build (%s) than this one (%s). Rebuild it with this engine."),
+            ModuleName, *ModuleFile, *ModuleStamp, *EngineStamp);
+        return false;
+    }
+
+    return true;
+}
+
+FString FModuleManager::GetBuildStamp()
+{
+    return StringCast<CHAR_T>(ENGINE_MODULE_BUILD_STAMP).ToString();
+}
+
 IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
+{
+    FString Error;
+    IModule* Module = LoadModule(ModuleName, Error);
+    if (!Module)
+    {
+        LOG_ERROR("%s", *Error);
+    }
+
+    return Module;
+}
+
+IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName, FString& OutError)
 {
     CHECK(ModuleName != nullptr);
 
     {
         SCOPED_LOCK(ModulesCS);
-        
+
         if (IModule* ExistingModule = GetModuleInternal(ModuleName))
         {
             LOG_WARNING("Module '%s' is already loaded", ModuleName);
@@ -52,6 +91,7 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
 
     FModuleData NewModule;
     FString     ModuleFile;
+    bool        bInBinariesDirectory = false;
 
     if (FInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate(ModuleName))
     {
@@ -60,32 +100,24 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
             NewModule.Interface = ModuleInitializer->Execute();
             if (!NewModule.Interface)
             {
-                LOG_ERROR("Failed to load static module '%s'", ModuleName);
+                OutError = FString::Printf(TEXT("Failed to load static module '%s'"), ModuleName);
                 return nullptr;
             }
         }
         else
         {
-            LOG_ERROR("No initializer bound when trying to load module '%s'", ModuleName);
+            OutError = FString::Printf(TEXT("No initializer bound when trying to load module '%s'"), ModuleName);
             return nullptr;
         }
     }
     else
     {
-        TArray<FString> Directories;
-        {
-            SCOPED_LOCK(ModulesCS);
-            Directories = BinariesDirectories;
-        }
+        ModuleFile = FindModuleFile(ModuleName, bInBinariesDirectory);
 
-        for (const FString& Directory : Directories)
+        // Checked before the module is loaded, since even its static initializers call into this engine
+        if (!ModuleFile.IsEmpty() && !CheckBuildStamp(ModuleName, ModuleFile, OutError))
         {
-            const FString Filepath = Directory + '/' + FPlatformLibrary::GetRealName(ModuleName);
-            if (FPlatformFile::IsFile(*Filepath))
-            {
-                ModuleFile = Filepath;
-                break;
-            }
+            return nullptr;
         }
 
         PlatformModule Module = ModuleFile.IsEmpty() ? FPlatformLibrary::LoadDynamicLib(ModuleName) : FPlatformLibrary::LoadDynamicLibFromFile(*ModuleFile);
@@ -93,11 +125,11 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
         {
             if (ModuleFile.IsEmpty())
             {
-                LOG_ERROR("Failed to find module '%s'", ModuleName);
+                OutError = FString::Printf(TEXT("Failed to find module '%s'"), ModuleName);
             }
             else
             {
-                LOG_ERROR("Failed to load module '%s' from '%s'", ModuleName, *ModuleFile);
+                OutError = FString::Printf(TEXT("Failed to load module '%s' from '%s'"), ModuleName, *ModuleFile);
             }
 
             return nullptr;
@@ -106,6 +138,7 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
         PFNLoadEngineModule LoadEngineModule = FPlatformLibrary::LoadSymbol<PFNLoadEngineModule>(TEXT("LoadEngineModule"), Module);
         if (!LoadEngineModule)
         {
+            OutError = FString::Printf(TEXT("Module '%s' does not export LoadEngineModule"), ModuleName);
             FPlatformLibrary::FreeDynamicLib(Module);
             return nullptr;
         }
@@ -113,7 +146,7 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
         NewModule.Interface = LoadEngineModule();
         if (!NewModule.Interface)
         {
-            LOG_ERROR("Failed to load module '%s', resulting interface was nullptr", ModuleName);
+            OutError = FString::Printf(TEXT("Failed to load module '%s', resulting interface was nullptr"), ModuleName);
             FPlatformLibrary::FreeDynamicLib(Module);
             return nullptr;
         }
@@ -125,13 +158,13 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
 
     if (NewModule.Interface->Load())
     {
-        if (ModuleFile.IsEmpty())
+        if (bInBinariesDirectory)
         {
-            LOG_INFO("Loaded module '%s'", ModuleName);
+            LOG_INFO("Loaded module '%s' from '%s'", ModuleName, *ModuleFile);
         }
         else
         {
-            LOG_INFO("Loaded module '%s' from '%s'", ModuleName, *ModuleFile);
+            LOG_INFO("Loaded module '%s'", ModuleName);
         }
 
         NewModule.Name = ModuleName;
@@ -142,10 +175,34 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
     }
     else
     {
-        LOG_ERROR("Failed to load module '%s'", ModuleName);
+        OutError = FString::Printf(TEXT("Failed to load module '%s'"), ModuleName);
         SAFE_DELETE(NewModule.Interface);
         return nullptr;
     }
+}
+
+FString FModuleManager::FindModuleFile(const CHAR_T* ModuleName, bool& bOutInBinariesDirectory)
+{
+    TArray<FString> Directories;
+    {
+        SCOPED_LOCK(ModulesCS);
+        Directories = BinariesDirectories;
+    }
+
+    const FString LibraryName = FPlatformLibrary::GetRealName(ModuleName);
+    for (const FString& Directory : Directories)
+    {
+        const FString Filepath = Directory + '/' + LibraryName;
+        if (FPlatformFile::IsFile(*Filepath))
+        {
+            bOutInBinariesDirectory = true;
+            return Filepath;
+        }
+    }
+
+    const FString NextToExecutable = File::GetDirectoryOf(FPlatformFile::GetExecutablePath()) + '/' + LibraryName;
+    bOutInBinariesDirectory = false;
+    return FPlatformFile::IsFile(*NextToExecutable) ? NextToExecutable : FString();
 }
 
 void FModuleManager::AddBinariesDirectory(const FString& Directory)

@@ -18,6 +18,7 @@
 #include "RHI/RHIStats.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
+#include "Core/Modules/ModuleImplementation.h"
 
 IMPLEMENT_ENGINE_MODULE(FVulkanModuleRHI, VulkanRHI);
 

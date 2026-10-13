@@ -1,5 +1,6 @@
 #include "NullRHI.h"
 #include "RHI/RHICore.h"
+#include "Core/Modules/ModuleImplementation.h"
 
 IMPLEMENT_ENGINE_MODULE(FNullModuleRHI, NullRHI);
 

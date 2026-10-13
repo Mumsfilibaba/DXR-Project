@@ -6,7 +6,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceManager.h"
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleImplementation.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Tasks/Tasks.h"
 #include "Core/Time/Timespan.h"

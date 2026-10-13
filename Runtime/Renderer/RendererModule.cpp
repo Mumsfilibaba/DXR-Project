@@ -5,6 +5,7 @@
 #include "Renderer/RendererModule.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
+#include "Core/Modules/ModuleImplementation.h"
 
 #if EDITOR_BUILD
     #include "RendererCore/Debug/RenderGraphDebug.h"

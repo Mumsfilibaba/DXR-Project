@@ -161,6 +161,24 @@ void* FMacPlatformLibrary::LoadDynamicLibFromFile(const CHAR_T* Filepath)
     return ::dlopen(Filepath, DEFAULT_DYLIB_MODE);
 }
 
+bool FMacPlatformLibrary::ReadStringExport(const CHAR_T* Filepath, const CHAR_T* SymbolName, FString& OutValue)
+{
+    void* Handle = ::dlopen(Filepath, RTLD_LAZY | RTLD_LOCAL);
+    if (!Handle)
+    {
+        return false;
+    }
+
+    const ANSICHAR* Value = static_cast<const ANSICHAR*>(::dlsym(Handle, SymbolName));
+    if (Value)
+    {
+        OutValue = StringCast<CHAR_T>(Value).ToString();
+    }
+
+    ::dlclose(Handle);
+    return Value != nullptr;
+}
+
 void* FMacPlatformLibrary::GetLoadedHandle(const CHAR_T* LibraryName)
 { 
     // RTLD_NOLOAD returns a handle only if the library is already loaded, for parity with windows

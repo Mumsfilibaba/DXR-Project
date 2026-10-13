@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Containers/String.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -23,6 +24,20 @@ struct IPlatformLibrary
     static FORCEINLINE void* LoadDynamicLibFromFile(const CHAR_T* Filepath)
     {
         return nullptr;
+    }
+
+    /**
+     * @brief Read a string a library exports as data, such as a module's build stamp, without running the library's code
+     * where the platform allows it. Windows maps the file as an image without preparing it to run; macOS opens and closes
+     * the library, which runs its initializers.
+     * @param Filepath Path of the library file, with the platform's prefix and extension on its name
+     * @param SymbolName Name of the exported string
+     * @param OutValue Receives the string
+     * @return Returns false if the file is not a library or does not export SymbolName
+     */
+    static FORCEINLINE bool ReadStringExport(const CHAR_T* Filepath, const CHAR_T* SymbolName, FString& OutValue)
+    {
+        return false;
     }
 
     /**

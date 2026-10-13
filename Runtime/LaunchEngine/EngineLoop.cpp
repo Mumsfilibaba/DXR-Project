@@ -2,7 +2,7 @@
 #include "Core/CoreGlobals.h"
 #include "Core/Memory/MemoryPagePool.h"
 #include "Core/PlatformInterface/PlatformEventPool.h"
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleImplementation.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Tasks/TaskGraph.h"
 #include "Core/Tasks/Tasks.h"

@@ -5,7 +5,7 @@
 #include "Core/Containers/StringConversion.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/Debug.h"
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleImplementation.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Memory/Memory.h"
 #include "ShaderCompiler/ShaderCompiler.h"

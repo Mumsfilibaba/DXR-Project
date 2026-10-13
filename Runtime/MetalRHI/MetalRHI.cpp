@@ -7,6 +7,7 @@
 #include "MetalRHI/MetalCapabilities.h"
 #include "MetalRHI/MetalDeviceDebug.h"
 #include "MetalRHI/MetalQueue.h"
+#include "Core/Modules/ModuleImplementation.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

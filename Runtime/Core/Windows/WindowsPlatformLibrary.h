@@ -4,8 +4,10 @@
 #include "Core/Windows/Windows.h"
 #include "Core/PlatformInterface/IPlatformLibrary.h"
 
-struct FWindowsPlatformLibrary final : public IPlatformLibrary
+struct CORE_API FWindowsPlatformLibrary final : public IPlatformLibrary
 {
+    static bool ReadStringExport(const CHAR_T* Filepath, const CHAR_T* SymbolName, FString& OutValue);
+
     static FORCEINLINE void* LoadDynamicLib(const CHAR_T* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);

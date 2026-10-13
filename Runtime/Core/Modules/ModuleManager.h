@@ -12,30 +12,6 @@
 #include "Core/Time/Timespan.h"
 #include "Core/Memory/NewOperators.h"
 
-/** 
- * Macro for implementing a new engine module based on monolithic or dynamic build
- */
-
-#if MONOLITHIC_BUILD
-#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName) \
-    /** @brief Self registering object for static modules */ \
-    static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( TEXT(#ModuleName) ); \
-    /** @brief This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
-    extern "C" void LinkModule_##ModuleName() { }
-#else
-#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName) \
-    extern "C" \
-    { \
-        MODULE_EXPORT IModule* LoadEngineModule() \
-        { \
-            return new ModuleClassType(); \
-        } \
-    } \
-    /** @brief This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
-    extern "C" MODULE_EXPORT void LinkModule_##ModuleName() { } \
-    IMPLEMENT_NEW_AND_DELETE_OPERATORS()
-#endif
-
 struct IModule;
 
 typedef IModule* (*PFNLoadEngineModule)();
@@ -74,10 +50,16 @@ class CORE_API FModuleManager
 
 public:
 
+    /** @brief The symbol a module of a modular build exports its ENGINE_MODULE_BUILD_STAMP as, see ModuleImplementation.h */
+    static constexpr const CHAR_T* BuildStampSymbol = TEXT("GEngineModuleBuildStamp");
+
     /** 
      * @return Returns a reference to the ModuleManager 
      */
     static FModuleManager& Get();
+
+    /** @return Returns the build stamp of this engine, which a dynamic module's has to equal for it to be loaded */
+    static FString GetBuildStamp();
 
     /**
      * @brief Releases all modules that are loaded 
@@ -103,11 +85,21 @@ public:
     FModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
     /**
-     * @brief Load a new module into the engine
+     * @brief Load a new module into the engine, logging why when it fails
      * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a pointer to a IModule interface if the load is successful, otherwise nullptr
      */
     IModule* LoadModule(const CHAR_T* ModuleName);
+
+    /**
+     * @brief Load a new module into the engine. A dynamic module found in a binaries directory or next to the executable is
+     * only loaded when its build stamp equals this engine's, which is checked before any of its code runs where the platform
+     * allows it (see FPlatformLibrary::ReadStringExport).
+     * @param ModuleName Name of the module without platform extension or prefix
+     * @param OutError Receives why loading failed, such as a module built by another engine build
+     * @return Returns a pointer to a IModule interface if the load is successful, otherwise nullptr
+     */
+    IModule* LoadModule(const CHAR_T* ModuleName, FString& OutError);
 
     /**
      * @brief Add a directory to look for dynamic modules in before the platform's own search path, such as the project's
@@ -232,6 +224,9 @@ protected:
     void ReleaseAllModules();
 
     FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const CHAR_T* ModuleName);
+
+    // Finds the module's library in a binaries directory or next to the executable, or returns an empty string
+    FString FindModuleFile(const CHAR_T* ModuleName, bool& bOutInBinariesDirectory);
 
     // Used to retrieve a module, does not break on error
     IModule* GetModuleInternal(const CHAR_T* ModuleName);

@@ -2,6 +2,7 @@
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIValidation.h"
+#include "Core/Modules/ModuleImplementation.h"
 
 IMPLEMENT_ENGINE_MODULE(FRHIModule, RHI);
 

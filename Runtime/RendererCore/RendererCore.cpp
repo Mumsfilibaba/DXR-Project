@@ -1,4 +1,4 @@
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleImplementation.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 IMPLEMENT_ENGINE_MODULE(IModule, RendererCore);

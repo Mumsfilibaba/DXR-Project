@@ -3,7 +3,7 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceManager.h"
-#include "Core/Modules/ModuleManager.h"
+#include "Core/Modules/ModuleImplementation.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 
 IMPLEMENT_ENGINE_MODULE(IModule, LaunchProgram);

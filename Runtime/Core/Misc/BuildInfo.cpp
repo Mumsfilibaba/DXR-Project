@@ -1,18 +1,6 @@
 #include "Core/CoreDefines.h"
 #include "Core/Misc/BuildInfo.h"
-
-#if __has_include("Core/Generated/BuildStamp.h")
-    #include "Core/Generated/BuildStamp.h"
-#endif
-
-#ifndef ENGINE_VERSION_STRING
-    #define ENGINE_NAME              "DXR-Engine"
-    #define ENGINE_VERSION_STRING    "0.0.0"
-    #define BUILD_BRANCH             "Unknown"
-    #define BUILD_COMMIT             "Unknown"
-    #define BUILD_COMMIT_DATE        "Unknown"
-    #define BUILD_WORKING_TREE_DIRTY (0)
-#endif
+#include "Core/Misc/BuildStampDefines.h"
 
 #define BUILDINFO_STRINGIFY_IMPL(Value) #Value
 #define BUILDINFO_STRINGIFY(Value)      BUILDINFO_STRINGIFY_IMPL(Value)
