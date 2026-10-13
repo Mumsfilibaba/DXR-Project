@@ -1,5 +1,6 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
+#include "Core/Platform/PlatformFile.h"
 
 static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
     TEXT("Core.ModuleManagerBreakOnError"),
@@ -50,6 +51,8 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
     }
 
     FModuleData NewModule;
+    FString     ModuleFile;
+
     if (FInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate(ModuleName))
     {
         if (ModuleInitializer->IsBound())
@@ -69,10 +72,34 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
     }
     else
     {
-        PlatformModule Module = FPlatformLibrary::LoadDynamicLib(ModuleName);
+        TArray<FString> Directories;
+        {
+            SCOPED_LOCK(ModulesCS);
+            Directories = BinariesDirectories;
+        }
+
+        for (const FString& Directory : Directories)
+        {
+            const FString Filepath = Directory + '/' + FPlatformLibrary::GetRealName(ModuleName);
+            if (FPlatformFile::IsFile(*Filepath))
+            {
+                ModuleFile = Filepath;
+                break;
+            }
+        }
+
+        PlatformModule Module = ModuleFile.IsEmpty() ? FPlatformLibrary::LoadDynamicLib(ModuleName) : FPlatformLibrary::LoadDynamicLibFromFile(*ModuleFile);
         if (!Module)
         {
-            LOG_ERROR("Failed to find module '%s'", ModuleName);
+            if (ModuleFile.IsEmpty())
+            {
+                LOG_ERROR("Failed to find module '%s'", ModuleName);
+            }
+            else
+            {
+                LOG_ERROR("Failed to load module '%s' from '%s'", ModuleName, *ModuleFile);
+            }
+
             return nullptr;
         }
 
@@ -98,7 +125,14 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
 
     if (NewModule.Interface->Load())
     {
-        LOG_INFO("Loaded module '%s'", ModuleName);
+        if (ModuleFile.IsEmpty())
+        {
+            LOG_INFO("Loaded module '%s'", ModuleName);
+        }
+        else
+        {
+            LOG_INFO("Loaded module '%s' from '%s'", ModuleName, *ModuleFile);
+        }
 
         NewModule.Name = ModuleName;
         Modules.Emplace(NewModule);
@@ -111,6 +145,16 @@ IModule* FModuleManager::LoadModule(const CHAR_T* ModuleName)
         LOG_ERROR("Failed to load module '%s'", ModuleName);
         SAFE_DELETE(NewModule.Interface);
         return nullptr;
+    }
+}
+
+void FModuleManager::AddBinariesDirectory(const FString& Directory)
+{
+    SCOPED_LOCK(ModulesCS);
+
+    if (!Directory.IsEmpty() && !BinariesDirectories.Contains(Directory))
+    {
+        BinariesDirectories.Add(Directory);
     }
 }
 

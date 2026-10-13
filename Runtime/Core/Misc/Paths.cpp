@@ -224,6 +224,30 @@ FString Paths::FindProjectFile(
     return Result;
 }
 
+FString Paths::FindProjectBinariesDir(const FString& ProjectDir, const FString& ExecutablePath)
+{
+    static constexpr const CHAR_T* BinFolder = TEXT("/Build/bin/");
+
+    const FString Executable  = File::NormalizePath(ExecutablePath);
+    const int32   BinPosition = Executable.FindLast(BinFolder);
+
+    if (ProjectDir.IsEmpty() || BinPosition == FString::InvalidIndex)
+    {
+        return FString();
+    }
+
+    const int32 ConfigurationStart = BinPosition + CString::Strlen(BinFolder);
+    const int32 ConfigurationEnd   = Executable.FindChar('/', ConfigurationStart);
+
+    if (ConfigurationEnd == FString::InvalidIndex || ConfigurationEnd <= ConfigurationStart)
+    {
+        return FString();
+    }
+
+    const FString Configuration = Executable.SubString(ConfigurationStart, ConfigurationEnd - ConfigurationStart);
+    return File::CombinePath(File::NormalizePath(ProjectDir), FString(TEXT("Build/bin/")) + Configuration);
+}
+
 EEngineDirSource Paths::GetEngineDirSource()
 {
     GetEngineDir();
@@ -343,7 +367,26 @@ FString Paths::GetProjectUserDir()
 
 FString Paths::GetProjectModuleName()
 {
-    return FString(TEXT(PROJECT_NAME));
+    const FProjectDescriptor* Descriptor = GetProjectDescriptor();
+    if (!Descriptor)
+    {
+        return FString(TEXT(PROJECT_NAME));
+    }
+
+    for (const FProjectModuleDescriptor& Module : Descriptor->Modules)
+    {
+        if (Module.Type == EProjectModuleType::Game)
+        {
+            return Module.Name;
+        }
+    }
+
+    return FString();
+}
+
+FString Paths::GetProjectBinariesDir()
+{
+    return FindProjectBinariesDir(GetProjectDir(), FPlatformFile::GetExecutablePath());
 }
 
 FString Paths::GetUserSettingsDir()

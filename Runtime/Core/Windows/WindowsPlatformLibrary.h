@@ -12,6 +12,13 @@ struct FWindowsPlatformLibrary final : public IPlatformLibrary
         return reinterpret_cast<void*>(::LoadLibraryW(StringCast<WIDECHAR>(RealName).Get()));
     }
 
+    static FORCEINLINE void* LoadDynamicLibFromFile(const CHAR_T* Filepath)
+    {
+        FString NativePath(Filepath);
+        NativePath.ReplaceAll('/', '\\');
+        return reinterpret_cast<void*>(::LoadLibraryW(StringCast<WIDECHAR>(NativePath).Get()));
+    }
+
     static FORCEINLINE void* GetLoadedHandle(const CHAR_T* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);

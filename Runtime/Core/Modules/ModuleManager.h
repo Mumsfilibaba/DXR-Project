@@ -110,6 +110,13 @@ public:
     IModule* LoadModule(const CHAR_T* ModuleName);
 
     /**
+     * @brief Add a directory to look for dynamic modules in before the platform's own search path, such as the project's
+     * binaries. A module whose file is found in one of them is only loaded from there.
+     * @param Directory Directory holding module libraries, named with the platform's prefix and extension
+     */
+    void AddBinariesDirectory(const FString& Directory);
+
+    /**
      * @brief Retrieve a already loaded module interface
      * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a pointer to a IModule interface if the interface is present, otherwise nullptr
@@ -242,6 +249,7 @@ protected:
     FCriticalSection          StaticModuleDelegatesCS;
     FModuleLoadedDelegate     ModuleLoadedDelegate;
     TArray<FModuleData>       Modules;
+    TArray<FString>           BinariesDirectories;
     FCriticalSection          ModulesCS;
 };
 

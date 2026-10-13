@@ -211,6 +211,12 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
         return -1;
     }
 
+    if (Paths::GetProjectModuleName().IsEmpty())
+    {
+        FPlatformApplicationMisc::MessageBox(TEXT("ERROR"), FString::Printf(TEXT("Could not load the project: %s lists no Game module in its Modules."), *Paths::GetProjectFile()));
+        return -1;
+    }
+
     if (!InitializeOutputDevices())
     {
         return -1;
@@ -226,6 +232,10 @@ int32 FEngineLoop::PreInit(const CHAR_T** Args, int32 NumArgs)
 
     GIsUnattended = CommandLine::FindOption(TEXT("unattended"));
     FProfileRun::ConfigureFromCommandLine();
+
+#if !MONOLITHIC_BUILD
+    FModuleManager::Get().AddBinariesDirectory(Paths::GetProjectBinariesDir());
+#endif
 
     if (!LoadCoreModules())
     {

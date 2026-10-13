@@ -6,6 +6,7 @@
 struct CORE_API FMacPlatformLibrary final : public IPlatformLibrary
 {
     static void* LoadDynamicLib(const CHAR_T* LibraryName);
+    static void* LoadDynamicLibFromFile(const CHAR_T* Filepath);
     static void* GetLoadedHandle(const CHAR_T* LibraryName);
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)

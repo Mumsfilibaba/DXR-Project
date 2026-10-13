@@ -106,6 +106,7 @@ bool ProjectPaths_Test()
         TEST_EXPECT(Paths::GetProjectDescriptor() == nullptr);
         TEST_EXPECT(!CompileTimeDir.IsEmpty() && Paths::GetProjectDir().Equals(CompileTimeDir));
         TEST_EXPECT(!CompileTimeName.IsEmpty() && Paths::GetProjectName().Equals(CompileTimeName));
+        TEST_EXPECT(Paths::GetProjectModuleName().Equals(CompileTimeName));
         TEST_EXPECT(!CompileTimeDir.Contains('\\'));
     }
 
@@ -127,6 +128,7 @@ bool ProjectPaths_Test()
     const FString Package     = Root + TEXT("/Package");
     const FString Packaged    = Package + TEXT("/Packaged Game/Packaged Game.dxrproject");
     const FString Broken      = Root + TEXT("/Broken/Broken.dxrproject");
+    const FString Coded       = Root + TEXT("/Coded/Coded.dxrproject");
     const FString NotAProject = Root + TEXT("/Notes.txt");
 
     File::DeleteDirectoryTree(Root);
@@ -134,9 +136,12 @@ bool ProjectPaths_Test()
     TEST_EXPECT(File::CreateDirectoryTree(Empty));
     TEST_EXPECT(File::CreateDirectoryTree(File::GetDirectoryOf(Packaged)));
     TEST_EXPECT(File::CreateDirectoryTree(File::GetDirectoryOf(Broken)));
+    TEST_EXPECT(File::CreateDirectoryTree(File::GetDirectoryOf(Coded)));
     TEST_EXPECT(WriteText(GameFile, TEXT("{ \"Version\": 1, \"Name\": \"Game\" }")));
     TEST_EXPECT(WriteText(Packaged, TEXT("{ \"Version\": 1, \"Name\": \"Packaged Game\" }")));
     TEST_EXPECT(WriteText(Broken, TEXT("{ \"Version\": 1 }")));
+    TEST_EXPECT(WriteText(Coded, TEXT("{ \"Version\": 1, \"Name\": \"Coded\", \"Modules\": [ ")
+        TEXT("{ \"Name\": \"CodedEditor\", \"Type\": \"Editor\" }, { \"Name\": \"CodedGame\" }, { \"Name\": \"CodedExtra\" } ] }")));
     TEST_EXPECT(WriteText(NotAProject, TEXT("Not a project")));
     TEST_EXPECT(WriteText(File::CombinePath(Package, Paths::PackageFilename), TEXT("[Package]\nProject=\"Packaged Game/Packaged Game.dxrproject\"\n")));
 
@@ -196,6 +201,35 @@ bool ProjectPaths_Test()
         TEST_EXPECT(Paths::GetProjectName().Equals(TEXT("Game")));
         TEST_EXPECT(Paths::GetProjectDescriptor() != nullptr && Paths::GetProjectDescriptor()->Name.Equals(TEXT("Game")));
         TEST_EXPECT(Paths::GetProjectContentDir().Equals(Game + TEXT("/Content")));
+    }
+
+    TEST_SECTION(TEXT("The game module is the descriptor's first Game module, and a descriptor without one names none"));
+    {
+        const FString CodedArgument = FString(TEXT("-project=")) + Coded;
+        const CHAR_T* CodedArgs[]   = { *CodedArgument };
+
+        FString Error;
+        TEST_EXPECT(InitializeProjectWith(CodedArgs, 1, Error));
+        TEST_EXPECT(Paths::GetProjectModuleName().Equals(TEXT("CodedGame")));
+
+        const FString GameArgument = FString(TEXT("-project=")) + Game;
+        const CHAR_T* GameArgs[]   = { *GameArgument };
+        TEST_EXPECT(InitializeProjectWith(GameArgs, 1, Error));
+        TEST_EXPECT(Paths::GetProjectModuleName().IsEmpty());
+    }
+
+    TEST_SECTION(TEXT("A project's binaries are in its Build/bin, in the folder named like the executable's configuration folder"));
+    {
+        const FString Project = TEXT("C:/My Projects/Game");
+        TEST_EXPECT(Paths::FindProjectBinariesDir(Project, TEXT("E:/Engine/Build/bin/Development Editor-windows-x64/SandboxStandalone.exe"))
+            .Equals(TEXT("C:/My Projects/Game/Build/bin/Development Editor-windows-x64")));
+        TEST_EXPECT(Paths::FindProjectBinariesDir(Project, TEXT("E:\\Engine\\Build\\bin\\Debug-windows-x64\\Game.exe"))
+            .Equals(TEXT("C:/My Projects/Game/Build/bin/Debug-windows-x64")));
+        TEST_EXPECT(Paths::FindProjectBinariesDir(Project, TEXT("/Engine/Build/bin/Development Editor-macosx-x64/SandboxStandalone.app/Contents/MacOS/SandboxStandalone"))
+            .Equals(TEXT("C:/My Projects/Game/Build/bin/Development Editor-macosx-x64")));
+        TEST_EXPECT(Paths::FindProjectBinariesDir(Project, TEXT("D:/Package/Game.exe")).IsEmpty());
+        TEST_EXPECT(Paths::FindProjectBinariesDir(Project, TEXT("D:/Build/bin/Game.exe")).IsEmpty());
+        TEST_EXPECT(Paths::FindProjectBinariesDir(TEXT(""), TEXT("E:/Engine/Build/bin/Debug-windows-x64/Game.exe")).IsEmpty());
     }
 
     TEST_SECTION(TEXT("A -project= that names no project, or a descriptor that does not load, fails with a reason"));

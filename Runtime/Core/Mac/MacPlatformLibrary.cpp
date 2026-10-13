@@ -156,6 +156,11 @@ void* FMacPlatformLibrary::LoadDynamicLib(const CHAR_T* LibraryName)
     return nullptr;
 }
 
+void* FMacPlatformLibrary::LoadDynamicLibFromFile(const CHAR_T* Filepath)
+{
+    return ::dlopen(Filepath, DEFAULT_DYLIB_MODE);
+}
+
 void* FMacPlatformLibrary::GetLoadedHandle(const CHAR_T* LibraryName)
 { 
     // RTLD_NOLOAD returns a handle only if the library is already loaded, for parity with windows

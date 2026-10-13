@@ -16,6 +16,16 @@ struct IPlatformLibrary
     }
 
     /**
+     * @brief Load a dynamic library from a file, rather than by name from the platform's search path
+     * @param Filepath Path of the library file, with the platform's prefix and extension on its name
+     * @return A native handle to a dynamic library
+     */
+    static FORCEINLINE void* LoadDynamicLibFromFile(const CHAR_T* Filepath)
+    {
+        return nullptr;
+    }
+
+    /**
      * @brief Retrieves a handle a dynamic handle if the library is already loaded into the application
      * @param LibraryName Name of the library to load without extension or prefixes
      * @return A native handle to a dynamic library

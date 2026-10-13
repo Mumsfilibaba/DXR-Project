@@ -87,6 +87,15 @@ struct CORE_API Paths
         const FString&  FallbackFile,
         EProjectSource* OutSource = nullptr);
 
+    /**
+     * @brief Find the folder a modular build loads the project's modules from: <ProjectDir>/Build/bin/<Configuration>, where
+     * <Configuration> is the folder below the Build/bin that holds the executable, such as "Development Editor-windows-x64"
+     * @param ProjectDir The project directory
+     * @param ExecutablePath The path of the running executable, which may be inside an application bundle
+     * @return Returns the folder, or an empty string when the executable is not in a Build/bin folder
+     */
+    static FString FindProjectBinariesDir(const FString& ProjectDir, const FString& ExecutablePath);
+
     /** @return Returns where the engine directory was found, resolving it first if Initialize has not run */
     static EEngineDirSource GetEngineDirSource();
 
@@ -141,8 +150,14 @@ struct CORE_API Paths
     /** @return Returns the project's User directory, for per-user state such as the editor layout */
     static FString GetProjectUserDir();
 
-    /** @return Returns the name of the project's game module, which is currently the project name */
+    /**
+     * @return Returns the name of the first Game module in the project descriptor, PROJECT_NAME when the project has no
+     * descriptor, or an empty string when the descriptor lists no Game module
+     */
     static FString GetProjectModuleName();
+
+    /** @return Returns the folder a modular build loads the project's modules from first, see FindProjectBinariesDir */
+    static FString GetProjectBinariesDir();
 
     /**
      * @return Returns the engine's folder in the per-user settings directory, e.g. %LOCALAPPDATA%/DXR-Engine on Windows,

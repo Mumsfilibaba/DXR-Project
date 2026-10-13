@@ -73,6 +73,7 @@ bool FEngine::Initialize()
 
     if (!LocalEngine->Init())
     {
+        LocalEngine->Release();
         Engine = nullptr;
         return false;
     }
@@ -482,7 +483,10 @@ void FEngine::Release()
     // Destroy the World
     if (World)
     {
-        SceneViewport->SetWorld(nullptr);
+        if (SceneViewport)
+        {
+            SceneViewport->SetWorld(nullptr);
+        }
 
         if (IRendererModule* Renderer = IRendererModule::Get())
         {
@@ -508,7 +512,10 @@ void FEngine::Release()
     FAssetManager::Release();
 
     // Release RHI resources
-    SceneViewport->ReleaseRHI();
+    if (SceneViewport)
+    {
+        SceneViewport->ReleaseRHI();
+    }
 
     // Reset widgets
     EngineViewport.Reset();
