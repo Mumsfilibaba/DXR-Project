@@ -607,6 +607,13 @@ void FEngineLoop::Tick()
 
     FFrameProfiler::Get().Tick();
 
+#if ENABLE_MEMORY_PROFILER
+    {
+        TRACE_SCOPE("Memory Profiler Tick");
+        FMemoryProfiler::Get().Tick();
+    }
+#endif
+
     ++FrameCounter;
 
     if (FrameCounter == 1)

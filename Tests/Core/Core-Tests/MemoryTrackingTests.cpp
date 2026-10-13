@@ -223,18 +223,21 @@ bool MemoryTracking_Test()
         Memory::Free(Block);
         TEST_EXPECT_EQ(TagBytesBeforeFree - Profiler.GetTagStats(Tag).CurrentBytes, BlockSize);
 
-        TEST_SECTION("A task launched with nothing pushed stays untagged, so a worker carries nothing over from the last task");
-        FMemoryNameId  UntaggedTag   = Tag;
-        FMemoryScopeId UntaggedScope = Node;
+        TEST_SECTION("A task launched with nothing more pushed runs under the launcher's tag, so a worker carries nothing over from the last task");
+        const FMemoryNameId LauncherTag = Profiler.GetCurrentTag();
 
-        Tasks::Launch("MemoryTrackingTestUntagged", [&]()
+        FMemoryNameId  LaterTag   = Tag;
+        FMemoryScopeId LaterScope = Node;
+
+        Tasks::Launch("MemoryTrackingTestLater", [&]()
         {
-            UntaggedTag   = Profiler.GetCurrentTag();
-            UntaggedScope = Profiler.GetCurrentScope();
+            LaterTag   = Profiler.GetCurrentTag();
+            LaterScope = Profiler.GetCurrentScope();
         }).Wait();
 
-        TEST_EXPECT_EQ(UntaggedTag, MEMORY_NAME_UNTAGGED);
-        TEST_EXPECT_EQ(UntaggedScope, MEMORY_SCOPE_ROOT);
+        TEST_EXPECT(LauncherTag != Tag);
+        TEST_EXPECT_EQ(LaterTag, LauncherTag);
+        TEST_EXPECT_EQ(LaterScope, MEMORY_SCOPE_ROOT);
     }
 
     TEST_SECTION("Every chunk of a ParallelFor runs under the caller's tag");
@@ -275,6 +278,125 @@ bool MemoryTracking_Test()
         TEST_EXPECT(Stats.CurrentBytes > 0);
         TEST_EXPECT(Stats.PeakBytes >= Stats.CurrentBytes);
         TEST_EXPECT_EQ(CString::Strcmp(Profiler.GetRegistry().GetName(Profiler.GetProfilerTag()), "MemoryProfiler"), 0);
+    }
+
+    TEST_SECTION("A tick samples the process and every tag with live allocations");
+    {
+        const FMemoryNameId Tag = Profiler.InternDynamic("MemoryTrackingTest.Tick");
+
+        Profiler.PushTag(Tag);
+        void* Block = Memory::Malloc(512);
+        Profiler.PopTag();
+
+        Profiler.Tick();
+
+        const FMemoryProfilerFrame* Frame = Profiler.GetLatestFrame();
+        TEST_CHECK(Frame != nullptr);
+        TEST_EXPECT(Frame->PlatformStats.FootprintBytes > 0);
+        TEST_EXPECT(Frame->TrackedBytes >= 512);
+        TEST_EXPECT(Frame->NumTrackedAllocations >= 1);
+
+        const FMemoryTagSample* TagSample      = nullptr;
+        const FMemoryTagSample* ProfilerSample = nullptr;
+        for (const FMemoryTagSample& Sample : Frame->Tags)
+        {
+            TagSample      = Sample.Tag == Tag ? &Sample : TagSample;
+            ProfilerSample = Sample.Tag == Profiler.GetProfilerTag() ? &Sample : ProfilerSample;
+        }
+
+        TEST_CHECK(TagSample != nullptr);
+        TEST_EXPECT_EQ(TagSample->CurrentBytes, 512);
+        TEST_EXPECT_EQ(TagSample->NumAllocations, 1);
+        TEST_CHECK(ProfilerSample != nullptr);
+        TEST_EXPECT(ProfilerSample->CurrentBytes > 0);
+
+        const int32 FrameIndex = Frame->FrameIndex;
+        Memory::Free(Block);
+        Profiler.Tick();
+
+        Frame = Profiler.GetLatestFrame();
+        TEST_EXPECT_EQ(Frame->FrameIndex, FrameIndex + 1);
+
+        bool bTagStillSampled = false;
+        for (const FMemoryTagSample& Sample : Frame->Tags)
+        {
+            bTagStillSampled |= Sample.Tag == Tag;
+        }
+
+        TEST_EXPECT(!bTagStillSampled);
+    }
+
+    TEST_SECTION("The frame history keeps the latest frames, oldest first");
+    {
+        for (int32 Index = 0; Index < NUM_LIVE_PROFILER_FRAMES + 2; ++Index)
+        {
+            Profiler.Tick();
+        }
+
+        TEST_CHECK(Profiler.GetNumFrames() == NUM_LIVE_PROFILER_FRAMES);
+
+        const FMemoryProfilerFrame* Oldest = Profiler.GetFrame(0);
+        const FMemoryProfilerFrame* Latest = Profiler.GetLatestFrame();
+        TEST_CHECK(Oldest != nullptr && Latest != nullptr);
+        TEST_EXPECT_EQ(Latest->FrameIndex - Oldest->FrameIndex, NUM_LIVE_PROFILER_FRAMES - 1);
+        TEST_EXPECT(Oldest->TimeStamp <= Latest->TimeStamp);
+        TEST_EXPECT(Profiler.GetFrame(NUM_LIVE_PROFILER_FRAMES) == nullptr);
+    }
+
+    TEST_SECTION("Live allocations are listed down to a minimum size, with their tag and scope");
+    {
+        const FMemoryNameId Tag       = Profiler.InternDynamic("MemoryTrackingTest.Live");
+        const FMemoryNameId ScopeName = Profiler.InternDynamic("MemoryTrackingTest.LiveScope");
+
+        constexpr uint64 LargeSize = 3 * 1024 * 1024 + 17;
+
+        Profiler.PushTag(Tag);
+        const FMemoryScopeId PreviousScope = Profiler.PushScope(ScopeName);
+        const FMemoryScopeId Scope         = Profiler.GetCurrentScope();
+        void* Large = Memory::Malloc(LargeSize);
+        void* Small = Memory::Malloc(100);
+        Profiler.PopScope(PreviousScope);
+        Profiler.PopTag();
+
+        TArray<FMemoryAllocationEntry> Entries;
+        Profiler.GetLiveAllocations(LargeSize, Entries);
+
+        const FMemoryAllocationEntry* LargeEntry = nullptr;
+        bool bSmallListed = false;
+        for (const FMemoryAllocationEntry& Entry : Entries)
+        {
+            TEST_EXPECT(Entry.Size >= LargeSize);
+            LargeEntry   = Entry.Block == Large ? &Entry : LargeEntry;
+            bSmallListed |= Entry.Block == Small;
+        }
+
+        TEST_CHECK(LargeEntry != nullptr);
+        TEST_EXPECT_EQ(LargeEntry->Size, LargeSize);
+        TEST_EXPECT_EQ(LargeEntry->Tag, Tag);
+        TEST_EXPECT_EQ(LargeEntry->Scope, Scope);
+        TEST_EXPECT(!bSmallListed);
+
+        Profiler.GetLiveAllocations(100, Entries);
+
+        bool bSmallFound = false;
+        for (const FMemoryAllocationEntry& Entry : Entries)
+        {
+            bSmallFound |= Entry.Block == Small;
+        }
+
+        TEST_EXPECT(bSmallFound);
+
+        Profiler.LogTags();
+        Profiler.LogLiveAllocations(LargeSize);
+
+        Memory::Free(Small);
+        Memory::Free(Large);
+
+        Profiler.GetLiveAllocations(LargeSize, Entries);
+        for (const FMemoryAllocationEntry& Entry : Entries)
+        {
+            TEST_EXPECT(Entry.Block != Large);
+        }
     }
 
     TEST_SECTION("With tracking off nothing is counted, and turning it back on starts clean");

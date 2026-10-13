@@ -65,6 +65,25 @@ public:
     /** @brief Forgets every block and unmaps every table */
     void Clear();
 
+    /**
+     * @brief Counts the tracked blocks of at least a given size
+     *
+     * @param MinSize The smallest block counted, in bytes
+     * @return Returns how many tracked blocks are at least MinSize bytes
+     */
+    int64 CountEntries(uint64 MinSize);
+
+    /**
+     * @brief Copies out the entries of the tracked blocks of at least a given size. Each shard's lock is held while it
+     * is copied, and an allocation under it could wait on the same lock, so the buffer has to be sized beforehand.
+     *
+     * @param MinSize The smallest block copied, in bytes
+     * @param OutEntries Receives the entries
+     * @param MaxEntries How many entries OutEntries has room for
+     * @return Returns how many entries were copied, at most MaxEntries
+     */
+    int64 CopyEntries(uint64 MinSize, FMemoryAllocationEntry* OutEntries, int64 MaxEntries);
+
     /** @return Returns how many blocks are tracked */
     int64 GetNumEntries();
 

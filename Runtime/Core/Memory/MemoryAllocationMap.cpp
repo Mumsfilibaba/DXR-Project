@@ -153,6 +153,46 @@ void FMemoryAllocationMap::Clear()
     }
 }
 
+int64 FMemoryAllocationMap::CountEntries(uint64 MinSize)
+{
+    int64 NumEntries = 0;
+    for (FShard& Shard : Shards)
+    {
+        SCOPED_LOCK(Shard.Lock);
+
+        for (uint32 Index = 0; Index < Shard.Capacity; ++Index)
+        {
+            const FMemoryAllocationEntry& Entry = Shard.Entries[Index];
+            if (Entry.Block != nullptr && Entry.Block != TOMBSTONE && Entry.Size >= MinSize)
+            {
+                NumEntries++;
+            }
+        }
+    }
+
+    return NumEntries;
+}
+
+int64 FMemoryAllocationMap::CopyEntries(uint64 MinSize, FMemoryAllocationEntry* OutEntries, int64 MaxEntries)
+{
+    int64 NumCopied = 0;
+    for (FShard& Shard : Shards)
+    {
+        SCOPED_LOCK(Shard.Lock);
+
+        for (uint32 Index = 0; Index < Shard.Capacity && NumCopied < MaxEntries; ++Index)
+        {
+            const FMemoryAllocationEntry& Entry = Shard.Entries[Index];
+            if (Entry.Block != nullptr && Entry.Block != TOMBSTONE && Entry.Size >= MinSize)
+            {
+                OutEntries[NumCopied++] = Entry;
+            }
+        }
+    }
+
+    return NumCopied;
+}
+
 int64 FMemoryAllocationMap::GetNumEntries()
 {
     int64 NumEntries = 0;

@@ -2,6 +2,8 @@
 #include "Core/Memory/MemoryAllocationMap.h"
 #include "Core/Memory/MemoryProfilerTypes.h"
 #include "Core/Memory/MemoryTagRegistry.h"
+#include "Core/Misc/ProfilerTypes.h"
+#include "Core/Platform/PlatformMemory.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "Core/Threading/ThreadLocal.h"
 
@@ -62,6 +64,39 @@ struct FMemoryReallocTicket
     bool bSkipped = false;
 };
 
+struct FMemoryTagSample
+{
+    /** @brief The tag the sample was taken from */
+    FMemoryNameId Tag = MEMORY_NAME_UNTAGGED;
+
+    /** @brief Bytes live under the tag when the frame was sampled */
+    int64 CurrentBytes = 0;
+
+    /** @brief How many allocations were live under the tag when the frame was sampled */
+    int64 NumAllocations = 0;
+};
+
+struct FMemoryProfilerFrame
+{
+    /** @brief How many frames were sampled before this one */
+    int32 FrameIndex = 0;
+
+    /** @brief When the frame was sampled, in performance counter ticks */
+    uint64 TimeStamp = 0;
+
+    /** @brief What the operating system reported for the process */
+    FPlatformMemoryStats PlatformStats;
+
+    /** @brief Bytes live in every tracked allocation, which leaves out the profiler's own pages */
+    int64 TrackedBytes = 0;
+
+    /** @brief How many tracked allocations were live */
+    int64 NumTrackedAllocations = 0;
+
+    /** @brief Every tag with live allocations, and the profiler's own tag with its pages included */
+    TArray<FMemoryTagSample> Tags;
+};
+
 class CORE_API FMemoryProfiler
 {
 public:
@@ -85,6 +120,8 @@ public:
         , bCountersReady(false)
         , TagCounters(nullptr)
         , ScopeCounters(nullptr)
+        , Frames(nullptr)
+        , NextFrameIndex(0)
         , bTrackingEnabled(ENABLE_MEMORY_PROFILER != 0)
     {
     }
@@ -132,7 +169,48 @@ public:
     void EndRealloc(const FMemoryReallocTicket& Ticket, void* NewBlock, uint64 NewSize);
 
     /**
-     * @brief Reads the counters of a module tag. The profiler's own tag reports the pages it has mapped for itself.
+     * @brief Samples the counters and the process's memory into the frame history, which keeps the latest
+     * NUM_LIVE_PROFILER_FRAMES frames. It runs once per frame on the game thread, the only thread that reads the history.
+     */
+    void Tick();
+
+    /**
+     * @brief Logs the counters of every tag that has held memory, the scopes that hold memory and the process's memory
+     */
+    void LogTags();
+
+    /**
+     * @brief Logs the live allocations of at least a given size, largest first, with their tags and scopes
+     *
+     * @param MinSize The smallest allocation logged, in bytes
+     */
+    void LogLiveAllocations(uint64 MinSize);
+
+    /**
+     * @brief Copies out the live allocations of at least a given size, in no particular order
+     *
+     * @param MinSize The smallest allocation copied, in bytes
+     * @param OutEntries Receives the allocations. A few blocks allocated by other threads while it runs can be missed.
+     */
+    void GetLiveAllocations(uint64 MinSize, TArray<FMemoryAllocationEntry>& OutEntries);
+
+    /** @return Returns how many frames the history holds */
+    int32 GetNumFrames();
+
+    /**
+     * @brief Reads a frame from the history
+     *
+     * @param OldestIndex The frame's position, counted from the oldest frame held
+     * @return Returns the frame, or nullptr when OldestIndex is out of range
+     */
+    const FMemoryProfilerFrame* GetFrame(int32 OldestIndex);
+
+    /** @return Returns the frame sampled last, or nullptr before the first Tick */
+    const FMemoryProfilerFrame* GetLatestFrame();
+
+    /**
+     * @brief Reads the counters of a module tag. The profiler's own tag adds the pages it has mapped for itself to its
+     * bytes but not to its counts, and its peak is then the sum of two peaks that need not have been reached at once.
      *
      * @param Tag The tag to read
      * @return Returns the tag's counters, all zero for a tag nothing was allocated under
@@ -218,6 +296,7 @@ private:
 
     static void AddToCounters(FCounters& Counters, int64 Size);
     static void RemoveFromCounters(FCounters& Counters, int64 Size);
+    static FMemoryCounterSnapshot ReadCounters(const FCounters& Counters);
 
     bool EnsureCounters();
 
@@ -228,6 +307,8 @@ private:
     AtomicBool                                                      bCountersReady;
     FCounters*                                                      TagCounters;
     FCounters*                                                      ScopeCounters;
+    TProfilerFrameRing<FMemoryProfilerFrame>*                       Frames;
+    int32                                                           NextFrameIndex;
     AtomicBool                                                      bTrackingEnabled;
 };
 

@@ -31,8 +31,15 @@ bool MemoryProfiler_Test()
     FMemoryProfiler&    Profiler = FMemoryProfiler::Get();
     FMemoryTagRegistry& Registry = Profiler.GetRegistry();
 
-    TEST_SECTION("Outside every scope a thread is untagged and at the root");
-    TEST_EXPECT_EQ(Profiler.GetCurrentTag(), MEMORY_NAME_UNTAGGED);
+    // The test body runs inside FProgramLoop::Run, which tags it with the program's title
+    const FMemoryNameId ProgramTag = Profiler.GetCurrentTag();
+
+    TEST_SECTION("The program's body runs under the program's tag, outside every scope");
+#if ENABLE_MEMORY_PROFILER
+    TEST_EXPECT_EQ(CString::Strcmp(Registry.GetName(ProgramTag), "Core-Tests"), 0);
+#else
+    TEST_EXPECT_EQ(ProgramTag, MEMORY_NAME_UNTAGGED);
+#endif
     TEST_EXPECT_EQ(Profiler.GetCurrentScope(), MEMORY_SCOPE_ROOT);
     TEST_EXPECT_EQ(CString::Strcmp(Registry.GetName(MEMORY_NAME_UNTAGGED), "Untagged"), 0);
     TEST_EXPECT_EQ(CString::Strcmp(Registry.GetName(MEMORY_NAME_OVERFLOW), "Overflow"), 0);
@@ -82,10 +89,10 @@ bool MemoryProfiler_Test()
         TEST_EXPECT_EQ(Profiler.GetCurrentTag(), Outer);
 
         Profiler.PopTag();
-        TEST_EXPECT_EQ(Profiler.GetCurrentTag(), MEMORY_NAME_UNTAGGED);
+        TEST_EXPECT_EQ(Profiler.GetCurrentTag(), ProgramTag);
     }
 
-    TEST_SECTION("Pushing past the stack's depth keeps the innermost tag it could hold, and still unwinds to untagged");
+    TEST_SECTION("Pushing past the stack's depth keeps the innermost tag it could hold, and still unwinds to the tag before");
     {
         constexpr int32 Depth = FMemoryThreadState::MaxTagDepth + 8;
         const FMemoryNameId Deep = Profiler.InternDynamic("MemoryProfilerTest.Deep");
@@ -102,7 +109,7 @@ bool MemoryProfiler_Test()
             Profiler.PopTag();
         }
 
-        TEST_EXPECT_EQ(Profiler.GetCurrentTag(), MEMORY_NAME_UNTAGGED);
+        TEST_EXPECT_EQ(Profiler.GetCurrentTag(), ProgramTag);
     }
 
     TEST_SECTION("Scopes form a tree, so a path is one node however often it is entered");
@@ -167,7 +174,7 @@ bool MemoryProfiler_Test()
 #if ENABLE_MEMORY_PROFILER
     TEST_SECTION("The macros push and pop for the block they are declared in");
     {
-        TEST_EXPECT_EQ(Profiler.GetCurrentTag(), MEMORY_NAME_UNTAGGED);
+        TEST_EXPECT_EQ(Profiler.GetCurrentTag(), ProgramTag);
         {
             MEMORY_MODULE_SCOPE("MemoryProfilerTest.MacroModule");
             const FMemoryNameId ModuleTag = Profiler.GetCurrentTag();
@@ -188,7 +195,7 @@ bool MemoryProfiler_Test()
             TEST_EXPECT_EQ(Profiler.GetCurrentTag(), ModuleTag);
         }
 
-        TEST_EXPECT_EQ(Profiler.GetCurrentTag(), MEMORY_NAME_UNTAGGED);
+        TEST_EXPECT_EQ(Profiler.GetCurrentTag(), ProgramTag);
     }
 #endif
 
