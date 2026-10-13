@@ -12,6 +12,7 @@ EngineModule.AddExternalIncludeDirs({
 
 EngineModule.AddModules({
     "Core",
+    "AssetCore",
     "CoreApplication",
     "Application",
     "RHI",
