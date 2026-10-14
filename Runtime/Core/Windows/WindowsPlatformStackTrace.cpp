@@ -120,6 +120,19 @@ int32 FWindowsPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
     return Depth;
 }
 
+int32 FWindowsPlatformStackTrace::CaptureStackTraceFast(uint64* StackTrace, int32 MaxDepth)
+{
+    static_assert(sizeof(PVOID) == sizeof(uint64), "RtlCaptureStackBackTrace writes pointers straight into the uint64 array");
+
+    if (!StackTrace || MaxDepth <= 0)
+    {
+        return 0;
+    }
+
+    const WORD Depth = ::RtlCaptureStackBackTrace(0, static_cast<DWORD>(MaxDepth), reinterpret_cast<PVOID*>(StackTrace), nullptr);
+    return static_cast<int32>(Depth);
+}
+
 int32 FWindowsPlatformStackTrace::CaptureThreadStackTrace(const FThreadStackContext& ThreadContext, uint64* StackTrace, int32 MaxDepth)
 {
     if (!ThreadContext.ThreadHandle || !ThreadContext.RegisterState)

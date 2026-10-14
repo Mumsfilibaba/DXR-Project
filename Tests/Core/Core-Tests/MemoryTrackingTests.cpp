@@ -2,6 +2,7 @@
 
 #include <Core/Memory/Memory.h>
 #include <Core/Memory/MemoryProfiler.h>
+#include <Core/Misc/OutputDeviceManager.h>
 #include <Core/Platform/PlatformMemory.h>
 #include <Core/Platform/PlatformThread.h>
 #include <Core/Tasks/ParallelFor.h>
@@ -359,7 +360,7 @@ bool MemoryTracking_Test()
         Profiler.PopTag();
 
         TArray<FMemoryAllocationEntry> Entries;
-        Profiler.GetLiveAllocations(LargeSize, Entries);
+        Profiler.GetLiveAllocations(LargeSize, 0, Entries);
 
         const FMemoryAllocationEntry* LargeEntry = nullptr;
         bool bSmallListed = false;
@@ -376,7 +377,7 @@ bool MemoryTracking_Test()
         TEST_EXPECT_EQ(LargeEntry->Scope, Scope);
         TEST_EXPECT(!bSmallListed);
 
-        Profiler.GetLiveAllocations(100, Entries);
+        Profiler.GetLiveAllocations(100, 0, Entries);
 
         bool bSmallFound = false;
         for (const FMemoryAllocationEntry& Entry : Entries)
@@ -387,15 +388,156 @@ bool MemoryTracking_Test()
         TEST_EXPECT(bSmallFound);
 
         Profiler.LogTags();
-        Profiler.LogLiveAllocations(LargeSize);
+        Profiler.LogLiveAllocations(LargeSize, 0);
 
         Memory::Free(Small);
         Memory::Free(Large);
 
-        Profiler.GetLiveAllocations(LargeSize, Entries);
+        Profiler.GetLiveAllocations(LargeSize, 0, Entries);
         for (const FMemoryAllocationEntry& Entry : Entries)
         {
             TEST_EXPECT(Entry.Block != Large);
+        }
+    }
+
+    TEST_SECTION("A marker splits the live blocks into those allocated before it and after it");
+    {
+        void* Before = Memory::Malloc(200);
+        const uint32 Marker = Profiler.AddMarker();
+        void* After = Memory::Malloc(300);
+
+        TEST_EXPECT(Marker > 0);
+        TEST_EXPECT_EQ(Profiler.AddMarker(), Marker + 1);
+
+        TArray<FMemoryAllocationEntry> Entries;
+        Profiler.GetLiveAllocations(0, Marker, Entries);
+
+        bool bBeforeListed = false;
+        bool bAfterListed  = false;
+        for (const FMemoryAllocationEntry& Entry : Entries)
+        {
+            TEST_EXPECT(Entry.Marker >= Marker);
+            bBeforeListed |= Entry.Block == Before;
+            bAfterListed  |= Entry.Block == After;
+        }
+
+        TEST_EXPECT(!bBeforeListed);
+        TEST_EXPECT(bAfterListed);
+
+        Profiler.LogLiveAllocations(0, Marker + 1);
+
+        Memory::Free(After);
+        Memory::Free(Before);
+    }
+
+    TEST_SECTION("The callstack table gives the same frames one id and keeps at most MaxFrames of them");
+    {
+        FMemoryCallstackTable Table;
+
+        const uint64 FramesA[] = { 0x1000, 0x2000, 0x3000 };
+        const uint64 FramesB[] = { 0x1000, 0x2000, 0x3004 };
+
+        const FMemoryCallstackId IdA = Table.Intern(FramesA, 3);
+        TEST_EXPECT(IdA != MEMORY_CALLSTACK_NONE);
+        TEST_EXPECT_EQ(Table.Intern(FramesA, 3), IdA);
+        TEST_EXPECT(Table.Intern(FramesB, 3) != IdA);
+        TEST_EXPECT(Table.Intern(FramesA, 2) != IdA);
+        TEST_EXPECT_EQ(Table.Intern(FramesA, 0), MEMORY_CALLSTACK_NONE);
+        TEST_EXPECT_EQ(Table.GetNumCallstacks(), 3);
+
+        uint64 OutFrames[FMemoryCallstackTable::MaxFrames];
+        TEST_CHECK(Table.GetFrames(IdA, OutFrames) == 3);
+        TEST_EXPECT_EQ(OutFrames[0], 0x1000ull);
+        TEST_EXPECT_EQ(OutFrames[2], 0x3000ull);
+        TEST_EXPECT_EQ(Table.GetFrames(MEMORY_CALLSTACK_NONE, OutFrames), 0);
+
+        uint64 LongFrames[FMemoryCallstackTable::MaxFrames + 8];
+        for (int32 Index = 0; Index < FMemoryCallstackTable::MaxFrames + 8; ++Index)
+        {
+            LongFrames[Index] = 0x10000 + static_cast<uint64>(Index) * 16;
+        }
+
+        const FMemoryCallstackId LongId = Table.Intern(LongFrames, FMemoryCallstackTable::MaxFrames + 8);
+        TEST_EXPECT_EQ(Table.GetFrames(LongId, OutFrames), FMemoryCallstackTable::MaxFrames);
+
+        bool bAllDistinct = true;
+        for (uint64 Index = 0; Index < 20000; ++Index)
+        {
+            const uint64 Frames[] = { 0x40000000 + Index * 8, 0x50000000 };
+            bAllDistinct &= Table.Intern(Frames, 2) != MEMORY_CALLSTACK_NONE;
+        }
+
+        TEST_EXPECT(bAllDistinct);
+        TEST_EXPECT_EQ(Table.GetNumCallstacks(), 20004);
+        TEST_EXPECT_EQ(Table.Intern(FramesA, 3), IdA);
+    }
+
+    TEST_SECTION("A leak is reported under its tag with its callstack, while a freed block and the Static tag are not");
+    {
+        const FMemoryNameId LeakTag   = Profiler.InternDynamic("MemoryTrackingTest.Leak");
+        const FMemoryNameId FreedTag  = Profiler.InternDynamic("MemoryTrackingTest.Freed");
+        const FMemoryNameId StaticTag = Profiler.InternDynamic("Static");
+
+        Profiler.SetCallstackCaptureEnabled(true);
+        TEST_EXPECT(Profiler.IsCallstackCaptureEnabled());
+
+        void* Leaks[2] = {};
+        Profiler.PushTag(LeakTag);
+        for (void*& Leak : Leaks)
+        {
+            Leak = Memory::Malloc(777);
+        }
+        Profiler.PopTag();
+
+        Profiler.PushTag(FreedTag);
+        void* Freed = Memory::Malloc(55);
+        Profiler.PopTag();
+        Memory::Free(Freed);
+
+        Profiler.PushTag(StaticTag);
+        void* Static = Memory::Malloc(66);
+        Profiler.PopTag();
+
+        Profiler.SetCallstackCaptureEnabled(false);
+
+        TArray<FMemoryLeakGroup> Groups;
+        Profiler.GetLeaks(Groups);
+
+        const FMemoryLeakGroup* LeakGroup     = nullptr;
+        bool                    bFreedListed  = false;
+        bool                    bStaticListed = false;
+        for (const FMemoryLeakGroup& Group : Groups)
+        {
+            LeakGroup      = Group.Tag == LeakTag ? &Group : LeakGroup;
+            bFreedListed  |= Group.Tag == FreedTag;
+            bStaticListed |= Group.Tag == StaticTag;
+        }
+
+        TEST_CHECK(LeakGroup != nullptr);
+        TEST_EXPECT_EQ(LeakGroup->NumAllocations, 2);
+        TEST_EXPECT_EQ(LeakGroup->Bytes, 2 * 777);
+        TEST_EXPECT(LeakGroup->CallstackId != MEMORY_CALLSTACK_NONE);
+        TEST_EXPECT(!bFreedListed);
+        TEST_EXPECT(!bStaticListed);
+
+        uint64 Frames[FMemoryCallstackTable::MaxFrames];
+        TEST_EXPECT(Profiler.GetCallstack(LeakGroup->CallstackId, Frames) > 0);
+
+        TArray<FMemoryLeakGroup> ReportedGroups;
+        ReportedGroups.Add(*LeakGroup);
+
+        const String Report = Profiler.BuildLeakReport(ReportedGroups);
+        TEST_EXPECT(CString::Strstr(*Report, "MemoryTrackingTest.Leak") != nullptr);
+        TEST_EXPECT(CString::Strstr(*Report, "MemoryTracking_Test") != nullptr);
+        TEST_EXPECT(CString::Strstr(*Report, "FMemoryProfiler::OnMalloc") == nullptr);
+        LOG_INFO("%s", *Report);
+
+        Profiler.LogLiveAllocations(777, 0);
+
+        Memory::Free(Static);
+        for (void* Leak : Leaks)
+        {
+            Memory::Free(Leak);
         }
     }
 

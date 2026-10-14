@@ -16,8 +16,11 @@ struct FMemoryAllocationEntry
     /** @brief The scope that was current when the block was allocated */
     FMemoryScopeId Scope = MEMORY_SCOPE_ROOT;
 
-    /** @brief The allocating callstack, zero until callstacks are captured */
-    uint32 CallstackId = 0;
+    /** @brief The allocating callstack, MEMORY_CALLSTACK_NONE when callstacks were not captured */
+    FMemoryCallstackId CallstackId = MEMORY_CALLSTACK_NONE;
+
+    /** @brief The latest marker set before the block was allocated, zero before the first marker */
+    uint32 Marker = 0;
 };
 
 enum class EMemoryMapInsertResult : uint8
@@ -66,23 +69,26 @@ public:
     void Clear();
 
     /**
-     * @brief Counts the tracked blocks of at least a given size
+     * @brief Counts the tracked blocks of at least a given size, allocated at or after a given marker
      *
      * @param MinSize The smallest block counted, in bytes
-     * @return Returns how many tracked blocks are at least MinSize bytes
+     * @param MinMarker The earliest marker counted, zero for every block
+     * @return Returns how many tracked blocks pass both limits
      */
-    int64 CountEntries(uint64 MinSize);
+    int64 CountEntries(uint64 MinSize, uint32 MinMarker);
 
     /**
-     * @brief Copies out the entries of the tracked blocks of at least a given size. Each shard's lock is held while it
-     * is copied, and an allocation under it could wait on the same lock, so the buffer has to be sized beforehand.
+     * @brief Copies out the entries of the tracked blocks of at least a given size, allocated at or after a given marker.
+     * Each shard's lock is held while it is copied, and an allocation under it could wait on the same lock, so the
+     * buffer has to be sized beforehand.
      *
      * @param MinSize The smallest block copied, in bytes
+     * @param MinMarker The earliest marker copied, zero for every block
      * @param OutEntries Receives the entries
      * @param MaxEntries How many entries OutEntries has room for
      * @return Returns how many entries were copied, at most MaxEntries
      */
-    int64 CopyEntries(uint64 MinSize, FMemoryAllocationEntry* OutEntries, int64 MaxEntries);
+    int64 CopyEntries(uint64 MinSize, uint32 MinMarker, FMemoryAllocationEntry* OutEntries, int64 MaxEntries);
 
     /** @return Returns how many blocks are tracked */
     int64 GetNumEntries();

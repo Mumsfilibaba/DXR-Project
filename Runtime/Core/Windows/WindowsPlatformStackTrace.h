@@ -11,6 +11,7 @@ struct CORE_API FWindowsPlatformStackTrace final : public IPlatformStackTrace
     static bool InitializeSymbols();
     static void ReleaseSymbols();
     static int32 CaptureStackTrace(uint64* StackTrace, int32 MaxDepth);
+    static int32 CaptureStackTraceFast(uint64* StackTrace, int32 MaxDepth);
     static int32 CaptureThreadStackTrace(const FThreadStackContext& ThreadContext, uint64* StackTrace, int32 MaxDepth);
     static void GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry);
 

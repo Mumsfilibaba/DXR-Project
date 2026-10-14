@@ -41,20 +41,6 @@
 #include <crtdbg.h>
 #endif
 
-struct FDebuggerOutputDevice : public IOutputDevice
-{
-    virtual void Log(const String& Message)
-    {
-        FPlatformMisc::OutputDebugString(Message.Data());
-        FPlatformMisc::OutputDebugString("\n");
-    }
-
-    virtual void Log(ELogSeverity Severity, const String& Message)
-    {
-        Log(Message);
-    }
-};
-
 /**
  * Tests
  */
@@ -178,15 +164,6 @@ static int32 RunContainerTests()
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();
-
-    // NOTE: If this reports no memory-leaks, that is probably false positives
-    if (GMalloc)
-    {
-        FDebuggerOutputDevice OutputDevice;
-        GMalloc->DumpAllocations(&OutputDevice);
-    }
-
-    FPlatformStackTrace::ReleaseSymbols();
     return ExitCode;
 }
 

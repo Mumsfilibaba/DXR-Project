@@ -201,6 +201,10 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
     GIsUnattended = CommandLine::FindOption("unattended");
     FProfileRun::ConfigureFromCommandLine();
 
+#if ENABLE_MEMORY_PROFILER
+    FMemoryProfiler::Get().ConfigureFromCommandLine();
+#endif
+
     if (!LoadCoreModules())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to load Core-Modules");
@@ -703,8 +707,10 @@ void FEngineLoop::Release()
     FMemoryPagePool::Get().Flush();
     FPlatformEventPool::Get().Flush();
 
+#if ENABLE_MEMORY_PROFILER
     if (FPlatformMisc::IsDebuggerPresent())
     {
-        GMalloc->DumpAllocations(GDebuggerOutputDevice.Get());
+        FMemoryProfiler::Get().DumpLeaks();
     }
+#endif
 }

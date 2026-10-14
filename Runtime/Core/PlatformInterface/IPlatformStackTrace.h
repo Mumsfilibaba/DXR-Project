@@ -57,6 +57,19 @@ struct CORE_API IPlatformStackTrace
     }
 
     /**
+     * @brief Captures the calling thread's return addresses without loading symbols, taking a lock or allocating, so it
+     * can run inside the allocator on every allocation.
+     *
+     * @param StackTrace Receives the return addresses, innermost frame first
+     * @param MaxDepth How many addresses StackTrace has room for
+     * @return Returns the number of addresses written, which is zero on a platform with no implementation
+     */
+    static FORCEINLINE int32 CaptureStackTraceFast(uint64* StackTrace, int32 MaxDepth)
+    {
+        return 0;
+    }
+
+    /**
      * @brief Captures the return addresses of a thread other than the caller, which has to be suspended for
      * the walk to see a coherent frame chain.
      *

@@ -11,21 +11,6 @@
 #include <cstring>
 #include <new>
 
-// TODO: Add CVar for these
-#if DEBUG_BUILD
-    #define USE_DEBUG_MALLOC (0)
-#else
-    #define USE_DEBUG_MALLOC (0)
-#endif
-
-#if DEBUG_BUILD
-    #define TRACK_MALLOC_CALLSTACK (0)
-#elif DEVELOPMENT_BUILD
-    #define TRACK_MALLOC_CALLSTACK (0)
-#elif RELEASE_BUILD
-    #define TRACK_MALLOC_CALLSTACK (0)
-#endif
-
 alignas(FMallocANSI) static uint8 GMallocANSIStorage[sizeof(FMallocANSI)];
 
 enum class EMallocState : int32
@@ -41,17 +26,7 @@ static void CreateMalloc()
 {
     if (GMallocState.CompareExchange(EMallocState::Creating, EMallocState::Uncreated))
     {
-        FMalloc* NewMalloc = ::new (GMallocANSIStorage) FMallocANSI();
-        if constexpr(USE_DEBUG_MALLOC)
-        {
-            NewMalloc = new FMallocLeakTracker(NewMalloc);
-        }
-        else if constexpr(TRACK_MALLOC_CALLSTACK)
-        {
-            NewMalloc = new FMallocStackTraceTracker(NewMalloc);
-        }
-
-        GMalloc = NewMalloc;
+        GMalloc = ::new (GMallocANSIStorage) FMallocANSI();
         GMallocState.Store(EMallocState::Created, EMemoryOrder::Release);
         return;
     }

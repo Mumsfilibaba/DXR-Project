@@ -1,10 +1,5 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Misc/IOutputDevice.h"
-#include "Core/Platform/PlatformStackTrace.h"
-#include "Core/Platform/CriticalSection.h"
-#include "Core/Containers/Map.h"
-#include "Core/Threading/Atomic.h"
 
 struct FMalloc;
 
@@ -66,12 +61,6 @@ struct CORE_API FMalloc : public FUseStandardMalloc
      * @param Block Block to free
      */
     virtual void Free(void* Block) = 0;
-
-    /**
-     * @brief Dumps information about the current allocations. For the standard implementation no info is available.
-     * @param OutputDevice Device to output the information to
-     */
-    virtual void DumpAllocations(IOutputDevice* OutputDevice) { }
 };
 
 struct CORE_API FMallocANSI : public FMalloc
@@ -79,87 +68,6 @@ struct CORE_API FMallocANSI : public FMalloc
     virtual void* Malloc(uint64 InSize, uint32 InAlignment) override final;
     virtual void* Realloc(void* InBlock, uint64 InSize, uint32 InAlignment) override final;
     virtual void Free(void* InBlock) override final;
-};
-
-class CORE_API FMallocLeakTracker : public FMalloc
-{
-    struct FAllocationInfo
-    {
-        uint64 Size;
-    };
-
-public:
-    FMallocLeakTracker(FMalloc* InBaseMalloc);
-    ~FMallocLeakTracker();
-
-    virtual void* Malloc(uint64 InSize, uint32 InAlignment) override final;
-    virtual void* Realloc(void* InBlock, uint64 InSize, uint32 InAlignment) override final;
-    virtual void Free(void* InBlock) override final;
-    virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
-
-    void TrackAllocationMalloc(void* Block, uint64 Size);
-    void TrackAllocationFree(void* Block);
-
-    void EnableTracking() 
-    { 
-        bTrackingEnabled = true; 
-    }
-
-    void DisableTacking()
-    { 
-        bTrackingEnabled = false;
-    }
-
-private:
-    TMap<void*, FAllocationInfo> Allocations;
-    FCriticalSection             AllocationsCS;
-    FMalloc*                     BaseMalloc;
-    bool                         bTrackingEnabled;
-};
-
-class CORE_API FMallocStackTraceTracker : public FMalloc
-{
-    static constexpr uint32 NumStackTraces = 8; 
-
-    struct FAllocationStackTrace
-    {
-        uint64 StackTrace[NumStackTraces];
-        uint64 StackDepth;
-        uint64 Size;
-    };
-
-public:
-    static void Enable();
-    static void Disable();
-
-    FMallocStackTraceTracker(FMalloc* InBaseMalloc);
-    ~FMallocStackTraceTracker();
-
-    virtual void* Malloc(uint64 InSize, uint32 InAlignment) override final;
-    virtual void* Realloc(void* InBlock, uint64 InSize, uint32 InAlignment) override final;
-    virtual void Free(void* InBlock) override final;
-    virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
-
-    void TrackAllocationMalloc(void* Block, uint64 Size);
-    void TrackAllocationFree(void* Block);
-
-    void EnableTracking() 
-    { 
-        bTrackingEnabled.Store(true);
-    }
-
-    void DisableTacking()
-    { 
-        bTrackingEnabled.Store(false);
-    }
-
-private:
-    TMap<void*, FAllocationStackTrace> Allocations;
-    FCriticalSection                   AllocationsCS;
-    FMalloc*                           BaseMalloc;
-    AtomicBool                         bTrackingEnabled;
-
-    static FMallocStackTraceTracker* StackTraceTracker;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

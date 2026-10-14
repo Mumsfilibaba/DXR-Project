@@ -16,6 +16,9 @@ using FMemoryNameId = uint16;
 /** @brief Identifies a node in the tree of scope paths */
 using FMemoryScopeId = uint16;
 
+/** @brief Identifies an interned callstack */
+using FMemoryCallstackId = uint32;
+
 /** @brief The tag of memory allocated outside every MEMORY_MODULE_SCOPE */
 constexpr FMemoryNameId MEMORY_NAME_UNTAGGED = 0;
 
@@ -30,6 +33,9 @@ constexpr FMemoryScopeId MEMORY_SCOPE_ROOT = 0;
 
 /** @brief The scope handed out once the scope tree is full */
 constexpr FMemoryScopeId MEMORY_SCOPE_OVERFLOW = 1;
+
+/** @brief The callstack of an allocation made while callstacks were not captured */
+constexpr FMemoryCallstackId MEMORY_CALLSTACK_NONE = 0;
 
 class CORE_API FMemoryName
 {

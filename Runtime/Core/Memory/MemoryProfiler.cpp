@@ -1,14 +1,21 @@
 #include "Core/Memory/MemoryProfiler.h"
 #include "Core/Algorithms/Sort.h"
+#include "Core/Containers/Map.h"
+#include "Core/Filesystem/File.h"
 #include "Core/Math/Math.h"
+#include "Core/Misc/CommandLine.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceManager.h"
+#include "Core/Misc/Paths.h"
+#include "Core/Misc/ProfilerReport.h"
 #include "Core/Platform/PlatformMemory.h"
+#include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Threading/ScopedLock.h"
 
 CORE_API CONST_INIT FMemoryProfiler GMemoryProfiler;
 
+static CONST_INIT FMemoryName  GStaticTagName("Static");
 static CONST_INIT AtomicInt32  GNumLiveThreadStates;
 static CONST_INIT AtomicUInt64 GProfilerPageBytes;
 static CONST_INIT AtomicUInt64 GProfilerPeakPageBytes;
@@ -24,27 +31,75 @@ static FAutoConsoleCommand CCmdMemoryDumpTags(
 
 static FAutoConsoleCommand CCmdMemoryDumpLive(
     "Memory.DumpLive",
-    "Logs the live allocations of at least MinSize bytes (65536 by default), largest first, with their tags and scopes",
+    "Logs the live allocations of at least MinSize bytes, largest first, with their tags and scopes. Takes [MinSize] [Since=<Marker>], "
+    "and MinSize is 65536 by default, or 0 when Since lists the blocks allocated after a Memory.Marker",
     FConsoleCommandDelegate::CreateLambda([](StringView Args)
     {
-        StringView MinSizeView = Args;
-        MinSizeView.TrimInline();
+        const String Arguments(Args);
 
-        uint64 MinSize = 64 * 1024;
-        if (!MinSizeView.IsEmpty())
+        uint64 MinSize       = 0;
+        bool   bHasMinSize   = false;
+        uint32 SinceMarker   = 0;
+        const CHAR* Cursor   = *Arguments;
+        while (*Cursor != '\0')
         {
-            const String MinSizeString(MinSizeView);
-
-            CHAR* End = nullptr;
-            MinSize = CString::Strtoui64(*MinSizeString, &End, 10);
-            if (End == *MinSizeString || *End != '\0')
+            if (*Cursor == ' ' || *Cursor == '\t')
             {
-                LOG_WARNING("[MemoryProfiler] Memory.DumpLive takes a size in bytes, not '%s'", *MinSizeString);
+                ++Cursor;
+                continue;
+            }
+
+            const CHAR* TokenStart = Cursor;
+            while (*Cursor != '\0' && *Cursor != ' ' && *Cursor != '\t')
+            {
+                ++Cursor;
+            }
+
+            const bool  bSince      = CString::Strnicmp(TokenStart, "Since=", 6) == 0;
+            const CHAR* NumberStart = bSince ? TokenStart + 6 : TokenStart;
+
+            CHAR*        NumberEnd = nullptr;
+            const uint64 Number    = CString::Strtoui64(NumberStart, &NumberEnd, 10);
+            if (NumberEnd == NumberStart || NumberEnd != Cursor)
+            {
+                LOG_WARNING("[MemoryProfiler] Memory.DumpLive takes [MinSize] [Since=<Marker>], not '%s'", *Arguments);
                 return;
+            }
+
+            if (bSince)
+            {
+                SinceMarker = static_cast<uint32>(Number);
+            }
+            else
+            {
+                MinSize     = Number;
+                bHasMinSize = true;
             }
         }
 
-        FMemoryProfiler::Get().LogLiveAllocations(MinSize);
+        if (!bHasMinSize && SinceMarker == 0)
+        {
+            MinSize = 64 * 1024;
+        }
+
+        FMemoryProfiler::Get().LogLiveAllocations(MinSize, SinceMarker);
+    }));
+
+static FAutoConsoleCommand CCmdMemoryMarker(
+    "Memory.Marker",
+    "Sets a marker, so Memory.DumpLive Since=<Marker> lists the blocks allocated after it that are still alive",
+    FConsoleCommandDelegate::CreateLambda([](StringView)
+    {
+        LOG_INFO("[MemoryProfiler] Set marker %u", FMemoryProfiler::Get().AddMarker());
+    }));
+
+static TAutoConsoleVariable<bool> CVarMemoryTrackCallstacks(
+    "Memory.TrackCallstacks",
+    "Captures the callstack of every allocation for Memory.DumpLive and the leak report. -MemoryTrackCallstacks turns it on at startup",
+    false,
+    FConsoleVariableDelegate::CreateLambda([](IConsoleVariable* Variable)
+    {
+        FMemoryProfiler::Get().SetCallstackCaptureEnabled(Variable->GetBool());
     }));
 #endif
 
@@ -87,6 +142,54 @@ static String GetScopePath(FMemoryTagRegistry& Registry, FMemoryScopeId Scope)
     }
 
     return Path;
+}
+
+// The innermost frames of a captured callstack are the capture itself, the profiler and the allocator
+static bool IsAllocatorFrame(const CHAR* FunctionName)
+{
+    static const CHAR* const AllocatorFrames[] =
+    {
+        "StackTrace::Capture",
+        "FMemoryProfiler::",
+        "Memory::Malloc",
+        "Memory::Realloc",
+        "operator new",
+    };
+
+    for (const CHAR* AllocatorFrame : AllocatorFrames)
+    {
+        if (CString::Strstr(FunctionName, AllocatorFrame))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static String DescribeFrame(uint64 Address)
+{
+    FStackTraceEntry Entry;
+    Memory::Memzero(&Entry);
+    FPlatformStackTrace::GetStackTraceEntryFromAddress(Address, Entry);
+
+    const CHAR* FunctionName = Entry.FunctionName[0] != '\0' ? Entry.FunctionName : "???";
+    if (Entry.Filename[0] != '\0')
+    {
+        return String::Printf("0x%016llx %s (%s:%u) [%s]", Address, FunctionName, Entry.Filename, Entry.Line, Entry.ModuleName);
+    }
+
+    return String::Printf("0x%016llx %s [%s]", Address, FunctionName, Entry.ModuleName);
+}
+
+static const String& DescribeCachedFrame(uint64 Address, TMap<uint64, String>& FrameDescriptions)
+{
+    if (const String* Description = FrameDescriptions.Find(Address))
+    {
+        return *Description;
+    }
+
+    return FrameDescriptions.Add(Address, DescribeFrame(Address));
 }
 
 static FMemoryNameId GetTopTag(const FMemoryThreadState& State)
@@ -318,10 +421,18 @@ void FMemoryProfiler::OnMalloc(void* Block, uint64 Size)
     State.bInProfiler = true;
 
     FMemoryAllocationEntry Entry;
-    Entry.Block = Block;
-    Entry.Size  = Size;
-    Entry.Tag   = GetTopTag(State);
-    Entry.Scope = State.ScopeNode;
+    Entry.Block  = Block;
+    Entry.Size   = Size;
+    Entry.Tag    = GetTopTag(State);
+    Entry.Scope  = State.ScopeNode;
+    Entry.Marker = CurrentMarker.Load(EMemoryOrder::Relaxed);
+
+    if (bCaptureCallstacks.Load(EMemoryOrder::Relaxed))
+    {
+        uint64      Frames[FMemoryCallstackTable::MaxFrames];
+        const int32 NumFrames = FPlatformStackTrace::CaptureStackTraceFast(Frames, FMemoryCallstackTable::MaxFrames);
+        Entry.CallstackId = Callstacks.Intern(Frames, NumFrames);
+    }
 
     FMemoryAllocationEntry       Replaced;
     const EMemoryMapInsertResult Result = Allocations.Insert(Entry, Replaced);
@@ -571,7 +682,7 @@ void FMemoryProfiler::LogTags()
     }
 }
 
-void FMemoryProfiler::LogLiveAllocations(uint64 MinSize)
+void FMemoryProfiler::LogLiveAllocations(uint64 MinSize, uint32 SinceMarker)
 {
     FMemoryModuleScope ProfilerScope(GetProfilerTag());
 
@@ -582,37 +693,63 @@ void FMemoryProfiler::LogLiveAllocations(uint64 MinSize)
     }
 
     TArray<FMemoryAllocationEntry> Entries;
-    GetLiveAllocations(MinSize, Entries);
+    GetLiveAllocations(MinSize, SinceMarker, Entries);
 
     Algorithm::Sort(Entries, [](const FMemoryAllocationEntry& LHS, const FMemoryAllocationEntry& RHS)
     {
         return LHS.Size > RHS.Size;
     });
 
-    int64 TotalBytes = 0;
+    int64 TotalBytes     = 0;
+    bool  bAnyCallstacks = false;
     for (const FMemoryAllocationEntry& Entry : Entries)
     {
-        TotalBytes += static_cast<int64>(Entry.Size);
+        TotalBytes     += static_cast<int64>(Entry.Size);
+        bAnyCallstacks |= Entry.CallstackId != MEMORY_CALLSTACK_NONE;
     }
 
-    LOG_INFO("[MemoryProfiler] %d live allocations of at least %s, %s in total", Entries.Size(), *FormatBytes(static_cast<int64>(MinSize)), *FormatBytes(TotalBytes));
-    LOG_INFO("[MemoryProfiler] %12s %-32s %-48s %s", "Size", "Tag", "Scope", "Address");
+    LOG_INFO("[MemoryProfiler] %d live allocations of at least %s since marker %u, %s in total", Entries.Size(), *FormatBytes(static_cast<int64>(MinSize)),
+        SinceMarker, *FormatBytes(TotalBytes));
+    LOG_INFO("[MemoryProfiler] %12s %-32s %-48s %-18s %s", "Size", "Tag", "Scope", "Address", "Callsite");
+
+    const bool bSymbolsLoaded = bAnyCallstacks && FPlatformStackTrace::InitializeSymbols();
+
+    TMap<uint64, String> FrameDescriptions;
     for (const FMemoryAllocationEntry& Entry : Entries)
     {
-        LOG_INFO("[MemoryProfiler] %12s %-32s %-48s %p", *FormatBytes(static_cast<int64>(Entry.Size)), Registry.GetName(Entry.Tag),
-            *GetScopePath(Registry, Entry.Scope), Entry.Block);
+        uint64      Frames[FMemoryCallstackTable::MaxFrames];
+        const int32 NumFrames = Callstacks.GetFrames(Entry.CallstackId, Frames);
+
+        const CHAR* Callsite = NumFrames > 0 ? "" : "(not captured)";
+        for (int32 FrameIndex = 0; FrameIndex < NumFrames; ++FrameIndex)
+        {
+            const String& Description = DescribeCachedFrame(Frames[FrameIndex], FrameDescriptions);
+            if (!IsAllocatorFrame(*Description))
+            {
+                Callsite = *Description;
+                break;
+            }
+        }
+
+        LOG_INFO("[MemoryProfiler] %12s %-32s %-48s %-18p %s", *FormatBytes(static_cast<int64>(Entry.Size)), Registry.GetName(Entry.Tag),
+            *GetScopePath(Registry, Entry.Scope), Entry.Block, Callsite);
+    }
+
+    if (bSymbolsLoaded)
+    {
+        FPlatformStackTrace::ReleaseSymbols();
     }
 }
 
-void FMemoryProfiler::GetLiveAllocations(uint64 MinSize, TArray<FMemoryAllocationEntry>& OutEntries)
+void FMemoryProfiler::GetLiveAllocations(uint64 MinSize, uint32 SinceMarker, TArray<FMemoryAllocationEntry>& OutEntries)
 {
     // The map copies under its shard locks, so the array is sized first, with room for blocks allocated in between
-    const int64 NumEntries = Allocations.CountEntries(MinSize);
+    const int64 NumEntries = Allocations.CountEntries(MinSize, SinceMarker);
     const int64 Capacity   = NumEntries + NumEntries / 8 + 64;
 
     OutEntries.Reset(static_cast<int32>(Capacity));
 
-    const int64 NumCopied = Allocations.CopyEntries(MinSize, OutEntries.Data(), Capacity);
+    const int64 NumCopied = Allocations.CopyEntries(MinSize, SinceMarker, OutEntries.Data(), Capacity);
     OutEntries.Resize(static_cast<int32>(NumCopied));
 }
 
@@ -629,4 +766,173 @@ const FMemoryProfilerFrame* FMemoryProfiler::GetFrame(int32 OldestIndex)
 const FMemoryProfilerFrame* FMemoryProfiler::GetLatestFrame()
 {
     return Frames ? Frames->GetLatest() : nullptr;
+}
+
+void FMemoryProfiler::ConfigureFromCommandLine()
+{
+#if ENABLE_MEMORY_PROFILER
+    if (CommandLine::FindOption("MemoryTrackCallstacks"))
+    {
+        CVarMemoryTrackCallstacks.SetVariable(true, EConsoleVariableFlags::SetByCommandLine);
+    }
+#endif
+}
+
+void FMemoryProfiler::SetCallstackCaptureEnabled(bool bEnabled)
+{
+    bCaptureCallstacks.Store(bEnabled, EMemoryOrder::Relaxed);
+}
+
+uint32 FMemoryProfiler::AddMarker()
+{
+    return CurrentMarker.Increment(EMemoryOrder::Relaxed);
+}
+
+void FMemoryProfiler::GetLeaks(TArray<FMemoryLeakGroup>& OutGroups)
+{
+    OutGroups.Clear();
+
+    TArray<FMemoryAllocationEntry> Entries;
+    GetLiveAllocations(0, 0, Entries);
+
+    Algorithm::Sort(Entries, [](const FMemoryAllocationEntry& LHS, const FMemoryAllocationEntry& RHS)
+    {
+        if (LHS.Tag != RHS.Tag)
+        {
+            return LHS.Tag < RHS.Tag;
+        }
+
+        if (LHS.Scope != RHS.Scope)
+        {
+            return LHS.Scope < RHS.Scope;
+        }
+
+        return LHS.CallstackId < RHS.CallstackId;
+    });
+
+    const FMemoryNameId ProfilerTag = GetProfilerTag();
+    const FMemoryNameId StaticTag   = GStaticTagName.GetId();
+    for (const FMemoryAllocationEntry& Entry : Entries)
+    {
+        if (Entry.Tag == ProfilerTag || Entry.Tag == StaticTag)
+        {
+            continue;
+        }
+
+        FMemoryLeakGroup* Group = OutGroups.IsEmpty() ? nullptr : &OutGroups.Last();
+        if (!Group || Group->Tag != Entry.Tag || Group->Scope != Entry.Scope || Group->CallstackId != Entry.CallstackId)
+        {
+            Group = &OutGroups.Emplace();
+            Group->Tag         = Entry.Tag;
+            Group->Scope       = Entry.Scope;
+            Group->CallstackId = Entry.CallstackId;
+        }
+
+        Group->NumAllocations++;
+        Group->Bytes += static_cast<int64>(Entry.Size);
+    }
+
+    Algorithm::Sort(OutGroups, [](const FMemoryLeakGroup& LHS, const FMemoryLeakGroup& RHS)
+    {
+        return LHS.Bytes > RHS.Bytes;
+    });
+}
+
+String FMemoryProfiler::BuildLeakReport(const TArray<FMemoryLeakGroup>& Groups)
+{
+    FMemoryModuleScope ProfilerScope(GetProfilerTag());
+
+    int64 NumAllocations = 0;
+    int64 Bytes          = 0;
+    bool  bAnyCallstacks = false;
+    for (const FMemoryLeakGroup& Group : Groups)
+    {
+        NumAllocations += Group.NumAllocations;
+        Bytes          += Group.Bytes;
+        bAnyCallstacks |= Group.CallstackId != MEMORY_CALLSTACK_NONE;
+    }
+
+    String Report = String::Printf("Memory leak report: %lld allocations, %s still alive in %d groups. The MemoryProfiler and Static tags are left out.\n",
+        NumAllocations, *FormatBytes(Bytes), Groups.Size());
+
+    if (!bAnyCallstacks)
+    {
+        Report += "No callstacks were captured. Run with -MemoryTrackCallstacks to get them.\n";
+    }
+
+    const bool bSymbolsLoaded = bAnyCallstacks && FPlatformStackTrace::InitializeSymbols();
+
+    TMap<uint64, String> FrameDescriptions;
+    for (int32 GroupIndex = 0; GroupIndex < Groups.Size(); ++GroupIndex)
+    {
+        const FMemoryLeakGroup& Group = Groups[GroupIndex];
+        Report.AppendPrintf("\n#%d  %lld allocations, %s  tag %s  scope %s\n", GroupIndex + 1, Group.NumAllocations, *FormatBytes(Group.Bytes),
+            Registry.GetName(Group.Tag), *GetScopePath(Registry, Group.Scope));
+
+        uint64      Frames[FMemoryCallstackTable::MaxFrames];
+        const int32 NumFrames = Callstacks.GetFrames(Group.CallstackId, Frames);
+
+        bool bInsideAllocator = true;
+        for (int32 FrameIndex = 0; FrameIndex < NumFrames; ++FrameIndex)
+        {
+            const String& Description = DescribeCachedFrame(Frames[FrameIndex], FrameDescriptions);
+            if (bInsideAllocator && IsAllocatorFrame(*Description))
+            {
+                continue;
+            }
+
+            bInsideAllocator = false;
+            Report.AppendPrintf("    %s\n", *Description);
+        }
+    }
+
+    if (bSymbolsLoaded)
+    {
+        FPlatformStackTrace::ReleaseSymbols();
+    }
+
+    return Report;
+}
+
+int64 FMemoryProfiler::DumpLeaks()
+{
+    FMemoryModuleScope ProfilerScope(GetProfilerTag());
+
+    if (!IsTrackingEnabled())
+    {
+        LOG_INFO("[MemoryProfiler] Allocation tracking is off, so there is no leak report");
+        return 0;
+    }
+
+    TArray<FMemoryLeakGroup> Groups;
+    GetLeaks(Groups);
+
+    int64 NumAllocations = 0;
+    int64 Bytes          = 0;
+    for (const FMemoryLeakGroup& Group : Groups)
+    {
+        NumAllocations += Group.NumAllocations;
+        Bytes          += Group.Bytes;
+    }
+
+    const String Path     = File::CombinePath(Paths::GetProjectDir(), String::Printf("Profiling/MemoryLeaks_%llu.txt", FPlatformTime::QueryPerformanceCounter()));
+    const bool   bWritten = FProfilerReport::WriteFile(Path, BuildLeakReport(Groups));
+
+    LOG_INFO("[MemoryProfiler] %lld allocations, %s still alive in %d groups. The full report is %s%s", NumAllocations, *FormatBytes(Bytes), Groups.Size(),
+        bWritten ? "in " : "missing, since it could not be written to ", *Path);
+
+    constexpr int32 NumLoggedGroups = 10;
+    for (int32 GroupIndex = 0; GroupIndex < Groups.Size() && GroupIndex < NumLoggedGroups; ++GroupIndex)
+    {
+        const FMemoryLeakGroup& Group = Groups[GroupIndex];
+        LOG_INFO("[MemoryProfiler] #%d  %lld allocations, %s  tag %s  scope %s", GroupIndex + 1, Group.NumAllocations, *FormatBytes(Group.Bytes),
+            Registry.GetName(Group.Tag), *GetScopePath(Registry, Group.Scope));
+    }
+
+    return NumAllocations;
+}
+
+int32 FMemoryProfiler::GetCallstack(FMemoryCallstackId Id, uint64* OutFrames)
+{
+    return Callstacks.GetFrames(Id, OutFrames);
 }

@@ -17,6 +17,11 @@ struct CORE_API FMacPlatformStackTrace final : public IPlatformStackTrace
     static int32 CaptureThreadStackTrace(const FThreadStackContext& ThreadContext, uint64* StackTrace, int32 MaxDepth);
     static void GetStackTraceEntryFromAddress(uint64 Address, FStackTraceEntry& OutStackTraceEntry);
 
+    static FORCEINLINE int32 CaptureStackTraceFast(uint64* StackTrace, int32 MaxDepth)
+    {
+        return CaptureStackTrace(StackTrace, MaxDepth);
+    }
+
     static FORCEINLINE String GetExecutableFilename()
     {
         CHAR   PathBuffer[PATH_MAX] = {};

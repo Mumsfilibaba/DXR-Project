@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Memory/MemoryAllocationMap.h"
+#include "Core/Memory/MemoryCallstackTable.h"
 #include "Core/Memory/MemoryProfilerTypes.h"
 #include "Core/Memory/MemoryTagRegistry.h"
 #include "Core/Misc/ProfilerTypes.h"
@@ -97,6 +98,24 @@ struct FMemoryProfilerFrame
     TArray<FMemoryTagSample> Tags;
 };
 
+struct FMemoryLeakGroup
+{
+    /** @brief The tag the allocations were made under */
+    FMemoryNameId Tag = MEMORY_NAME_UNTAGGED;
+
+    /** @brief The scope the allocations were made in */
+    FMemoryScopeId Scope = MEMORY_SCOPE_ROOT;
+
+    /** @brief The callstack the allocations share, MEMORY_CALLSTACK_NONE when none was captured */
+    FMemoryCallstackId CallstackId = MEMORY_CALLSTACK_NONE;
+
+    /** @brief How many allocations are in the group */
+    int64 NumAllocations = 0;
+
+    /** @brief Bytes in the group's allocations */
+    int64 Bytes = 0;
+};
+
 class CORE_API FMemoryProfiler
 {
 public:
@@ -116,12 +135,15 @@ public:
         : Registry()
         , ThreadState()
         , Allocations()
+        , Callstacks()
         , CountersLock()
         , bCountersReady(false)
         , TagCounters(nullptr)
         , ScopeCounters(nullptr)
         , Frames(nullptr)
         , NextFrameIndex(0)
+        , CurrentMarker(0)
+        , bCaptureCallstacks(false)
         , bTrackingEnabled(ENABLE_MEMORY_PROFILER != 0)
     {
     }
@@ -133,6 +155,27 @@ public:
      * @param bEnabled Whether to track allocations
      */
     void SetTrackingEnabled(bool bEnabled);
+
+    /**
+     * @brief Turns callstack capture on when the command line has -MemoryTrackCallstacks. It goes through the
+     * Memory.TrackCallstacks variable, so the variable reports what is captured.
+     */
+    void ConfigureFromCommandLine();
+
+    /**
+     * @brief Turns capturing the callstack of every allocation on or off. Blocks allocated while it is off keep no
+     * callstack.
+     *
+     * @param bEnabled Whether to capture callstacks
+     */
+    void SetCallstackCaptureEnabled(bool bEnabled);
+
+    /**
+     * @brief Sets a marker, so later queries can list only the blocks allocated after it
+     *
+     * @return Returns the new marker, which blocks allocated from now on carry
+     */
+    uint32 AddMarker();
 
     /**
      * @brief Records a block Memory has just allocated, attributing it to the calling thread's tag and scope
@@ -180,19 +223,55 @@ public:
     void LogTags();
 
     /**
-     * @brief Logs the live allocations of at least a given size, largest first, with their tags and scopes
+     * @brief Logs the live allocations of at least a given size, largest first, with their tags, scopes and the
+     * callsites of those whose callstack was captured
      *
      * @param MinSize The smallest allocation logged, in bytes
+     * @param SinceMarker Logs only blocks allocated at or after this marker, zero for every block
      */
-    void LogLiveAllocations(uint64 MinSize);
+    void LogLiveAllocations(uint64 MinSize, uint32 SinceMarker);
 
     /**
      * @brief Copies out the live allocations of at least a given size, in no particular order
      *
      * @param MinSize The smallest allocation copied, in bytes
+     * @param SinceMarker Copies only blocks allocated at or after this marker, zero for every block
      * @param OutEntries Receives the allocations. A few blocks allocated by other threads while it runs can be missed.
      */
-    void GetLiveAllocations(uint64 MinSize, TArray<FMemoryAllocationEntry>& OutEntries);
+    void GetLiveAllocations(uint64 MinSize, uint32 SinceMarker, TArray<FMemoryAllocationEntry>& OutEntries);
+
+    /**
+     * @brief Groups the live allocations by tag, scope and callstack, leaving out the profiler's own tag and the Static
+     * tag, which holds memory that is meant to outlive shutdown
+     *
+     * @param OutGroups Receives the groups, the most bytes first
+     */
+    void GetLeaks(TArray<FMemoryLeakGroup>& OutGroups);
+
+    /**
+     * @brief Formats leak groups as text, with their callstacks symbolicated where they were captured
+     *
+     * @param Groups The groups GetLeaks returned
+     * @return Returns the report
+     */
+    String BuildLeakReport(const TArray<FMemoryLeakGroup>& Groups);
+
+    /**
+     * @brief Reports the allocations still alive, writing the full report to Profiling/MemoryLeaks_<qpc>.txt and logging
+     * a summary with the largest groups
+     *
+     * @return Returns how many allocations were reported
+     */
+    int64 DumpLeaks();
+
+    /**
+     * @brief Copies out the frames of a captured callstack
+     *
+     * @param Id The callstack's id
+     * @param OutFrames Receives the return addresses, innermost first, and needs room for FMemoryCallstackTable::MaxFrames
+     * @return Returns how many frames were copied, zero for MEMORY_CALLSTACK_NONE
+     */
+    int32 GetCallstack(FMemoryCallstackId Id, uint64* OutFrames);
 
     /** @return Returns how many frames the history holds */
     int32 GetNumFrames();
@@ -285,6 +364,12 @@ public:
         return bTrackingEnabled.Load(EMemoryOrder::Relaxed);
     }
 
+    /** @return Returns whether the callstack of every allocation is captured */
+    FORCEINLINE bool IsCallstackCaptureEnabled() const
+    {
+        return bCaptureCallstacks.Load(EMemoryOrder::Relaxed);
+    }
+
     /** @return Returns the registry that holds every name and scope path */
     FORCEINLINE FMemoryTagRegistry& GetRegistry()
     {
@@ -303,12 +388,15 @@ private:
     FMemoryTagRegistry                                              Registry;
     TThreadLocal<FMemoryThreadState, FMemoryProfilerStateAllocator> ThreadState;
     FMemoryAllocationMap                                            Allocations;
+    FMemoryCallstackTable                                           Callstacks;
     FSpinLock                                                       CountersLock;
     AtomicBool                                                      bCountersReady;
     FCounters*                                                      TagCounters;
     FCounters*                                                      ScopeCounters;
     TProfilerFrameRing<FMemoryProfilerFrame>*                       Frames;
     int32                                                           NextFrameIndex;
+    AtomicUInt32                                                    CurrentMarker;
+    AtomicBool                                                      bCaptureCallstacks;
     AtomicBool                                                      bTrackingEnabled;
 };
 
