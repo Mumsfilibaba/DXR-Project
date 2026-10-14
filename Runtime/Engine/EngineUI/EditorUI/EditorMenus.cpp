@@ -216,6 +216,7 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu(FEditorEngine* InEditorEngin
         EEditorLightType::Point,
         EEditorLightType::Spot,
         EEditorLightType::Directional,
+        EEditorLightType::SkyLight,
         EEditorLightType::Sky,
     };
 

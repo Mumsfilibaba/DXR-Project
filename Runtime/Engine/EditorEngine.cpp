@@ -177,7 +177,7 @@ void FEditorEngine::Release()
     }
 
     // The cached primitive meshes own RHI buffers, so they cannot outlive the RHI.
-    EditorActorFactory::ReleaseCachedMeshes();
+    EditorActorFactory::ReleaseCachedResources();
 
     FEngine::Release();
 }

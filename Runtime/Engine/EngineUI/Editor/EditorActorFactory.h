@@ -25,6 +25,7 @@ enum class EEditorLightType : uint8
     Point,
     Spot,
     Directional,
+    SkyLight,
     Sky,
 };
 
@@ -74,11 +75,11 @@ struct ENGINE_API EditorActorFactory
     /**
      * @brief Check whether a light of the given type can be spawned
      *
-     * A spot light is never drawn, because the renderer has no spot light support at all. A sky light is rejected
-     * by the scene without a cube map, and the editor has no way to author one, so a new sky light can only
-     * borrow the cube map from one that already exists.
+     * A spot light is never drawn, because the renderer has no spot light support at all. The scene lights with
+     * one sky light and draws one skybox, so a sky light can't be added when the world has one, and a sky can't be
+     * added when it has either.
      *
-     * @param World World to search for an existing sky light
+     * @param World World to search for an existing sky light or skybox
      * @param Type Kind of light the caller wants to create
      * @return Returns true if spawning the light would produce something the renderer can draw
      */
@@ -93,8 +94,8 @@ struct ENGINE_API EditorActorFactory
      */
     static FString CreateUniqueActorName(FWorld* World, const CHAR_T* BaseName);
 
-    /** @brief Drop the cached primitive meshes, which must happen before the RHI is torn down. */
-    static void ReleaseCachedMeshes();
+    /** @brief Drop the cached primitive meshes and default sky, which must happen before the RHI is torn down. */
+    static void ReleaseCachedResources();
 
     /** @brief Display name of a primitive, also used as the base name of the spawned actor. */
     static const CHAR_T* GetPrimitiveName(EEditorPrimitiveType Type);

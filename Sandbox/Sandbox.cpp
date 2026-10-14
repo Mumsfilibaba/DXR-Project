@@ -57,7 +57,7 @@ static void TryCompressBC5(FTextureCompressor& Compressor, FRHITextureRef& Textu
     }
 }
 
-static bool AddSandboxPlayer(FWorld* World, const TSharedPtr<FEnvironment>& Skybox, FActorFilter* CamerasFilter = nullptr, FActorFilter* ActorsFilter = nullptr)
+static bool AddSandboxPlayer(FWorld* World, FActorFilter* CamerasFilter = nullptr, FActorFilter* ActorsFilter = nullptr)
 {
     FCameraActor* CameraActor = World->SpawnActor<FCameraActor>(FVector3(0.0f, 10.0f, -2.0f), FVector3(0.0f, 0.0f, 0.0f));
     FSandboxPlayerController* Player = World->SpawnActor<FSandboxPlayerController>();
@@ -74,13 +74,6 @@ static bool AddSandboxPlayer(FWorld* World, const TSharedPtr<FEnvironment>& Skyb
     Player->SetFilter(ActorsFilter);
     Player->SetCameraActor(CameraActor);
     World->SetActiveCamera(CameraActor->GetCameraComponent());
-
-    if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
-    {
-        SkyboxComponent->SetEnvironment(Skybox);
-        Player->AddComponent(SkyboxComponent);
-    }
-
     return true;
 }
 
@@ -636,7 +629,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         return false;
     }
 
-    if (!AddSandboxPlayer(InWorld, Skybox, CamerasFilter, ActorsFilter))
+    if (!AddSandboxPlayer(InWorld, CamerasFilter, ActorsFilter))
     {
         return false;
     }
@@ -734,10 +727,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     }
 #endif
 
-    // Add SkyLight
-    if (FSkyLightActor* SkyLightActor = InWorld->SpawnActor<FSkyLightActor>())
+    // Add Sky
+    if (FSkyActor* SkyActor = InWorld->SpawnActor<FSkyActor>(Skybox))
     {
-        SkyLightActor->SetFilter(LightingFilter);
+        SkyActor->SetFilter(LightingFilter);
     }
 
     // Add DirectionalLight
@@ -801,13 +794,13 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
         return false;
     }
 
-    if (!AddSandboxPlayer(InWorld, Skybox))
+    if (!AddSandboxPlayer(InWorld))
     {
         return false;
     }
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>();
+    InWorld->SpawnActor<FSkyActor>(Skybox);
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
@@ -851,13 +844,13 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
         return false;
     }
 
-    if (!AddSandboxPlayer(InWorld, Skybox))
+    if (!AddSandboxPlayer(InWorld))
     {
         return false;
     }
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>();
+    InWorld->SpawnActor<FSkyActor>(Skybox);
 
     // Load Reflection Probe
     TSharedPtr<FEnvironment> ReflectionProbeExterior = LoadEnvironmentFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Reflection.hdr"));
@@ -935,13 +928,13 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
         return false;
     }
 
-    if (!AddSandboxPlayer(InWorld, Skybox))
+    if (!AddSandboxPlayer(InWorld))
     {
         return false;
     }
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>();
+    InWorld->SpawnActor<FSkyActor>(Skybox);
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
@@ -1123,13 +1116,13 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         return false;
     }
 
-    if (!AddSandboxPlayer(InWorld, Skybox))
+    if (!AddSandboxPlayer(InWorld))
     {
         return false;
     }
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>();
+    InWorld->SpawnActor<FSkyActor>(Skybox);
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(FVector3(Math::DegreesToRadians(45.0f), 0.0f, 0.0f)))
@@ -1145,20 +1138,12 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
 TSharedPtr<FEnvironment> FSandbox::LoadEnvironmentFromPanorama(const FString& Filename)
 {
-    TSharedPtr<FTexture2D> Panorama = StaticCastSharedPtr<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
-    if (!Panorama || !Panorama->GetRHITexture())
-    {
-        DEBUG_BREAK();
-        return nullptr;
-    }
-
     FString                  Error;
-    TSharedPtr<FEnvironment> Environment = FEnvironmentAssetFactory::CreateFromPanorama(Panorama->GetRHITexture().Get(), 1024, Error);
+    TSharedPtr<FEnvironment> Environment = FEnvironmentAssetFactory::CreateFromPanoramaFile(Filename, 1024, Error);
     if (!Environment)
     {
         LOG_ERROR("[FSandbox]: '%s' couldn't be baked into an environment: %s", *Filename, *Error);
     }
 
-    FAssetManager::Get().UnloadTexture(Panorama);
     return Environment;
 }

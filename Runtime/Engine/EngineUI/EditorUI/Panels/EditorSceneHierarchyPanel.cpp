@@ -33,6 +33,7 @@ static const EEditorLightType GPlaceableLightTypes[] =
     EEditorLightType::Point,
     EEditorLightType::Spot,
     EEditorLightType::Directional,
+    EEditorLightType::SkyLight,
     EEditorLightType::Sky,
 };
 

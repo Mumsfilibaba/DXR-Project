@@ -5,5 +5,6 @@
 #include "Engine/World/Actors/LightProbeActor.h"
 #include "Engine/World/Actors/PlayerController.h"
 #include "Engine/World/Actors/PointLightActor.h"
+#include "Engine/World/Actors/SkyActor.h"
 #include "Engine/World/Actors/SkyLightActor.h"
 #include "Engine/World/Actors/SpotLightActor.h"

@@ -37,6 +37,7 @@
 #include "Engine/World/Actors/PlayerController.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Actors/PointLightActor.h"
+#include "Engine/World/Actors/SkyActor.h"
 #include "Engine/World/Actors/SkyLightActor.h"
 #include "Engine/World/Actors/SpotLightActor.h"
 

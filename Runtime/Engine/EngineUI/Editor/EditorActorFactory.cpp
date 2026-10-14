@@ -1,8 +1,11 @@
 #include "Engine/EngineUI/Editor/EditorActorFactory.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Math/Math.h"
+#include "Core/Misc/OutputDeviceManager.h"
+#include "Core/Misc/Paths.h"
 #include "Core/Templates/CString.h"
 #include "Engine/Engine.h"
+#include "Engine/Assets/EnvironmentAssetFactory.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/World/World.h"
@@ -10,9 +13,11 @@
 #include "Engine/World/Actors/CameraActor.h"
 #include "Engine/World/Actors/DirectionalLightActor.h"
 #include "Engine/World/Actors/PointLightActor.h"
+#include "Engine/World/Actors/SkyActor.h"
 #include "Engine/World/Actors/SkyLightActor.h"
 #include "Engine/World/Actors/SpotLightActor.h"
 #include "Engine/World/Components/SkyLightComponent.h"
+#include "Engine/World/Components/SkyboxComponent.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 
@@ -42,10 +47,13 @@ static const EEditorLightType GLightTypes[] =
     EEditorLightType::Point,
     EEditorLightType::Spot,
     EEditorLightType::Directional,
+    EEditorLightType::SkyLight,
     EEditorLightType::Sky,
 };
 
 static TStaticArray<TSharedPtr<FMesh>, NumPrimitiveTypes> GPrimitiveMeshCache;
+
+static TSharedPtr<FEnvironment> GDefaultSky;
 
 static FMeshData CreatePrimitiveMeshData(EEditorPrimitiveType Type)
 {
@@ -112,6 +120,39 @@ static bool HasSkyLight(FWorld* World)
     }
 
     return false;
+}
+
+static bool HasSkybox(FWorld* World)
+{
+    if (World)
+    {
+        for (FActor* Actor : World->GetActors())
+        {
+            if (Actor && Actor->GetComponentOfType<FSkyboxComponent>())
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+static TSharedPtr<FEnvironment> GetDefaultSky()
+{
+    if (!GDefaultSky)
+    {
+        const FString Filename = Paths::GetAssetDir() + TEXT("/Textures/arches.hdr");
+
+        FString Error;
+        GDefaultSky = FEnvironmentAssetFactory::CreateFromPanoramaFile(Filename, 1024, Error);
+        if (!GDefaultSky)
+        {
+            LOG_ERROR("[EditorActorFactory]: The default sky '%s' couldn't be baked: %s", *Filename, *Error);
+        }
+    }
+
+    return GDefaultSky;
 }
 
 FActor* EditorActorFactory::SpawnPrimitive(FWorld* World, EEditorPrimitiveType Type, const FVector3& Location)
@@ -189,11 +230,21 @@ FActor* EditorActorFactory::SpawnLight(FWorld* World, EEditorLightType Type, con
             break;
         }
 
-        case EEditorLightType::Sky:
+        case EEditorLightType::SkyLight:
         {
             if (!HasSkyLight(World))
             {
                 NewActor = World->SpawnActor<FSkyLightActor>();
+            }
+
+            break;
+        }
+
+        case EEditorLightType::Sky:
+        {
+            if (!HasSkyLight(World) && !HasSkybox(World))
+            {
+                NewActor = World->SpawnActor<FSkyActor>(GetDefaultSky());
             }
 
             break;
@@ -235,9 +286,14 @@ bool EditorActorFactory::CanSpawnLight(FWorld* World, EEditorLightType Type)
             return false;
         }
 
-        case EEditorLightType::Sky:
+        case EEditorLightType::SkyLight:
         {
             return World && !HasSkyLight(World);
+        }
+
+        case EEditorLightType::Sky:
+        {
+            return World && !HasSkyLight(World) && !HasSkybox(World);
         }
 
         default:
@@ -327,12 +383,14 @@ FString EditorActorFactory::CreateUniqueActorName(FWorld* World, const CHAR_T* B
     return Name;
 }
 
-void EditorActorFactory::ReleaseCachedMeshes()
+void EditorActorFactory::ReleaseCachedResources()
 {
     for (int32 Index = 0; Index < NumPrimitiveTypes; ++Index)
     {
         GPrimitiveMeshCache[Index].Reset();
     }
+
+    GDefaultSky.Reset();
 }
 
 const CHAR_T* EditorActorFactory::GetPrimitiveName(EEditorPrimitiveType Type)
@@ -348,7 +406,8 @@ const CHAR_T* EditorActorFactory::GetLightName(EEditorLightType Type)
         case EEditorLightType::Point:       return TEXT("Point Light");
         case EEditorLightType::Spot:        return TEXT("Spot Light");
         case EEditorLightType::Directional: return TEXT("Directional Light");
-        case EEditorLightType::Sky:         return TEXT("Sky Light");
+        case EEditorLightType::SkyLight:    return TEXT("Sky Light");
+        case EEditorLightType::Sky:         return TEXT("Sky");
         default:                            return TEXT("Light");
     }
 }

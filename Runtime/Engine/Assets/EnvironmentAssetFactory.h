@@ -38,6 +38,9 @@ public:
      */
     static TSharedPtr<FEnvironment> CreateFromPanorama(FRHITexture* Panorama, int32 SkySize, FString& OutError);
 
+    /** @brief Load a panorama file and bake an environment from it with CreateFromPanorama */
+    static TSharedPtr<FEnvironment> CreateFromPanoramaFile(const FString& Filename, int32 SkySize, FString& OutError);
+
 public:
 
     /**

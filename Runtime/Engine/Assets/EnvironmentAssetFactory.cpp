@@ -4,6 +4,7 @@
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/EnvironmentAssetFactory.h"
 #include "Engine/Assets/TextureAssetLoader.h"
+#include "Engine/Resources/Texture.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/TextureHelpers.h"
@@ -317,6 +318,20 @@ TSharedPtr<FEnvironment> FEnvironmentAssetFactory::CreateFromPanorama(FRHITextur
     }
 
     return MakeSharedPtr<FEnvironment>(SkyCubeMap, SpecularCubeMap, DiffuseCubeMap);
+}
+
+TSharedPtr<FEnvironment> FEnvironmentAssetFactory::CreateFromPanoramaFile(const FString& Filename, int32 SkySize, FString& OutError)
+{
+    TSharedPtr<FTexture2D> Panorama = StaticCastSharedPtr<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
+    if (!Panorama || !Panorama->GetRHITexture())
+    {
+        OutError = FString(TEXT("the panorama couldn't be loaded"));
+        return nullptr;
+    }
+
+    TSharedPtr<FEnvironment> Environment = CreateFromPanorama(Panorama->GetRHITexture().Get(), SkySize, OutError);
+    FAssetManager::Get().UnloadTexture(Panorama);
+    return Environment;
 }
 
 TSharedPtr<FEnvironment> FEnvironmentAssetFactory::Load(const FAssetData& Asset, const FString& DiskPath, FString& OutError)
