@@ -11,9 +11,9 @@ class FAccelerationStructureCompactionHelper
 {
     struct FPendingCompaction
     {
-        FRHIRayTracingAccelerationStructure* Source          = nullptr;
-        FRHIBufferRef                        SizeReadbackBuffer;
-        uint32                               FramesRemaining = 0;
+        FRHIRayTracingAccelerationStructureRef Source;
+        FRHIBufferRef                          SizeReadbackBuffer;
+        uint32                                 FramesRemaining = 0;
     };
 
 public:
@@ -51,7 +51,7 @@ public:
         CommandList.WriteAccelerationStructurePostBuildInfo(ReadbackBuffer.Get(), 0, EAccelerationStructurePostBuildInfoType::CompactedSize, Sources, 1);
 
         FPendingCompaction Pending;
-        Pending.Source             = AccelerationStructure;
+        Pending.Source             = MakeSharedRef<FRHIRayTracingAccelerationStructure>(AccelerationStructure);
         Pending.SizeReadbackBuffer = ::Move(ReadbackBuffer);
         Pending.FramesRemaining    = ReadbackLatencyInFrames;
         PendingCompactions.Emplace(::Move(Pending));
@@ -77,8 +77,8 @@ public:
 
             if (CompactedSize > 0)
             {
-                CommandList.CompactAccelerationStructure(Pending.Source, CompactedSize);
-                CommandList.UnorderedAccessBarrier(Pending.Source);
+                CommandList.CompactAccelerationStructure(Pending.Source.Get(), CompactedSize);
+                CommandList.UnorderedAccessBarrier(Pending.Source.Get());
             }
 
             PendingCompactions.RemoveAt(Index);

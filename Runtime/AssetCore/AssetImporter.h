@@ -48,6 +48,9 @@ struct FAssetImportOptions
 
     /** @brief Also replace text assets, such as materials, that were edited since they were imported; otherwise they are kept */
     bool bOverwriteEditedAssets = false;
+
+    /** @brief The GUIDs to give assets by name, such as engine content that code loads by a fixed GUID; any other asset gets the usual one */
+    TMap<FString, FGuid> Guids;
 };
 
 struct FAssetImportResult
@@ -116,7 +119,7 @@ public:
 
 private:
     FAssetImportResult CopyToContentSources(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, FString& OutCopiedSource) const;
-    FAssetImportResult RunImport(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, const FJsonValue& Settings, const FString& ImportName, bool bReplaceExisting, bool bOverwriteEditedAssets) const;
+    FAssetImportResult RunImport(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, const FJsonValue& Settings, const FString& ImportName, bool bReplaceExisting, bool bOverwriteEditedAssets, const TMap<FString, FGuid>& RequestedGuids) const;
 
     FContentMounts                    Mounts;
     TArray<TSharedPtr<IAssetFactory>> Factories;

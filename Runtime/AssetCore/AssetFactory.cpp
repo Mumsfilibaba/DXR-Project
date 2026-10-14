@@ -11,6 +11,7 @@ FAssetImportContext::FAssetImportContext(const FString& InSourcePath, const FStr
     , Settings(InSettings)
     , ImportName(InImportName)
     , Guids()
+    , RequestedGuids()
     , Warnings()
 {
 }
@@ -25,6 +26,12 @@ FGuid FAssetImportContext::GetGuid(const FString& Name, EAssetType Type)
     if (const FGuid* Known = Guids.Find(FileName))
     {
         return *Known;
+    }
+
+    if (const FGuid* Requested = RequestedGuids.Find(Name))
+    {
+        Guids.Add(FileName, *Requested);
+        return *Requested;
     }
 
     FGuid Guid;
@@ -62,6 +69,11 @@ FGuid FAssetImportContext::GetGuid(const FString& Name, EAssetType Type)
 
     Guids.Add(FileName, Guid);
     return Guid;
+}
+
+void FAssetImportContext::RequestGuid(const FString& Name, const FGuid& Guid)
+{
+    RequestedGuids.Add(Name, Guid);
 }
 
 FString FAssetImportContext::GetAssetPath(const FString& Name, EAssetType Type) const

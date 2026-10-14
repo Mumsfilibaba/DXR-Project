@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/EditorUI/Panels/EditorPropertiesPanel.h"
+#include "Engine/EngineUI/EditorUI/EditorConvertToMeshDialog.h"
 #include "Engine/EngineUI/EditorUI/EditorIcons.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EditorEngine.h"
@@ -8,6 +9,7 @@
 #include "Engine/World/Components/LightComponent.h"
 #include "Engine/World/Components/LightProbeComponent.h"
 #include "Engine/World/Components/PointLightComponent.h"
+#include "Engine/World/Components/PrimitiveShapeComponent.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/Resources/Material.h"
 #include "Application/Draw/DrawCommandList.h"
@@ -20,6 +22,7 @@
 #include "Application/Elements/PropertyTable.h"
 #include "Application/Elements/ScrollBox.h"
 #include "Application/Elements/SeparatorText.h"
+#include "Application/Elements/Spinner.h"
 #include "Application/Elements/TextBlock.h"
 #include "Application/Elements/TexturePreview.h"
 #include "Application/Input/Keys.h"
@@ -120,6 +123,9 @@ FEditorPropertiesPanel::FEditorPropertiesPanel(FEditorEngine* InEditorEngine)
     , VectorRows()
     , ColorRows()
     , BuiltForActor(nullptr)
+    , ShapeComponent(nullptr)
+    , ShapeSpinner(nullptr)
+    , ShapeCounts(nullptr)
     , SelectedMaterialIndex(0)
     , bRebuildRequested(false)
 {
@@ -194,6 +200,10 @@ void FEditorPropertiesPanel::RebuildContent()
     VectorRows.Clear();
     ColorRows.Clear();
 
+    ShapeComponent = nullptr;
+    ShapeSpinner.Reset();
+    ShapeCounts.Reset();
+
     for (TSharedPtr<TNumericEntry<float>>& Field : LightDirectionFields)
     {
         Field.Reset();
@@ -222,6 +232,11 @@ void FEditorPropertiesPanel::RebuildContent()
     if (FActor* ParentActor = Actor->GetParentActor())
     {
         BuildAttachmentSection(Column, ParentActor);
+    }
+
+    if (FPrimitiveShapeComponent* Component = Actor->GetComponentOfType<FPrimitiveShapeComponent>())
+    {
+        BuildPrimitiveShapeSection(Column, Component);
     }
 
     if (FStaticMeshComponent* Component = Actor->GetComponentOfType<FStaticMeshComponent>())
@@ -814,6 +829,91 @@ void FEditorPropertiesPanel::BuildCameraSection(const TSharedPtr<FVerticalBox>& 
     AddSection(InColumn, TEXT("Transform"), TransformTable);
 }
 
+void FEditorPropertiesPanel::BuildPrimitiveShapeSection(const TSharedPtr<FVerticalBox>& InColumn, FPrimitiveShapeComponent* Component)
+{
+    ShapeComponent = Component;
+
+    FSpinner::FDesc SpinnerDesc;
+    SpinnerDesc.bIsSpinning = Component->IsBuilding();
+    ShapeSpinner = FSpinner::Create(SpinnerDesc);
+
+    TSharedPtr<FHorizontalBox> Header = FHorizontalBox::Create();
+    Header->AddSlot(CreateSectionLabel(TEXT("PrimitiveShape"))).SetFillCoefficient(1.0f);
+    Header->AddSlot(ShapeSpinner).SetVerticalAlignment(EVerticalAlignment::Center).SetPadding(FMargin(6, 0, 0, 0));
+    InColumn->AddSlot(Header);
+
+    TSharedPtr<FPropertyTable> Table = CreateTable();
+
+    const FPrimitiveShape      Shape = Component->GetShape();
+    const FPrimitiveShapeDesc& Desc  = PrimitiveShapes::GetDesc(Shape.Type);
+    AddTextRow(Table, TEXT("Shape"), Desc.Name);
+
+    for (int32 Index = 0; Index < Desc.NumParameters; ++Index)
+    {
+        const FShapeParameter& Parameter = Desc.Parameters[Index];
+        const FString          RowLabel  = Parameter.Unit ? FString::Printf(TEXT("%s (%s)"), Parameter.Name, Parameter.Unit) : FString(Parameter.Name);
+
+        const auto ApplyValue = [Component, Index](float Value)
+        {
+            FPrimitiveShape NewShape = Component->GetShape();
+            NewShape.Values[Index] = Value;
+            Component->SetShape(NewShape);
+        };
+
+        if (Parameter.Type == EShapeParameterType::Integer)
+        {
+            AddIntRow(Table, RowLabel, static_cast<int32>(Shape.Values[Index]), static_cast<int32>(Parameter.Min), static_cast<int32>(Parameter.Max), static_cast<int32>(Parameter.Default),
+                TDelegate<void(int32)>::CreateLambda([ApplyValue](int32 Value)
+                {
+                    ApplyValue(static_cast<float>(Value));
+                }), static_cast<int32>(Parameter.SliderMax));
+        }
+        else
+        {
+            AddFloatRow(Table, RowLabel, Shape.Values[Index], Parameter.Min, Parameter.Max, 0.05f, Parameter.Default, 2, TDelegate<void(float)>::CreateLambda(ApplyValue), Parameter.SliderMax);
+        }
+    }
+
+    ShapeCounts = CreateTextRow(FString());
+    Table->AddRow(TEXT("Mesh"), ShapeCounts);
+
+    FButton::FDesc ConvertDesc;
+    ConvertDesc.Text      = TEXT("Convert to Mesh Asset");
+    ConvertDesc.Font      = FEditorStyle::GetFonts().Body;
+    ConvertDesc.MinHeight = FUIStyle::GetDefault().Metrics.ButtonHeight;
+    ConvertDesc.OnClicked = FOnClicked::CreateLambda([this, Component]()
+    {
+        FEditorConvertToMeshDialog::Open(Column, EditorEngine, Component);
+    });
+
+    Table->AddRow(TEXT("Asset"), FButton::Create(ConvertDesc));
+
+    AddSection(InColumn, TEXT("Shape"), Table);
+    RefreshPrimitiveShapeStatus();
+}
+
+void FEditorPropertiesPanel::RefreshPrimitiveShapeStatus()
+{
+    if (!ShapeComponent)
+    {
+        return;
+    }
+
+    FActor* Actor = EditorEngine->GetSelectedActor();
+    if (!Actor || Actor->GetComponentOfType<FPrimitiveShapeComponent>() != ShapeComponent)
+    {
+        ShapeComponent = nullptr;
+        RequestRebuild();
+        return;
+    }
+
+    ShapeSpinner->SetSpinning(ShapeComponent->IsBuilding());
+
+    const TSharedPtr<FMesh> Mesh = ShapeComponent->GetMesh();
+    ShapeCounts->SetText(ShapeComponent->IsBuilding() ? FString(TEXT("Building...")) :
+        Mesh ? FString::Printf(TEXT("%d vertices, %d triangles"), Mesh->GetVertexCount(), Mesh->GetIndexCount() / 3) : FString());
+}
+
 void FEditorPropertiesPanel::BuildLightProbeSection(const TSharedPtr<FVerticalBox>& InColumn, FLightProbeComponent* Component)
 {
     InColumn->AddSlot(CreateSectionLabel(TEXT("LightProbe")));
@@ -1098,9 +1198,10 @@ FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
     float                             Step,
     float                             DefaultValue,
     int32                             Precision,
-    const TDelegate<void(float)>&     OnChanged)
+    const TDelegate<void(float)>&     OnChanged,
+    float                             SliderMax)
 {
-    TSharedPtr<TNumericEntry<float>> Field = CreateFloatEditor(Value, MinValue, MaxValue, Step, Precision, OnChanged);
+    TSharedPtr<TNumericEntry<float>> Field = CreateFloatEditor(Value, MinValue, MaxValue, Step, Precision, OnChanged, SliderMax);
 
     FPropertyRow& NewRow = Table->AddRow(RowLabel,  Field);
     NewRow.ToolTipText   = FString::Printf(TEXT("Default %.4f"), DefaultValue);
@@ -1114,6 +1215,47 @@ FPropertyRow& FEditorPropertiesPanel::AddFloatRow(
     NewRow.IsModified = FOnPropertyModified::CreateLambda([Field, DefaultValue]() -> bool
     {
         return Math::Abs(Field->GetValue() - DefaultValue) > REVERT_EPSILON;
+    });
+
+    return NewRow;
+}
+
+FPropertyRow& FEditorPropertiesPanel::AddIntRow(
+    const TSharedPtr<FPropertyTable>& Table,
+    const FString&                    RowLabel,
+    int32                             Value,
+    int32                             MinValue,
+    int32                             MaxValue,
+    int32                             DefaultValue,
+    const TDelegate<void(int32)>&     OnChanged,
+    int32                             SliderMax)
+{
+    TNumericEntry<int32>::FDesc Desc;
+    Desc.Value          = Value;
+    Desc.MinValue       = MinValue;
+    Desc.MaxValue       = MaxValue;
+    Desc.SliderMinValue = MinValue;
+    Desc.SliderMaxValue = SliderMax;
+    Desc.Font           = FEditorStyle::GetFonts().Body;
+    Desc.bShowLabel     = false;
+    Desc.bShowFillTrack = true;
+    Desc.TextAlignment  = EHorizontalAlignment::Center;
+    Desc.OnValueChanged = OnChanged;
+
+    TSharedPtr<TNumericEntry<int32>> Field = TNumericEntry<int32>::Create(Desc);
+
+    FPropertyRow& NewRow = Table->AddRow(RowLabel, Field);
+    NewRow.ToolTipText   = FString::Printf(TEXT("Default %d"), DefaultValue);
+
+    NewRow.OnRevert = FOnClicked::CreateLambda([Field, DefaultValue, OnChanged]()
+    {
+        Field->SetValue(DefaultValue);
+        OnChanged.ExecuteIfBound(Field->GetValue());
+    });
+
+    NewRow.IsModified = FOnPropertyModified::CreateLambda([Field, DefaultValue]() -> bool
+    {
+        return Field->GetValue() != DefaultValue;
     });
 
     return NewRow;
@@ -1208,6 +1350,8 @@ void FEditorPropertiesPanel::WriteColorRow(int32 RowIndex)
 
 void FEditorPropertiesPanel::RefreshValues()
 {
+    RefreshPrimitiveShapeStatus();
+
     for (const FVectorRow& Row : VectorRows)
     {
         if (!Row.OnRead.IsBound())
@@ -1267,12 +1411,14 @@ void FEditorPropertiesPanel::AddSection(const TSharedPtr<FVerticalBox>& InColumn
     InColumn->AddSlot(FExpander::Create(Desc)).SetPadding(FEditorStyle::GetSectionSpacing());
 }
 
-TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged)
+TSharedPtr<TNumericEntry<float>> FEditorPropertiesPanel::CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged, float SliderMax)
 {
     TNumericEntry<float>::FDesc Desc;
     Desc.Value          = Value;
     Desc.MinValue       = Min;
     Desc.MaxValue       = Max;
+    Desc.SliderMinValue = Min;
+    Desc.SliderMaxValue = SliderMax;
     Desc.Step           = Step;
     Desc.Precision      = Precision;
     Desc.Font           = FEditorStyle::GetFonts().Body;

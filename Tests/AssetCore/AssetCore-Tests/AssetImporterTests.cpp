@@ -541,6 +541,28 @@ bool AssetImporter_Test()
         Importer.UnregisterFactory(OtherFactory);
     }
 
+    TEST_SECTION(TEXT("An import can ask for an asset's GUID by name, and a reimport keeps it"));
+    {
+        const FGuid Requested = FGuid::Create();
+        TEST_EXPECT(WriteText(ProjectDir + TEXT("/Sources/Fixed.testimage"), TEXT("fixed\n")));
+
+        FAssetImportOptions Options;
+        Options.Guids.Add(TEXT("Fixed"), Requested);
+
+        FGuid          Guid;
+        FAssetMetadata Metadata;
+        TArray<uint8>  Data;
+
+        TEST_EXPECT(Importer.ImportFile(ProjectDir + TEXT("/Sources/Fixed.testimage"), TEXT("/Project/Fixed"), Options).Error == EAssetImportError::None);
+        TEST_EXPECT(ReadAsset(ProjectDir + TEXT("/Content/Fixed/Fixed.dxrasset"), Guid, Metadata, Data) && Guid == Requested);
+
+        TEST_EXPECT(Importer.Reimport(TEXT("/Project/Fixed/Fixed.dxrasset")).Error == EAssetImportError::None);
+        TEST_EXPECT(ReadAsset(ProjectDir + TEXT("/Content/Fixed/Fixed.dxrasset"), Guid, Metadata, Data) && Guid == Requested);
+
+        TEST_EXPECT(Importer.ImportFile(ProjectDir + TEXT("/Sources/Fixed.testimage"), TEXT("/Project/Unfixed")).Error == EAssetImportError::None);
+        TEST_EXPECT(ReadAsset(ProjectDir + TEXT("/Content/Unfixed/Fixed.dxrasset"), Guid, Metadata, Data) && Guid.IsValid() && Guid != Requested);
+    }
+
     TEST_SECTION(TEXT("The source hash is 64-bit FNV-1a"));
     {
         TEST_EXPECT(WriteText(Root + TEXT("/abc.txt"), TEXT("abc")));

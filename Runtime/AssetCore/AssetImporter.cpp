@@ -238,7 +238,7 @@ FAssetImportResult FAssetImporter::ImportFile(const FString& SourcePath, const F
     }
 
     const FJsonValue Settings = Options.Settings.IsObject() ? Options.Settings : FJsonValue::MakeObject();
-    return RunImport(*Factory, ImportSource, DestinationFolder, Settings, File::ExtractFilenameWithoutExtension(AbsoluteSource), Options.bReplaceExisting, Options.bOverwriteEditedAssets);
+    return RunImport(*Factory, ImportSource, DestinationFolder, Settings, File::ExtractFilenameWithoutExtension(AbsoluteSource), Options.bReplaceExisting, Options.bOverwriteEditedAssets, Options.Guids);
 }
 
 FAssetImportResult FAssetImporter::Reimport(const FString& AssetPath, const FString& LocatedSourcePath, bool bOverwriteEditedAssets)
@@ -281,7 +281,7 @@ FAssetImportResult FAssetImporter::Reimport(const FString& AssetPath, const FStr
 
     const FString DestinationFolder = AssetPath.SubString(0, AssetPath.Length() - NamedPath.Length());
     const FString ImportName        = Metadata.ImportName.IsEmpty() ? Metadata.Name : Metadata.ImportName;
-    return RunImport(*Factory, SourcePath, DestinationFolder, Metadata.ImportSettings, ImportName, true, bOverwriteEditedAssets);
+    return RunImport(*Factory, SourcePath, DestinationFolder, Metadata.ImportSettings, ImportName, true, bOverwriteEditedAssets, TMap<FString, FGuid>());
 }
 
 FAssetImportResult FAssetImporter::CopyToContentSources(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, FString& OutCopiedSource) const
@@ -358,7 +358,7 @@ FAssetImportResult FAssetImporter::CopyToContentSources(IAssetFactory& Factory, 
     return FAssetImportResult();
 }
 
-FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, const FJsonValue& Settings, const FString& ImportName, bool bReplaceExisting, bool bOverwriteEditedAssets) const
+FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FString& SourcePath, const FString& DestinationFolder, const FJsonValue& Settings, const FString& ImportName, bool bReplaceExisting, bool bOverwriteEditedAssets, const TMap<FString, FGuid>& RequestedGuids) const
 {
     FString DestinationDirectory;
     if (!Mounts.ToDiskPath(DestinationFolder, DestinationDirectory))
@@ -366,7 +366,12 @@ FAssetImportResult FAssetImporter::RunImport(IAssetFactory& Factory, const FStri
         return MakeError(EAssetImportError::InvalidDestination, FString::Printf(TEXT("'%s' isn't a folder under a mount"), *DestinationFolder));
     }
 
-    FAssetImportContext    Context(SourcePath, DestinationFolder, DestinationDirectory, Settings, ImportName);
+    FAssetImportContext Context(SourcePath, DestinationFolder, DestinationDirectory, Settings, ImportName);
+    for (const TPair<const FString&, const FGuid&>& Requested : RequestedGuids)
+    {
+        Context.RequestGuid(Requested.First, Requested.Second);
+    }
+
     TArray<FImportedAsset> Assets;
     FJsonValue             UsedSettings;
     FString                Error;

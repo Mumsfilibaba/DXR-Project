@@ -2,23 +2,10 @@
 #include "Core/Containers/String.h"
 #include "Core/Math/Vector3.h"
 #include "Engine/EngineModule.h"
+#include "Engine/Assets/PrimitiveShapes.h"
 
 class FActor;
 class FWorld;
-
-enum class EEditorPrimitiveType : uint8
-{
-    Cube,
-    Sphere,
-    Plane,
-    Cylinder,
-    Capsule,
-    Cone,
-    Torus,
-    Pyramid,
-    Teapot,
-    Count,
-};
 
 enum class EEditorLightType : uint8
 {
@@ -32,14 +19,17 @@ enum class EEditorLightType : uint8
 struct ENGINE_API EditorActorFactory
 {
     /**
-     * @brief Spawn a MeshFactory primitive resting on top of the given location
+     * @brief Spawn a primitive shape resting on top of the given location, built from its parameters
      *
      * @param World World to spawn into
-     * @param Type Primitive to build the mesh from
-     * @param Location Point on the surface the mesh should sit on
+     * @param Shape The shape and its parameters
+     * @param Location Point on the surface the shape should sit on
      * @return Returns the new actor, or nullptr if it could not be created
      */
-    static FActor* SpawnPrimitive(FWorld* World, EEditorPrimitiveType Type, const FVector3& Location);
+    static FActor* SpawnPrimitive(FWorld* World, const FPrimitiveShape& Shape, const FVector3& Location);
+
+    /** @brief Move an actor so its mesh rests on top of Location, which is done again when a shape's mesh changes size */
+    static void RestOnGround(FActor* Actor, const FVector3& Location);
 
     /**
      * @brief Spawn a light actor at the given location
@@ -94,11 +84,11 @@ struct ENGINE_API EditorActorFactory
      */
     static FString CreateUniqueActorName(FWorld* World, const CHAR_T* BaseName);
 
-    /** @brief Drop the cached primitive meshes and default sky, which must happen before the RHI is torn down. */
+    /** @brief Drop the cached default sky, which must happen before the RHI is torn down. */
     static void ReleaseCachedResources();
 
     /** @brief Display name of a primitive, also used as the base name of the spawned actor. */
-    static const CHAR_T* GetPrimitiveName(EEditorPrimitiveType Type);
+    static const CHAR_T* GetPrimitiveName(EPrimitiveShape Type);
 
     /** @brief Display name of a light type, also used as the base name of the spawned actor. */
     static const CHAR_T* GetLightName(EEditorLightType Type);

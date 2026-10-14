@@ -122,6 +122,8 @@ public:
     TSharedPtr<FMaterial> BaseMaterial;
 
 protected:
+    FRHITextureRef LoadBaseTexture(const FGuid& Guid, const CHAR_T* Name, uint8 Red, uint8 Green, uint8 Blue);
+
     bool CreateViewportRenderTarget();
 
     virtual FIntVector2 GetSceneRenderSize() const;

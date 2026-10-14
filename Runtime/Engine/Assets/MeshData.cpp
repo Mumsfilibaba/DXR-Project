@@ -136,41 +136,40 @@ TArray<uint16> FMeshData::GetSmallIndices() const
 
 void FMeshData::Optimize(uint32 StartVertex)
 {
-    uint32 VertexCount = static_cast<uint32>(Vertices.Size());
-    uint32 IndexCount  = static_cast<uint32>(Indices.Size());
+    // Each vertex from StartVertex on merges into the first identical vertex, and the others keep their order
+    const int32 VertexCount = Vertices.Size();
 
-    uint32 k = 0;
-    uint32 j = 0;
+    TMap<FSourceVertex, uint32> FirstVertex;
+    TArray<uint32>              Remap;
+    Remap.Resize(VertexCount);
 
-    for (uint32 i = StartVertex; i < VertexCount; i++)
+    uint32 NumKept = 0;
+    for (int32 Index = 0; Index < VertexCount; ++Index)
     {
-        for (j = 0; j < VertexCount; j++)
+        const FSourceVertex Vertex = Vertices[Index];
+        if (static_cast<uint32>(Index) >= StartVertex)
         {
-            if (Vertices[i] == Vertices[j])
+            if (const uint32* Existing = FirstVertex.Find(Vertex))
             {
-                if (i != j)
-                {
-                    Vertices.RemoveAt(i);
-                    VertexCount--;
-                    j--;
-
-                    for (k = 0; k < IndexCount; k++)
-                    {
-                        if (Indices[k] == i)
-                        {
-                            Indices[k] = j;
-                        }
-                        else if (Indices[k] > i)
-                        {
-                            Indices[k]--;
-                        }
-                    }
-
-                    i--;
-                    break;
-                }
+                Remap[Index] = *Existing;
+                continue;
             }
         }
+
+        Remap[Index] = NumKept;
+        if (!FirstVertex.Find(Vertex))
+        {
+            FirstVertex.Add(Vertex, NumKept);
+        }
+
+        Vertices[NumKept++] = Vertex;
+    }
+
+    Vertices.Resize(static_cast<int32>(NumKept));
+
+    for (uint32& VertexIndex : Indices)
+    {
+        VertexIndex = Remap[VertexIndex];
     }
 }
 

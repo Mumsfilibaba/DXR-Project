@@ -15,6 +15,8 @@
     #include "Engine/RuntimeEngine.h"
 #endif
 #include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/EngineContent.h"
+#include "Engine/Assets/PrimitiveShapeMeshCache.h"
 #include "Engine/Resources/Material.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
@@ -273,6 +275,30 @@ void FEngine::OnEngineWindowResized(const FIntVector2& /* NewScreenSize */)
 {
 }
 
+FRHITextureRef FEngine::LoadBaseTexture(const FGuid& Guid, const CHAR_T* Name, uint8 Red, uint8 Green, uint8 Blue)
+{
+    if (TSharedPtr<FTexture2D> Texture = StaticCastSharedPtr<FTexture2D>(FAssetManager::Get().LoadAsset<FTexture>(Guid)); Texture && Texture->GetRHITexture())
+    {
+        return Texture->GetRHITexture();
+    }
+
+    LOG_WARNING("[FEngine]: The engine content's %s is missing, so one is made in code; run Engine.ImportEngineContent in the editor to create the engine content", Name);
+
+    uint8 Pixels[4] = { Red, Green, Blue, 255 };
+
+    FRHITextureRef Texture = FTextureFactory::Get().LoadFromMemory(Pixels, 1, 1, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
+    if (Texture)
+    {
+        Texture->SetDebugName(Name);
+    }
+    else
+    {
+        LOG_ERROR("[FEngine]: Failed to create %s", Name);
+    }
+
+    return Texture;
+}
+
 bool FEngine::Init()
 {
     if (!CreateEngineWindow())
@@ -290,33 +316,6 @@ bool FEngine::Init()
         return false;
     }
 
-    // Create standard textures
-    uint8 Pixels[4] = { 255, 255, 255, 255 };
-
-    BaseTexture = FTextureFactory::Get().LoadFromMemory(Pixels, 1, 1, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
-    if (!BaseTexture)
-    {
-        LOG_WARNING("Failed to create BaseTexture");
-    }
-    else
-    {
-        BaseTexture->SetDebugName(TEXT("BaseTexture"));
-    }
-
-    Pixels[0] = 127;
-    Pixels[1] = 127;
-    Pixels[2] = 255;
-
-    BaseNormal = FTextureFactory::Get().LoadFromMemory(Pixels, 1, 1, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
-    if (!BaseNormal)
-    {
-        LOG_WARNING("Failed to create BaseNormal-Texture");
-    }
-    else
-    {
-        BaseNormal->SetDebugName(TEXT("BaseNormal"));
-    }
-
     // Create material sampler (Used for now by all materials)
     FRHISamplerStateDesc SamplerDesc;
     SamplerDesc.AddressU       = ESamplerMode::Wrap;
@@ -331,18 +330,27 @@ bool FEngine::Init()
 
     BaseMaterialSampler = RHI::CreateSamplerState(SamplerDesc);
 
-    // Base material
-    FMaterialInfo MaterialDesc;
-    MaterialDesc.Albedo           = FFloatColor::White;
-    MaterialDesc.Metallic         = 0.0f;
-    MaterialDesc.AmbientOcclusion = 1.0f;
-    MaterialDesc.Roughness        = 1.0f;
+    BaseTexture = LoadBaseTexture(EngineContent::BaseTexture, TEXT("BaseTexture"), 255, 255, 255);
+    BaseNormal  = LoadBaseTexture(EngineContent::BaseNormal, TEXT("BaseNormal"), 127, 127, 255);
 
-    BaseMaterial = MakeSharedPtr<FMaterial>(MaterialDesc);
-    BaseMaterial->SetTexture(EMaterialTextureSlot::BaseColor, BaseTexture);
-    BaseMaterial->SetTexture(EMaterialTextureSlot::Normal, BaseNormal);
-    BaseMaterial->SetTexture(EMaterialTextureSlot::MaskA, BaseTexture);
-    BaseMaterial->Initialize();
+
+    BaseMaterial = FAssetManager::Get().LoadAsset<FMaterial>(EngineContent::BaseMaterial);
+    if (!BaseMaterial)
+    {
+        LOG_WARNING("[FEngine]: The engine content's BaseMaterial is missing, so one is made in code; run Engine.ImportEngineContent in the editor to create the engine content");
+
+        FMaterialInfo MaterialDesc;
+        MaterialDesc.Albedo           = FFloatColor::White;
+        MaterialDesc.Metallic         = 0.0f;
+        MaterialDesc.AmbientOcclusion = 1.0f;
+        MaterialDesc.Roughness        = 1.0f;
+
+        BaseMaterial = MakeSharedPtr<FMaterial>(MaterialDesc);
+        BaseMaterial->SetTexture(EMaterialTextureSlot::BaseColor, BaseTexture);
+        BaseMaterial->SetTexture(EMaterialTextureSlot::Normal, BaseNormal);
+        BaseMaterial->SetTexture(EMaterialTextureSlot::MaskA, BaseTexture);
+        BaseMaterial->Initialize();
+    }
 
     // Create a new world
     World = new FWorld();
@@ -449,6 +457,8 @@ void FEngine::Tick(float DeltaTime)
 
     UpdateViewportRenderTarget(DeltaTime);
 
+    FPrimitiveShapeMeshCache::Get().Tick();
+
     if (SceneViewport)
     {
         SceneViewport->Tick();
@@ -512,6 +522,7 @@ void FEngine::Release()
     }
 
     // Release all assets
+    FPrimitiveShapeMeshCache::Get().Release();
     FAssetManager::Release();
 
     // Release RHI resources

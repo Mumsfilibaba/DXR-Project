@@ -4,6 +4,7 @@
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Engine/EngineUI/EditorUI/IEditorViewportHost.h"
 #include "Engine/EngineUI/Editor/EditorActorFactory.h"
+#include "Engine/EngineUI/EditorUI/EditorPrimitiveShapeDialog.h"
 #include "Engine/World/Components/CameraComponent.h"
 #include "Engine/EditorEngine.h"
 #include "Core/CoreGlobals.h"
@@ -194,16 +195,16 @@ TSharedPtr<FMenu> FEditorMenus::BuildPlaceActorMenu(FEditorEngine* InEditorEngin
 
     Menu->AddSection(TEXT("Primitives"), Font);
 
-    for (uint8 Index = 0; Index < static_cast<uint8>(EEditorPrimitiveType::Count); ++Index)
+    for (int32 Index = 0; Index < PrimitiveShapes::NumShapes; ++Index)
     {
-        const EEditorPrimitiveType Type = static_cast<EEditorPrimitiveType>(Index);
+        const EPrimitiveShape Type = static_cast<EPrimitiveShape>(Index);
 
         FMenuItem::FDesc Desc;
         Desc.Label       = EditorActorFactory::GetPrimitiveName(Type);
         Desc.Font        = Font;
-        Desc.OnActivated = FOnMenuItemActivated::CreateLambda([InEditorEngine, GetLocation, SelectPlacedActor, Type]()
+        Desc.OnActivated = FOnMenuItemActivated::CreateLambda([InEditorEngine, GetLocation, Type]()
         {
-            SelectPlacedActor(EditorActorFactory::SpawnPrimitive(InEditorEngine->GetWorld(), Type, GetLocation.Execute()));
+            FEditorPrimitiveShapeDialog::Place(InEditorEngine, Type, GetLocation.Execute());
         });
 
         Menu->AddItem(FMenuItem::Create(Desc));

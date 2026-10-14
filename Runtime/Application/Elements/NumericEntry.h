@@ -176,6 +176,13 @@ public:
          */
         bool bShowFillTrack = false;
 
+        /**
+         * @brief The span the fill track shows and dragging across it covers, when it should be narrower than MinValue to
+         * MaxValue; typing can still reach the whole range. Left with SliderMaxValue not above SliderMinValue, it is the whole range.
+         */
+        T SliderMinValue = T(0);
+        T SliderMaxValue = T(0);
+
         /** @brief Where the value sits across the field, which a filled track wants centred. */
         EHorizontalAlignment TextAlignment = EHorizontalAlignment::Left;
 
@@ -297,6 +304,7 @@ private:
     FFloatColor               AccentEdge;
     T                         Value;
     TNumericRange<T>          Range;
+    TNumericRange<T>          SliderRange;
     TValueScrubber<T>         Scrubber;
     T                         ScrubStep;
     int32                     LabelWidth;
@@ -326,6 +334,7 @@ TNumericEntry<T>::TNumericEntry()
     , AccentEdge(0.0f, 0.0f, 0.0f, 0.0f)
     , Value(T(0))
     , Range()
+    , SliderRange()
     , Scrubber()
     , ScrubStep(TNumericEntryTraits<T>::GetDefaultStep())
     , LabelWidth(14)
@@ -338,6 +347,7 @@ TNumericEntry<T>::TNumericEntry()
     Range.Min       = TNumericLimits<T>::Lowest();
     Range.Max       = TNumericLimits<T>::Max();
     Range.Precision = 3;
+    SliderRange     = Range;
 }
 
 template<typename T>
@@ -351,6 +361,13 @@ void TNumericEntry<T>::Initialize(const FDesc& Desc)
     Range.Min              = Desc.MinValue;
     Range.Max              = Math::Max(Desc.MaxValue, Desc.MinValue);
     Range.Precision        = Math::Max(0, Desc.Precision);
+    SliderRange            = Range;
+
+    if (Desc.SliderMaxValue > Desc.SliderMinValue)
+    {
+        SliderRange.Min = Math::Clamp(Desc.SliderMinValue, Range.Min, Range.Max);
+        SliderRange.Max = Math::Clamp(Desc.SliderMaxValue, SliderRange.Min, Range.Max);
+    }
     ScrubStep              = Desc.Step;
     LabelWidth             = Math::Max(0, Desc.LabelWidth);
     bShowLabel             = Desc.bShowLabel;
@@ -427,7 +444,7 @@ int32 TNumericEntry<T>::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawComma
 
     if (HasFillTrack())
     {
-        const float Fraction = Range.GetFraction(Value);
+        const float Fraction = SliderRange.GetFraction(Value);
 
         FRectangle Filled = AllottedGeometry.Bounds;
         Filled.Width      = static_cast<int32>(static_cast<float>(Filled.Width) * Fraction);
@@ -548,7 +565,7 @@ FEventResponse TNumericEntry<T>::OnMouseMove(const FCursorEvent& CursorEvent)
             ? Math::Saturate(static_cast<float>(CursorEvent.GetClientPosition().X - Bounds.Position.X) / static_cast<float>(Bounds.Width))
             : 0.0f;
 
-        ApplyValue(Range.FromFraction(Alpha));
+        ApplyValue(SliderRange.FromFraction(Alpha));
         return FEventResponse::Handled();
     }
 

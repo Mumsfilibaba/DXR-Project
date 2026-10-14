@@ -14,8 +14,10 @@ class FDirectionalLightComponent;
 class FLightComponent;
 class FLightProbeComponent;
 class FMaterial;
+class FPrimitiveShapeComponent;
 class FScrollBox;
 class FSeparatorText;
+class FSpinner;
 class FStaticMeshComponent;
 class FTextBlock;
 class FVerticalBox;
@@ -71,6 +73,8 @@ private:
     void BuildDirectionalLightSection(const TSharedPtr<FVerticalBox>& InColumn, FDirectionalLightComponent* Component);
     void BuildCameraSection(const TSharedPtr<FVerticalBox>& InColumn, FCameraComponent* Component);
     void BuildLightProbeSection(const TSharedPtr<FVerticalBox>& InColumn, FLightProbeComponent* Component);
+    void BuildPrimitiveShapeSection(const TSharedPtr<FVerticalBox>& InColumn, FPrimitiveShapeComponent* Component);
+    void RefreshPrimitiveShapeStatus();
 
     void AddMaterialSlotRows(const TSharedPtr<FPropertyTable>& Table, FStaticMeshComponent* Component);
     void AddMaterialRows(const TSharedPtr<FPropertyTable>& Table, FMaterial* Material);
@@ -110,7 +114,18 @@ private:
         float                             Step,
         float                             DefaultValue,
         int32                             Precision,
-        const TDelegate<void(float)>&     OnChanged);
+        const TDelegate<void(float)>&     OnChanged,
+        float                             SliderMax = 0.0f);
+
+    FPropertyRow& AddIntRow(
+        const TSharedPtr<FPropertyTable>& Table,
+        const FString&                    RowLabel,
+        int32                             Value,
+        int32                             MinValue,
+        int32                             MaxValue,
+        int32                             DefaultValue,
+        const TDelegate<void(int32)>&     OnChanged,
+        int32                             SliderMax = 0);
 
     FPropertyRow& AddBoolRow(
         const TSharedPtr<FPropertyTable>& Table,
@@ -127,7 +142,7 @@ private:
 
     NODISCARD TSharedPtr<FPropertyTable> CreateTable();
     NODISCARD TSharedPtr<FSeparatorText> CreateSectionLabel(const FString& SectionLabel);
-    NODISCARD TSharedPtr<TNumericEntry<float>> CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged);
+    NODISCARD TSharedPtr<TNumericEntry<float>> CreateFloatEditor(float Value, float Min, float Max, float Step, int32 Precision, const TDelegate<void(float)>& OnChanged, float SliderMax = 0.0f);
     NODISCARD TSharedPtr<TNumericEntry<int32>> CreateIntEditor(int32 Value, int32 Min, int32 Max, const TDelegate<void(int32)>& OnChanged);
     NODISCARD TSharedPtr<FCheckBox> CreateBoolEditor(bool bValue, const TDelegate<void(bool)>& OnChanged);
     NODISCARD TSharedPtr<FVisualElement> CreateComboEditor(const TArray<FString>& Options, int32 SelectedIndex, const TDelegate<void(int32)>& OnChanged);
@@ -140,6 +155,9 @@ private:
     TArray<FVectorRow>               VectorRows;
     TArray<FColorRow>                ColorRows;
     FActor*                          BuiltForActor;
+    FPrimitiveShapeComponent*        ShapeComponent;
+    TSharedPtr<FSpinner>             ShapeSpinner;
+    TSharedPtr<FTextBlock>           ShapeCounts;
     int32                            SelectedMaterialIndex;
     bool                             bRebuildRequested;
 };

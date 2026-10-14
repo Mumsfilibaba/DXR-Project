@@ -501,7 +501,7 @@ void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
 
 void FScene::AddStaticMesh(FStaticMeshComponent* InMeshComponent)
 {
-    if (!InMeshComponent)
+    if (!InMeshComponent || !InMeshComponent->GetMesh())
     {
         return;
     }

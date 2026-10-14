@@ -21,14 +21,14 @@ class FAccelerationStructureSerializationHelper
 
     struct FPendingSerialize
     {
-        FString                              CacheKey;
-        FRHIRayTracingAccelerationStructure* Source          = nullptr;
-        FRHIBufferRef                        SizeReadbackBuffer;
-        FRHIBufferRef                        SerializeDestBuffer;
-        FRHIBufferRef                        BytesReadbackBuffer;
-        uint64                               SerializedSize  = 0;
-        uint32                               FramesRemaining = 0;
-        EStage                               Stage           = EStage::SizeQuery;
+        FString                                CacheKey;
+        FRHIRayTracingAccelerationStructureRef Source;
+        FRHIBufferRef                          SizeReadbackBuffer;
+        FRHIBufferRef                          SerializeDestBuffer;
+        FRHIBufferRef                          BytesReadbackBuffer;
+        uint64                                 SerializedSize  = 0;
+        uint32                                 FramesRemaining = 0;
+        EStage                                 Stage           = EStage::SizeQuery;
     };
 
 public:
@@ -62,7 +62,7 @@ public:
         CommandList.WriteAccelerationStructurePostBuildInfo(ReadbackBuffer.Get(), 0, EAccelerationStructurePostBuildInfoType::Serialization, Sources, 1);
 
         FPendingSerialize Pending;
-        Pending.Source             = AccelerationStructure;
+        Pending.Source             = MakeSharedRef<FRHIRayTracingAccelerationStructure>(AccelerationStructure);
         Pending.CacheKey           = CacheKey;
         Pending.SizeReadbackBuffer = ::Move(ReadbackBuffer);
         Pending.FramesRemaining    = ReadbackLatencyInFrames;
@@ -134,7 +134,7 @@ private:
             return;
         }
 
-        CommandList.SerializeAccelerationStructure(Pending.Source, DestBuffer.Get(), 0);
+        CommandList.SerializeAccelerationStructure(Pending.Source.Get(), DestBuffer.Get(), 0);
         CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(DestBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
 
         const FRHIBufferCopyDesc CopyDesc(0, 0, static_cast<uint32>(SerializedSize));

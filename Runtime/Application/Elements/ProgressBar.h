@@ -33,6 +33,9 @@ public:
 
         /** @brief How far each corner of the track is rounded, in pixels. */
         FCornerRadii CornerRadius = FCornerRadii(FUIStyle::GetDefault().Metrics.CornerRadius);
+
+        /** @brief Show work whose fraction isn't known as a segment sliding along the track, ignoring Percent. */
+        bool bIndeterminate = false;
     };
 
 public:
@@ -59,6 +62,14 @@ public:
      * @param InPercent The fraction to fill to, clamped between zero and one.
      */
     void SetPercent(float InPercent);
+
+    /**
+     * @brief Switches between showing a fraction and a segment sliding along the track, for work that can't say how
+     * far it has got.
+     *
+     * @param bInIndeterminate Whether the bar slides instead of filling.
+     */
+    void SetIndeterminate(bool bInIndeterminate);
 
     /**
      * @brief Sets the text written over the track.
@@ -96,4 +107,5 @@ private:
     FCornerRadii          CornerRadius;
     float                 Percent;
     int32                 PreferredHeight;
+    bool                  bIndeterminate;
 };

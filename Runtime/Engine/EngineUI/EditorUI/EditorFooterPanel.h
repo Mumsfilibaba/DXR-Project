@@ -5,6 +5,7 @@
 #include "Application/Elements/EditableText.h"
 
 class FBorder;
+class FEditorBackgroundTaskIndicator;
 class FConsoleCommandLine;
 class FEditorFooterCandidateList;
 class FHorizontalBox;
@@ -57,16 +58,17 @@ private:
     NODISCARD int32 GetCandidateRowHeight() const;
     NODISCARD FString GetCandidateFilterText() const;
 
-    TUniquePtr<FConsoleCommandLine>        CommandLine;
-    TSharedPtr<FEditableText>              Field;
-    TSharedPtr<FBorder>                    FieldFrame;
-    TSharedPtr<FTextBlock>                 StatusLabel;
-    TSharedPtr<FBorder>                    CandidateBackground;
-    TSharedPtr<FEditorFooterCandidateList> CandidateList;
-    TSharedPtr<FScrollBox>                 CandidateScrollBox;
-    TSharedPtr<FVerticalBox>               CandidateRows;
-    TArray<FCandidateRow>                  CandidateRowVisuals;
-    TSharedPtr<FVisualElement>             HoveredCandidateRow;
-    TSharedPtr<FVisualElement>             Element;
-    bool                                   bIsSyncingField;
+    TUniquePtr<FConsoleCommandLine>            CommandLine;
+    TSharedPtr<FEditableText>                  Field;
+    TSharedPtr<FBorder>                        FieldFrame;
+    TSharedPtr<FTextBlock>                     StatusLabel;
+    TSharedPtr<FEditorBackgroundTaskIndicator> TaskIndicator;
+    TSharedPtr<FBorder>                        CandidateBackground;
+    TSharedPtr<FEditorFooterCandidateList>     CandidateList;
+    TSharedPtr<FScrollBox>                     CandidateScrollBox;
+    TSharedPtr<FVerticalBox>                   CandidateRows;
+    TArray<FCandidateRow>                      CandidateRowVisuals;
+    TSharedPtr<FVisualElement>                 HoveredCandidateRow;
+    TSharedPtr<FVisualElement>                 Element;
+    bool                                       bIsSyncingField;
 };

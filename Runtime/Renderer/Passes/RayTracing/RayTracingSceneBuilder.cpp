@@ -238,6 +238,30 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
         }
     }
 
+    const auto IsInScene = [&Resources](const FRHIRayTracingAccelerationStructure* Structure)
+    {
+        for (const FRHIGeometryAccelerationStructureInstance& Instance : Resources.RayTracingGeometryInstances)
+        {
+            if (Instance.Geometry == Structure)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    for (TArray<FRHIRayTracingAccelerationStructure*>* Requested : { &CompactionRequested, &SerializationRequested })
+    {
+        for (int32 Index = Requested->Size() - 1; Index >= 0; --Index)
+        {
+            if (!IsInScene((*Requested)[Index]))
+            {
+                Requested->RemoveAt(Index);
+            }
+        }
+    }
+
     if (CompactionHelper.HasPendingWork())
     {
         CompactionHelper.Tick(CommandList);

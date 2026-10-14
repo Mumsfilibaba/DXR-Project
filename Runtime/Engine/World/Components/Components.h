@@ -7,6 +7,7 @@
 #include "Engine/World/Components/LightComponent.h"
 #include "Engine/World/Components/LightProbeComponent.h"
 #include "Engine/World/Components/PointLightComponent.h"
+#include "Engine/World/Components/PrimitiveShapeComponent.h"
 #include "Engine/World/Components/SceneComponent.h"
 #include "Engine/World/Components/SkyboxComponent.h"
 #include "Engine/World/Components/SkyLightComponent.h"

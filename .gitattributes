@@ -12,3 +12,7 @@ Assets/Scenes/Bistro/BistroExterior.fbx filter=lfs diff=lfs merge=lfs -text
 Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx filter=lfs diff=lfs merge=lfs -text
 Assets/Scenes/EmeraldSquare/EmeraldSquare_Dusk.fbx filter=lfs diff=lfs merge=lfs -text
 Assets/Scenes/SunTemple/SunTemple.fbx filter=lfs diff=lfs merge=lfs -text
+
+# Binary assets, and the engine's binary content sources, are stored in Git LFS
+*.dxrasset filter=lfs diff=lfs merge=lfs -text
+ContentSources/**/*.hdr filter=lfs diff=lfs merge=lfs -text

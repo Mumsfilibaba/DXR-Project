@@ -1,6 +1,11 @@
 #include "Application/Elements/ProgressBar.h"
+#include "Application/Animation/UIAnimation.h"
 #include "Application/Draw/DrawCommandList.h"
 #include "Core/Math/Math.h"
+
+// How much of the track the sliding segment covers, and how long it takes to cross it, in seconds
+static constexpr float  IndeterminateFraction = 0.3f;
+static constexpr double IndeterminatePeriod   = 1.4;
 
 TSharedPtr<FProgressBar> FProgressBar::Create(const FDesc& Desc)
 {
@@ -19,6 +24,7 @@ FProgressBar::FProgressBar()
     , CornerRadius(FUIStyle::GetDefault().Metrics.CornerRadius)
     , Percent(0.0f)
     , PreferredHeight(16)
+    , bIndeterminate(false)
 {
 }
 
@@ -33,6 +39,7 @@ void FProgressBar::Initialize(const FDesc& Desc)
     TextColor       = Desc.TextColor;
     CornerRadius    = Desc.CornerRadius;
     PreferredHeight = Math::Max(Desc.PreferredHeight, 1);
+    bIndeterminate  = Desc.bIndeterminate;
 
     Percent = Math::Saturate(Desc.Percent);
 }
@@ -47,12 +54,31 @@ int32 FProgressBar::OnDraw(const FDrawGeometry& AllottedGeometry, FDrawCommandLi
     const FRectangle Bounds = AllottedGeometry.Bounds;
     OutCommandList.AddBox(LayerId, Bounds, BackgroundColor, CornerRadius);
 
-    FRectangle Filled = Bounds;
-    Filled.Width      = Math::Clamp(Math::RoundToInt(Percent * static_cast<float>(Bounds.Width)), 0, Bounds.Width);
-
-    if (!Filled.IsEmpty())
+    if (bIndeterminate)
     {
-        OutCommandList.AddBox(LayerId, Filled, FillColor, CornerRadius);
+        const double Cycles  = FUIFrameClock::Now() / IndeterminatePeriod;
+        const float  Phase   = static_cast<float>(Cycles - static_cast<double>(static_cast<int64>(Cycles)));
+        const int32  Segment = Math::Max(Math::RoundToInt(IndeterminateFraction * static_cast<float>(Bounds.Width)), 1);
+
+        FRectangle Sliding = Bounds;
+        Sliding.Position.X = Bounds.Position.X - Segment + Math::RoundToInt(Phase * static_cast<float>(Bounds.Width + Segment));
+        Sliding.Width = Segment;
+
+        OutCommandList.PushClip(LayerId, Bounds);
+        OutCommandList.AddBox(LayerId, Sliding, FillColor, CornerRadius);
+        OutCommandList.PopClip(LayerId);
+
+        RequestContinuousPaint();
+    }
+    else
+    {
+        FRectangle Filled = Bounds;
+        Filled.Width      = Math::Clamp(Math::RoundToInt(Percent * static_cast<float>(Bounds.Width)), 0, Bounds.Width);
+
+        if (!Filled.IsEmpty())
+        {
+            OutCommandList.AddBox(LayerId, Filled, FillColor, CornerRadius);
+        }
     }
 
     if (Font && !OverlayText.IsEmpty())
@@ -76,6 +102,17 @@ void FProgressBar::SetPercent(float InPercent)
     }
 
     Percent = NewPercent;
+    InvalidatePaint();
+}
+
+void FProgressBar::SetIndeterminate(bool bInIndeterminate)
+{
+    if (bIndeterminate == bInIndeterminate)
+    {
+        return;
+    }
+
+    bIndeterminate = bInIndeterminate;
     InvalidatePaint();
 }
 

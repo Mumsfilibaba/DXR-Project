@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/EditorUI/EditorFooterPanel.h"
+#include "Engine/EngineUI/EditorUI/EditorBackgroundTaskIndicator.h"
 #include "Engine/EngineUI/EditorUI/EditorStyle.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -268,6 +269,12 @@ bool FEditorFooterPanel::Initialize()
         return false;
     }
 
+    TaskIndicator = MakeSharedPtr<FEditorBackgroundTaskIndicator>();
+    if (!TaskIndicator || !TaskIndicator->Initialize())
+    {
+        return false;
+    }
+
     CandidateRows = FVerticalBox::Create();
     if (!CandidateRows)
     {
@@ -322,9 +329,11 @@ bool FEditorFooterPanel::Initialize()
     Row->AddSlot(CandidateAnchor);
     Row->AddSlot(FieldFrame)
         .SetVerticalAlignment(EVerticalAlignment::Center);
+    Row->AddSlot(FSpacer::CreateHorizontal(0))
+        .SetFillCoefficient(1.0f);
+    Row->AddSlot(TaskIndicator->GetElement())
+        .SetVerticalAlignment(EVerticalAlignment::Center);
     Row->AddSlot(StatusLabel)
-        .SetFillCoefficient(1.0f)
-        .SetHorizontalAlignment(EHorizontalAlignment::Right)
         .SetVerticalAlignment(EVerticalAlignment::Center);
 
     FBorder::FDesc BorderDesc;
@@ -692,6 +701,8 @@ void FEditorFooterPanel::Refresh()
 
     FieldFrame->SetBorderColor(bHasFocus ? FrameStyle.BorderFocused : FrameStyle.BorderNormal);
     Field->SetHintColor(bHasFocus ? FrameStyle.HintFocused : FrameStyle.HintNormal);
+
+    TaskIndicator->Refresh();
 
     const FFrameProfiler& Profiler = FFrameProfiler::Get();
 

@@ -43,6 +43,9 @@ public:
      */
     FGuid GetGuid(const FString& Name, EAssetType Type);
 
+    /** @brief Make GetGuid return Guid for the asset named Name, whatever the destination holds */
+    void RequestGuid(const FString& Name, const FGuid& Guid);
+
     /** @return Returns the virtual path the asset of Type named Name is written to, such as "/Project/Textures/Brick.dxrasset" */
     NODISCARD FString GetAssetPath(const FString& Name, EAssetType Type) const;
 
@@ -82,6 +85,7 @@ private:
     FJsonValue           Settings;
     FString              ImportName;
     TMap<FString, FGuid> Guids;
+    TMap<FString, FGuid> RequestedGuids;
     TArray<FString>      Warnings;
 };
 

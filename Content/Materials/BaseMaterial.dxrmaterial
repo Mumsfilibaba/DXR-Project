@@ -1,0 +1,25 @@
+{
+    "Version": 1,
+    "Guid": "8f219b26d43b43fdadcbe3bb51fc867e",
+    "Type": "Material",
+    "Roughness": 1,
+    "AmbientOcclusion": 1,
+    "Textures": {
+        "BaseColor": {
+            "Guid": "5c98d6b1c9cf457fad1ac7b2fa2bd0ca",
+            "Path": "/Engine/Textures/BaseTexture.dxrasset"
+        },
+        "Normal": {
+            "Guid": "a2a39e90273f4bddb88c9db64120c1c0",
+            "Path": "/Engine/Textures/BaseNormal.dxrasset"
+        },
+        "MaskA": {
+            "Guid": "5c98d6b1c9cf457fad1ac7b2fa2bd0ca",
+            "Path": "/Engine/Textures/BaseTexture.dxrasset"
+        }
+    },
+    "Dependencies": [
+        "5c98d6b1c9cf457fad1ac7b2fa2bd0ca",
+        "a2a39e90273f4bddb88c9db64120c1c0"
+    ]
+}

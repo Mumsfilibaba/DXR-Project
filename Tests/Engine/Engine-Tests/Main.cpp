@@ -11,6 +11,8 @@
 #include "MeshAssetTests.h"
 #include "ImportSceneTests.h"
 #include "ModelAssetTests.h"
+#include "EngineContentTests.h"
+#include "PrimitiveShapeTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -28,6 +30,9 @@ static int32 RunEngineTests()
     RUN_TEST(TEXT("MeshAsset"), MeshAsset_Test());
     RUN_TEST(TEXT("ImportScene"), ImportScene_Test());
     RUN_TEST(TEXT("ModelAsset"), ModelAsset_Test());
+    RUN_TEST(TEXT("EngineContent"), EngineContent_Test());
+    RUN_TEST(TEXT("PrimitiveShapes"), PrimitiveShapes_Test());
+    RUN_TEST(TEXT("BackgroundTasks"), BackgroundTasks_Test());
 
     const int32 ExitCode = TestHarness::Report();
     TestHarness::Shutdown();
