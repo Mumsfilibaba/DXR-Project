@@ -142,11 +142,16 @@ void FAssetImporter::UnregisterFactory(const TSharedPtr<IAssetFactory>& Factory)
     Factories.Remove(Factory);
 }
 
-IAssetFactory* FAssetImporter::FindFactory(const FString& SourcePath) const
+IAssetFactory* FAssetImporter::FindFactory(const FString& SourcePath, const FString& FactoryName) const
 {
     const FString Extension = File::ExtractExtension(SourcePath);
     for (const TSharedPtr<IAssetFactory>& Factory : Factories)
     {
+        if (!FactoryName.IsEmpty() && !FactoryName.Equals(Factory->GetName()))
+        {
+            continue;
+        }
+
         for (const FString& FactoryExtension : Factory->GetExtensions())
         {
             if (Extension.Equals(FactoryExtension, EStringCaseType::NoCase))
@@ -208,10 +213,12 @@ FAssetImportResult FAssetImporter::ImportFile(const FString& SourcePath, const F
         return MakeError(EAssetImportError::SourceMissing, FString::Printf(TEXT("'%s' doesn't exist"), *AbsoluteSource));
     }
 
-    IAssetFactory* Factory = FindFactory(AbsoluteSource);
+    IAssetFactory* Factory = FindFactory(AbsoluteSource, Options.Factory);
     if (!Factory)
     {
-        return MakeError(EAssetImportError::NoFactory, FString::Printf(TEXT("Nothing imports '%s' files, such as '%s'"), *File::ExtractExtension(AbsoluteSource), *AbsoluteSource));
+        return MakeError(EAssetImportError::NoFactory, Options.Factory.IsEmpty()
+            ? FString::Printf(TEXT("Nothing imports '%s' files, such as '%s'"), *File::ExtractExtension(AbsoluteSource), *AbsoluteSource)
+            : FString::Printf(TEXT("No factory named '%s' imports '%s' files, such as '%s'"), *Options.Factory, *File::ExtractExtension(AbsoluteSource), *AbsoluteSource));
     }
 
     FString DestinationDirectory;
@@ -259,10 +266,10 @@ FAssetImportResult FAssetImporter::Reimport(const FString& AssetPath, const FStr
             : FString::Printf(TEXT("'%s' doesn't exist"), *SourcePath));
     }
 
-    IAssetFactory* Factory = FindFactory(SourcePath);
+    IAssetFactory* Factory = FindFactory(SourcePath, Metadata.Factory);
     if (!Factory)
     {
-        return MakeError(EAssetImportError::NoFactory, FString::Printf(TEXT("Nothing imports '%s' files, such as '%s'"), *File::ExtractExtension(SourcePath), *SourcePath));
+        return MakeError(EAssetImportError::NoFactory, FString::Printf(TEXT("No factory named '%s' imports '%s' files, such as '%s'"), *Metadata.Factory, *File::ExtractExtension(SourcePath), *SourcePath));
     }
 
     // The asset's name can hold folders under the import's destination, such as "Textures/Brick"

@@ -34,6 +34,9 @@ struct FAssetImportOptions
     /** @brief The settings to import with, a JSON object; empty for the factory's defaults */
     FJsonValue Settings;
 
+    /** @brief The factory to import with by name, such as "Texture" for an .hdr that isn't an environment, or empty for the last one registered for the source's extension */
+    FString Factory;
+
     /**
      * @brief Copy the source and its companion files into <Root>/ContentSources/<the destination's folder> first, and import
      * the copy. A file there with other content is never overwritten.
@@ -102,8 +105,8 @@ public:
      */
     FAssetImportResult Reimport(const FString& AssetPath, const FString& LocatedSourcePath = FString(), bool bOverwriteEditedAssets = false);
 
-    /** @return Returns the factory that imports SourcePath's extension, or nullptr */
-    NODISCARD IAssetFactory* FindFactory(const FString& SourcePath) const;
+    /** @return Returns the factory named FactoryName if it imports SourcePath's extension, or with no name the last one registered for it, or nullptr */
+    NODISCARD IAssetFactory* FindFactory(const FString& SourcePath, const FString& FactoryName = FString()) const;
 
     /** @return Returns how a source path is recorded: relative to the deepest mount root holding it with its prefix, or absolute */
     NODISCARD FString MakeSourcePath(const FString& DiskPath) const;

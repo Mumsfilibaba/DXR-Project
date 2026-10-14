@@ -178,6 +178,36 @@ public:
     }
 };
 
+class FOtherImageFactory final : public IAssetFactory
+{
+public:
+    virtual const CHAR_T* GetName() const override
+    {
+        return TEXT("OtherImage");
+    }
+
+    virtual TArray<FString> GetExtensions() const override
+    {
+        return { FString(TEXT(".testimage")) };
+    }
+
+    virtual TArray<EAssetType> GetAssetTypes() const override
+    {
+        return { EAssetType::Texture };
+    }
+
+    virtual bool Import(FAssetImportContext& Context, TArray<FImportedAsset>& OutAssets, FJsonValue& OutSettings, FString& /*OutError*/) override
+    {
+        FImportedAsset& Image = OutAssets.Emplace();
+        Image.Name = Context.GetImportName();
+        Image.Type = EAssetType::Texture;
+        Image.Data = { 9 };
+
+        OutSettings = FJsonValue::MakeObject();
+        return true;
+    }
+};
+
 static FString ReadValue(const FString& DiskPath, FGuid& OutGuid)
 {
     FJsonValue Document;
@@ -482,6 +512,33 @@ bool AssetImporter_Test()
 
         TEST_EXPECT(WriteText(ProjectDir + TEXT("/Sources/Escape.testbundle"), TEXT("x\nbadname\n")));
         TEST_EXPECT(Importer.ImportFile(ProjectDir + TEXT("/Sources/Escape.testbundle"), TEXT("/Project/Kit")).Error == EAssetImportError::ImportFailed);
+    }
+
+    TEST_SECTION(TEXT("An import can name its factory among those for the extension, and a reimport uses the one that imported it"));
+    {
+        TSharedPtr<FOtherImageFactory> OtherFactory = MakeSharedPtr<FOtherImageFactory>();
+        Importer.RegisterFactory(OtherFactory);
+        TEST_EXPECT(WriteText(ProjectDir + TEXT("/Sources/Pick.testimage"), TEXT("pick\n")));
+
+        FGuid          Guid;
+        FAssetMetadata Metadata;
+        TArray<uint8>  Data;
+
+        TEST_EXPECT(Importer.ImportFile(ProjectDir + TEXT("/Sources/Pick.testimage"), TEXT("/Project/Picked")).Error == EAssetImportError::None);
+        TEST_EXPECT(ReadAsset(ProjectDir + TEXT("/Content/Picked/Pick.dxrasset"), Guid, Metadata, Data) && Metadata.Factory.Equals(TEXT("OtherImage")) && Data.Size() == 1);
+
+        FAssetImportOptions Options;
+        Options.Factory = TEXT("TestImage");
+        TEST_EXPECT(Importer.ImportFile(ProjectDir + TEXT("/Sources/Pick.testimage"), TEXT("/Project/Named"), Options).Error == EAssetImportError::None);
+        TEST_EXPECT(ReadAsset(ProjectDir + TEXT("/Content/Named/Pick.dxrasset"), Guid, Metadata, Data) && Metadata.Factory.Equals(TEXT("TestImage")) && Data.Size() > 1);
+
+        TEST_EXPECT(Importer.Reimport(TEXT("/Project/Named/Pick.dxrasset")).Error == EAssetImportError::None);
+        TEST_EXPECT(ReadAsset(ProjectDir + TEXT("/Content/Named/Pick.dxrasset"), Guid, Metadata, Data) && Metadata.Factory.Equals(TEXT("TestImage")) && Data.Size() > 1);
+
+        Options.Factory = TEXT("Nope");
+        TEST_EXPECT(Importer.ImportFile(ProjectDir + TEXT("/Sources/Pick.testimage"), TEXT("/Project/Nope"), Options).Error == EAssetImportError::NoFactory);
+
+        Importer.UnregisterFactory(OtherFactory);
     }
 
     TEST_SECTION(TEXT("The source hash is 64-bit FNV-1a"));

@@ -7,6 +7,7 @@
 #include "RHI/RHICommandList.h"
 #include "AssetCore/TextureAssetFactory.h"
 #include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/EnvironmentAssetFactory.h"
 #include "Engine/Assets/GPUTextureBlockCompressor.h"
 #include "Engine/Assets/ImportScene.h"
 #include "Engine/Assets/MaterialAsset.h"
@@ -63,12 +64,15 @@ bool FAssetManager::Initialize()
         AssetManager->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
         AssetManager->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
 
-        TSharedPtr<FTextureAssetFactory> TextureFactory = MakeSharedPtr<FTextureAssetFactory>(MakeSharedPtr<FGPUTextureBlockCompressor>());
+        TSharedPtr<FGPUTextureBlockCompressor> Compressor     = MakeSharedPtr<FGPUTextureBlockCompressor>();
+        TSharedPtr<FTextureAssetFactory>       TextureFactory = MakeSharedPtr<FTextureAssetFactory>(Compressor);
         AssetManager->AssetImporter.RegisterFactory(TextureFactory);
         AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FModelAssetFactory>(TextureFactory));
+        AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FEnvironmentAssetFactory>(TextureFactory, Compressor));
         AssetManager->AssetLoader.RegisterLoader<FTexture>(&TextureAssetLoader::Load);
         AssetManager->AssetLoader.RegisterLoader<FMaterial>(&MaterialAssets::Load);
         AssetManager->AssetLoader.RegisterLoader<FMesh>(&MeshAssets::Load);
+        AssetManager->AssetLoader.RegisterLoader<FEnvironment>(&FEnvironmentAssetFactory::Load);
 
         FAssetRegistry& Registry = AssetManager->AssetRegistry;
         Registry.SetMounts(FContentMounts::CreateDefault());

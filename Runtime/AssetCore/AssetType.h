@@ -3,12 +3,13 @@
 
 enum class EAssetType : uint32
 {
-    Unknown  = 0,
-    Texture  = 1,
-    Mesh     = 2,
-    Material = 3,
-    Model    = 4,
-    Scene    = 5,
+    Unknown     = 0,
+    Texture     = 1,
+    Mesh        = 2,
+    Material    = 3,
+    Model       = 4,
+    Scene       = 5,
+    Environment = 6,
 };
 
 struct ASSETCORE_API AssetTypes

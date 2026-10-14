@@ -7,18 +7,20 @@ static constexpr EAssetType NamedTypes[] =
     EAssetType::Material,
     EAssetType::Model,
     EAssetType::Scene,
+    EAssetType::Environment,
 };
 
 const CHAR_T* AssetTypes::GetName(EAssetType Type)
 {
     switch (Type)
     {
-        case EAssetType::Texture:  return TEXT("Texture");
-        case EAssetType::Mesh:     return TEXT("Mesh");
-        case EAssetType::Material: return TEXT("Material");
-        case EAssetType::Model:    return TEXT("Model");
-        case EAssetType::Scene:    return TEXT("Scene");
-        default:                   return TEXT("Unknown");
+        case EAssetType::Texture:     return TEXT("Texture");
+        case EAssetType::Mesh:        return TEXT("Mesh");
+        case EAssetType::Material:    return TEXT("Material");
+        case EAssetType::Model:       return TEXT("Model");
+        case EAssetType::Scene:       return TEXT("Scene");
+        case EAssetType::Environment: return TEXT("Environment");
+        default:                      return TEXT("Unknown");
     }
 }
 
