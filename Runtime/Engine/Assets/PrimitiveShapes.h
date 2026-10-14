@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Templates/TypeHash.h"
-#include "Engine/Assets/MeshData.h"
+#include "AssetCore/MeshData.h"
 
 enum class EPrimitiveShape : uint8
 {

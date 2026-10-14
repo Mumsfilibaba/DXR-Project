@@ -7,7 +7,7 @@
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Engine/Assets/ITextureImporter.h"
-#include "Engine/Assets/IModelImporter.h"
+#include "AssetCore/IModelImporter.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Texture.h"
 #include "Core/Templates/Utility/NonCopyable.h"

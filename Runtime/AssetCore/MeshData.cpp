@@ -1,4 +1,4 @@
-#include "Engine/Assets/MeshData.h"
+#include "AssetCore/MeshData.h"
 #include "Core/Containers/Map.h"
 #include "Core/Misc/OutputDeviceManager.h"
 
@@ -46,7 +46,7 @@ FMeshData::FMeshData()
     , SubMeshes()
     , Indices()
     , Vertices()
-    , Declaration(FVertexDeclaration::GetStandardStaticMesh())
+    , VertexAttributes(FMeshStreamLayout::GetStandardStaticMesh().GetAttributeFlags())
     , PackedStreams()
     , PackedVertexCount(0)
 {
@@ -65,13 +65,15 @@ FMeshData& FMeshData::operator=(FMeshData&& Other) = default;
 static_assert(TIsMoveConstructible<FMeshData>::Value,
     "FMeshData is moved into FModelData::Meshes by the importers; without a move constructor TArray silently deep-copies every mesh");
 
-bool FMeshData::PackVertexStreams(TArray<uint8> (&OutStreams)[VERTEX_MAX_STREAMS]) const
+bool FMeshData::PackVertexStreams(TArray<uint8> (&OutStreams)[MESH_MAX_STREAMS]) const
 {
     const int32 VertexCount = Vertices.Size();
 
-    for (uint8 StreamIndex = 0; StreamIndex < Declaration.GetNumStreams(); StreamIndex++)
+    const FMeshStreamLayout& Layout = GetStreamLayout();
+
+    for (uint8 StreamIndex = 0; StreamIndex < Layout.GetNumStreams(); StreamIndex++)
     {
-        const uint16 Stride = Declaration.GetStreamStride(StreamIndex);
+        const uint16 Stride = Layout.GetStreamStride(StreamIndex);
         if (Stride == 0)
         {
             continue;
@@ -80,7 +82,7 @@ bool FMeshData::PackVertexStreams(TArray<uint8> (&OutStreams)[VERTEX_MAX_STREAMS
         TArray<uint8>& StreamData = OutStreams[StreamIndex];
         StreamData.Resize(VertexCount * Stride);
 
-        for (const FVertexAttributeInfo& Attribute : Declaration.GetAttributes())
+        for (const FMeshStreamElement& Attribute : Layout.GetElements())
         {
             if (Attribute.StreamIndex != StreamIndex)
             {
@@ -94,19 +96,19 @@ bool FMeshData::PackVertexStreams(TArray<uint8> (&OutStreams)[VERTEX_MAX_STREAMS
 
                 switch (Attribute.Element)
                 {
-                    case EVertexElement::Position:
+                    case EMeshVertexElement::Position:
                         *reinterpret_cast<FVector3*>(Destination) = Vertex.Position;
                         break;
 
-                    case EVertexElement::Normal:
+                    case EMeshVertexElement::Normal:
                         *reinterpret_cast<FRGBA16Snorm*>(Destination) = FRGBA16Snorm(Vertex.Normal);
                         break;
 
-                    case EVertexElement::Tangent:
+                    case EMeshVertexElement::Tangent:
                         *reinterpret_cast<FRGBA16Snorm*>(Destination) = FRGBA16Snorm(Vertex.Tangent, Vertex.TangentSign);
                         break;
 
-                    case EVertexElement::TexCoord0:
+                    case EMeshVertexElement::TexCoord0:
                         *reinterpret_cast<FVector2*>(Destination) = Vertex.TexCoord;
                         break;
 

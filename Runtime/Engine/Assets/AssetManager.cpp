@@ -9,15 +9,15 @@
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/EnvironmentAssetFactory.h"
 #include "Engine/Assets/GPUTextureBlockCompressor.h"
-#include "Engine/Assets/ImportScene.h"
-#include "Engine/Assets/MaterialAsset.h"
-#include "Engine/Assets/MeshAsset.h"
-#include "Engine/Assets/ModelAssetFactory.h"
+#include "Engine/Assets/ImportSceneBaking.h"
+#include "Engine/Assets/MaterialAssetLoader.h"
+#include "Engine/Assets/MeshAssetLoader.h"
+#include "AssetCore/ModelAssetFactory.h"
 #include "Engine/Assets/TextureAssetLoader.h"
 #include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
-#include "Engine/Assets/AssetImporters/FBXImporter.h"
-#include "Engine/Assets/AssetImporters/OBJImporter.h"
+#include "AssetCore/ModelImporters/FBXImporter.h"
+#include "AssetCore/ModelImporters/OBJImporter.h"
 
 FAssetManager* FAssetManager::AssetManager = nullptr;
 
@@ -70,8 +70,8 @@ bool FAssetManager::Initialize()
         AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FModelAssetFactory>(TextureFactory));
         AssetManager->AssetImporter.RegisterFactory(MakeSharedPtr<FEnvironmentAssetFactory>(TextureFactory, Compressor));
         AssetManager->AssetLoader.RegisterLoader<FTexture>(&TextureAssetLoader::Load);
-        AssetManager->AssetLoader.RegisterLoader<FMaterial>(&MaterialAssets::Load);
-        AssetManager->AssetLoader.RegisterLoader<FMesh>(&MeshAssets::Load);
+        AssetManager->AssetLoader.RegisterLoader<FMaterial>(&MaterialAssetLoader::Load);
+        AssetManager->AssetLoader.RegisterLoader<FMesh>(&MeshAssetLoader::Load);
         AssetManager->AssetLoader.RegisterLoader<FEnvironment>(&FEnvironmentAssetFactory::Load);
 
         FAssetRegistry& Registry = AssetManager->AssetRegistry;
@@ -215,7 +215,7 @@ TSharedPtr<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
             if (Importer->MatchExtenstion(FileNameView))
             {
                 FImportScene Scene;
-                bResult = Importer->ImportFromFile(FileNameView, Flags, Scene) && ImportScenes::BakeToModelData(Scene, NewModelData, [this](const FString& TexturePath)
+                bResult = Importer->ImportFromFile(FileNameView, Flags, Scene) && ImportSceneBaking::BakeToModelData(Scene, NewModelData, [this](const FString& TexturePath)
                 {
                     return StaticCastSharedPtr<FTexture2D>(LoadTexture(TexturePath));
                 });

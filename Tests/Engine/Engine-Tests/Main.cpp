@@ -7,11 +7,9 @@
 #include "TestCommon/TestMacros.h"
 #include "LaunchProgram/ProgramEntry.h"
 
-#include "MaterialAssetTests.h"
-#include "MeshAssetTests.h"
-#include "ImportSceneTests.h"
-#include "ModelAssetTests.h"
 #include "EngineContentTests.h"
+#include "ImportSceneBakingTests.h"
+#include "MeshStreamLayoutTests.h"
 #include "PrimitiveShapeTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
@@ -26,11 +24,9 @@ static int32 RunEngineTests()
     TestHarness::Initialize(TEXT("TestResults_Engine.log"));
     LOG_INFO("=== Engine Tests ===");
 
-    RUN_TEST(TEXT("MaterialAsset"), MaterialAsset_Test());
-    RUN_TEST(TEXT("MeshAsset"), MeshAsset_Test());
-    RUN_TEST(TEXT("ImportScene"), ImportScene_Test());
-    RUN_TEST(TEXT("ModelAsset"), ModelAsset_Test());
     RUN_TEST(TEXT("EngineContent"), EngineContent_Test());
+    RUN_TEST(TEXT("ImportSceneBaking"), ImportSceneBaking_Test());
+    RUN_TEST(TEXT("MeshStreamLayouts"), MeshStreamLayouts_Test());
     RUN_TEST(TEXT("PrimitiveShapes"), PrimitiveShapes_Test());
     RUN_TEST(TEXT("BackgroundTasks"), BackgroundTasks_Test());
 

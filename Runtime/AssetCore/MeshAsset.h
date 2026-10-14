@@ -1,7 +1,15 @@
 #pragma once
-#include "AssetCore/AssetRegistry.h"
-#include "Engine/Assets/MeshData.h"
-#include "Engine/Resources/Model.h"
+#include "AssetCore/AssetRef.h"
+#include "AssetCore/MeshData.h"
+
+struct FMeshAssetSlot
+{
+    /** @brief The source's name for the material, such as "Bricks" */
+    FString Name;
+
+    /** @brief The material asset the slot uses by default, or unset */
+    FAssetRef Material;
+};
 
 struct FMeshAssetData
 {
@@ -9,10 +17,10 @@ struct FMeshAssetData
     FMeshData Mesh;
 
     /** @brief The materials the submeshes' MaterialIndex picks from, until a component overrides them */
-    TArray<FMeshMaterialSlot> MaterialSlots;
+    TArray<FMeshAssetSlot> MaterialSlots;
 };
 
-struct ENGINE_API MeshAssets
+struct ASSETCORE_API MeshAssets
 {
     /**
      * @brief Write a mesh asset's DATA payload: its vertex streams in the GPU layout of its declaration, 32-bit indices,
@@ -25,7 +33,4 @@ struct ENGINE_API MeshAssets
 
     /** @return Returns the materials the slots reference, once each, as the asset's dependencies */
     NODISCARD static TArray<FGuid> GetDependencies(const FMeshAssetData& Mesh);
-
-    /** @brief Load a mesh asset into an FMesh with its material slots, as the loader FAssetLoader calls for meshes */
-    static TSharedPtr<FMesh> Load(const FAssetData& Asset, const FString& DiskPath, FString& OutError);
 };

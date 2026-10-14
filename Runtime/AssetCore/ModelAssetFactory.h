@@ -1,8 +1,8 @@
 #pragma once
 #include "AssetCore/AssetFactory.h"
 #include "AssetCore/TextureAssetFactory.h"
-#include "Engine/Assets/IModelImporter.h"
-#include "Engine/Assets/ImportScene.h"
+#include "AssetCore/IModelImporter.h"
+#include "AssetCore/ImportScene.h"
 
 enum class EModelImportMode : uint8
 {
@@ -32,7 +32,7 @@ struct FModelImportSettings
     int32 MaxTextureResolution = 0;
 };
 
-class ENGINE_API FModelAssetFactory final : public IAssetFactory
+class ASSETCORE_API FModelAssetFactory final : public IAssetFactory
 {
 public:
     static bool ReadSettings(const FJsonValue& Value, FModelImportSettings& OutSettings, FString& OutError);

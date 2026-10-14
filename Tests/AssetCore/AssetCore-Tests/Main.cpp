@@ -18,6 +18,10 @@
 #include "AssetImporterTests.h"
 #include "TextureAssetTests.h"
 #include "EnvironmentAssetTests.h"
+#include "MaterialAssetTests.h"
+#include "MeshAssetTests.h"
+#include "ImportSceneTests.h"
+#include "ModelAssetTests.h"
 
 #define ENABLE_CUSTOM_MEMORY (1)
 
@@ -49,6 +53,10 @@ static int32 RunAssetCoreTests()
     RUN_TEST(TEXT("AssetImporter"), AssetImporter_Test());
     RUN_TEST(TEXT("TextureAsset"), TextureAsset_Test());
     RUN_TEST(TEXT("EnvironmentAsset"), EnvironmentAsset_Test());
+    RUN_TEST(TEXT("MaterialAsset"), MaterialAsset_Test());
+    RUN_TEST(TEXT("MeshAsset"), MeshAsset_Test());
+    RUN_TEST(TEXT("ImportScene"), ImportScene_Test());
+    RUN_TEST(TEXT("ModelAsset"), ModelAsset_Test());
 
     if (CommandLine::FindOption(TEXT("LargeFiles")))
     {

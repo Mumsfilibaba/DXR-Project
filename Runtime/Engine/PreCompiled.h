@@ -1,14 +1,14 @@
 #pragma once
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/ITextureImporter.h"
-#include "Engine/Assets/IModelImporter.h"
-#include "Engine/Assets/MeshData.h"
+#include "AssetCore/IModelImporter.h"
+#include "AssetCore/MeshData.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Assets/ModelData.h"
-#include "Engine/Assets/VertexFormat.h"
+#include "AssetCore/VertexFormat.h"
 
-#include "Engine/Assets/AssetImporters/FBXImporter.h"
-#include "Engine/Assets/AssetImporters/OBJImporter.h"
+#include "AssetCore/ModelImporters/FBXImporter.h"
+#include "AssetCore/ModelImporters/OBJImporter.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
 #include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
 

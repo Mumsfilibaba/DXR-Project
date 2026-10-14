@@ -1,7 +1,44 @@
 #pragma once
-#include "Core/Containers/Function.h"
 #include "Core/Math/Matrix4.h"
-#include "Engine/Assets/ModelData.h"
+#include "AssetCore/MaterialDescription.h"
+#include "AssetCore/MeshData.h"
+
+struct EMaterialTexture
+{
+    enum Type
+    {
+        Diffuse = 0,
+        Normal,
+        Specular,
+        Emissive,
+        AmbientOcclusion,
+        Roughness,
+        Metallic,
+        AlphaMask,
+        Count
+    };
+};
+
+struct FMaterialSourceRoute
+{
+    FMaterialSourceRoute() = default;
+
+    FMaterialSourceRoute(EMaterialTexture::Type InTexture, ETextureChannel InChannel, bool bInInvert = false)
+        : Texture(InTexture)
+        , Channel(InChannel)
+        , bInvert(bInInvert)
+    {
+    }
+
+    bool IsRouted() const
+    {
+        return Texture < EMaterialTexture::Count;
+    }
+
+    EMaterialTexture::Type Texture = EMaterialTexture::Count;
+    ETextureChannel        Channel = ETextureChannel::R;
+    bool                   bInvert = false;
+};
 
 struct FImportTexture
 {
@@ -42,7 +79,6 @@ struct FImportNode
     TArray<int32> Materials;
 };
 
-/** @brief What a model importer reads from a source: the node hierarchy and the meshes, materials and textures it uses */
 struct FImportScene
 {
     TArray<FImportNode>     Nodes;
@@ -53,7 +89,7 @@ struct FImportScene
     TArray<FImportTexture>  Textures;
 };
 
-struct ENGINE_API ImportScenes
+struct ASSETCORE_API ImportScenes
 {
     /** @return Returns the node's transform relative to the scene: its local transform followed by its parents' */
     NODISCARD static FMatrix4 GetWorldTransform(const FImportScene& Scene, int32 NodeIndex);
@@ -69,10 +105,4 @@ struct ENGINE_API ImportScenes
      * its submeshes' MaterialIndex turned from the node's slots into scene materials
      */
     NODISCARD static FMeshData BakeNodeMesh(const FImportScene& Scene, int32 NodeIndex);
-
-    /**
-     * @brief Bake the scene into the FModelData LoadModel uses: a mesh for each node that has one, from BakeNodeMesh
-     * @param LoadTexture Loads a scene texture's source file, or returns nullptr to leave it out
-     */
-    static bool BakeToModelData(const FImportScene& Scene, FModelData& OutModelData, TFunction<TSharedPtr<FTexture2D>(const FString&)> LoadTexture);
 };

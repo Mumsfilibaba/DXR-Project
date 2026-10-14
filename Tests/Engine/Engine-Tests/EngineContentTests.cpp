@@ -5,7 +5,7 @@
 #include <Core/Filesystem/File.h>
 #include <Core/Platform/PlatformFile.h>
 #include <Engine/Assets/EngineContent.h>
-#include <Engine/Assets/MaterialAsset.h>
+#include <AssetCore/MaterialAsset.h>
 
 #include "TestCommon/TestMacros.h"
 

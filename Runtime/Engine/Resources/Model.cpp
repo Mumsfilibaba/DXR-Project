@@ -2,6 +2,7 @@
 #include "Core/Misc/OutputDeviceManager.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
+#include "Engine/Assets/MeshStreamLayouts.h"
 #include "Engine/Resources/Model.h"
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/TextureFactory.h"
@@ -43,7 +44,13 @@ bool FMesh::Initialize(const FMeshData& MeshData, bool bCreateRayTracingResource
 {
     const bool bEnableRayTracing = RHI::bSupportsRayTracing;
 
-    Declaration = MeshData.Declaration;
+    Declaration = FVertexDeclaration::GetOrCreate(MeshStreamLayouts::ToVertexAttributes(MeshData.VertexAttributes));
+    if (!MeshStreamLayouts::MatchesDeclaration(MeshData.GetStreamLayout(), Declaration))
+    {
+        LOG_ERROR("[FMesh]: '%s' is stored in a vertex layout the renderer's vertex declaration doesn't read", *MeshData.Name);
+        return false;
+    }
+
     VertexCount = MeshData.PackedVertexCount > 0 ? MeshData.PackedVertexCount : MeshData.Vertices.Size();
     IndexCount  = MeshData.Indices.Size();
 

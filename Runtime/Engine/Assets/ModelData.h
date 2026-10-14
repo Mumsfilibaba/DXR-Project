@@ -1,46 +1,9 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Containers/Array.h"
-#include "Engine/Assets/MeshData.h"
+#include "AssetCore/ImportScene.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Texture.h"
-
-struct EMaterialTexture
-{
-    enum Type
-    {
-        Diffuse = 0,
-        Normal,
-        Specular,
-        Emissive,
-        AmbientOcclusion,
-        Roughness,
-        Metallic,
-        AlphaMask,
-        Count
-    };
-};
-
-struct FMaterialSourceRoute
-{
-    FMaterialSourceRoute() = default;
-
-    FMaterialSourceRoute(EMaterialTexture::Type InTexture, ETextureChannel InChannel, bool bInInvert = false)
-        : Texture(InTexture)
-        , Channel(InChannel)
-        , bInvert(bInInvert)
-    {
-    }
-
-    bool IsRouted() const
-    {
-        return Texture < EMaterialTexture::Count;
-    }
-
-    EMaterialTexture::Type Texture = EMaterialTexture::Count;
-    ETextureChannel        Channel = ETextureChannel::R;
-    bool                   bInvert = false;
-};
 
 struct FMaterialData
 {

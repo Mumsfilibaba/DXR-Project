@@ -20,7 +20,5 @@ EngineModule.AddModules({
     "ShaderCompiler",
     "ImGui",
     "ImGuiPlugin",
-    "OpenFBX",
-    "tinyobjloader",
     "RemoteConsole",
 })

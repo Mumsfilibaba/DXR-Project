@@ -10,4 +10,6 @@ AssetCoreModule.AddExternalIncludeDirs({
 
 AssetCoreModule.AddModules({
     "Core",
+    "OpenFBX",
+    "tinyobjloader",
 })

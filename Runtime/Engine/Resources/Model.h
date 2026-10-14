@@ -7,7 +7,7 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/EngineModule.h"
-#include "Engine/Assets/MeshData.h"
+#include "AssetCore/MeshData.h"
 #include "Engine/Assets/ModelData.h"
 #include "Engine/Resources/Material.h"
 #include "RendererCore/VertexDeclaration.h"

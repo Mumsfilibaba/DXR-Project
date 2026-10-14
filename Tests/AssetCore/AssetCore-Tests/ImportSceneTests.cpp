@@ -3,8 +3,8 @@
 #include <Core/Filesystem/File.h>
 #include <Core/Math/Math.h>
 #include <Core/Platform/PlatformFile.h>
-#include <Engine/Assets/AssetImporters/OBJImporter.h>
-#include <Engine/Assets/ImportScene.h>
+#include <AssetCore/ModelImporters/OBJImporter.h>
+#include <AssetCore/ImportScene.h>
 
 #include "TestCommon/TestMacros.h"
 
@@ -132,31 +132,19 @@ bool ImportScene_Test()
 
         TEST_EXPECT(ImportScenes::GetWorldTransform(Scene, 1).GetTranslation() == FVector3(10.0f, 5.0f, 0.0f));
 
-        TArray<FString> LoadedTextures;
-        FModelData      ModelData;
-        TEST_EXPECT(ImportScenes::BakeToModelData(Scene, ModelData, [&](const FString& Path)
+        const FMeshData Meshes[] = { ImportScenes::BakeNodeMesh(Scene, 1), ImportScenes::BakeNodeMesh(Scene, 2), ImportScenes::BakeNodeMesh(Scene, 3) };
         {
-            LoadedTextures.Add(Path);
-            return TSharedPtr<FTexture2D>();
-        }));
-
-        TEST_EXPECT(LoadedTextures.Size() == 1 && LoadedTextures[0].Equals(TEXT("C:/Art/Second.png")));
-        TEST_EXPECT(ModelData.Materials.Size() == 2 && ModelData.Materials[1].Name.Equals(TEXT("Second")));
-        TEST_EXPECT(ModelData.Meshes.Size() == 3);
-
-        if (ModelData.Meshes.Size() == 3)
-        {
-            const FMeshData& Placed = ModelData.Meshes[0];
+            const FMeshData& Placed = Meshes[0];
             TEST_EXPECT(Placed.Name.Equals(TEXT("Child")));
             TEST_EXPECT(IsNear(Placed.Vertices[1].Position, FVector3(11.0f, 5.0f, 0.0f)));
             TEST_EXPECT(Placed.SubMeshes[0].MaterialIndex == 1);
 
-            const FMeshData& Stretch = ModelData.Meshes[1];
+            const FMeshData& Stretch = Meshes[1];
             TEST_EXPECT(Stretch.Name.Equals(TEXT("Stretched")) && IsNear(Stretch.Vertices[1].Position, FVector3(2.0f, 0.0f, 0.0f)));
             TEST_EXPECT(IsNear(Stretch.Vertices[0].Normal, FVector3(0.5f, 0.0f, 1.0f).GetNormalized()));
             TEST_EXPECT(Stretch.SubMeshes[0].MaterialIndex == 0);
 
-            const FMeshData& Mirror = ModelData.Meshes[2];
+            const FMeshData& Mirror = Meshes[2];
             TEST_EXPECT(IsNear(Mirror.Vertices[1].Position, FVector3(-1.0f, 0.0f, 0.0f)));
             TEST_EXPECT(Mirror.Indices[0] == 0 && Mirror.Indices[1] == 2 && Mirror.Indices[2] == 1);
             TEST_EXPECT(Mirror.Vertices[0].TangentSign == -1.0f && IsNear(Mirror.Vertices[0].Tangent, FVector3(-1.0f, 0.0f, 0.0f)));

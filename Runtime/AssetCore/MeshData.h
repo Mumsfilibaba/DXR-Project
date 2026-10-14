@@ -1,9 +1,8 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Containers/Array.h"
-#include "Engine/EngineModule.h"
-#include "Engine/Assets/VertexFormat.h"
-#include "RendererCore/VertexDeclaration.h"
+#include "AssetCore/VertexFormat.h"
+#include "AssetCore/MeshStreamLayout.h"
 
 struct FSubMesh
 {
@@ -23,7 +22,7 @@ struct FSubMesh
     int32  MaterialIndex;
 };
 
-struct ENGINE_API FMeshData
+struct ASSETCORE_API FMeshData
 {
     FMeshData();
     FMeshData(const FMeshData& Other);
@@ -46,15 +45,20 @@ struct ENGINE_API FMeshData
     void ReverseHandedness();
     void InvertAxisX();
 
-    bool PackVertexStreams(TArray<uint8> (&OutStreams)[VERTEX_MAX_STREAMS]) const;
+    bool PackVertexStreams(TArray<uint8> (&OutStreams)[MESH_MAX_STREAMS]) const;
 
     TArray<uint16> GetSmallIndices() const;
+
+    FORCEINLINE const FMeshStreamLayout& GetStreamLayout() const
+    {
+        return FMeshStreamLayout::GetOrCreate(VertexAttributes);
+    }
 
     FString               Name;
     TArray<FSubMesh>      SubMeshes;
     TArray<uint32>        Indices;
     TArray<FSourceVertex> Vertices;
-    FVertexDeclaration    Declaration;
-    TArray<uint8>         PackedStreams[VERTEX_MAX_STREAMS];
+    EMeshVertexAttributes VertexAttributes;
+    TArray<uint8>         PackedStreams[MESH_MAX_STREAMS];
     int32                 PackedVertexCount;
 };

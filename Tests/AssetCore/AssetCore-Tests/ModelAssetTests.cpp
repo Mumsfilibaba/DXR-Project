@@ -6,9 +6,9 @@
 #include <Core/Filesystem/File.h>
 #include <Core/Image/PngWriter.h>
 #include <Core/Platform/PlatformFile.h>
-#include <Engine/Assets/MaterialAsset.h>
-#include <Engine/Assets/MeshAsset.h>
-#include <Engine/Assets/ModelAssetFactory.h>
+#include <AssetCore/MaterialAsset.h>
+#include <AssetCore/MeshAsset.h>
+#include <AssetCore/ModelAssetFactory.h>
 
 #include "TestCommon/TestMacros.h"
 

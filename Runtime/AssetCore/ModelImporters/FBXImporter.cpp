@@ -1,10 +1,11 @@
+#include "Core/Containers/Function.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/StringConversion.h"
 #include "Core/Misc/OutputDeviceManager.h"
 #include "Core/Platform/PlatformFile.h"
-#include "Engine/Assets/VertexFormat.h"
-#include "Engine/Assets/AssetImporters/FBXImporter.h"
+#include "AssetCore/VertexFormat.h"
+#include "AssetCore/ModelImporters/FBXImporter.h"
 
 #include <ofbx.h>
 

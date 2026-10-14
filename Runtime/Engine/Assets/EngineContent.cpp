@@ -10,7 +10,7 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/EngineContent.h"
-#include "Engine/Assets/MaterialAsset.h"
+#include "AssetCore/MaterialAsset.h"
 
 static constexpr const CHAR_T* TexturesFolder     = TEXT("Textures");
 static constexpr const CHAR_T* MaterialsFolder    = TEXT("Materials");
@@ -93,10 +93,10 @@ static bool WriteBaseMaterial(const FString& ContentDirectory, FString& OutError
     Material.Info.AmbientOcclusion = 1.0f;
     Material.Info.Roughness        = 1.0f;
 
-    const TAssetRef<FTexture> BaseTexture(EngineContent::BaseTexture, GetVirtualPath(TexturesFolder, TEXT("BaseTexture"), FAssetFile::FileExtension));
+    const FAssetRef BaseTexture(EngineContent::BaseTexture, GetVirtualPath(TexturesFolder, TEXT("BaseTexture"), FAssetFile::FileExtension));
     Material.Textures[EMaterialTextureSlot::BaseColor] = BaseTexture;
     Material.Textures[EMaterialTextureSlot::MaskA]     = BaseTexture;
-    Material.Textures[EMaterialTextureSlot::Normal]    = TAssetRef<FTexture>(EngineContent::BaseNormal, GetVirtualPath(TexturesFolder, TEXT("BaseNormal"), FAssetFile::FileExtension));
+    Material.Textures[EMaterialTextureSlot::Normal]    = FAssetRef(EngineContent::BaseNormal, GetVirtualPath(TexturesFolder, TEXT("BaseNormal"), FAssetFile::FileExtension));
 
     const FString Filename = GetDiskPath(ContentDirectory, MaterialsFolder, TEXT("BaseMaterial"), AssetTypes::GetTextExtension(EAssetType::Material));
     if (!File::CreateDirectoryTree(File::GetDirectoryOf(Filename)))

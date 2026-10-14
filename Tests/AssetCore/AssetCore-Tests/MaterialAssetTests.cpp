@@ -5,7 +5,7 @@
 #include <Core/Filesystem/File.h>
 #include <Core/Json/Json.h>
 #include <Core/Platform/PlatformFile.h>
-#include <Engine/Assets/MaterialAsset.h>
+#include <AssetCore/MaterialAsset.h>
 
 #include "TestCommon/TestMacros.h"
 
@@ -64,13 +64,13 @@ static FMaterialAssetData MakeFullMaterial()
     Material.Info.Routes[EMaterialScalar::Roughness] = FMaterialTextureRoute(EMaterialTextureSlot::MaskB, ETextureChannel::G, true);
     Material.Info.Routes[EMaterialScalar::Opacity]   = FMaterialTextureRoute();
 
-    Material.Textures[EMaterialTextureSlot::BaseColor] = TAssetRef<FTexture>(MakeGuid(TEXT("22222222000000010000000100000001")), TEXT("/Project/Textures/Brick.dxrasset"));
-    Material.Textures[EMaterialTextureSlot::Normal]    = TAssetRef<FTexture>(MakeGuid(TEXT("33333333000000010000000100000001")), TEXT("/Project/Textures/Brick_Normal.dxrasset"));
-    Material.Textures[EMaterialTextureSlot::MaskB]     = TAssetRef<FTexture>(MakeGuid(TEXT("22222222000000010000000100000001")), TEXT("/Project/Textures/Brick.dxrasset"));
+    Material.Textures[EMaterialTextureSlot::BaseColor] = FAssetRef(MakeGuid(TEXT("22222222000000010000000100000001")), TEXT("/Project/Textures/Brick.dxrasset"));
+    Material.Textures[EMaterialTextureSlot::Normal]    = FAssetRef(MakeGuid(TEXT("33333333000000010000000100000001")), TEXT("/Project/Textures/Brick_Normal.dxrasset"));
+    Material.Textures[EMaterialTextureSlot::MaskB]     = FAssetRef(MakeGuid(TEXT("22222222000000010000000100000001")), TEXT("/Project/Textures/Brick.dxrasset"));
 
     Material.EmissiveColor        = FFloatColor(1.0f, 0.5f, 0.0f, 1.0f);
     Material.EmissiveIntensity    = 4.0f;
-    Material.EmissiveTexture      = TAssetRef<FTexture>(MakeGuid(TEXT("44444444000000010000000100000001")), TEXT("/Project/Textures/Glow.dxrasset"));
+    Material.EmissiveTexture      = FAssetRef(MakeGuid(TEXT("44444444000000010000000100000001")), TEXT("/Project/Textures/Glow.dxrasset"));
     Material.bMultiplyVertexColor = true;
     return Material;
 }

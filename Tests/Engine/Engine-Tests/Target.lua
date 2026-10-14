@@ -9,5 +9,6 @@ EngineTests.AddModules({
     "Core",
     "AssetCore",
     "Engine",
+    "RendererCore",
     "TestCommon",
 })

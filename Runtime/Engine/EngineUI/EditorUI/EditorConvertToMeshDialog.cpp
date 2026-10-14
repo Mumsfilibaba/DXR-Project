@@ -4,7 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/EngineContent.h"
-#include "Engine/Assets/MeshAsset.h"
+#include "AssetCore/MeshAsset.h"
 #include "Engine/World/World.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/PrimitiveShapeComponent.h"
@@ -196,11 +196,11 @@ bool FEditorConvertToMeshDialog::Convert(FPrimitiveShapeComponent* Component, co
         SubMesh.MaterialIndex = 0;
     }
 
-    FMeshMaterialSlot& Slot = MeshAsset.MaterialSlots.Emplace();
+    FMeshAssetSlot& Slot = MeshAsset.MaterialSlots.Emplace();
     Slot.Name = TEXT("Default");
     if (FEngine::Get() && Component->GetMaterial(0) == FEngine::Get()->BaseMaterial)
     {
-        Slot.Material = TAssetRef<FMaterial>(EngineContent::BaseMaterial, TEXT("/Engine/Materials/BaseMaterial.dxrmaterial"));
+        Slot.Material = FAssetRef(EngineContent::BaseMaterial, TEXT("/Engine/Materials/BaseMaterial.dxrmaterial"));
     }
 
     TArray<uint8> Payload;

@@ -2,11 +2,11 @@
 #include "Core/Filesystem/File.h"
 #include "Core/Json/Json.h"
 #include "Core/Platform/PlatformFile.h"
-#include "Engine/Assets/AssetImporters/FBXImporter.h"
-#include "Engine/Assets/AssetImporters/OBJImporter.h"
-#include "Engine/Assets/MaterialAsset.h"
-#include "Engine/Assets/MeshAsset.h"
-#include "Engine/Assets/ModelAssetFactory.h"
+#include "AssetCore/ModelImporters/FBXImporter.h"
+#include "AssetCore/ModelImporters/OBJImporter.h"
+#include "AssetCore/MaterialAsset.h"
+#include "AssetCore/MeshAsset.h"
+#include "AssetCore/ModelAssetFactory.h"
 
 static constexpr const CHAR_T* MeshFolder     = TEXT("Meshes/");
 static constexpr const CHAR_T* MaterialFolder = TEXT("Materials/");
@@ -59,6 +59,7 @@ static bool GetTextureUsage(const FImportMaterial& Material, EMaterialTexture::T
 
     bool bRouted  = false;
     bool bOnlyRed = true;
+
     for (const FMaterialSourceRoute& Route : Material.Routes)
     {
         if (Route.IsRouted() && Route.Texture == SourceTexture)
@@ -353,6 +354,7 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
     TArray<int32> MeshOrder;
     TArray<int32> FirstNodeOfMesh;
     TArray<bool>  UsedMaterials;
+
     FirstNodeOfMesh.Reset(Scene.Meshes.Size(), -1);
     UsedMaterials.Reset(Scene.Materials.Size(), false);
 
@@ -409,7 +411,8 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
             }
 
             // A texture one material reads one channel of and another reads more of keeps them all
-            if (TextureUsages[TextureIndex] < 0 || (TextureUsages[TextureIndex] == int32(ETextureUsage::Single) && Usage == ETextureUsage::Mask))
+            if (TextureUsages[TextureIndex] < 0 || 
+                (TextureUsages[TextureIndex] == int32(ETextureUsage::Single) && Usage == ETextureUsage::Mask))
             {
                 TextureUsages[TextureIndex] = int32(Usage);
             }
@@ -418,6 +421,7 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
 
     TArray<int32>            JobTextures;
     TArray<FTextureBuildJob> Jobs;
+
     for (int32 TextureIndex = 0; TextureIndex < Scene.Textures.Size(); ++TextureIndex)
     {
         if (TextureUsages[TextureIndex] < 0)
@@ -439,7 +443,7 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
 
     TextureFactory->BuildTextures(Jobs);
 
-    TArray<TAssetRef<FTexture>> TextureRefs;
+    TArray<FAssetRef> TextureRefs;
     TextureRefs.Resize(Scene.Textures.Size());
 
     for (int32 JobIndex = 0; JobIndex < Jobs.Size(); ++JobIndex)
@@ -458,10 +462,10 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
         Asset.Data      = ::Move(Job.Data);
         Asset.Thumbnail = ::Move(Job.Thumbnail);
 
-        TextureRefs[JobTextures[JobIndex]] = TAssetRef<FTexture>(Asset.Guid, Context.GetAssetPath(Asset.Name, Asset.Type));
+        TextureRefs[JobTextures[JobIndex]] = FAssetRef(Asset.Guid, Context.GetAssetPath(Asset.Name, Asset.Type));
     }
 
-    TArray<TAssetRef<FMaterial>> MaterialRefs;
+    TArray<FAssetRef> MaterialRefs;
     MaterialRefs.Resize(Scene.Materials.Size());
 
     for (int32 MaterialIndex = 0; MaterialIndex < Scene.Materials.Size(); ++MaterialIndex)
@@ -493,7 +497,7 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
                 continue;
             }
 
-            const TAssetRef<FTexture>& Texture = TextureRefs[TextureIndex];
+            const FAssetRef& Texture = TextureRefs[TextureIndex];
             if (SourceTexture == EMaterialTexture::Diffuse || SourceTexture == EMaterialTexture::Normal)
             {
                 SourceSlots[SourceTexture] = (SourceTexture == EMaterialTexture::Diffuse) ? EMaterialTextureSlot::BaseColor : EMaterialTextureSlot::Normal;
@@ -549,7 +553,7 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
         Material.Guid = Asset.Guid;
         Asset.Data    = ToUtf8(Json::ToString(MaterialAssets::ToJson(Material)));
 
-        MaterialRefs[MaterialIndex] = TAssetRef<FMaterial>(Asset.Guid, Context.GetAssetPath(Asset.Name, Asset.Type));
+        MaterialRefs[MaterialIndex] = FAssetRef(Asset.Guid, Context.GetAssetPath(Asset.Name, Asset.Type));
     }
 
     TArray<FMeshAssetData> Meshes;
@@ -564,9 +568,9 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
 
             for (int32 MaterialIndex : Node.Materials)
             {
-                FMeshMaterialSlot& Slot = Mesh.MaterialSlots.Emplace();
+                FMeshAssetSlot& Slot = Mesh.MaterialSlots.Emplace();
                 Slot.Name     = MaterialIndex >= 0 ? Scene.Materials[MaterialIndex].Name : FString(TEXT("None"));
-                Slot.Material = MaterialIndex >= 0 ? MaterialRefs[MaterialIndex] : TAssetRef<FMaterial>();
+                Slot.Material = MaterialIndex >= 0 ? MaterialRefs[MaterialIndex] : FAssetRef();
             }
 
             for (FSubMesh& SubMesh : Mesh.Mesh.SubMeshes)
@@ -620,7 +624,7 @@ bool FModelAssetFactory::Import(FAssetImportContext& Context, TArray<FImportedAs
                 {
                     MaterialSlots[MaterialIndex] = Combined.MaterialSlots.Size();
 
-                    FMeshMaterialSlot& Slot = Combined.MaterialSlots.Emplace();
+                    FMeshAssetSlot& Slot = Combined.MaterialSlots.Emplace();
                     Slot.Name     = Scene.Materials[MaterialIndex].Name;
                     Slot.Material = MaterialRefs[MaterialIndex];
                 }

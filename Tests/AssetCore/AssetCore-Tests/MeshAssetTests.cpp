@@ -1,7 +1,6 @@
 #include "MeshAssetTests.h"
 
-#include <Engine/Assets/MeshAsset.h>
-#include <Engine/Assets/MeshFactory.h>
+#include <AssetCore/MeshAsset.h>
 
 #include "TestCommon/TestMacros.h"
 
@@ -12,10 +11,44 @@ static FGuid MakeGuid(const CHAR_T* Text)
     return Guid;
 }
 
+static FMeshData MakeBox()
+{
+    static const FVector3 Normals[]  = { FVector3(1, 0, 0), FVector3(-1, 0, 0), FVector3(0, 1, 0), FVector3(0, -1, 0), FVector3(0, 0, 1), FVector3(0, 0, -1) };
+    static const FVector3 Tangents[] = { FVector3(0, 0, 1), FVector3(0, 0, -1), FVector3(1, 0, 0), FVector3(1, 0, 0), FVector3(-1, 0, 0), FVector3(1, 0, 0) };
+
+    FMeshData Mesh;
+    for (int32 Face = 0; Face < 6; ++Face)
+    {
+        const FVector3 Normal    = Normals[Face];
+        const FVector3 Tangent   = Tangents[Face];
+        const FVector3 Bitangent = Normal.CrossProduct(Tangent);
+
+        for (int32 Corner = 0; Corner < 4; ++Corner)
+        {
+            const float U = (Corner == 1 || Corner == 2) ? 1.0f : 0.0f;
+            const float V = (Corner >= 2) ? 1.0f : 0.0f;
+
+            FSourceVertex& Vertex = Mesh.Vertices.Emplace();
+            Vertex.Position = (Normal + Tangent * (U * 2.0f - 1.0f) + Bitangent * (V * 2.0f - 1.0f)) * 0.5f;
+            Vertex.Normal   = Normal;
+            Vertex.Tangent  = Tangent;
+            Vertex.TexCoord = FVector2(U, V);
+        }
+
+        const uint32 Base = static_cast<uint32>(Face * 4);
+        for (const uint32 Index : { Base, Base + 1, Base + 2, Base, Base + 2, Base + 3 })
+        {
+            Mesh.Indices.Add(Index);
+        }
+    }
+
+    return Mesh;
+}
+
 static FMeshAssetData MakeCube()
 {
     FMeshAssetData Cube;
-    Cube.Mesh      = MeshFactory::CreateCube();
+    Cube.Mesh      = MakeBox();
     Cube.Mesh.Name = TEXT("Cube");
 
     FSubMesh& First = Cube.Mesh.SubMeshes.Emplace();
@@ -36,11 +69,11 @@ static FMeshAssetData MakeCube()
     Second.IndexCount    = Cube.Mesh.Indices.Size() - 12;
     Second.MaterialIndex = 1;
 
-    FMeshMaterialSlot& Bricks = Cube.MaterialSlots.Emplace();
+    FMeshAssetSlot& Bricks = Cube.MaterialSlots.Emplace();
     Bricks.Name     = TEXT("Bricks");
-    Bricks.Material = TAssetRef<FMaterial>(MakeGuid(TEXT("55555555000000010000000100000001")), TEXT("/Project/Materials/Bricks.dxrmaterial"));
+    Bricks.Material = FAssetRef(MakeGuid(TEXT("55555555000000010000000100000001")), TEXT("/Project/Materials/Bricks.dxrmaterial"));
 
-    FMeshMaterialSlot& Trim = Cube.MaterialSlots.Emplace();
+    FMeshAssetSlot& Trim = Cube.MaterialSlots.Emplace();
     Trim.Name = TEXT("Trim");
     return Cube;
 }
@@ -60,12 +93,12 @@ bool MeshAsset_Test()
         FMeshAssetData Read;
         TEST_EXPECT(MeshAssets::Read(Payload, Read, Error));
 
-        TArray<uint8> Streams[VERTEX_MAX_STREAMS];
+        TArray<uint8> Streams[MESH_MAX_STREAMS];
         TEST_EXPECT(Cube.Mesh.PackVertexStreams(Streams));
 
         TEST_EXPECT(Read.Mesh.PackedVertexCount == Cube.Mesh.Vertices.Size());
-        TEST_EXPECT(Read.Mesh.Declaration.GetAttributeFlags() == Cube.Mesh.Declaration.GetAttributeFlags());
-        for (int32 StreamIndex = 0; StreamIndex < VERTEX_MAX_STREAMS; ++StreamIndex)
+        TEST_EXPECT(Read.Mesh.VertexAttributes == Cube.Mesh.VertexAttributes);
+        for (int32 StreamIndex = 0; StreamIndex < MESH_MAX_STREAMS; ++StreamIndex)
         {
             TEST_EXPECT(Read.Mesh.PackedStreams[StreamIndex] == Streams[StreamIndex]);
         }
@@ -91,7 +124,7 @@ bool MeshAsset_Test()
     TEST_SECTION(TEXT("A mesh without submeshes or materials is written as it is"));
     {
         FMeshAssetData Sphere;
-        Sphere.Mesh = MeshFactory::CreateSphere(2);
+        Sphere.Mesh = MakeBox();
 
         TArray<uint8>  Payload;
         FMeshAssetData Read;

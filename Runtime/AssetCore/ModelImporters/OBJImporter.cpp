@@ -5,7 +5,7 @@
 #include "Core/Containers/StringConversion.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceManager.h"
-#include "Engine/Assets/AssetImporters/OBJImporter.h"
+#include "AssetCore/ModelImporters/OBJImporter.h"
 
 #include <tiny_obj_loader.h>
 #include <sstream>

@@ -1,6 +1,6 @@
 #pragma once
 #include "Engine/EngineModule.h"
-#include "Engine/Assets/MeshData.h"
+#include "AssetCore/MeshData.h"
 
 struct ENGINE_API MeshFactory
 {

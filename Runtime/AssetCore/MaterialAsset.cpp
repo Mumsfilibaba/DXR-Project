@@ -3,9 +3,8 @@
 #include "Core/Json/JsonGuid.h"
 #include "Core/Json/JsonMath.h"
 #include "Core/Json/JsonSerializer.h"
-#include "Engine/Assets/AssetManager.h"
-#include "Engine/Assets/MaterialAsset.h"
-#include "Engine/Engine.h"
+#include "AssetCore/MaterialAsset.h"
+#include "Core/Json/JsonArchive.h"
 
 struct FMaterialFlagName
 {
@@ -193,7 +192,7 @@ void FMaterialAssetData::Serialize(FJsonArchive& Archive)
     }
 
     bool bHasTextures = Archive.IsLoading();
-    for (const TAssetRef<FTexture>& Texture : Textures)
+    for (const FAssetRef& Texture : Textures)
     {
         bHasTextures = bHasTextures || Texture.IsSet();
     }
@@ -215,7 +214,7 @@ void FMaterialAssetData::Serialize(FJsonArchive& Archive)
     if (Archive.IsSaving())
     {
         TArray<FGuid> Dependencies;
-        for (const TAssetRef<FTexture>& Texture : Textures)
+        for (const FAssetRef& Texture : Textures)
         {
             if (Texture.IsSet())
             {
@@ -312,41 +311,7 @@ bool MaterialAssets::LoadFromFile(const FString& Filename, FMaterialAssetData& O
     return true;
 }
 
-TSharedPtr<FMaterial> MaterialAssets::Load(const FAssetData& Asset, const FString& DiskPath, FString& OutError)
+const CHAR_T* MaterialAssets::GetTextureSlotName(EMaterialTextureSlot::Type Slot)
 {
-    FMaterialAssetData Data;
-    if (!LoadFromFile(DiskPath, Data, OutError))
-    {
-        return nullptr;
-    }
-
-    TSharedPtr<FMaterial> Material = MakeSharedPtr<FMaterial>(Data.Info);
-    for (int32 Slot = 0; Slot < EMaterialTextureSlot::Count; ++Slot)
-    {
-        if (!Data.Textures[Slot].IsSet())
-        {
-            continue;
-        }
-
-        FString              Error;
-        TSharedPtr<FTexture> Texture   = FAssetManager::Get().GetAssetLoader().Load<FTexture>(Data.Textures[Slot], &Error);
-        FTexture2D*          Texture2D = Texture ? Texture->GetTexture2D() : nullptr;
-
-        if (!Texture2D)
-        {
-            LOG_WARNING("[MaterialAssets]: The %s texture of '%s' is left out: %s", TextureSlotNames[Slot], *Asset.Path, Texture ? TEXT("it isn't a 2D texture") : *Error);
-            continue;
-        }
-
-        Material->SetTexture(EMaterialTextureSlot::Type(Slot), Texture2D->GetRHITexture());
-    }
-
-    if (!Material->GetTexture(EMaterialTextureSlot::BaseColor))
-    {
-        Material->SetTexture(EMaterialTextureSlot::BaseColor, FEngine::Get()->BaseTexture);
-    }
-
-    Material->Initialize();
-    Material->SetName(Asset.Name);
-    return Material;
+    return Slot < EMaterialTextureSlot::Count ? TextureSlotNames[Slot] : TEXT("Unknown");
 }
