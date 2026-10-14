@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Math/Vector3.h"
-#include "RHI/RHITexture.h"
+#include "Engine/Resources/Environment.h"
 #include "Engine/World/Components/SceneComponent.h"
 
 class ENGINE_API FLightProbeComponent : public FSceneComponent
@@ -14,7 +14,11 @@ public:
     void SetBoxExtent(const FVector3& InBoxExtent);
     void SetBoxOffset(const FVector3& InBoxOffset);
     void SetBoxProjection(bool bInBoxProjection);
-    void SetCubeMap(const FRHITextureRef& InCubeMap);
+
+    void SetEnvironment(const TSharedPtr<FEnvironment>& InEnvironment);
+    void SetIntensity(float InIntensity);
+
+    void SetRotation(float InRotation);
 
     const FVector3& GetPosition() const;
 
@@ -33,14 +37,26 @@ public:
         return bBoxProjection;
     }
 
-    const FRHITextureRef& GetCubeMap() const
+    const TSharedPtr<FEnvironment>& GetEnvironment() const
     {
-        return CubeMap;
+        return Environment;
+    }
+
+    float GetIntensity() const
+    {
+        return Intensity;
+    }
+
+    float GetRotation() const
+    {
+        return Rotation;
     }
 
 private:
-    FRHITextureRef CubeMap;
-    FVector3       BoxOffset;
-    FVector3       BoxExtent;
-    bool           bBoxProjection;
+    TSharedPtr<FEnvironment> Environment;
+    FVector3                 BoxOffset;
+    FVector3                 BoxExtent;
+    float                    Intensity;
+    float                    Rotation;
+    bool                     bBoxProjection;
 };

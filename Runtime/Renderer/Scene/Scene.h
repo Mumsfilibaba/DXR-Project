@@ -107,7 +107,7 @@ public:
 
     FSceneSkyLight* GetSkyLight() const
     {
-        return SkyLight;
+        return (SkyLight && SkyLight->SpecularCubeMap && SkyLight->DiffuseCubeMap) ? SkyLight : nullptr;
     }
 
     FSceneDirectionalLight* GetDirectionalLight() const
@@ -117,7 +117,7 @@ public:
 
     FSceneSkybox* GetSkybox() const
     {
-        return Skybox;
+        return (Skybox && Skybox->CubeMap) ? Skybox : nullptr;
     }
 
     const TArray<FMaterial*>& GetMaterials() const

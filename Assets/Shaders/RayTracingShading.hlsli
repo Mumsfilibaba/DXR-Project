@@ -109,14 +109,14 @@ float3 ShadeReflectionHit(FRayTracingSceneConstants Lighting, TextureCube<float4
     const float3 Kd = 1.0f - Ks;
 
     FDiffuseEnvironmentInfo DiffuseInfo;
-    DiffuseInfo.NormalUVW = N;
+    DiffuseInfo.NormalUVW = RotateEnvironmentDirection(N, Lighting.SkyLightRotation);
 
     FSpecularEnvironmentInfo SpecularInfo;
-    SpecularInfo.ReflectionUVW = Reflection;
+    SpecularInfo.ReflectionUVW = RotateEnvironmentDirection(Reflection, Lighting.SkyLightRotation);
     SpecularInfo.Roughness     = SampledRoughness;
 
-    const float3 DiffuseSample   = DiffuseEnvironment(DiffuseCube, EnvironmentSampler, DiffuseInfo);
-    const float3 SpecularSample  = SpecularEnvironment(SpecularCube, EnvironmentSampler, SpecularInfo, Lighting.NumSkyLightMips);
+    const float3 DiffuseSample   = DiffuseEnvironment(DiffuseCube, EnvironmentSampler, DiffuseInfo) * Lighting.SkyLightColor;
+    const float3 SpecularSample  = SpecularEnvironment(SpecularCube, EnvironmentSampler, SpecularInfo, Lighting.NumSkyLightMips) * Lighting.SkyLightColor;
     const float2 BRDFIntegration = GetIntegrationConstants(IntegrationLUT, LUTSampler, NDotV, SampledRoughness);
 
     const float3 Specular = SpecularSample * (Ks * BRDFIntegration.x + BRDFIntegration.y);

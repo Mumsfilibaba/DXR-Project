@@ -1,17 +1,16 @@
 #include "RHI/RHITexture.h"
-#include "RendererCore/TextureFactory.h"
 #include "Renderer/Scene/SceneLightProbe.h"
 #include "Renderer/Scene/SceneProxyData.h"
-#include "Renderer/Graph/FrameResources.h"
 
-FSceneLightProbe::FSceneLightProbe(FScene* InScene, const FRHITextureRef& InSourceCubeMap)
+FSceneLightProbe::FSceneLightProbe(FScene* InScene)
     : FSceneObject(InScene)
-    , SourceCubeMap(InSourceCubeMap)
     , SpecularCubeMap(nullptr)
     , DiffuseCubeMap(nullptr)
     , Origin()
     , BoxMin()
     , BoxMax()
+    , Intensity(1.0f)
+    , Rotation(0.0f)
     , bBoxProjection(false)
 {
 }
@@ -20,92 +19,16 @@ FSceneLightProbe::~FSceneLightProbe() = default;
 
 void FSceneLightProbe::RenderThread_ApplyUpdate(const FLightProbeProxyUpdate& Update)
 {
-    Origin         = Update.Position;
-    bBoxProjection = Update.bBoxProjection;
+    SpecularCubeMap = Update.SpecularCubeMap;
+    DiffuseCubeMap  = Update.DiffuseCubeMap;
+    Intensity       = Update.Intensity;
+    Rotation        = Update.Rotation;
+    Origin          = Update.Position;
+    bBoxProjection  = Update.bBoxProjection;
 
     FVector3 BoxMidPoint   = Origin + Update.BoxOffset;
     FVector3 BoxExtentHalf = Update.BoxExtent * 0.5f;
 
     BoxMin = BoxMidPoint - BoxExtentHalf;
     BoxMax = BoxMidPoint + BoxExtentHalf;
-}
-
-void FSceneLightProbe::RenderThread_FilterStaticCubeMaps()
-{
-    if (!SourceCubeMap)
-    {
-        LOG_WARNING("[FSceneLightProbe::FilterStaticCubeMaps] Trying to filter cube-map without a source");
-        return;
-    }
-
-    constexpr EFormat TempCubeMapFormat   = EFormat::R16G16B16A16_Float;
-    constexpr uint32  SpecularCubeMapSize = 512;
-
-    const uint32 SpecularIrradianceMiplevels = Math::Max<uint32>(static_cast<uint32>(Math::Log2(static_cast<float>(SpecularCubeMapSize))), 1);
-
-    const ETextureUsageFlags TextureFlags =
-        ETextureUsageFlags::UnorderedAccessTexture |
-        ETextureUsageFlags::ShaderResourceTexture;
-
-    FRHITextureDesc SpecularCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1, TextureFlags);
-    FRHITextureRef  TempSpecularCubeMap = RHI::CreateTexture(SpecularCubeMapDesc, ERHIResourceState::ShaderResource);
-
-    if (!TempSpecularCubeMap)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-    else
-    {
-        TempSpecularCubeMap->SetDebugName(TEXT("Temp Specular CubeMap"));
-    }
-
-    const uint32 DiffuseCubeMapSize = 32;
-    FRHITextureDesc DiffuseCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, DiffuseCubeMapSize, 1, 1, TextureFlags);
-    FRHITextureRef  TempDiffuseCubeMap = RHI::CreateTexture(DiffuseCubeMapDesc, ERHIResourceState::ShaderResource);
-
-    if (!TempDiffuseCubeMap)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-    else
-    {
-        TempDiffuseCubeMap->SetDebugName(TEXT("Temp Diffuse CubeMap"));
-    }
-
-    FRHICommandList CommandList;
-
-    constexpr uint32 NumMipsSkipped = 3;
-    const int32 NumSpecularMipLevels = Math::Max<int32>(static_cast<int32>(SpecularIrradianceMiplevels) - NumMipsSkipped, 1);
-
-    bool bResult = FTextureFactory::Get().FilterSpecularCubeMap(CommandList, SourceCubeMap.Get(), TempSpecularCubeMap.Get(), NumSpecularMipLevels);
-    if (!bResult)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
-    bResult = FTextureFactory::Get().FilterDiffuseCubeMap(CommandList, SourceCubeMap.Get(), TempDiffuseCubeMap.Get());
-    if (!bResult)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
-    FTextureCompressor& TextureCompressor = FTextureFactory::Get().GetTextureCompressor();
-    TextureCompressor.CompressCubeMapBC6(CommandList, TempSpecularCubeMap, SpecularCubeMap);
-
-    if (SpecularCubeMap)
-    {
-        SpecularCubeMap->SetDebugName(TEXT("Specular CubeMap"));
-    }
-
-    TextureCompressor.CompressCubeMapBC6(CommandList, TempDiffuseCubeMap, DiffuseCubeMap);
-    if (DiffuseCubeMap)
-    {
-        DiffuseCubeMap->SetDebugName(TEXT("Diffuse CubeMap"));
-    }
-
-    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
 }

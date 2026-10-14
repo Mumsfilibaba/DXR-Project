@@ -191,10 +191,21 @@ struct FLightProbeInfo
     float  BoxProjection;
     // 16-32
     float3 BoxMinWS;
-    float  Padding0;
+    float  Intensity;
     // 32-48
     float3 BoxMaxWS;
-    float  Padding1;
+    float  Rotation;
+};
+
+struct FEnvironmentInfo
+{
+    // 0-16
+    float3 SkyLightColor;
+    float  SkyLightRotation;
+    // 16-32
+    float  SkyboxIntensity;
+    float  SkyboxRotation;
+    float2 Padding0;
 };
 
 #endif

@@ -99,6 +99,43 @@ static bool ReadCubeMap(FRHITexture* CubeMap, int32 NumMips, FEnvironmentCube& O
     return true;
 }
 
+static bool BakeCubeMaps(FRHITexture* Panorama, int32 SkySize, FRHITextureRef& OutSkyCubeMap, FRHITextureRef& OutSpecularCubeMap, FRHITextureRef& OutDiffuseCubeMap, FString& OutError)
+{
+    const ETextureUsageFlags CubeFlags  = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopySource;
+    const uint32             NumSkyMips = TextureHelpers::TextureSizeToMiplevels(SkySize);
+
+    OutSkyCubeMap      = RHI::CreateTexture(FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, SkySize, NumSkyMips, 1, CubeFlags));
+    OutSpecularCubeMap = RHI::CreateTexture(FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, FEnvironmentAssetFactory::SpecularSize, FEnvironmentAssetFactory::NumSpecularMips, 1, CubeFlags), ERHIResourceState::ShaderResource);
+    OutDiffuseCubeMap  = RHI::CreateTexture(FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, FEnvironmentAssetFactory::DiffuseSize, 1, 1, CubeFlags), ERHIResourceState::ShaderResource);
+
+    if (!OutSkyCubeMap || !OutSpecularCubeMap || !OutDiffuseCubeMap)
+    {
+        OutError = FString(TEXT("the textures to bake it with couldn't be created"));
+        return false;
+    }
+
+    if (!FTextureFactory::Get().TextureCubeFromPanorma(Panorama, OutSkyCubeMap.Get(), ETextureFactoryFlags::GenerateMips))
+    {
+        OutError = FString(TEXT("the panorama couldn't be turned into a cube map"));
+        return false;
+    }
+
+    FRHICommandList CommandList;
+    if (!FTextureFactory::Get().FilterSpecularCubeMap(CommandList, OutSkyCubeMap.Get(), OutSpecularCubeMap.Get(), FEnvironmentAssetFactory::NumSpecularMips) ||
+        !FTextureFactory::Get().FilterDiffuseCubeMap(CommandList, OutSkyCubeMap.Get(), OutDiffuseCubeMap.Get()))
+    {
+        OutError = FString(TEXT("the sky couldn't be filtered"));
+        return false;
+    }
+
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+
+    OutSkyCubeMap->SetDebugName(TEXT("Environment Sky"));
+    OutSpecularCubeMap->SetDebugName(TEXT("Environment Specular"));
+    OutDiffuseCubeMap->SetDebugName(TEXT("Environment Diffuse"));
+    return true;
+}
+
 static bool BakeEnvironment(const FTextureMip& Panorama, int32 SkySize, FEnvironmentAssetData& OutEnvironment, FString& OutError)
 {
     FTextureResourceData PanoramaData;
@@ -107,37 +144,23 @@ static bool BakeEnvironment(const FTextureMip& Panorama, int32 SkySize, FEnviron
     const FRHITextureDesc PanoramaDesc    = FRHITextureDesc::CreateTexture2D(EFormat::R16G16B16A16_Float, Panorama.Width, Panorama.Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
     FRHITextureRef        PanoramaTexture = RHI::CreateTexture(PanoramaDesc, ERHIResourceState::ShaderResource, &PanoramaData);
 
-    const ETextureUsageFlags CubeFlags  = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::CopySource;
-    const uint32             NumSkyMips = TextureHelpers::TextureSizeToMiplevels(SkySize);
+    FRHITextureRef SkyCubeMap;
+    FRHITextureRef SpecularCubeMap;
+    FRHITextureRef DiffuseCubeMap;
 
-    FRHITextureRef SkyCubeMap      = RHI::CreateTexture(FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, SkySize, NumSkyMips, 1, CubeFlags));
-    FRHITextureRef SpecularCubeMap = RHI::CreateTexture(FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, FEnvironmentAssetFactory::SpecularSize, FEnvironmentAssetFactory::NumSpecularMips, 1, CubeFlags), ERHIResourceState::ShaderResource);
-    FRHITextureRef DiffuseCubeMap  = RHI::CreateTexture(FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, FEnvironmentAssetFactory::DiffuseSize, 1, 1, CubeFlags), ERHIResourceState::ShaderResource);
-
-    if (!PanoramaTexture || !SkyCubeMap || !SpecularCubeMap || !DiffuseCubeMap)
+    if (!PanoramaTexture)
     {
-        OutError = FString(TEXT("the textures to bake it with couldn't be created"));
+        OutError = FString(TEXT("the panorama couldn't be uploaded"));
         return false;
     }
 
-    if (!FTextureFactory::Get().TextureCubeFromPanorma(PanoramaTexture.Get(), SkyCubeMap.Get(), ETextureFactoryFlags::GenerateMips))
+    if (!BakeCubeMaps(PanoramaTexture.Get(), SkySize, SkyCubeMap, SpecularCubeMap, DiffuseCubeMap, OutError))
     {
-        OutError = FString(TEXT("the panorama couldn't be turned into a cube map"));
         return false;
     }
-
-    FRHICommandList CommandList;
-    if (!FTextureFactory::Get().FilterSpecularCubeMap(CommandList, SkyCubeMap.Get(), SpecularCubeMap.Get(), FEnvironmentAssetFactory::NumSpecularMips) ||
-        !FTextureFactory::Get().FilterDiffuseCubeMap(CommandList, SkyCubeMap.Get(), DiffuseCubeMap.Get()))
-    {
-        OutError = FString(TEXT("the sky couldn't be filtered"));
-        return false;
-    }
-
-    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
 
     OutEnvironment.FilterVersion = FEnvironmentAssetFactory::FilterVersion;
-    return ReadCubeMap(SkyCubeMap.Get(), NumSkyMips, OutEnvironment.Sky, OutError)
+    return ReadCubeMap(SkyCubeMap.Get(), SkyCubeMap->GetDesc().NumMipLevels, OutEnvironment.Sky, OutError)
         && ReadCubeMap(SpecularCubeMap.Get(), FEnvironmentAssetFactory::NumSpecularMips, OutEnvironment.Specular, OutError)
         && ReadCubeMap(DiffuseCubeMap.Get(), 1, OutEnvironment.Diffuse, OutError);
 }
@@ -273,6 +296,27 @@ FJsonValue FEnvironmentAssetFactory::WriteSettings(const FEnvironmentImportSetti
     Value.AddMember(TEXT("SkySize"), FJsonValue(Settings.SkySize));
     Value.AddMember(TEXT("Compress"), FJsonValue(Settings.bCompress));
     return Value;
+}
+
+TSharedPtr<FEnvironment> FEnvironmentAssetFactory::CreateFromPanorama(FRHITexture* Panorama, int32 SkySize, FString& OutError)
+{
+    FRHITextureRef SkyCubeMap;
+    FRHITextureRef SpecularCubeMap;
+    FRHITextureRef DiffuseCubeMap;
+
+    if (!Panorama || !BakeCubeMaps(Panorama, SkySize, SkyCubeMap, SpecularCubeMap, DiffuseCubeMap, OutError))
+    {
+        return nullptr;
+    }
+
+    FRHITextureRef CompressedSkyCubeMap;
+    if (FTextureFactory::Get().GetTextureCompressor().CompressCubeMapBC6(SkyCubeMap, CompressedSkyCubeMap) && CompressedSkyCubeMap)
+    {
+        CompressedSkyCubeMap->SetDebugName(TEXT("Environment Sky"));
+        SkyCubeMap = CompressedSkyCubeMap;
+    }
+
+    return MakeSharedPtr<FEnvironment>(SkyCubeMap, SpecularCubeMap, DiffuseCubeMap);
 }
 
 TSharedPtr<FEnvironment> FEnvironmentAssetFactory::Load(const FAssetData& Asset, const FString& DiskPath, FString& OutError)

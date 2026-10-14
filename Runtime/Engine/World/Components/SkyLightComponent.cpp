@@ -1,12 +1,12 @@
-#include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/SkyLightComponent.h"
-#include "Engine/World/World.h"
 
 FOBJECT_IMPLEMENT_CLASS(FSkyLightComponent);
 
 FSkyLightComponent::FSkyLightComponent(const FObjectInitializer& ObjectInitializer)
     : FLightComponent(ObjectInitializer)
-    , CubeMap(nullptr)
+    , Source(ESkyLightSource::FollowSkybox)
+    , Environment()
+    , Rotation(0.0f)
 {
 }
 
@@ -14,23 +14,17 @@ FSkyLightComponent::~FSkyLightComponent()
 {
 }
 
-void FSkyLightComponent::SetCubeMap(const FRHITextureRef& InCubeMap)
+void FSkyLightComponent::SetSource(ESkyLightSource InSource)
 {
-    if (CubeMap == InCubeMap)
-    {
-        return;
-    }
+    Source = InSource;
+}
 
-    FWorld* World = GetActorOwner() ? GetActorOwner()->GetWorld() : nullptr;
-    if (World && CubeMap)
-    {
-        World->RemoveSceneComponent(this);
-    }
+void FSkyLightComponent::SetEnvironment(const TSharedPtr<FEnvironment>& InEnvironment)
+{
+    Environment = InEnvironment;
+}
 
-    CubeMap = InCubeMap;
-
-    if (World && CubeMap)
-    {
-        World->AddSceneComponent(this);
-    }
+void FSkyLightComponent::SetRotation(float InRotation)
+{
+    Rotation = InRotation;
 }

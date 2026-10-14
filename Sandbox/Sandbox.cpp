@@ -7,6 +7,7 @@
 #include <Core/Misc/Paths.h>
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
+#include <Engine/Assets/EnvironmentAssetFactory.h>
 #include <Engine/Assets/MeshFactory.h>
 #include <Engine/World/World.h>
 #include <Engine/World/ActorFilter.h>
@@ -56,7 +57,7 @@ static void TryCompressBC5(FTextureCompressor& Compressor, FRHITextureRef& Textu
     }
 }
 
-static bool AddSandboxPlayer(FWorld* World, const FRHITextureRef& Skybox, FActorFilter* CamerasFilter = nullptr, FActorFilter* ActorsFilter = nullptr)
+static bool AddSandboxPlayer(FWorld* World, const TSharedPtr<FEnvironment>& Skybox, FActorFilter* CamerasFilter = nullptr, FActorFilter* ActorsFilter = nullptr)
 {
     FCameraActor* CameraActor = World->SpawnActor<FCameraActor>(FVector3(0.0f, 10.0f, -2.0f), FVector3(0.0f, 0.0f, 0.0f));
     FSandboxPlayerController* Player = World->SpawnActor<FSandboxPlayerController>();
@@ -76,7 +77,7 @@ static bool AddSandboxPlayer(FWorld* World, const FRHITextureRef& Skybox, FActor
 
     if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
     {
-        SkyboxComponent->SetCubeMap(Skybox);
+        SkyboxComponent->SetEnvironment(Skybox);
         Player->AddComponent(SkyboxComponent);
     }
 
@@ -628,7 +629,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     InWorld->SetCurrentFilter(nullptr);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Textures/arches.hdr"));
+    TSharedPtr<FEnvironment> Skybox = LoadEnvironmentFromPanorama(Paths::GetAssetDir() + TEXT("/Textures/arches.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -734,7 +735,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 #endif
 
     // Add SkyLight
-    if (FSkyLightActor* SkyLightActor = InWorld->SpawnActor<FSkyLightActor>(Skybox))
+    if (FSkyLightActor* SkyLightActor = InWorld->SpawnActor<FSkyLightActor>())
     {
         SkyLightActor->SetFilter(LightingFilter);
     }
@@ -793,7 +794,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     BistroExterior->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/Bistro/san_giuseppe_bridge_4k.hdr"));
+    TSharedPtr<FEnvironment> Skybox = LoadEnvironmentFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/Bistro/san_giuseppe_bridge_4k.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -806,7 +807,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     }
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>(Skybox);
+    InWorld->SpawnActor<FSkyLightActor>();
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
@@ -843,7 +844,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     SunTemple->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Skybox.hdr"));
+    TSharedPtr<FEnvironment> Skybox = LoadEnvironmentFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Skybox.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -856,10 +857,10 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     }
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>(Skybox);
+    InWorld->SpawnActor<FSkyLightActor>();
 
     // Load Reflection Probe
-    FRHITextureRef ReflectionProbeExterior = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Reflection.hdr"));
+    TSharedPtr<FEnvironment> ReflectionProbeExterior = LoadEnvironmentFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Reflection.hdr"));
     if (!ReflectionProbeExterior)
     {
         DEBUG_BREAK();
@@ -876,7 +877,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     }
 
     // Load Reflection Probe
-    FRHITextureRef ReflectionProbeInterior = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr"));
+    TSharedPtr<FEnvironment> ReflectionProbeInterior = LoadEnvironmentFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr"));
     if (!ReflectionProbeInterior)
     {
         DEBUG_BREAK();
@@ -927,7 +928,7 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     EmeraldSquare_Day->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr"));
+    TSharedPtr<FEnvironment> Skybox = LoadEnvironmentFromPanorama(Paths::GetAssetDir() + TEXT("/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -940,7 +941,7 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     }
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>(Skybox);
+    InWorld->SpawnActor<FSkyLightActor>();
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(
@@ -1115,7 +1116,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     }
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadCubeMapFromPanorama(Paths::GetAssetDir() + TEXT("/Textures/arches.hdr"));
+    TSharedPtr<FEnvironment> Skybox = LoadEnvironmentFromPanorama(Paths::GetAssetDir() + TEXT("/Textures/arches.hdr"));
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -1128,7 +1129,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     }
 
     // Add SkyLight
-    InWorld->SpawnActor<FSkyLightActor>(Skybox);
+    InWorld->SpawnActor<FSkyLightActor>();
 
     // Add DirectionalLight
     if (FDirectionalLightActor* DirectionalLightActor = InWorld->SpawnActor<FDirectionalLightActor>(FVector3(Math::DegreesToRadians(45.0f), 0.0f, 0.0f)))
@@ -1142,63 +1143,22 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     return true;
 }
 
-FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
+TSharedPtr<FEnvironment> FSandbox::LoadEnvironmentFromPanorama(const FString& Filename)
 {
     TSharedPtr<FTexture2D> Panorama = StaticCastSharedPtr<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
-    if (!Panorama)
-    {
-        DEBUG_BREAK();
-        return nullptr;
-    }
-    else
-    {
-        Panorama->SetDebugName(Filename);
-    }
-
-    // Convert the Panorama into a cube-map
-    FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
-    if (!PanoramaRHI)
+    if (!Panorama || !Panorama->GetRHITexture())
     {
         DEBUG_BREAK();
         return nullptr;
     }
 
-    const uint32 SkyboxSize   = 1024;
-    const uint32 NumMiplevels = TextureHelpers::TextureSizeToMiplevels(SkyboxSize);
-
-    constexpr ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, SkyboxSize, NumMiplevels, 1, TextureFlags);
-
-    FRHITextureRef Skybox = RHI::CreateTexture(TextureDesc);
-    if (!Skybox)
+    FString                  Error;
+    TSharedPtr<FEnvironment> Environment = FEnvironmentAssetFactory::CreateFromPanorama(Panorama->GetRHITexture().Get(), 1024, Error);
+    if (!Environment)
     {
-        DEBUG_BREAK();
-        return nullptr;
+        LOG_ERROR("[FSandbox]: '%s' couldn't be baked into an environment: %s", *Filename, *Error);
     }
 
-    const bool bResult = FTextureFactory::Get().TextureCubeFromPanorma(PanoramaRHI.Get(), Skybox.Get(), ETextureFactoryFlags::GenerateMips);
-    if (!bResult)
-    {
-        return nullptr;
-    }
-    else
-    {
-        Skybox->SetDebugName(TEXT("Skybox Uncompressed"));
-    }
-
-    // Unload the panorama
     FAssetManager::Get().UnloadTexture(Panorama);
-
-    // Compress the CubeMap
-    FRHITextureRef CompressedSkybox;
-
-    FTextureCompressor& TextureCompressor = FTextureFactory::Get().GetTextureCompressor();
-    TextureCompressor.CompressCubeMapBC6(Skybox, CompressedSkybox);
-
-    if (CompressedSkybox)
-    {
-        CompressedSkybox->SetDebugName(TEXT("Skybox Compressed"));
-    }
-
-    return CompressedSkybox;
+    return Environment;
 }

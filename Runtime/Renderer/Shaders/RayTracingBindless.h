@@ -27,6 +27,12 @@ struct FRayTracingSceneConstantsHLSL
     uint32   ReflectionNoiseSize                = 0;
     uint32   Padding2                           = 0;
     uint32   Padding3                           = 0;
+    FVector3 SkyLightColor                      = FVector3(1.0f, 1.0f, 1.0f);
+    float    SkyLightRotation                   = 0.0f;
+    float    SkyboxIntensity                    = 1.0f;
+    float    SkyboxRotation                     = 0.0f;
+    float    Padding4                           = 0.0f;
+    float    Padding5                           = 0.0f;
 };
 
 struct FRayTracingGeometryIndicesHLSL
@@ -38,5 +44,5 @@ struct FRayTracingGeometryIndicesHLSL
 };
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL layout");
-static_assert(sizeof(FRayTracingSceneConstantsHLSL) == 336, "FRayTracingSceneConstantsHLSL must match the HLSL constant buffer layout");
+static_assert(sizeof(FRayTracingSceneConstantsHLSL) == 368, "FRayTracingSceneConstantsHLSL must match the HLSL constant buffer layout");
 static_assert(sizeof(FRayTracingGeometryIndicesHLSL) == 16, "FRayTracingGeometryIndicesHLSL must match the HLSL structured-buffer layout");

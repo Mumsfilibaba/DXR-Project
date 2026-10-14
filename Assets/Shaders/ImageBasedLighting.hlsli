@@ -6,6 +6,19 @@
 #endif
 
 // ------------------------------------------------------------------------------------------------
+// Environment Rotation
+// ------------------------------------------------------------------------------------------------
+
+// The direction to sample an environment turned by Rotation radians about the up axis with, for a world-space direction
+float3 RotateEnvironmentDirection(float3 Direction, float Rotation)
+{
+    float SinRotation;
+    float CosRotation;
+    sincos(Rotation, SinRotation, CosRotation);
+    return float3((CosRotation * Direction.x) - (SinRotation * Direction.z), Direction.y, (SinRotation * Direction.x) + (CosRotation * Direction.z));
+}
+
+// ------------------------------------------------------------------------------------------------
 // Specular Environment
 // ------------------------------------------------------------------------------------------------
 

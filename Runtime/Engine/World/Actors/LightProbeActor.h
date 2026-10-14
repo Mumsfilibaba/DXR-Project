@@ -1,6 +1,6 @@
 #pragma once
 #include "Engine/World/Actors/Actor.h"
-#include "RHI/RHITexture.h"
+#include "Engine/Resources/Environment.h"
 
 class FLightProbeComponent;
 
@@ -13,7 +13,7 @@ public:
     ~FLightProbeActor();
 
     using FActor::Initialize;
-    void Initialize(const FVector3& InPosition, const FRHITextureRef& InCubeMap);
+    void Initialize(const FVector3& InPosition, const TSharedPtr<FEnvironment>& InEnvironment);
 
     virtual const CHAR_T* GetTypeLabel() const override
     {

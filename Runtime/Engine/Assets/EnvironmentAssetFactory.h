@@ -32,6 +32,12 @@ public:
     /** @brief Load an environment asset into an FEnvironment, as the loader FAssetLoader calls for environments, rebuilding it first when its bake is stale */
     static TSharedPtr<FEnvironment> Load(const FAssetData& Asset, const FString& DiskPath, FString& OutError);
 
+    /**
+     * @brief Bake an environment on the GPU from a panorama already loaded as a texture, for one made in code rather than imported, such
+     * as the samples' until they are assets. It has no asset identity.
+     */
+    static TSharedPtr<FEnvironment> CreateFromPanorama(FRHITexture* Panorama, int32 SkySize, FString& OutError);
+
 public:
 
     /**

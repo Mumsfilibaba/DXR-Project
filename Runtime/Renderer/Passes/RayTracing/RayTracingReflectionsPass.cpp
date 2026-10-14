@@ -474,6 +474,9 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
             {
                 Constants.NumSkyLightMips = SkyLight->SpecularCubeMap->GetDesc().NumMipLevels;
             }
+
+            Constants.SkyLightColor    = SkyLight->Color;
+            Constants.SkyLightRotation = SkyLight->Rotation;
         }
         else if (FSceneSkybox* Skybox = Scene->GetSkybox())
         {
@@ -484,6 +487,15 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
 
                 Constants.NumSkyLightMips = Skybox->CubeMap->GetDesc().NumMipLevels;
             }
+
+            Constants.SkyLightColor    = FVector3(Skybox->Intensity, Skybox->Intensity, Skybox->Intensity);
+            Constants.SkyLightRotation = Skybox->Rotation;
+        }
+
+        if (FSceneSkybox* Skybox = Scene->GetSkybox())
+        {
+            Constants.SkyboxIntensity = Skybox->Intensity;
+            Constants.SkyboxRotation  = Skybox->Rotation;
         }
 
         Constants.SunDirection = Resources.DirectionalLightData.Direction;

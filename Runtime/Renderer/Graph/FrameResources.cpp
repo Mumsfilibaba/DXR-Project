@@ -152,6 +152,19 @@ bool FFrameResources::Initialize()
         LightProbeBuffer->SetDebugName(TEXT("Light-Probe Infos"));
     }
 
+    BufferDesc            = FRHIBufferDesc::CreateConstantBuffer(sizeof(FEnvironmentInfoHLSL));
+    EnvironmentInfoBuffer = RHI::CreateBuffer(BufferDesc, ERHIResourceState::ConstantBuffer, nullptr);
+
+    if (!EnvironmentInfoBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        EnvironmentInfoBuffer->SetDebugName(TEXT("Environment Info"));
+    }
+
     return true;
 }
 
@@ -237,11 +250,24 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         Info.BoxOriginWS   = LightProbe->Origin;
         Info.BoxProjection = LightProbe->bBoxProjection ? 1.0f : 0.0f;
         Info.BoxMinWS      = LightProbe->BoxMin;
-        Info.Padding0      = 0.0f;
+        Info.Intensity     = LightProbe->Intensity;
         Info.BoxMaxWS      = LightProbe->BoxMax;
-        Info.Padding1      = 0.0f;
+        Info.Rotation      = LightProbe->Rotation;
 
         LightProbeInfos.Emplace(Info);
+    }
+
+    EnvironmentInfo = FEnvironmentInfoHLSL();
+    if (FSceneSkyLight* SkyLight = Scene->GetSkyLight())
+    {
+        EnvironmentInfo.SkyLightColor    = SkyLight->Color;
+        EnvironmentInfo.SkyLightRotation = SkyLight->Rotation;
+    }
+
+    if (FSceneSkybox* Skybox = Scene->GetSkybox())
+    {
+        EnvironmentInfo.SkyboxIntensity = Skybox->Intensity;
+        EnvironmentInfo.SkyboxRotation  = Skybox->Rotation;
     }
 
     if (PointLightsData.SizeInBytes() > static_cast<int32>(PointLightsBuffer->GetDesc().Size))
@@ -308,6 +334,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         FRHITransitionBarrierDesc::CreateBuffer(ShadowCastingPointLightsBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
         FRHITransitionBarrierDesc::CreateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
         FRHITransitionBarrierDesc::CreateBuffer(LightProbeBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
+        FRHITransitionBarrierDesc::CreateBuffer(EnvironmentInfoBuffer.Get(), ERHIResourceState::ConstantBuffer, ERHIResourceState::CopyDest),
     };
 
     CommandList.TransitionBarrier(ToCopyDest);
@@ -344,6 +371,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CommandList.UpdateBuffer(LightProbeBuffer.Get(), FBufferRegion(0, LightProbeInfos.SizeInBytes()), LightProbeInfos.Data());
     }
 
+    CommandList.UpdateBuffer(EnvironmentInfoBuffer.Get(), FBufferRegion(0, sizeof(FEnvironmentInfoHLSL)), &EnvironmentInfo);
+
     const FRHITransitionBarrierDesc ToConstantBuffer[] =
     {
         FRHITransitionBarrierDesc::CreateBuffer(DirectionalLightDataBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
@@ -353,6 +382,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         FRHITransitionBarrierDesc::CreateBuffer(ShadowCastingPointLightsBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
         FRHITransitionBarrierDesc::CreateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
         FRHITransitionBarrierDesc::CreateBuffer(LightProbeBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
+        FRHITransitionBarrierDesc::CreateBuffer(EnvironmentInfoBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::ConstantBuffer),
     };
 
     CommandList.TransitionBarrier(ToConstantBuffer);
@@ -420,6 +450,7 @@ void FFrameResources::Release()
     CascadeSplitsBufferUAV.Reset();
 
     LightProbeBuffer.Reset();
+    EnvironmentInfoBuffer.Reset();
 }
 
 void FFrameResources::ReleaseRayTracingResources()

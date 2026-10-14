@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/RHITexture.h"
+#include "Engine/Resources/Environment.h"
 #include "Engine/World/Components/SceneComponent.h"
 
 class ENGINE_API FSkyboxComponent : public FSceneComponent
@@ -10,13 +10,29 @@ public:
     FSkyboxComponent(const FObjectInitializer& ObjectInitializer);
     ~FSkyboxComponent() = default;
 
-    void SetCubeMap(const FRHITextureRef& InCubeMap);
+    void SetEnvironment(const TSharedPtr<FEnvironment>& InEnvironment);
 
-    FORCEINLINE const FRHITextureRef& GetCubeMap() const 
+    void SetIntensity(float InIntensity);
+
+    void SetRotation(float InRotation);
+
+    FORCEINLINE const TSharedPtr<FEnvironment>& GetEnvironment() const
     {
-        return CubeMap;
+        return Environment;
+    }
+
+    FORCEINLINE float GetIntensity() const
+    {
+        return Intensity;
+    }
+
+    FORCEINLINE float GetRotation() const
+    {
+        return Rotation;
     }
 
 private:
-    FRHITextureRef CubeMap;
+    TSharedPtr<FEnvironment> Environment;
+    float                    Intensity;
+    float                    Rotation;
 };

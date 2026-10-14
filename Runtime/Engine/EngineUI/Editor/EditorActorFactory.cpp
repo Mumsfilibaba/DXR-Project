@@ -97,28 +97,21 @@ static float ComputeGroundOffset(const FAABB& Bounds, const FMatrix4& Orientatio
     return (LowestY < FLT_MAX) ? -LowestY : 0.0f;
 }
 
-static FRHITextureRef FindSkyLightCubeMap(FWorld* World)
+// The scene lights with one sky light
+static bool HasSkyLight(FWorld* World)
 {
     if (World)
     {
         for (FActor* Actor : World->GetActors())
         {
-            if (!Actor)
+            if (Actor && Actor->GetComponentOfType<FSkyLightComponent>())
             {
-                continue;
-            }
-
-            if (FSkyLightComponent* SkyLight = Actor->GetComponentOfType<FSkyLightComponent>())
-            {
-                if (SkyLight->GetCubeMap())
-                {
-                    return SkyLight->GetCubeMap();
-                }
+                return true;
             }
         }
     }
 
-    return FRHITextureRef();
+    return false;
 }
 
 FActor* EditorActorFactory::SpawnPrimitive(FWorld* World, EEditorPrimitiveType Type, const FVector3& Location)
@@ -198,10 +191,9 @@ FActor* EditorActorFactory::SpawnLight(FWorld* World, EEditorLightType Type, con
 
         case EEditorLightType::Sky:
         {
-            const FRHITextureRef CubeMap = FindSkyLightCubeMap(World);
-            if (CubeMap)
+            if (!HasSkyLight(World))
             {
-                NewActor = World->SpawnActor<FSkyLightActor>(CubeMap);
+                NewActor = World->SpawnActor<FSkyLightActor>();
             }
 
             break;
@@ -245,7 +237,7 @@ bool EditorActorFactory::CanSpawnLight(FWorld* World, EEditorLightType Type)
 
         case EEditorLightType::Sky:
         {
-            return FindSkyLightCubeMap(World).IsValid();
+            return World && !HasSkyLight(World);
         }
 
         default:

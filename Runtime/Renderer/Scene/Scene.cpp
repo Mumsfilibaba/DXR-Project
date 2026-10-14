@@ -278,6 +278,14 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
         FLightProbeProxyUpdate Update;
         if (LightProbe)
         {
+            if (const TSharedPtr<FEnvironment>& Environment = LightProbe->GetEnvironment())
+            {
+                Update.SpecularCubeMap = Environment->GetSpecularCubeMap();
+                Update.DiffuseCubeMap  = Environment->GetDiffuseCubeMap();
+            }
+
+            Update.Intensity      = LightProbe->GetIntensity();
+            Update.Rotation       = LightProbe->GetRotation();
             Update.Position       = LightProbe->GetPosition();
             Update.bBoxProjection = LightProbe->GetBoxProjection();
             Update.BoxOffset      = LightProbe->GetBoxOffset();
@@ -285,6 +293,41 @@ FRenderUpdateBatch FScene::CollectRenderUpdates()
         }
 
         Batch.LightProbeUpdates.Add(Update);
+    }
+
+    // Skybox
+    if (SkyboxSource)
+    {
+        if (const TSharedPtr<FEnvironment>& Environment = SkyboxSource->GetEnvironment())
+        {
+            Batch.Skybox.CubeMap = Environment->GetSkyCubeMap();
+        }
+
+        Batch.Skybox.Intensity = SkyboxSource->GetIntensity();
+        Batch.Skybox.Rotation  = SkyboxSource->GetRotation();
+    }
+
+    if (SkyLightSource)
+    {
+        const bool bFollowSkybox = SkyLightSource->GetSource() == ESkyLightSource::FollowSkybox;
+
+        TSharedPtr<FEnvironment> Environment = SkyLightSource->GetEnvironment();
+        float                    Rotation    = SkyLightSource->GetRotation();
+
+        if (bFollowSkybox)
+        {
+            Environment = SkyboxSource ? SkyboxSource->GetEnvironment() : nullptr;
+            Rotation   += SkyboxSource ? SkyboxSource->GetRotation() : 0.0f;
+        }
+
+        if (Environment)
+        {
+            Batch.SkyLight.SpecularCubeMap = Environment->GetSpecularCubeMap();
+            Batch.SkyLight.DiffuseCubeMap  = Environment->GetDiffuseCubeMap();
+        }
+
+        Batch.SkyLight.Color    = SkyLightSource->GetColor() * SkyLightSource->GetIntensity();
+        Batch.SkyLight.Rotation = Rotation;
     }
 
     return Batch;
@@ -315,6 +358,16 @@ void FScene::RenderThread_ApplyRenderUpdates(const FRenderUpdateBatch& Batch)
     for (int32 Index = 0; Index < NumLightProbeUpdates; ++Index)
     {
         LightProbes[Index]->RenderThread_ApplyUpdate(Batch.LightProbeUpdates[Index]);
+    }
+
+    if (Skybox)
+    {
+        Skybox->RenderThread_ApplyUpdate(Batch.Skybox);
+    }
+
+    if (SkyLight)
+    {
+        SkyLight->RenderThread_ApplyUpdate(Batch.SkyLight);
     }
 }
 
@@ -373,24 +426,17 @@ void FScene::AddDirectionalLight(FDirectionalLightComponent* InDirectionalLight)
 
 void FScene::AddSkyLight(FSkyLightComponent* InSkyLight)
 {
-    if (!InSkyLight || !InSkyLight->GetCubeMap())
-    {
-        return;
-    }
-
-    if (SkyLightSource == InSkyLight)
+    if (!InSkyLight || SkyLightSource == InSkyLight)
     {
         return;
     }
 
     SkyLightSource = InSkyLight;
 
-    const FRHITextureRef CubeMap = InSkyLight->GetCubeMap();
-    Tasks::LaunchOnRenderThread(TEXT("AddSkyLight"), [this, CubeMap]()
+    Tasks::LaunchOnRenderThread(TEXT("AddSkyLight"), [this]()
     {
         DeferDeletion(SkyLight);
-        SkyLight = new FSceneSkyLight(this, CubeMap);
-        SkyLight->RenderThread_FilterStaticCubeMaps();
+        SkyLight = new FSceneSkyLight(this);
     });
 }
 
@@ -416,7 +462,7 @@ void FScene::AddPointLight(FPointLightComponent* InPointLight)
 
 void FScene::AddLightProbe(FLightProbeComponent* InLightProbe)
 {
-    if (!InLightProbe || !InLightProbe->GetCubeMap())
+    if (!InLightProbe || !InLightProbe->GetEnvironment())
     {
         return;
     }
@@ -428,11 +474,9 @@ void FScene::AddLightProbe(FLightProbeComponent* InLightProbe)
 
     LightProbeSources.Add(InLightProbe);
 
-    FRHITextureRef CubeMap = InLightProbe->GetCubeMap();
-    Tasks::LaunchOnRenderThread(TEXT("AddLightProbe"), [this, CubeMap]()
+    Tasks::LaunchOnRenderThread(TEXT("AddLightProbe"), [this]()
     {
-        FSceneLightProbe* NewLightProbe = new FSceneLightProbe(this, CubeMap);
-        NewLightProbe->RenderThread_FilterStaticCubeMaps();
+        FSceneLightProbe* NewLightProbe = new FSceneLightProbe(this);
         LightProbes.Add(NewLightProbe);
         STAT_ADD(STAT_Scene_LightProbeCount, 1);
     });
@@ -447,11 +491,11 @@ void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
 
     SkyboxSource = InSkyboxComponent;
 
-    const FRHITextureRef CubeMap = InSkyboxComponent ? InSkyboxComponent->GetCubeMap() : FRHITextureRef(nullptr);
-    Tasks::LaunchOnRenderThread(TEXT("AddSkybox"), [this, CubeMap]()
+    const bool bHasSkybox = InSkyboxComponent != nullptr;
+    Tasks::LaunchOnRenderThread(TEXT("AddSkybox"), [this, bHasSkybox]()
     {
         DeferDeletion(Skybox);
-        Skybox = CubeMap ? new FSceneSkybox(this, CubeMap) : nullptr;
+        Skybox = bHasSkybox ? new FSceneSkybox(this) : nullptr;
     });
 }
 

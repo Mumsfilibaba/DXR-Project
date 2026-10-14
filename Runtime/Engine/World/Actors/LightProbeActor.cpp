@@ -17,8 +17,8 @@ FLightProbeActor::~FLightProbeActor()
 {
 }
 
-void FLightProbeActor::Initialize(const FVector3& InPosition, const FRHITextureRef& InCubeMap)
+void FLightProbeActor::Initialize(const FVector3& InPosition, const TSharedPtr<FEnvironment>& InEnvironment)
 {
     GetTransform().SetTranslation(InPosition);
-    LightProbeComponent->SetCubeMap(InCubeMap);
+    LightProbeComponent->SetEnvironment(InEnvironment);
 }

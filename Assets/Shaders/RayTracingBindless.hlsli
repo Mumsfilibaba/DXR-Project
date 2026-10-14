@@ -31,6 +31,15 @@ struct FRayTracingSceneConstants
     uint   ReflectionNoiseSize; // Edge length of the blue noise mask; 0 when no mask is bound
     uint   Padding2;
     uint   Padding3;
+
+    // 336-352
+    float3 SkyLightColor;       // What the diffuse and specular cubes are scaled by
+    float  SkyLightRotation;
+
+    // 352-368
+    float  SkyboxIntensity;
+    float  SkyboxRotation;
+    float2 Padding4;
 };
 
 struct FRayTracingGeometryIndices

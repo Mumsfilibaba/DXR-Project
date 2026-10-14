@@ -149,12 +149,28 @@ struct FLightProbeInfoHLSL
 
     // 16-32
     FVector3 BoxMinWS;
-    float    Padding0;
+    float    Intensity;
 
     // 32-48
     FVector3 BoxMaxWS;
-    float    Padding1;
+    float    Rotation;
 };
+
+// Mirrors FEnvironmentInfo in Assets/Shaders/Structs.hlsli
+struct FEnvironmentInfoHLSL
+{
+    // 0-16
+    FVector3 SkyLightColor    = FVector3(0.0f, 0.0f, 0.0f);
+    float    SkyLightRotation = 0.0f;
+
+    // 16-32
+    float SkyboxIntensity = 1.0f;
+    float SkyboxRotation  = 0.0f;
+    float Padding0        = 0.0f;
+    float Padding1        = 0.0f;
+};
+
+static_assert(sizeof(FEnvironmentInfoHLSL) == 32, "FEnvironmentInfoHLSL must match the HLSL FEnvironmentInfo layout");
 
 MARK_AS_REALLOCATABLE(FLightProbeInfoHLSL);
 
@@ -285,6 +301,10 @@ struct FFrameResources
     // Light-Probes
     FRHIBufferRef               LightProbeBuffer;
     TArray<FLightProbeInfoHLSL> LightProbeInfos;
+
+    // The sky light's and the skybox's intensity and rotation
+    FRHIBufferRef               EnvironmentInfoBuffer;
+    FEnvironmentInfoHLSL        EnvironmentInfo;
 
     // RayTracing
     FRHITextureRef                                    RayTracingOutput;

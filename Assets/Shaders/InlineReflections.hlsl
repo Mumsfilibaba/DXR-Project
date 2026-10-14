@@ -133,7 +133,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     }
     else
     {
-        Color = Skybox.SampleLevel(GBufferSampler, ReflectDirection, 0).rgb;
+        Color = Skybox.SampleLevel(GBufferSampler, RotateEnvironmentDirection(ReflectDirection, SceneConstants.SkyboxRotation), 0).rgb * SceneConstants.SkyboxIntensity;
     }
 
     OutTexture[Pixel] = float4(Color, OutHitT);

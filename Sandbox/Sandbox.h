@@ -1,7 +1,8 @@
 #pragma once
 #include <Core/Core.h>
 #include <Core/Modules/ModuleManager.h>
-#include <RHI/RHITexture.h>
+#include <Core/Containers/SharedPtr.h>
+#include <Engine/Resources/Environment.h>
 
 class FWorld;
 
@@ -23,5 +24,5 @@ private:
     bool CreateEmeraldSquare(FWorld* InWorld);
     bool CreateLightSandbox(FWorld* InWorld);
 
-    FRHITextureRef LoadCubeMapFromPanorama(const FString& Filename);
+    TSharedPtr<FEnvironment> LoadEnvironmentFromPanorama(const FString& Filename);
 };

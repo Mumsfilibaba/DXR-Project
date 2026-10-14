@@ -4,6 +4,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix4.h"
 #include "RHI/RHICore.h"
+#include "RHI/RHITexture.h"
 
 struct FStaticMeshProxyUpdate
 {
@@ -39,10 +40,29 @@ struct FPointLightProxyUpdate
 
 struct FLightProbeProxyUpdate
 {
-    FVector3 Position       = {};
-    FVector3 BoxOffset      = {};
-    FVector3 BoxExtent      = {};
-    bool     bBoxProjection = false;
+    FRHITextureRef SpecularCubeMap = nullptr;
+    FRHITextureRef DiffuseCubeMap  = nullptr;
+    FVector3       Position        = {};
+    FVector3       BoxOffset       = {};
+    FVector3       BoxExtent       = {};
+    float          Intensity       = 1.0f;
+    float          Rotation        = 0.0f;
+    bool           bBoxProjection  = false;
+};
+
+struct FSkyboxProxyUpdate
+{
+    FRHITextureRef CubeMap   = nullptr;
+    float          Intensity = 1.0f;
+    float          Rotation  = 0.0f;
+};
+
+struct FSkyLightProxyUpdate
+{
+    FRHITextureRef SpecularCubeMap = nullptr;
+    FRHITextureRef DiffuseCubeMap  = nullptr;
+    FVector3       Color           = {};
+    float          Rotation        = 0.0f;
 };
 
 struct FRenderUpdateBatch
@@ -51,5 +71,7 @@ struct FRenderUpdateBatch
     FDirectionalLightProxyUpdate   DirectionalLight;
     TArray<FPointLightProxyUpdate> PointLightUpdates;
     TArray<FLightProbeProxyUpdate> LightProbeUpdates;
+    FSkyboxProxyUpdate             Skybox;
+    FSkyLightProxyUpdate           SkyLight;
     bool                           bHasDirectionalLight = false;
 };

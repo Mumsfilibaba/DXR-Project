@@ -7,20 +7,18 @@ struct FLightProbeProxyUpdate;
 
 struct FSceneLightProbe : public FSceneObject
 {
-    FSceneLightProbe(FScene* InScene, const FRHITextureRef& InSourceCubeMap);
+    FSceneLightProbe(FScene* InScene);
     ~FSceneLightProbe();
 
-    // Applies a per-frame probe snapshot (position + box-projection bounds).
+    // Applies a per-frame probe snapshot (environment, position and box-projection bounds).
     void RenderThread_ApplyUpdate(const FLightProbeProxyUpdate& Update);
 
-    // Filters the source into the necessary cube-maps
-    void RenderThread_FilterStaticCubeMaps();
-
-    FRHITextureRef SourceCubeMap;   
     FRHITextureRef SpecularCubeMap; 
     FRHITextureRef DiffuseCubeMap;  
     FVector3       Origin;
     FVector3       BoxMin;          
     FVector3       BoxMax;          
+    float          Intensity;
+    float          Rotation;
     bool           bBoxProjection;  
 };

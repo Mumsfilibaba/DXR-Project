@@ -1,93 +1,21 @@
-#include "RHI/RHITexture.h"
-#include "RendererCore/TextureFactory.h"
+#include "Renderer/Scene/SceneProxyData.h"
 #include "Renderer/Scene/SceneSkyLight.h"
-#include "Renderer/Graph/FrameResources.h"
 
-FSceneSkyLight::FSceneSkyLight(FScene* InScene, const FRHITextureRef& InSourceCubeMap)
+FSceneSkyLight::FSceneSkyLight(FScene* InScene)
     : FSceneObject(InScene)
-    , SourceCubeMap(InSourceCubeMap)
     , SpecularCubeMap(nullptr)
     , DiffuseCubeMap(nullptr)
+    , Color(1.0f, 1.0f, 1.0f)
+    , Rotation(0.0f)
 {
 }
 
 FSceneSkyLight::~FSceneSkyLight() = default;
 
-void FSceneSkyLight::RenderThread_FilterStaticCubeMaps()
+void FSceneSkyLight::RenderThread_ApplyUpdate(const FSkyLightProxyUpdate& Update)
 {
-    if (!SourceCubeMap)
-    {
-        LOG_WARNING("[FSceneSkyLight::FilterStaticCubeMaps] Trying to filter cube-map without a source");
-        return;
-    }
-
-    constexpr EFormat TempCubeMapFormat   = EFormat::R16G16B16A16_Float;
-    constexpr uint32  SpecularCubeMapSize = 256;
-    const uint32 SpecularIrradianceMiplevels = Math::Max<uint32>(static_cast<uint32>(Math::Log2(static_cast<float>(SpecularCubeMapSize))), 1);
-
-    const ETextureUsageFlags TextureFlags =
-        ETextureUsageFlags::UnorderedAccessTexture |
-        ETextureUsageFlags::ShaderResourceTexture;
-
-    FRHITextureDesc SpecularCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1,TextureFlags);
-    FRHITextureRef  TempSpecularCubeMap = RHI::CreateTexture(SpecularCubeMapDesc, ERHIResourceState::ShaderResource);
-
-    if (!TempSpecularCubeMap)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-    else
-    {
-        TempSpecularCubeMap->SetDebugName(TEXT("Temp Specular CubeMap"));
-    }
-
-    const uint32 DiffuseCubeMapSize = 32;
-    FRHITextureDesc DiffuseCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, DiffuseCubeMapSize, 1, 1, TextureFlags);
-    FRHITextureRef  TempDiffuseCubeMap = RHI::CreateTexture(DiffuseCubeMapDesc, ERHIResourceState::ShaderResource);
-
-    if (!TempDiffuseCubeMap)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-    else
-    {
-        TempDiffuseCubeMap->SetDebugName(TEXT("Temp Diffuse CubeMap"));
-    }
-
-    FRHICommandList CommandList;
-
-    constexpr uint32 NumMipsSkipped = 3;
-    const int32 NumSpecularMipLevels =  Math::Max<int32>(static_cast<int32>(SpecularIrradianceMiplevels) - NumMipsSkipped, 1);
-
-    bool bResult = FTextureFactory::Get().FilterSpecularCubeMap(CommandList, SourceCubeMap.Get(), TempSpecularCubeMap.Get(), NumSpecularMipLevels);
-    if (!bResult)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
-    bResult = FTextureFactory::Get().FilterDiffuseCubeMap(CommandList, SourceCubeMap.Get(), TempDiffuseCubeMap.Get());
-    if (!bResult)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-
-    FTextureCompressor& TextureCompressor = FTextureFactory::Get().GetTextureCompressor();
-    TextureCompressor.CompressCubeMapBC6(CommandList, TempSpecularCubeMap, SpecularCubeMap);
-
-    if (SpecularCubeMap)
-    {
-        SpecularCubeMap->SetDebugName(TEXT("Specular CubeMap"));
-    }
-
-    TextureCompressor.CompressCubeMapBC6(CommandList, TempDiffuseCubeMap, DiffuseCubeMap);
-    if (DiffuseCubeMap)
-    {
-        DiffuseCubeMap->SetDebugName(TEXT("Diffuse CubeMap"));
-    }
-
-    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    SpecularCubeMap = Update.SpecularCubeMap;
+    DiffuseCubeMap  = Update.DiffuseCubeMap;
+    Color           = Update.Color;
+    Rotation        = Update.Rotation;
 }

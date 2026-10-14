@@ -17,7 +17,8 @@ FSkyLightActor::~FSkyLightActor()
 {
 }
 
-void FSkyLightActor::Initialize(const FRHITextureRef& InCubeMap)
+void FSkyLightActor::Initialize(const TSharedPtr<FEnvironment>& InEnvironment)
 {
-    LightComponent->SetCubeMap(InCubeMap);
+    LightComponent->SetSource(ESkyLightSource::SpecifiedEnvironment);
+    LightComponent->SetEnvironment(InEnvironment);
 }

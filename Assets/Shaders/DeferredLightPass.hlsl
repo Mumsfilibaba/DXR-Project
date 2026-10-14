@@ -98,6 +98,7 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 
 ConstantBuffer<FDirectionalLight> DirectionalLightBuffer : register(b5);
 ConstantBuffer<FLightProbeInfo>   LightProbeInfoBuffer   : register(b6);
+ConstantBuffer<FEnvironmentInfo>  EnvironmentInfoBuffer  : register(b7);
 
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> Output : register(u0);
 
@@ -378,27 +379,30 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
                 BoxProjectionInfo.BoxMaxWS          = LightProbeInfoBuffer.BoxMaxWS;
                 BoxProjectionInfo.BoxProjection     = LightProbeInfoBuffer.BoxProjection;
                 
-                SpecularEnvironmentInfo.ReflectionUVW = BoxProjection(BoxProjectionInfo);
+                SpecularEnvironmentInfo.ReflectionUVW = RotateEnvironmentDirection(BoxProjection(BoxProjectionInfo), LightProbeInfoBuffer.Rotation);
+                DiffuseEnvironmentInfo.NormalUVW      = RotateEnvironmentDirection(NormalWS, LightProbeInfoBuffer.Rotation);
 
-                SpecularSample = SpecularEnvironment(ProbeSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips);
-                DiffuseSample  = DiffuseEnvironment(ProbeDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo);
+                SpecularSample = SpecularEnvironment(ProbeSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * LightProbeInfoBuffer.Intensity;
+                DiffuseSample  = DiffuseEnvironment(ProbeDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo) * LightProbeInfoBuffer.Intensity;
             }
             else
             {
-                SpecularEnvironmentInfo.ReflectionUVW = Reflection;
+                SpecularEnvironmentInfo.ReflectionUVW = RotateEnvironmentDirection(Reflection, EnvironmentInfoBuffer.SkyLightRotation);
+                DiffuseEnvironmentInfo.NormalUVW      = RotateEnvironmentDirection(NormalWS, EnvironmentInfoBuffer.SkyLightRotation);
 
                 // Apply shadow-mask so that environment is not too visible in the shadowed areas
-                SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * ShadowMask;
-                DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo) * ShadowMask;
+                SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * EnvironmentInfoBuffer.SkyLightColor * ShadowMask;
+                DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo) * EnvironmentInfoBuffer.SkyLightColor * ShadowMask;
             }
         }
         else
         {
-            SpecularEnvironmentInfo.ReflectionUVW = Reflection;
+            SpecularEnvironmentInfo.ReflectionUVW = RotateEnvironmentDirection(Reflection, EnvironmentInfoBuffer.SkyLightRotation);
+            DiffuseEnvironmentInfo.NormalUVW      = RotateEnvironmentDirection(NormalWS, EnvironmentInfoBuffer.SkyLightRotation);
 
             // Apply shadow-mask so that environment is not too visible in the shadowed areas
-            SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * ShadowMask;
-            DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo) * ShadowMask;
+            SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, EnvironmentSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * EnvironmentInfoBuffer.SkyLightColor * ShadowMask;
+            DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, EnvironmentSampler, DiffuseEnvironmentInfo) * EnvironmentInfoBuffer.SkyLightColor * ShadowMask;
         }
 
         // Ray Traced reflections

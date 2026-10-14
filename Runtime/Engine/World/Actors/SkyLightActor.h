@@ -1,6 +1,6 @@
 #pragma once
 #include "Engine/World/Actors/Actor.h"
-#include "RHI/RHITexture.h"
+#include "Engine/Resources/Environment.h"
 
 class FSkyLightComponent;
 
@@ -13,7 +13,7 @@ public:
     ~FSkyLightActor();
 
     using FActor::Initialize;
-    void Initialize(const FRHITextureRef& InCubeMap);
+    void Initialize(const TSharedPtr<FEnvironment>& InEnvironment);
 
     virtual const CHAR_T* GetTypeLabel() const override
     {

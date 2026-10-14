@@ -358,6 +358,7 @@ void FTiledLightPass::Record(FRHICommandList& CommandList, const FFrameResources
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.DirectionalLightDataBuffer.Get(), 5);
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.LightProbeBuffer.Get(), 6);
+    CommandList.SetConstantBuffer(LightPassShader, FrameResources.EnvironmentInfoBuffer.Get(), 7);
 
     CommandList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
     CommandList.SetSamplerState(LightPassShader, FrameResources.LightProbeSampler.Get(), 1);

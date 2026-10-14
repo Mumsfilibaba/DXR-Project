@@ -326,6 +326,7 @@ void FForwardPass::Record(FRHICommandList& CommandList, const FFrameResources& F
         CommandList.SetConstantBuffer(PShader, FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
         CommandList.SetConstantBuffer(PShader, FrameResources.DirectionalLightDataBuffer.Get(), 5);
         CommandList.SetConstantBuffer(PShader, FrameResources.LightProbeBuffer.Get(), 7);
+        CommandList.SetConstantBuffer(PShader, FrameResources.EnvironmentInfoBuffer.Get(), 8);
 
         if (Scene)
         {

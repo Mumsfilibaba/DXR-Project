@@ -18,9 +18,13 @@ static FAutoConsoleVariableRef CVarClearBeforeSkyboxEnabled(
     TEXT("Clear the final target before rendering the Skybox (Used for debugging)"),
     GClearBeforeSkyboxEnabled);
 
-struct FSimpleCameraBufferHLSL
+struct FSkyboxConstantsHLSL
 {
     FMatrix4 Matrix;
+    float    Intensity;
+    float    Rotation;
+    float    Padding0;
+    float    Padding1;
 };
 
 class FSkyboxVS
@@ -232,19 +236,23 @@ void FSkyboxRenderPass::Record(FRHICommandList& CommandList, const FFrameResourc
     CommandList.SetIndexBuffer(SkyboxIndexBuffer.Get(), SkyboxIndexFormat);
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
-    FSimpleCameraBufferHLSL SimpleCamera;
-
-    SimpleCamera.Matrix = Scene->GetCamera()->Snapshot.ViewProjectionNoTranslation;
-    SimpleCamera.Matrix = SimpleCamera.Matrix.GetTranspose();
-
-    constexpr uint32 NumConstants = sizeof(FSimpleCameraBufferHLSL) / sizeof(uint32);
-    CommandList.SetShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, NumConstants);
+    FSkyboxConstantsHLSL SkyboxConstants;
+    SkyboxConstants.Matrix    = Scene->GetCamera()->Snapshot.ViewProjectionNoTranslation.GetTranspose();
+    SkyboxConstants.Intensity = 1.0f;
+    SkyboxConstants.Rotation  = 0.0f;
+    SkyboxConstants.Padding0  = 0.0f;
+    SkyboxConstants.Padding1  = 0.0f;
 
     FRHIShaderResourceView* SkyboxSRV = nullptr;
-    if (Scene->GetSkybox())
+    if (FSceneSkybox* Skybox = Scene->GetSkybox())
     {
-        SkyboxSRV = Scene->GetSkybox()->CubeMap->GetShaderResourceView();
+        SkyboxSRV                 = Skybox->CubeMap->GetShaderResourceView();
+        SkyboxConstants.Intensity = Skybox->Intensity;
+        SkyboxConstants.Rotation  = Skybox->Rotation;
     }
+
+    constexpr uint32 NumConstants = sizeof(FSkyboxConstantsHLSL) / sizeof(uint32);
+    CommandList.SetShaderConstants(SkyboxVertexShader.Get(), &SkyboxConstants, NumConstants);
 
     CommandList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
 

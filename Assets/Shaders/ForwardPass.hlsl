@@ -77,6 +77,7 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 ConstantBuffer<FDirectionalLight> DirLightBuffer       : register(b5);
 ConstantBuffer<FPerObject>        PerObjectBuffer      : register(b6);
 ConstantBuffer<FLightProbeInfo>   LightProbeInfoBuffer : register(b7);
+ConstantBuffer<FEnvironmentInfo>  EnvironmentInfoBuffer : register(b8);
 
 #define MATERIAL_SRV_REGISTER_BASE 5
 #define MATERIAL_ARRAY_REGISTER    t12
@@ -331,18 +332,20 @@ float4 PSMain(FPSInput Input) : SV_Target0
             BoxProjectionInfo.BoxMaxWS          = LightProbeInfoBuffer.BoxMaxWS;
             BoxProjectionInfo.BoxProjection     = LightProbeInfoBuffer.BoxProjection;
 
-            SpecularEnvironmentInfo.ReflectionUVW = BoxProjection(BoxProjectionInfo);
+            SpecularEnvironmentInfo.ReflectionUVW = RotateEnvironmentDirection(BoxProjection(BoxProjectionInfo), LightProbeInfoBuffer.Rotation);
+            DiffuseEnvironmentInfo.NormalUVW      = RotateEnvironmentDirection(DiffuseEnvironmentInfo.NormalUVW, LightProbeInfoBuffer.Rotation);
 
             // The probe is a local capture, so it already contains the local lighting and is not dimmed by the sun shadow
-            SpecularSample = SpecularEnvironment(ProbeSpecularCubeMap, IrradianceSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips);
-            DiffuseSample  = DiffuseEnvironment(ProbeDiffuseCubeMap, IrradianceSampler, DiffuseEnvironmentInfo);
+            SpecularSample = SpecularEnvironment(ProbeSpecularCubeMap, IrradianceSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * LightProbeInfoBuffer.Intensity;
+            DiffuseSample  = DiffuseEnvironment(ProbeDiffuseCubeMap, IrradianceSampler, DiffuseEnvironmentInfo) * LightProbeInfoBuffer.Intensity;
         }
         else
         {
-            SpecularEnvironmentInfo.ReflectionUVW = Reflection;
+            SpecularEnvironmentInfo.ReflectionUVW = RotateEnvironmentDirection(Reflection, EnvironmentInfoBuffer.SkyLightRotation);
+            DiffuseEnvironmentInfo.NormalUVW      = RotateEnvironmentDirection(DiffuseEnvironmentInfo.NormalUVW, EnvironmentInfoBuffer.SkyLightRotation);
 
-            SpecularSample = SpecularEnvironment(SpecularIrradianceMap, IrradianceSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * ShadowMask;
-            DiffuseSample  = DiffuseEnvironment(IrradianceMap, IrradianceSampler, DiffuseEnvironmentInfo) * ShadowMask;
+            SpecularSample = SpecularEnvironment(SpecularIrradianceMap, IrradianceSampler, SpecularEnvironmentInfo, Constants.NumSkyLightMips) * EnvironmentInfoBuffer.SkyLightColor * ShadowMask;
+            DiffuseSample  = DiffuseEnvironment(IrradianceMap, IrradianceSampler, DiffuseEnvironmentInfo) * EnvironmentInfoBuffer.SkyLightColor * ShadowMask;
         }
 
         const float2 BRDFIntegration = GetIntegrationConstants(IntegrationLUT, LUTSampler, NDotV, Roughness);
@@ -366,7 +369,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
         const float3 RefractDir = refract(-V, N, Eta);
         const float  MipLevel   = Roughness * float(max(Constants.NumSkyLightMips - 1, 0));
         const float3 SampleDir  = all(RefractDir == 0.0) ? reflect(-V, N) : RefractDir;
-        const float3 Sky        = SkyboxCubeMap.SampleLevel(IrradianceSampler, SampleDir, MipLevel).rgb;
+        const float3 Sky        = SkyboxCubeMap.SampleLevel(IrradianceSampler, RotateEnvironmentDirection(SampleDir, EnvironmentInfoBuffer.SkyboxRotation), MipLevel).rgb * EnvironmentInfoBuffer.SkyboxIntensity;
 
         const float Transmission = (1.0 - Opacity) * MaterialData.RefractionStrength;
         Transmitted = Sky * Transmission;
