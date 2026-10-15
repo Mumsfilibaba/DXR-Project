@@ -116,6 +116,27 @@ struct FMemoryLeakGroup
     int64 Bytes = 0;
 };
 
+struct FMemoryGPUResourceInfo
+{
+    /** @brief What kind of resource it is */
+    EMemoryGPUResourceKind Kind = EMemoryGPUResourceKind::Unknown;
+
+    /** @brief Whether it is in use or waiting to be destroyed */
+    EMemoryGPUResourceState State = EMemoryGPUResourceState::Live;
+
+    /** @brief The memory it holds, in bytes */
+    uint64 Size = 0;
+
+    /** @brief The tag that was current where it was created */
+    FMemoryNameId Tag = MEMORY_NAME_UNTAGGED;
+
+    /** @brief The scope it was created in */
+    FMemoryScopeId Scope = MEMORY_SCOPE_ROOT;
+
+    /** @brief Its debug name, empty until it is named */
+    String Name;
+};
+
 class CORE_API FMemoryProfiler
 {
 public:
@@ -143,6 +164,8 @@ public:
         , Frames(nullptr)
         , NextFrameIndex(0)
         , CurrentMarker(0)
+        , GPULock()
+        , GPUDomain(nullptr)
         , bCaptureCallstacks(false)
         , bTrackingEnabled(ENABLE_MEMORY_PROFILER != 0)
     {
@@ -288,6 +311,74 @@ public:
     const FMemoryProfilerFrame* GetLatestFrame();
 
     /**
+     * @brief Records a GPU resource that has just been created, billed to the calling thread's tag and scope
+     *
+     * @param Resource Identifies the resource in the later calls
+     * @param Kind What kind of resource it is
+     * @param Size The memory it holds, in bytes
+     */
+    void OnGPUResourceCreated(const void* Resource, EMemoryGPUResourceKind Kind, uint64 Size);
+
+    /**
+     * @brief Changes the memory a GPU resource holds, keeping its tag and scope
+     *
+     * @param Resource The resource
+     * @param NewSize The memory it holds now, in bytes
+     */
+    void OnGPUResourceResized(const void* Resource, uint64 NewSize);
+
+    /**
+     * @brief Marks a GPU resource that nothing references any more. Its memory stays counted until it is destroyed,
+     * since the GPU can still be using it.
+     *
+     * @param Resource The resource
+     */
+    void OnGPUResourceReleased(const void* Resource);
+
+    /**
+     * @brief Forgets a GPU resource and gives its memory back. A resource that was never recorded is ignored.
+     *
+     * @param Resource The resource
+     */
+    void OnGPUResourceDestroyed(const void* Resource);
+
+    /**
+     * @brief Sets the debug name of a GPU resource
+     *
+     * @param Resource The resource
+     * @param Name The name, which is copied
+     */
+    void OnGPUResourceNamed(const void* Resource, const CHAR* Name);
+
+    /**
+     * @brief Looks up a GPU resource
+     *
+     * @param Resource The resource
+     * @param OutInfo Receives what is recorded about it
+     * @return Returns false when the resource is not recorded
+     */
+    bool GetGPUResource(const void* Resource, FMemoryGPUResourceInfo& OutInfo);
+
+    /**
+     * @brief Reads the GPU counters of a module tag, which count resources pending deletion as live
+     *
+     * @param Tag The tag to read
+     * @return Returns the tag's counters, all zero for a tag no resource was created under
+     */
+    FMemoryCounterSnapshot GetGPUTagStats(FMemoryNameId Tag);
+
+    /**
+     * @brief Reads the GPU counters of a scope node, which cover resources created directly in it
+     *
+     * @param Scope The scope node to read
+     * @return Returns the node's counters, all zero for a node no resource was created in
+     */
+    FMemoryCounterSnapshot GetGPUScopeStats(FMemoryScopeId Scope);
+
+    /** @return Returns the bytes held by GPU resources that are released but not destroyed yet */
+    int64 GetGPUPendingDeletionBytes();
+
+    /**
      * @brief Reads the counters of a module tag. The profiler's own tag adds the pages it has mapped for itself to its
      * bytes but not to its counts, and its peak is then the sum of two peaks that need not have been reached at once.
      *
@@ -378,6 +469,7 @@ public:
 
 private:
     struct FCounters;
+    struct FGPUDomain;
 
     static void AddToCounters(FCounters& Counters, int64 Size);
     static void RemoveFromCounters(FCounters& Counters, int64 Size);
@@ -396,6 +488,8 @@ private:
     TProfilerFrameRing<FMemoryProfilerFrame>*                       Frames;
     int32                                                           NextFrameIndex;
     AtomicUInt32                                                    CurrentMarker;
+    FSpinLock                                                       GPULock;
+    FGPUDomain*                                                     GPUDomain;
     AtomicBool                                                      bCaptureCallstacks;
     AtomicBool                                                      bTrackingEnabled;
 };

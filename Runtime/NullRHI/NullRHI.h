@@ -2,6 +2,7 @@
 #include "NullRHIResources.h"
 #include "NullRHIShader.h"
 #include "NullRHICommandContext.h"
+#include "Core/Memory/MemoryProfiler.h"
 #include "RHI/RHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -22,11 +23,13 @@ public:
 
     virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState, const IRHITextureData* InInitialData) override final
     {
+        MEMORY_MODULE_SCOPE("NullRHI");
         return new FNullTextureRHI(InTextureDesc);
     }
 
     virtual FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState, const void* InInitialData) override final
     {
+        MEMORY_MODULE_SCOPE("NullRHI");
         return new FNullBufferRHI(InBufferDesc);
     }
 

@@ -1,9 +1,59 @@
 #pragma once
 #include "RHI/RHI.h"
+#include "RHI/RHIMemoryTracker.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+inline uint64 GetBytesPerBlock(EFormat Format)
+{
+    switch (Format)
+    {
+        case EFormat::BC1_Typeless:
+        case EFormat::BC1_UNorm:
+        case EFormat::BC1_UNorm_SRGB:
+        case EFormat::BC4_Typeless:
+        case EFormat::BC4_UNorm:
+        case EFormat::BC4_SNorm:
+            return 8;
+
+        default:
+            return 16;
+    }
+}
+
+inline uint64 GetPackedTextureSize(const FRHITextureDesc& TextureDesc)
+{
+    if (TextureDesc.Dimension == ETextureDimension::None)
+    {
+        return 0;
+    }
+
+    const bool   bBlockCompressed = IsBlockCompressed(TextureDesc.Format);
+    const uint64 BytesPerUnit     = bBlockCompressed ? GetBytesPerBlock(TextureDesc.Format) : GetByteStrideFromFormat(TextureDesc.Format);
+    const uint64 NumLayers        = RHIDimensionArrayLayers(TextureDesc.Dimension, Math::Max<uint32>(TextureDesc.NumArraySlices, 1));
+    const uint64 NumSamples       = Math::Max<uint32>(TextureDesc.NumSamples, 1);
+    const uint32 NumMipLevels     = Math::Max<uint32>(TextureDesc.NumMipLevels, 1);
+
+    uint64 MipChainBytes = 0;
+    for (uint32 MipLevel = 0; MipLevel < NumMipLevels; ++MipLevel)
+    {
+        uint64 Width  = Math::Max<uint64>(static_cast<uint64>(TextureDesc.Extent.X) >> MipLevel, 1);
+        uint64 Height = Math::Max<uint64>(static_cast<uint64>(TextureDesc.Extent.Y) >> MipLevel, 1);
+        uint64 Depth  = TextureDesc.IsTexture3D() ? Math::Max<uint64>(static_cast<uint64>(TextureDesc.Extent.Z) >> MipLevel, 1) : 1;
+
+        if (bBlockCompressed)
+        {
+            Width  = (Width + 3) / 4;
+            Height = (Height + 3) / 4;
+        }
+
+        MipChainBytes += Width * Height * Depth * BytesPerUnit;
+    }
+
+    return MipChainBytes * NumLayers * NumSamples;
+}
 
 inline FRHIShaderResourceViewDesc GetDefaultShaderResourceViewDescForTexture(const FRHITextureDesc& TextureDesc)
 {
@@ -159,6 +209,11 @@ public:
     {
     }
 
+    virtual uint64 GetAllocatedSize() const override final
+    {
+        return GetDesc().Size;
+    }
+
     virtual void* GetRHINativeResource() const override final
     {
         return nullptr;
@@ -181,6 +236,7 @@ public:
     virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;
+        RHIMemoryTracker::OnResourceNamed(this, InDebugName);
     }
 
     virtual void GetDebugName(String& OutDebugName) const override final
@@ -325,9 +381,15 @@ public:
         return DepthStencilView.Get();
     }
 
+    virtual uint64 GetAllocatedSize() const override final
+    {
+        return GetPackedTextureSize(GetDesc());
+    }
+
     virtual void SetDebugName(const String& InDebugName) override final
     {
         DebugName = InDebugName;
+        RHIMemoryTracker::OnResourceNamed(this, InDebugName);
     }
 
     virtual void GetDebugName(String& OutDebugName) const override final

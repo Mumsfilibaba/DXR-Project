@@ -1,5 +1,6 @@
 #include "RHI/RHIResource.h"
 #include "RHI/RHICommandList.h"
+#include "RHI/RHIMemoryTracker.h"
 
 FRHIResource::FRHIResource(ERHIResourceType InResourceType)
     : ResourceType(InResourceType)
@@ -12,6 +13,8 @@ FRHIResource::~FRHIResource()
 {
     CHECK(StrongReferences.Load() == 0);
     CHECK(State.Load() == EState::Deleted);
+
+    RHIMemoryTracker::OnResourceDestroyed(this);
 }
 
 int32 FRHIResource::AddRef() const
@@ -31,6 +34,7 @@ int32 FRHIResource::Release() const
     if (RefCount < 1)
     {
         State = EState::Deleted;
+        RHIMemoryTracker::OnResourceReleased(this);
 
         // Delete immediately if we have not initialized the command-executor, this can happen if we fail to initialize the RHI
         if (FRHICommandListExecutor::IsInitialized())

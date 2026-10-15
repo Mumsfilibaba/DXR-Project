@@ -11,6 +11,7 @@
 #include "TestCommon/TestMacros.h"
 #include "LaunchProgram/ProgramEntry.h"
 
+#include "GPUMemoryTrackingTests.h"
 #include "RenderGraphTests.h"
 #include "SwapChainAcquireTests.h"
 
@@ -89,6 +90,7 @@ static int32 RunRendererCoreTests()
     RUN_TEST("RenderGraphFrame", RenderGraphFrame_Test());
     RUN_TEST("RenderGraphUndefinedExternal", RenderGraphUndefinedExternal_Test());
     RUN_TEST("SwapChainAcquire", SwapChainAcquire_Test());
+    RUN_TEST("GPUMemoryTracking", GPUMemoryTracking_Test());
     RUN_TEST("RenderGraphViewSlice", RenderGraphViewSlice_Test());
     RUN_TEST("RenderGraphViewUndeclared", RenderGraphViewUndeclared_Test());
     RUN_TEST("RenderGraphViewBufferRange", RenderGraphViewBufferRange_Test());

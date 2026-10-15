@@ -2,6 +2,7 @@
 #include "Core/Modules/ModuleManager.h"
 #include "RHI/RHIDevice.h"
 #include "RHI/RHICommandList.h"
+#include "RHI/RHIMemoryTracker.h"
 #include "RHI/RHIPipelineStateCache.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -50,12 +51,16 @@ struct RHI
 
     static FORCEINLINE FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, ERHIResourceState InInitialState = ERHIResourceState::Common, const IRHITextureData* InInitialData = nullptr)
     {
-        return Device->CreateTexture(InTextureDesc, InInitialState, InInitialData);
+        FRHITexture* Texture = Device->CreateTexture(InTextureDesc, InInitialState, InInitialData);
+        RHIMemoryTracker::OnResourceCreated(Texture);
+        return Texture;
     }
 
     static FORCEINLINE FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, ERHIResourceState InInitialState = ERHIResourceState::Common, const void* InInitialData = nullptr)
     {
-        return Device->CreateBuffer(InBufferDesc, InInitialState, InInitialData);
+        FRHIBuffer* Buffer = Device->CreateBuffer(InBufferDesc, InInitialState, InInitialData);
+        RHIMemoryTracker::OnResourceCreated(Buffer);
+        return Buffer;
     }
 
     static FORCEINLINE FRHISamplerState* CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)

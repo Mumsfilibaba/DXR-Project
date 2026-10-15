@@ -37,6 +37,19 @@ constexpr FMemoryScopeId MEMORY_SCOPE_OVERFLOW = 1;
 /** @brief The callstack of an allocation made while callstacks were not captured */
 constexpr FMemoryCallstackId MEMORY_CALLSTACK_NONE = 0;
 
+enum class EMemoryGPUResourceKind : uint8
+{
+    Unknown = 0,
+    Texture = 1,
+    Buffer  = 2,
+};
+
+enum class EMemoryGPUResourceState : uint8
+{
+    Live            = 0,
+    PendingDeletion = 1,
+};
+
 class CORE_API FMemoryName
 {
 public:

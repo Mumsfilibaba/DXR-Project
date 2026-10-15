@@ -81,6 +81,11 @@ public:
     
     virtual int32 GetRefCount() const override;
 
+    NODISCARD virtual uint64 GetAllocatedSize() const
+    {
+        return 0;
+    }
+
     NODISCARD ERHIResourceType GetResourceType() const
     {
         return ResourceType;

@@ -111,6 +111,34 @@ struct alignas(64) FMemoryProfiler::FCounters
     AtomicInt64 TotalAllocations;
 };
 
+struct FMemoryProfiler::FGPUDomain
+{
+    TMap<const void*, FMemoryGPUResourceInfo>    Resources;
+    TMap<FMemoryNameId, FMemoryCounterSnapshot>  TagCounters;
+    TMap<FMemoryScopeId, FMemoryCounterSnapshot> ScopeCounters;
+    int64                                        PendingDeletionBytes = 0;
+};
+
+static void AddGPUBytes(FMemoryCounterSnapshot& Counters, int64 Size)
+{
+    Counters.CurrentBytes += Size;
+    Counters.PeakBytes     = Math::Max(Counters.PeakBytes, Counters.CurrentBytes);
+    Counters.NumAllocations++;
+    Counters.TotalAllocations++;
+}
+
+static void RemoveGPUBytes(FMemoryCounterSnapshot& Counters, int64 Size)
+{
+    Counters.CurrentBytes -= Size;
+    Counters.NumAllocations--;
+}
+
+static void ResizeGPUBytes(FMemoryCounterSnapshot& Counters, int64 Delta)
+{
+    Counters.CurrentBytes += Delta;
+    Counters.PeakBytes     = Math::Max(Counters.PeakBytes, Counters.CurrentBytes);
+}
+
 static String FormatBytes(int64 Bytes)
 {
     const int64 Magnitude = Bytes < 0 ? -Bytes : Bytes;
@@ -408,6 +436,16 @@ void FMemoryProfiler::SetTrackingEnabled(bool bEnabled)
     {
         Memory::Memzero(ScopeCounters, sizeof(FCounters) * FMemoryTagRegistry::MaxScopeNodes);
     }
+
+    SCOPED_LOCK(GPULock);
+
+    if (GPUDomain)
+    {
+        GPUDomain->Resources.Clear();
+        GPUDomain->TagCounters.Clear();
+        GPUDomain->ScopeCounters.Clear();
+        GPUDomain->PendingDeletionBytes = 0;
+    }
 }
 
 void FMemoryProfiler::OnMalloc(void* Block, uint64 Size)
@@ -649,6 +687,48 @@ void FMemoryProfiler::LogTags()
     {
         LOG_INFO("[MemoryProfiler] %-32s %12s %12s %10lld %12lld%s", Registry.GetName(Row.Id), *FormatBytes(Row.Stats.CurrentBytes),
             *FormatBytes(Row.Stats.PeakBytes), Row.Stats.NumAllocations, Row.Stats.TotalAllocations, Row.Id == ProfilerTag ? " (includes its pages)" : "");
+    }
+
+    TArray<FRow> GPURows;
+    int64        GPUBytes             = 0;
+    int64        NumGPUResources      = 0;
+    int64        PendingDeletionBytes = 0;
+    {
+        SCOPED_LOCK(GPULock);
+
+        if (GPUDomain)
+        {
+            for (const auto& Pair : GPUDomain->TagCounters)
+            {
+                if (Pair.Second.PeakBytes > 0)
+                {
+                    GPURows.Add({ Pair.First, Pair.Second });
+                }
+
+                GPUBytes        += Pair.Second.CurrentBytes;
+                NumGPUResources += Pair.Second.NumAllocations;
+            }
+
+            PendingDeletionBytes = GPUDomain->PendingDeletionBytes;
+        }
+    }
+
+    if (!GPURows.IsEmpty())
+    {
+        Algorithm::Sort(GPURows, [](const FRow& LHS, const FRow& RHS)
+        {
+            return LHS.Stats.CurrentBytes > RHS.Stats.CurrentBytes;
+        });
+
+        LOG_INFO("[MemoryProfiler] GPU: %s in %lld resources, %s of it pending deletion", *FormatBytes(GPUBytes), NumGPUResources,
+            *FormatBytes(PendingDeletionBytes));
+
+        LOG_INFO("[MemoryProfiler] %-32s %12s %12s %10s %12s", "GPU tag", "Current", "Peak", "Live", "Total");
+        for (const FRow& Row : GPURows)
+        {
+            LOG_INFO("[MemoryProfiler] %-32s %12s %12s %10lld %12lld", Registry.GetName(Row.Id), *FormatBytes(Row.Stats.CurrentBytes),
+                *FormatBytes(Row.Stats.PeakBytes), Row.Stats.NumAllocations, Row.Stats.TotalAllocations);
+        }
     }
 
     TArray<FRow> ScopeRows;
@@ -935,4 +1015,147 @@ int64 FMemoryProfiler::DumpLeaks()
 int32 FMemoryProfiler::GetCallstack(FMemoryCallstackId Id, uint64* OutFrames)
 {
     return Callstacks.GetFrames(Id, OutFrames);
+}
+
+void FMemoryProfiler::OnGPUResourceCreated(const void* Resource, EMemoryGPUResourceKind Kind, uint64 Size)
+{
+    if (!Resource || !IsTrackingEnabled())
+    {
+        return;
+    }
+
+    const FMemoryThreadState* State = ThreadState.TryGet();
+    const FMemoryNameId       Tag   = State ? GetTopTag(*State) : MEMORY_NAME_UNTAGGED;
+    const FMemoryScopeId      Scope = State ? State->ScopeNode : MEMORY_SCOPE_ROOT;
+
+    FMemoryModuleScope ProfilerScope(GetProfilerTag());
+    SCOPED_LOCK(GPULock);
+
+    if (!GPUDomain)
+    {
+        GPUDomain = new FGPUDomain();
+    }
+
+    if (const FMemoryGPUResourceInfo* Stale = GPUDomain->Resources.Find(Resource))
+    {
+        RemoveGPUBytes(GPUDomain->TagCounters.FindOrAdd(Stale->Tag), static_cast<int64>(Stale->Size));
+        RemoveGPUBytes(GPUDomain->ScopeCounters.FindOrAdd(Stale->Scope), static_cast<int64>(Stale->Size));
+        if (Stale->State == EMemoryGPUResourceState::PendingDeletion)
+        {
+            GPUDomain->PendingDeletionBytes -= static_cast<int64>(Stale->Size);
+        }
+    }
+
+    FMemoryGPUResourceInfo& Info = GPUDomain->Resources.Add(Resource);
+    Info.Kind  = Kind;
+    Info.State = EMemoryGPUResourceState::Live;
+    Info.Size  = Size;
+    Info.Tag   = Tag;
+    Info.Scope = Scope;
+
+    AddGPUBytes(GPUDomain->TagCounters.FindOrAdd(Tag), static_cast<int64>(Size));
+    AddGPUBytes(GPUDomain->ScopeCounters.FindOrAdd(Scope), static_cast<int64>(Size));
+}
+
+void FMemoryProfiler::OnGPUResourceResized(const void* Resource, uint64 NewSize)
+{
+    SCOPED_LOCK(GPULock);
+
+    FMemoryGPUResourceInfo* Info = GPUDomain ? GPUDomain->Resources.Find(Resource) : nullptr;
+    if (!Info)
+    {
+        return;
+    }
+
+    const int64 Delta = static_cast<int64>(NewSize) - static_cast<int64>(Info->Size);
+    ResizeGPUBytes(GPUDomain->TagCounters.FindOrAdd(Info->Tag), Delta);
+    ResizeGPUBytes(GPUDomain->ScopeCounters.FindOrAdd(Info->Scope), Delta);
+    if (Info->State == EMemoryGPUResourceState::PendingDeletion)
+    {
+        GPUDomain->PendingDeletionBytes += Delta;
+    }
+
+    Info->Size = NewSize;
+}
+
+void FMemoryProfiler::OnGPUResourceReleased(const void* Resource)
+{
+    SCOPED_LOCK(GPULock);
+
+    FMemoryGPUResourceInfo* Info = GPUDomain ? GPUDomain->Resources.Find(Resource) : nullptr;
+    if (!Info || Info->State == EMemoryGPUResourceState::PendingDeletion)
+    {
+        return;
+    }
+
+    Info->State = EMemoryGPUResourceState::PendingDeletion;
+    GPUDomain->PendingDeletionBytes += static_cast<int64>(Info->Size);
+}
+
+void FMemoryProfiler::OnGPUResourceDestroyed(const void* Resource)
+{
+    FMemoryModuleScope ProfilerScope(GetProfilerTag());
+    SCOPED_LOCK(GPULock);
+
+    const FMemoryGPUResourceInfo* Info = GPUDomain ? GPUDomain->Resources.Find(Resource) : nullptr;
+    if (!Info)
+    {
+        return;
+    }
+
+    RemoveGPUBytes(GPUDomain->TagCounters.FindOrAdd(Info->Tag), static_cast<int64>(Info->Size));
+    RemoveGPUBytes(GPUDomain->ScopeCounters.FindOrAdd(Info->Scope), static_cast<int64>(Info->Size));
+    if (Info->State == EMemoryGPUResourceState::PendingDeletion)
+    {
+        GPUDomain->PendingDeletionBytes -= static_cast<int64>(Info->Size);
+    }
+
+    GPUDomain->Resources.Remove(Resource);
+}
+
+void FMemoryProfiler::OnGPUResourceNamed(const void* Resource, const CHAR* Name)
+{
+    FMemoryModuleScope ProfilerScope(GetProfilerTag());
+    SCOPED_LOCK(GPULock);
+
+    if (FMemoryGPUResourceInfo* Info = GPUDomain ? GPUDomain->Resources.Find(Resource) : nullptr)
+    {
+        Info->Name = Name ? Name : "";
+    }
+}
+
+bool FMemoryProfiler::GetGPUResource(const void* Resource, FMemoryGPUResourceInfo& OutInfo)
+{
+    SCOPED_LOCK(GPULock);
+
+    const FMemoryGPUResourceInfo* Info = GPUDomain ? GPUDomain->Resources.Find(Resource) : nullptr;
+    if (!Info)
+    {
+        return false;
+    }
+
+    OutInfo = *Info;
+    return true;
+}
+
+FMemoryCounterSnapshot FMemoryProfiler::GetGPUTagStats(FMemoryNameId Tag)
+{
+    SCOPED_LOCK(GPULock);
+
+    const FMemoryCounterSnapshot* Counters = GPUDomain ? GPUDomain->TagCounters.Find(Tag) : nullptr;
+    return Counters ? *Counters : FMemoryCounterSnapshot();
+}
+
+FMemoryCounterSnapshot FMemoryProfiler::GetGPUScopeStats(FMemoryScopeId Scope)
+{
+    SCOPED_LOCK(GPULock);
+
+    const FMemoryCounterSnapshot* Counters = GPUDomain ? GPUDomain->ScopeCounters.Find(Scope) : nullptr;
+    return Counters ? *Counters : FMemoryCounterSnapshot();
+}
+
+int64 FMemoryProfiler::GetGPUPendingDeletionBytes()
+{
+    SCOPED_LOCK(GPULock);
+    return GPUDomain ? GPUDomain->PendingDeletionBytes : 0;
 }
