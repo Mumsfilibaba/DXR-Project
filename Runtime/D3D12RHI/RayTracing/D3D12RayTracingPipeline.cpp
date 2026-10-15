@@ -195,7 +195,7 @@ void* FD3D12RayTracingPipelineStateRHI::GetRHINativeState() const
     return reinterpret_cast<void*>(GetD3D12StateObject());
 }
 
-void FD3D12RayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const
+void FD3D12RayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 ShaderIndex, FString& OutExportName) const
 {
     const TArray<FString>& Names = GetExportNameArray(Kind);
     if (Names.IsEmpty())
@@ -204,13 +204,7 @@ void FD3D12RayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind
         return;
     }
 
-    if (RecordIndex < uint32(Names.Size()))
-    {
-        OutExportName = Names[int32(RecordIndex)];
-        return;
-    }
-
-    OutExportName = (Kind == ERayTracingShaderRecordKind::HitGroup) ? Names[0] : FString();
+    OutExportName = (ShaderIndex < uint32(Names.Size())) ? Names[int32(ShaderIndex)] : FString();
 }
 
 uint32 FD3D12RayTracingPipelineStateRHI::GetNumExportNames(ERayTracingShaderRecordKind Kind) const

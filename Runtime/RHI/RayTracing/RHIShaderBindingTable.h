@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/ArrayView.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RayTracing/RHIRayTracingTypes.h"
 
@@ -79,6 +80,35 @@ struct FRHIHitGroupLocalShaderBinding
         FRHIUnorderedAccessView* UnorderedAccessView;
         FRHISamplerState*        Sampler;
     };
+};
+
+struct FRHIShaderRecordDesc
+{
+    FRHIShaderRecordDesc() noexcept = default;
+
+    FRHIShaderRecordDesc(
+        ERayTracingShaderRecordKind                             InRecordKind,
+        uint32                                                  InRecordIndex,
+        uint32                                                  InShaderIndex,
+        const TArrayView<const FRHIHitGroupLocalShaderBinding>& InBindings = TArrayView<const FRHIHitGroupLocalShaderBinding>()) noexcept
+        : RecordKind(InRecordKind)
+        , RecordIndex(InRecordIndex)
+        , ShaderIndex(InShaderIndex)
+        , Bindings(InBindings)
+    {
+    }
+
+    /** @brief The sub-table the record is in */
+    ERayTracingShaderRecordKind RecordKind = ERayTracingShaderRecordKind::RayGeneration;
+
+    /** @brief The record's slot in its sub-table */
+    uint32 RecordIndex = 0;
+
+    /** @brief The pipeline's ray generation shader, miss shader, callable shader or hit group the record uses, by its position in the pipeline description */
+    uint32 ShaderIndex = 0;
+
+    /** @brief The record's local bindings, which only have to live until the record is set */
+    TArrayView<const FRHIHitGroupLocalShaderBinding> Bindings;
 };
 
 struct FRHIShaderBindingTableDesc

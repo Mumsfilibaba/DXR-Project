@@ -68,7 +68,7 @@ public:
     virtual FRHIShaderBindingTableAddressInfo GetAddressInfo() const override final;
 
     bool Initialize();
-    void SetBindings(ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
+    void SetRecord(const FRHIShaderRecordDesc& RecordDesc);
     void Build(FD3D12CommandContext& CmdContext);
     bool ResolveLocalDescriptorTables(FD3D12CommandContext& CmdContext, FD3D12LocalDescriptorHeap& ResourceHeap, FD3D12LocalDescriptorHeap& SamplerHeap);
     void ClearTableRecords();

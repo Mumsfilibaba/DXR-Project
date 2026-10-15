@@ -109,7 +109,7 @@ public:
     virtual void CompactAccelerationStructure(FRHIRayTracingAccelerationStructure*, uint64) override final { }
     virtual void SerializeAccelerationStructure(FRHIRayTracingAccelerationStructure*, FRHIBuffer*, uint64) override final { }
     virtual void DeserializeAccelerationStructure(FRHIRayTracingAccelerationStructure*, FRHIBuffer*, uint64) override final { }
-    virtual void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable*, ERayTracingShaderRecordKind, uint32, const FRHIHitGroupLocalShaderBinding*, uint32) override final { }
+    virtual void SetShaderRecord(FRHIShaderBindingTable*, const FRHIShaderRecordDesc&) override final { }
     virtual void BuildShaderBindingTable(FRHIShaderBindingTable*) override final { }
     virtual void ResetShaderBindingTable(FRHIShaderBindingTable*) override final { }
     virtual void SetRayTracingPipelineState(FRHIRayTracingPipelineState*) override final { }

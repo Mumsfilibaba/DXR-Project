@@ -92,8 +92,8 @@ public:
         return RayTracingPipelineFlags;
     }
 
-    /** @brief Returns the backend export/group name for a sub-table record, or an empty string. */
-    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const = 0;
+    /** @brief Returns the backend export/group name of the pipeline's ShaderIndex-th shader or hit group of the kind, or an empty string. */
+    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 ShaderIndex, FString& OutExportName) const = 0;
 
     /** @brief Returns the number of registered export names for the given record kind. */
     virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind Kind) const = 0;

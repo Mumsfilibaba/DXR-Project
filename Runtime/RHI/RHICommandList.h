@@ -518,9 +518,11 @@ public:
         STAT_ADD(STAT_RHI_DrawCalls, 1);
     }
 
-    FORCEINLINE void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) noexcept
+    FORCEINLINE void SetShaderRecord(FRHIShaderBindingTable* ShaderBindingTable, const FRHIShaderRecordDesc& InRecordDesc) noexcept
     {
-        EmplaceCommand<FRHICommandSetHitRecordLocalShaderBindings>(ShaderBindingTable, RecordKind, RecordIndex, Bindings, NumBindings);
+        FRHIShaderRecordDesc RecordDesc = InRecordDesc;
+        RecordDesc.Bindings = AllocateArray(InRecordDesc.Bindings);
+        EmplaceCommand<FRHICommandSetShaderRecord>(ShaderBindingTable, RecordDesc);
     }
 
     FORCEINLINE void BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) noexcept

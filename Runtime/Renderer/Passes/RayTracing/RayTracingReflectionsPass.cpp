@@ -645,19 +645,20 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
     }
 
     FRHIShaderBindingTable* ShaderBindingTable = ActiveShaderBindingTable.Get();
-    CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::RayGeneration, 0, nullptr, 0);
-    CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::Miss, 0, nullptr, 0);
+    CommandList.SetShaderRecord(ShaderBindingTable, FRHIShaderRecordDesc(ERayTracingShaderRecordKind::RayGeneration, 0, 0));
+    CommandList.SetShaderRecord(ShaderBindingTable, FRHIShaderRecordDesc(ERayTracingShaderRecordKind::Miss, 0, 0));
 
     for (uint32 RecordIndex = 0; RecordIndex < NumHitGroupRecords; ++RecordIndex)
     {
         if (RecordIndex < NumHitGroupBindings)
         {
-            const TArray<FRHIHitGroupLocalShaderBinding>& Record = Resources.RayTracingHitGroupBindings[RecordIndex];
-            CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::HitGroup, RecordIndex, Record.Data(), Record.Size());
+            const TArray<FRHIHitGroupLocalShaderBinding>&          Record = Resources.RayTracingHitGroupBindings[RecordIndex];
+            const TArrayView<const FRHIHitGroupLocalShaderBinding> Bindings(Record.Data(), Record.Size());
+            CommandList.SetShaderRecord(ShaderBindingTable, FRHIShaderRecordDesc(ERayTracingShaderRecordKind::HitGroup, RecordIndex, 0, Bindings));
         }
         else
         {
-            CommandList.SetHitRecordLocalShaderBindings(ShaderBindingTable, ERayTracingShaderRecordKind::HitGroup, RecordIndex, nullptr, 0);
+            CommandList.SetShaderRecord(ShaderBindingTable, FRHIShaderRecordDesc(ERayTracingShaderRecordKind::HitGroup, RecordIndex, 0));
         }
     }
 

@@ -3206,7 +3206,7 @@ void FD3D12CommandContext::DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer,
 #endif
 }
 
-void FD3D12CommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FD3D12CommandContext::SetShaderRecord(FRHIShaderBindingTable* ShaderBindingTable, const FRHIShaderRecordDesc& RecordDesc)
 {
     if (!ShaderBindingTable)
     {
@@ -3214,7 +3214,7 @@ void FD3D12CommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTabl
     }
 
     FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
-    D3D12ShaderBindingTable->SetBindings(RecordKind, RecordIndex, Bindings, NumBindings);
+    D3D12ShaderBindingTable->SetRecord(RecordDesc);
 }
 
 void FD3D12CommandContext::BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)

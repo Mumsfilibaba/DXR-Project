@@ -340,7 +340,7 @@ public:
     virtual void GetDebugName(FString& OutDebugName) const override final;
 
     // FRHIRayTracingPipelineState Interface
-    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const override final;
+    virtual void GetExportName(ERayTracingShaderRecordKind Kind, uint32 ShaderIndex, FString& OutExportName) const override final;
     virtual uint32 GetNumExportNames(ERayTracingShaderRecordKind Kind) const override final;
 
     bool Initialize();

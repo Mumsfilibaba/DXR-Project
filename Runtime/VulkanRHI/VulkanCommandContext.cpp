@@ -2618,11 +2618,11 @@ void FVulkanCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* 
 #endif
 }
 
-void FVulkanCommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FVulkanCommandContext::SetShaderRecord(FRHIShaderBindingTable* ShaderBindingTable, const FRHIShaderRecordDesc& RecordDesc)
 {
     if (FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
     {
-        VulkanShaderBindingTable->SetBindings(RecordKind, RecordIndex, Bindings, NumBindings);
+        VulkanShaderBindingTable->SetRecord(RecordDesc);
     }
 }
 

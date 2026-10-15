@@ -320,7 +320,7 @@ const uint8* FVulkanRayTracingPipelineStateRHI::GetShaderGroupHandle(const FStri
     return nullptr;
 }
 
-void FVulkanRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const
+void FVulkanRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 ShaderIndex, FString& OutExportName) const
 {
     const TArray<FString>& Names = GetExportNameArray(Kind);
     if (Names.IsEmpty())
@@ -329,13 +329,7 @@ void FVulkanRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKin
         return;
     }
 
-    if (RecordIndex < uint32(Names.Size()))
-    {
-        OutExportName = Names[int32(RecordIndex)];
-        return;
-    }
-
-    OutExportName = (Kind == ERayTracingShaderRecordKind::HitGroup) ? Names[0] : FString();
+    OutExportName = (ShaderIndex < uint32(Names.Size())) ? Names[int32(ShaderIndex)] : FString();
 }
 
 uint32 FVulkanRayTracingPipelineStateRHI::GetNumExportNames(ERayTracingShaderRecordKind Kind) const

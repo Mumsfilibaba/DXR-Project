@@ -17,6 +17,7 @@ class FRHIRayTracingPipelineState;
 class FRHIFence;
 class FRHIBuffer;
 struct FRHIHitGroupLocalShaderBinding;
+struct FRHIShaderRecordDesc;
 struct FRHIOpacityMicromapBuildDesc;
 struct FRHIRayTracingAccelerationStructureOperationDesc;
 struct FRHIGeometryAccelerationStructureInstance;
@@ -527,14 +528,11 @@ struct IRHICommandContext
     virtual void DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) = 0;
 
     /**
-     * @brief Records the local resources for a single shader-binding-table record.
+     * @brief Sets a single shader-binding-table record: the shader or hit group it uses and its local bindings.
      * @param ShaderBindingTable The table to update.
-     * @param RecordKind Which sub-table the record belongs to.
-     * @param RecordIndex Record slot within the sub-table to update.
-     * @param Bindings Array of this record's local bindings.
-     * @param NumBindings Number of entries in Bindings.
+     * @param RecordDesc The record to set.
      */
-    virtual void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) = 0;
+    virtual void SetShaderRecord(FRHIShaderBindingTable* ShaderBindingTable, const FRHIShaderRecordDesc& RecordDesc) = 0;
 
     /**
      * @brief Flushes pending record updates from the CPU shadow into the GPU shader-binding-table buffer.

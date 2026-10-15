@@ -361,8 +361,13 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     }
 }
 
-void FD3D12ShaderBindingTable::SetBindings(ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FD3D12ShaderBindingTable::SetRecord(const FRHIShaderRecordDesc& RecordDesc)
 {
+    const ERayTracingShaderRecordKind     RecordKind  = RecordDesc.RecordKind;
+    const uint32                          RecordIndex = RecordDesc.RecordIndex;
+    const FRHIHitGroupLocalShaderBinding* Bindings    = RecordDesc.Bindings.Data();
+    const uint32                          NumBindings = uint32(RecordDesc.Bindings.Size());
+
     const uint32 SubTableBaseRecord  = GetSubTableBaseRecord(RecordKind);
     const uint32 GlobalRecordIndex   = SubTableBaseRecord + RecordIndex;
     const uint64 ByteOffset          = uint64(GlobalRecordIndex) * RecordStride;
@@ -377,7 +382,7 @@ void FD3D12ShaderBindingTable::SetBindings(ERayTracingShaderRecordKind RecordKin
     if (Pipeline)
     {
         FString ExportName;
-        Pipeline->GetExportName(RecordKind, RecordIndex, ExportName);
+        Pipeline->GetExportName(RecordKind, RecordDesc.ShaderIndex, ExportName);
 
         FD3D12RootSignature* LocalRootSignature = Pipeline->GetLocalRootSignature(ExportName);
         PopulateRecord(LocalRootSignature, CpuShadow.Data() + ByteOffset, ByteOffset, RecordKind, RecordIndex, ExportName, Bindings, NumBindings);

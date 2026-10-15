@@ -1345,31 +1345,22 @@ DECLARE_RHICOMMAND(FRHICommandDispatchMeshIndirectCount)
     uint32      MaxCommandCount;
 };
 
-DECLARE_RHICOMMAND(FRHICommandSetHitRecordLocalShaderBindings)
+DECLARE_RHICOMMAND(FRHICommandSetShaderRecord)
 {
-    FORCEINLINE FRHICommandSetHitRecordLocalShaderBindings(FRHIShaderBindingTable* InShaderBindingTable, ERayTracingShaderRecordKind InRecordKind, uint32 InRecordIndex, const FRHIHitGroupLocalShaderBinding* InBindings, uint32 InNumBindings)
+    // The record's bindings were copied into the command list's memory when the command was recorded
+    FORCEINLINE FRHICommandSetShaderRecord(FRHIShaderBindingTable* InShaderBindingTable, const FRHIShaderRecordDesc& InRecordDesc)
         : ShaderBindingTable(InShaderBindingTable)
-        , RecordKind(InRecordKind)
-        , RecordIndex(InRecordIndex)
-        , Bindings()
+        , RecordDesc(InRecordDesc)
     {
-        Bindings.Reserve(int32(InNumBindings));
-
-        for (uint32 i = 0; i < InNumBindings; ++i)
-        {
-            Bindings.Emplace(InBindings[i]);
-        }
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetHitRecordLocalShaderBindings(ShaderBindingTable, RecordKind, RecordIndex, Bindings.Data(), uint32(Bindings.Size()));
+        CommandContext.SetShaderRecord(ShaderBindingTable, RecordDesc);
     }
 
-    FRHIShaderBindingTable*                ShaderBindingTable;
-    ERayTracingShaderRecordKind            RecordKind;
-    uint32                                 RecordIndex;
-    TArray<FRHIHitGroupLocalShaderBinding> Bindings;
+    FRHIShaderBindingTable* ShaderBindingTable;
+    FRHIShaderRecordDesc    RecordDesc;
 };
 
 DECLARE_RHICOMMAND(FRHICommandBuildShaderBindingTable)

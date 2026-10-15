@@ -1348,10 +1348,10 @@ bool FMetalRayTracingPipelineStateRHI::Initialize()
     return true;
 }
 
-void FMetalRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 RecordIndex, FString& OutExportName) const
+void FMetalRayTracingPipelineStateRHI::GetExportName(ERayTracingShaderRecordKind Kind, uint32 ShaderIndex, FString& OutExportName) const
 {
     const TArray<FString>& Names = GetExportNameArray(Kind);
-    OutExportName = (RecordIndex < static_cast<uint32>(Names.Size())) ? Names[RecordIndex] : FString();
+    OutExportName = (ShaderIndex < static_cast<uint32>(Names.Size())) ? Names[ShaderIndex] : FString();
 }
 
 uint32 FMetalRayTracingPipelineStateRHI::GetNumExportNames(ERayTracingShaderRecordKind Kind) const

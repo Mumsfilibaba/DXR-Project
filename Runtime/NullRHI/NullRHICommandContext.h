@@ -74,7 +74,7 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void DispatchMeshIndirect(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, uint32 CommandCount) override final { }
     virtual void DispatchMeshIndirectCount(FRHIBuffer* ArgumentBuffer, uint64 ArgumentBufferOffset, FRHIBuffer* CountBuffer, uint64 CountBufferOffset, uint32 MaxCommandCount) override final { }
 
-    virtual void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) override final { }
+    virtual void SetShaderRecord(FRHIShaderBindingTable* ShaderBindingTable, const FRHIShaderRecordDesc& RecordDesc) override final { }
     virtual void BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) override final { }
     virtual void ResetShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) override final { }
 

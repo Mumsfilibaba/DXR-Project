@@ -109,12 +109,12 @@ uint64 FVulkanShaderBindingTable::GetRegionBaseOffset(ERayTracingShaderRecordKin
     }
 }
 
-void FVulkanShaderBindingTable::PopulateRecord(uint8* OutRecord, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FVulkanShaderBindingTable::PopulateRecord(uint8* OutRecord, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, uint32 ShaderIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
     FString ExportName;
     if (Pipeline)
     {
-        Pipeline->GetExportName(RecordKind, RecordIndex, ExportName);
+        Pipeline->GetExportName(RecordKind, ShaderIndex, ExportName);
     }
 
     const uint8* GroupHandle = (Pipeline && !ExportName.IsEmpty()) ? Pipeline->GetShaderGroupHandle(ExportName) : nullptr;
@@ -156,14 +156,14 @@ void FVulkanShaderBindingTable::PopulateRecord(uint8* OutRecord, ERayTracingShad
     }
 }
 
-void FVulkanShaderBindingTable::SetBindings(ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FVulkanShaderBindingTable::SetRecord(const FRHIShaderRecordDesc& RecordDesc)
 {
-    const uint64 RegionBase = GetRegionBaseOffset(RecordKind);
-    const uint64 ByteOffset = RegionBase + uint64(RecordIndex) * RecordStride;
+    const uint64 RegionBase = GetRegionBaseOffset(RecordDesc.RecordKind);
+    const uint64 ByteOffset = RegionBase + uint64(RecordDesc.RecordIndex) * RecordStride;
 
     if (ByteOffset + RecordStride <= uint64(CpuShadow.SizeInBytes()))
     {
-        PopulateRecord(CpuShadow.Data() + ByteOffset, RecordKind, RecordIndex, Bindings, NumBindings);
+        PopulateRecord(CpuShadow.Data() + ByteOffset, RecordDesc.RecordKind, RecordDesc.RecordIndex, RecordDesc.ShaderIndex, RecordDesc.Bindings.Data(), uint32(RecordDesc.Bindings.Size()));
     }
 }
 

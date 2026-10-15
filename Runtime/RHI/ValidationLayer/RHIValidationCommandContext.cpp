@@ -1578,24 +1578,22 @@ void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeomet
     MarkAccelerationStructureWritten(RayTracingGeometry);
 }
 
-void FRHIValidationCommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FRHIValidationCommandContext::SetShaderRecord(FRHIShaderBindingTable* ShaderBindingTable, const FRHIShaderRecordDesc& RecordDesc)
 {
-    if (!ValidateRecordingPhase(TEXT("SetHitRecordLocalShaderBindings")))
+    if (!ValidateRecordingPhase(TEXT("SetShaderRecord")))
     {
         return;
     }
 
     if (!ShaderBindingTable)
     {
-        RHI_VALIDATION_ERROR("SetHitRecordLocalShaderBindings: ShaderBindingTable cannot be nullptr.");
+        RHI_VALIDATION_ERROR("SetShaderRecord: ShaderBindingTable cannot be nullptr.");
         return;
     }
 
-    if (NumBindings > 0 && !Bindings)
-    {
-        RHI_VALIDATION_ERROR("SetHitRecordLocalShaderBindings: Bindings is nullptr but NumBindings=%u.", NumBindings);
-        return;
-    }
+    const ERayTracingShaderRecordKind RecordKind  = RecordDesc.RecordKind;
+    const uint32                      RecordIndex = RecordDesc.RecordIndex;
+    const uint32                      ShaderIndex = RecordDesc.ShaderIndex;
 
     const FRHIShaderBindingTableDesc& TableDesc = ShaderBindingTable->GetDesc();
     uint32 RecordCount = 0;
@@ -1618,30 +1616,36 @@ void FRHIValidationCommandContext::SetHitRecordLocalShaderBindings(FRHIShaderBin
             break;
 
         default:
-            RHI_VALIDATION_ERROR("SetHitRecordLocalShaderBindings: invalid record kind.");
+            RHI_VALIDATION_ERROR("SetShaderRecord: invalid record kind.");
             return;
     }
 
     if (RecordIndex >= RecordCount)
     {
-        RHI_VALIDATION_ERROR("SetHitRecordLocalShaderBindings: RecordIndex %u exceeds record count %u.", RecordIndex, RecordCount);
+        RHI_VALIDATION_ERROR("SetShaderRecord: RecordIndex %u exceeds record count %u.", RecordIndex, RecordCount);
+        return;
+    }
+
+    if (TableDesc.Pipeline && ShaderIndex >= TableDesc.Pipeline->GetNumExportNames(RecordKind))
+    {
+        RHI_VALIDATION_ERROR("SetShaderRecord: ShaderIndex %u is out of range; the pipeline has %u of kind %s.", ShaderIndex, TableDesc.Pipeline->GetNumExportNames(RecordKind), ToString(RecordKind));
         return;
     }
 
     if (!RHI::bSupportsShaderBindingTableDescriptors)
     {
-        for (uint32 i = 0; i < NumBindings; ++i)
+        for (const FRHIHitGroupLocalShaderBinding& Binding : RecordDesc.Bindings)
         {
-            if (Bindings[i].Type != ERayTracingLocalBindingType::ConstantBuffer)
+            if (Binding.Type != ERayTracingLocalBindingType::ConstantBuffer)
             {
-                RHI_VALIDATION_ERROR("SetHitRecordLocalShaderBindings: this backend's records may only hold buffers; texture/typed-view/sampler local records are not allowed (record %u, kind %s). Use the global bindless heap.", RecordIndex, ToString(RecordKind));
+                RHI_VALIDATION_ERROR("SetShaderRecord: this backend's records may only hold buffers; texture/typed-view/sampler local records are not allowed (record %u, kind %s). Use the global bindless heap.", RecordIndex, ToString(RecordKind));
                 return;
             }
         }
     }
 
     FRHIValidationShaderBindingTable* ValidationShaderBindingTable = static_cast<FRHIValidationShaderBindingTable*>(ShaderBindingTable);
-    CommandContext->SetHitRecordLocalShaderBindings(ValidationShaderBindingTable->GetRHI(), RecordKind, RecordIndex, Bindings, NumBindings);
+    CommandContext->SetShaderRecord(ValidationShaderBindingTable->GetRHI(), RecordDesc);
     ValidationShaderBindingTable->MarkDirty();
 }
 

@@ -19,7 +19,7 @@ public:
     virtual FRHIShaderBindingTableAddressInfo GetAddressInfo() const override final;
 
     bool Initialize();
-    void SetBindings(ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
+    void SetRecord(const FRHIShaderRecordDesc& RecordDesc);
     void Build(class FVulkanCommandContext& CmdContext);
     void ClearTableRecords();
 
@@ -35,7 +35,7 @@ public:
 
 private:
     uint64 GetRegionBaseOffset(ERayTracingShaderRecordKind RecordKind) const;
-    void   PopulateRecord(uint8* OutRecord, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
+    void   PopulateRecord(uint8* OutRecord, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, uint32 ShaderIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings);
 
     FVulkanRayTracingPipelineStateRHIRef Pipeline;
     uint32                               NumRayGen;

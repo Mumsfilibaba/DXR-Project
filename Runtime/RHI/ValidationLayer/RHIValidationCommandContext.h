@@ -63,7 +63,7 @@ public:
     virtual void DiscardContents(class FRHITexture* Texture) override final;
     virtual void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildDesc) override final;
     virtual void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) override final;
-    virtual void SetHitRecordLocalShaderBindings(FRHIShaderBindingTable* ShaderBindingTable, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings) override final;
+    virtual void SetShaderRecord(FRHIShaderBindingTable* ShaderBindingTable, const FRHIShaderRecordDesc& RecordDesc) override final;
     virtual void BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) override final;
     virtual void ResetShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable) override final;
     virtual void SetRayTracingPipelineState(FRHIRayTracingPipelineState* PipelineState) override final;
