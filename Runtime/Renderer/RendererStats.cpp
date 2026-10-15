@@ -19,4 +19,5 @@ STAT_DEFINE_COUNTER(STAT_RT_InstanceCount,           TEXT("Instances"),         
 STAT_DEFINE_COUNTER(STAT_RT_HitGroupCount,           TEXT("Hit Groups"),          TEXT("Ray Tracing"));
 STAT_DEFINE_COUNTER(STAT_RT_GeometryTableRows,       TEXT("Geometry Table Rows"), TEXT("Ray Tracing"));
 STAT_DEFINE_COUNTER(STAT_RT_LazyBLASBuildsThisFrame, TEXT("Lazy BLAS Builds"),    TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_BLASCacheLoadsThisFrame, TEXT("BLAS Cache Loads"),    TEXT("Ray Tracing"));
 STAT_DEFINE_COUNTER(STAT_RT_SkippedNullGeometry,     TEXT("Skipped Null Geom"),   TEXT("Ray Tracing"));

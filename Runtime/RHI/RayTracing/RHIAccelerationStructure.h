@@ -18,7 +18,26 @@ typedef TSharedRef<FRHIGeometryAccelerationStructure>         FRHIGeometryAccele
 
 struct FRHIGeometryAccelerationStructureDesc
 {
-    constexpr FRHIGeometryAccelerationStructureDesc() noexcept = default;
+    NODISCARD static FORCEINLINE FRHIGeometryAccelerationStructureDesc CreateSerialized(
+        const void*                      InSerializedData, 
+        uint64                           InSerializedSizeInBytes, 
+        EAccelerationStructureBuildFlags InFlags) noexcept
+    {
+        FRHIGeometryAccelerationStructureDesc Desc;
+        Desc.Flags                 = InFlags | EAccelerationStructureBuildFlags::Deserialize;
+        Desc.SerializedData        = InSerializedData;
+        Desc.SerializedSizeInBytes = InSerializedSizeInBytes;
+        return Desc;
+    }
+
+    constexpr FRHIGeometryAccelerationStructureDesc() noexcept
+        : VertexBuffer(nullptr)
+        , NumVertices(0)
+        , IndexBuffer(nullptr)
+        , NumIndices(0)
+        , IndexFormat(EIndexFormat::Unknown)
+    {
+    }
 
     constexpr FRHIGeometryAccelerationStructureDesc(
         FRHIBuffer*                      InVertexBuffer,
@@ -27,12 +46,12 @@ struct FRHIGeometryAccelerationStructureDesc
         uint32                           InNumIndices,
         EIndexFormat                     InIndexFormat,
         EAccelerationStructureBuildFlags InFlags) noexcept
-        : VertexBuffer(InVertexBuffer)
+        : Flags(InFlags)
+        , VertexBuffer(InVertexBuffer)
         , NumVertices(InNumVerticies)
         , IndexBuffer(InIndexBuffer)
         , NumIndices(InNumIndices)
         , IndexFormat(InIndexFormat)
-        , Flags(InFlags)
     {
     }
 
@@ -41,17 +60,29 @@ struct FRHIGeometryAccelerationStructureDesc
     NODISCARD constexpr bool AllowUpdate()         const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
     NODISCARD constexpr bool AllowCompaction()     const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowCompaction); }
     NODISCARD constexpr bool IsClusteredGeometry() const noexcept { return bIsClusteredGeometry; }
+    NODISCARD constexpr bool IsSerialized()        const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::Deserialize); }
 
-    constexpr bool operator==(const FRHIGeometryAccelerationStructureDesc& Other) const noexcept = default;
-
-    FRHIBuffer*                      VertexBuffer         = nullptr;
-    uint32                           NumVertices          = 0;
-    FRHIBuffer*                      IndexBuffer          = nullptr;
-    uint32                           NumIndices           = 0;
-    EIndexFormat                     IndexFormat          = EIndexFormat::Unknown;
     EAccelerationStructureBuildFlags Flags                = EAccelerationStructureBuildFlags::None;
     ERayTracingGeometryType          GeometryType         = ERayTracingGeometryType::Triangles;
     bool                             bIsClusteredGeometry = false;
+
+    union
+    {
+        struct
+        {
+            FRHIBuffer*  VertexBuffer;
+            uint32       NumVertices;
+            FRHIBuffer*  IndexBuffer;
+            uint32       NumIndices;
+            EIndexFormat IndexFormat;
+        };
+
+        struct
+        {
+            const void* SerializedData;
+            uint64      SerializedSizeInBytes;
+        };
+    };
 };
 
 struct FRHISceneAccelerationStructureDesc

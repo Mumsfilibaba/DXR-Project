@@ -30,6 +30,7 @@ STAT_DEFINE_MEMORY(STAT_RHI_MiscBufferMemory,       TEXT("Misc Buffer Memory"), 
 // -------------------------------------------------------------------------------------------
 
 STAT_DEFINE_MEMORY(STAT_RHI_AccelerationStructureMemory, TEXT("Acceleration Structure Memory"), TEXT("RHI"));
+STAT_DEFINE_MEMORY(STAT_RHI_AccelerationStructureCompactionSavings, TEXT("Saved by Acceleration Structure Compaction"), TEXT("RHI"));
 STAT_DEFINE_MEMORY(STAT_RHI_UploadMemory,                TEXT("Upload Memory"),                 TEXT("RHI"));
 STAT_DEFINE_MEMORY(STAT_RHI_ReadbackMemory,              TEXT("Readback Memory"),               TEXT("RHI"));
 

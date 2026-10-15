@@ -1,13 +1,13 @@
 #pragma once
-#include "Core/Containers/UniquePtr.h"
+#include "Core/Containers/Set.h"
 #include "RHI/RHICommandList.h"
-#include "RendererCore/RayTracing/AccelerationStructureCache.h"
-#include "RendererCore/RayTracing/AccelerationStructureCacheBackend.h"
 #include "RendererCore/RayTracing/AccelerationStructureCompactionHelper.h"
 #include "RendererCore/RayTracing/AccelerationStructureSerializationHelper.h"
 #include "Renderer/Passes/RenderPass.h"
+#include "Renderer/Passes/RayTracing/RayTracingStructureCache.h"
 #include "Renderer/Graph/FrameResources.h"
 
+class FMesh;
 class FScene;
 
 class FRayTracingSceneBuilder : public FRenderPass
@@ -23,11 +23,20 @@ public:
     void ReleaseRayTracingResources(FScene* Scene);
 
 private:
-    uint32                                             GeometryTableCapacity;
-    FAccelerationStructureCache                        ASCache;
-    TUniquePtr<FDiskAccelerationStructureCacheBackend> ASCacheBackend;
-    FAccelerationStructureCompactionHelper             CompactionHelper;
-    FAccelerationStructureSerializationHelper          SerializationHelper;
-    TArray<FRHIRayTracingAccelerationStructure*>       CompactionRequested;
-    TArray<FRHIRayTracingAccelerationStructure*>       SerializationRequested;
+    struct FPendingCacheWrite
+    {
+        FRHIRayTracingAccelerationStructure* Structure = nullptr;
+        FAccelerationStructureCache*         Cache     = nullptr;
+        FString                              Key;
+    };
+
+    void RequestCompactionAndCacheWrite(FRHICommandList& CommandList, const FMesh& Mesh, FRHIGeometryAccelerationStructure* Geometry);
+    void TickCompactionAndCacheWrites(FRHICommandList& CommandList);
+
+    uint32                                     GeometryTableCapacity;
+    FRayTracingStructureCache                  StructureCache;
+    FAccelerationStructureCompactionHelper     CompactionHelper;
+    FAccelerationStructureSerializationHelper  SerializationHelper;
+    TSet<FRHIRayTracingAccelerationStructure*> HandledStructures;
+    TArray<FPendingCacheWrite>                 AwaitingCompaction;
 };

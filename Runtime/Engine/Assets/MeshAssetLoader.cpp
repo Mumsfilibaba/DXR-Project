@@ -13,6 +13,9 @@ TSharedPtr<FMesh> MeshAssetLoader::Load(const FAssetData& Asset, const FString& 
         return nullptr;
     }
 
+    const FAssetChunkEntry* DataChunk   = Reader.FindChunk(AssetChunk::Data);
+    const uint64            ContentHash = (uint64(DataChunk->CRC) << 32) ^ DataChunk->Size;
+
     if (!MeshAssets::Read(Payload, Data, OutError))
     {
         OutError = FString::Printf(TEXT("The mesh data of '%s' can't be read: %s"), *Asset.Path, *OutError);
@@ -38,5 +41,6 @@ TSharedPtr<FMesh> MeshAssetLoader::Load(const FAssetData& Asset, const FString& 
     }
 
     Mesh->SetMaterialSlots(MaterialSlots);
+    Mesh->SetContentHash(ContentHash);
     return Mesh;
 }

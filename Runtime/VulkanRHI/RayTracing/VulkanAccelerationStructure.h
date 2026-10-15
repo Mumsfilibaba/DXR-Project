@@ -48,17 +48,24 @@ public:
     virtual void GetDebugName(FString& OutDebugName) const override final;
     
     bool Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
+    bool BuildSerialized(FVulkanCommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes);
     bool CompactInPlace(FVulkanCommandContext& CmdContext, uint64 CompactedSize);
 
 private:
+    bool AllocateResultStorage(uint64 Size, FVulkanMemoryLocation& OutLocation, VkAccelerationStructureKHR& OutAccelerationStructure, VkDeviceAddress& OutDeviceAddress);
+
+    FORCEINLINE int64 GetCompactionSavings() const
+    {
+        return UncompactedSize > GeometryLocation.GetSize() ? static_cast<int64>(UncompactedSize - GeometryLocation.GetSize()) : 0;
+    }
+
     FVulkanMemoryLocation      GeometryLocation;
     FVulkanMemoryLocation      ScratchLocation;
     FVulkanBufferRHIRef        VertexBuffer;
     FVulkanBufferRHIRef        IndexBuffer;
     FVulkanBufferRHIRef        AABBBuffer;
-    VkAccelerationStructureKHR StaleGeometry;
-    FVulkanMemoryLocation      StaleGeometryLocation;
     uint64                     TrackedAccelerationStructureMemory;
+    uint64                     UncompactedSize;
 #if VULKAN_STORE_DEBUG_NAMES
     FString                     DebugName;
 #endif

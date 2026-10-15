@@ -853,7 +853,15 @@ FRHIGeometryAccelerationStructure* FRHIValidationDevice::CreateGeometryAccelerat
         return nullptr;
     }
 
-    if (InGeometryDesc.GeometryType != ERayTracingGeometryType::ProceduralAABBs)
+    if (InGeometryDesc.IsSerialized())
+    {
+        if (!InGeometryDesc.SerializedData || InGeometryDesc.SerializedSizeInBytes == 0 || InGeometryDesc.IsClusteredGeometry())
+        {
+            RHI_VALIDATION_ERROR("CreateGeometryAccelerationStructure: serialized data needs its size, and clustered geometry can't be deserialized.");
+            return nullptr;
+        }
+    }
+    else if (InGeometryDesc.GeometryType != ERayTracingGeometryType::ProceduralAABBs)
     {
         if (!InGeometryDesc.VertexBuffer || InGeometryDesc.NumVertices == 0 ||
             !InGeometryDesc.VertexBuffer->GetDesc().IsVertexBuffer())

@@ -1,10 +1,8 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Function.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/String.h"
-#include "Core/Filesystem/File.h"
-#include "Core/Platform/PlatformFile.h"
-#include "Core/PlatformInterface/IPlatformFileSystem.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Spinlock.h"
 #include "RendererCore/RayTracing/AccelerationStructureCache.h"
@@ -44,65 +42,62 @@ private:
     FSpinLock                    EntriesLock;
 };
 
-class FDiskAccelerationStructureCacheBackend : public IAccelerationStructureCache
+class RENDERERCORE_API FDiskAccelerationStructureCacheBackend : public IAccelerationStructureCache
 {
 public:
-    explicit FDiskAccelerationStructureCacheBackend(const FString& InDirectory)
-        : Directory(InDirectory)
+    static constexpr const CHAR_T* FileExtension = TEXT(".rtas");
+
+    /**
+     * @param InDirectory The folder the entries are files in, created if missing
+     * @param InMaxSizeInBytes The size the entries may take together, zero for no limit
+     */
+    FDiskAccelerationStructureCacheBackend(const FString& InDirectory, uint64 InMaxSizeInBytes);
+    virtual ~FDiskAccelerationStructureCacheBackend();
+
+    /** @brief Read the entry and mark it used now, so eviction keeps it longest */
+    virtual bool Load(const FStringView& Key, TArray<uint8>& OutBytes) override final;
+
+    /** @brief Write the entry, then evict the least recently used entries past the size limit */
+    virtual void Store(const FStringView& Key, const TArray<uint8>& Bytes) override final;
+
+    /** @brief Delete every entry ShouldRemove returns true for */
+    void RemoveEntries(TFunction<bool(const FString& Key)> ShouldRemove);
+
+    /** @brief Set the size the entries may take together, zero for no limit, and evict down to it */
+    void SetMaxSize(uint64 InMaxSizeInBytes);
+
+    FORCEINLINE const FString& GetDirectory() const
     {
-        // Ensure <AssetDir>/RTASCache (and any missing parents) exists so Store can persist entries
-        File::CreateDirectoryTree(Directory);
+        return Directory;
     }
 
-    ~FDiskAccelerationStructureCacheBackend() override = default;
-
-    bool Load(const FStringView& Key, TArray<uint8>& OutBytes) override
+    FORCEINLINE uint64 GetSizeInBytes() const
     {
-        const FString FilePath = CreateFilePath(Key);
-
-        // A cache miss is expected - skip the open attempt (and its logging) when the file is absent
-        if (!FPlatformFile::IsFile(*FilePath))
-        {
-            return false;
-        }
-
-        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForRead(FilePath);
-        if (!FileHandle)
-        {
-            return false;
-        }
-
-        if (!File::ReadFile(FileHandle.Get(), OutBytes))
-        {
-            return false;
-        }
-
-        return !OutBytes.IsEmpty();
+        return SizeInBytes;
     }
 
-    void Store(const FStringView& Key, const TArray<uint8>& Bytes) override
+    FORCEINLINE int32 GetNumEntries() const
     {
-        if (Bytes.IsEmpty())
-        {
-            return;
-        }
-
-        const FString FilePath = CreateFilePath(Key);
-
-        TFileRef<IPlatformFile> FileHandle = FPlatformFile::OpenForWrite(FilePath);
-        if (!FileHandle)
-        {
-            return;
-        }
-
-        FileHandle->Write(Bytes.Data(), static_cast<uint32>(Bytes.SizeInBytes()));
+        return Entries.Size();
     }
 
 private:
-    NODISCARD FString CreateFilePath(const FStringView& Key) const
+    struct FEntry
     {
-        return Directory + '/' + FString(Key) + TEXT(".rtas");
-    }
+        FString Key;
+        uint64  SizeInBytes  = 0;
+        int64   LastUsedTime = 0;
+    };
 
-    FString Directory;
+    void ScanDirectory();
+    int32 EvictToMaxSize();
+    void LogEviction(int32 NumEvicted, uint64 EvictedSizeInBytes) const;
+    void RemoveEntryAt(int32 Index);
+    int32 FindEntry(const FStringView& Key) const;
+    FString CreateFilePath(const FStringView& Key) const;
+
+    FString        Directory;
+    TArray<FEntry> Entries;
+    uint64         SizeInBytes;
+    uint64         MaxSizeInBytes;
 };

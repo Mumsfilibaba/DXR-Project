@@ -354,7 +354,8 @@ FRHISceneAccelerationStructure* FMetalDeviceRHI::CreateSceneAccelerationStructur
 
 FRHIGeometryAccelerationStructure* FMetalDeviceRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
-    if (!RHI::bSupportsRayTracing)
+    // Metal can't serialize acceleration structures, so there is never data of its own to deserialize
+    if (!RHI::bSupportsRayTracing || InGeometryDesc.IsSerialized())
     {
         return nullptr;
     }

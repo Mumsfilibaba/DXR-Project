@@ -17,8 +17,15 @@ public:
     bool CompactInPlace(FMetalCommandContext& Context, uint64 CompactedSizeInBytes);
     bool CopyFrom(FMetalCommandContext& Context, const FMetalAccelerationStructure& Source, bool bCompact);
 
-    FORCEINLINE id<MTLAccelerationStructure> GetMTLAccelerationStructure() const { return Storage ? Storage->GetAccelerationStructure() : nil; }
-    FORCEINLINE FMetalResidencyEntry*        GetResidencyEntry()           const { return Storage ? Storage->GetResidencyEntry() : nullptr; }
+    FORCEINLINE id<MTLAccelerationStructure> GetMTLAccelerationStructure() const
+    {
+        return Storage ? Storage->GetAccelerationStructure() : nil;
+    }
+
+    FORCEINLINE FMetalResidencyEntry* GetResidencyEntry() const
+    {
+        return Storage ? Storage->GetResidencyEntry() : nullptr;
+    }
 
 protected:
     explicit FMetalAccelerationStructure(FMetalDevice* InDevice);
@@ -31,7 +38,10 @@ protected:
 
     virtual void OnStorageReplaced() { }
 
-    FORCEINLINE const FString& GetLabel() const { return DebugName; }
+    FORCEINLINE const FString& GetLabel() const
+    {
+        return DebugName;
+    }
 
 private:
     TUniquePtr<FMetalResourceStorage> AllocateStorage(FMetalCommandContext& Context, MTLSizeAndAlign SizeAndAlign);
@@ -39,10 +49,17 @@ private:
     bool EncodeCopy(FMetalCommandContext& Context, id<MTLAccelerationStructure> Source, FMetalResidencyEntry* SourceEntry, MTLSizeAndAlign SizeAndAlign, bool bCompact);
     void UpdateMemoryStat();
 
+    FORCEINLINE int64 GetCompactionSavings() const
+    {
+        const uint64 StorageSize = Storage ? Storage->GetSize() : 0;
+        return UncompactedSize > StorageSize ? static_cast<int64>(UncompactedSize - StorageSize) : 0;
+    }
+
     TUniquePtr<FMetalResourceStorage> Storage;
     FMetalResidencyEntry*             PinnedEntry;
     FString                           DebugName;
-    int64                             TrackedMemory;
+    int64                             TrackedAccelerationStructureMemory;
+    uint64                            UncompactedSize;
 };
 
 class FMetalGeometryAccelerationStructureRHI : public FRHIGeometryAccelerationStructure, public FMetalAccelerationStructure
@@ -80,7 +97,10 @@ public:
 
     bool Build(FMetalCommandContext& Context, const FRHISceneAccelerationStructureBuildDesc& BuildDesc);
 
-    FORCEINLINE FCriticalSection& GetBindlessLock() { return BindlessCS; }
+    FORCEINLINE FCriticalSection& GetBindlessLock()
+    {
+        return BindlessCS;
+    }
 
 protected:
     virtual void OnStorageReplaced() override final;

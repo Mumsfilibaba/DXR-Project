@@ -670,25 +670,33 @@ FRHISceneAccelerationStructure* FVulkanDeviceRHI::CreateSceneAccelerationStructu
 
 FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
-    FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
-    BuildDesc.VertexBuffer = InGeometryDesc.VertexBuffer;
-    BuildDesc.NumVertices  = InGeometryDesc.NumVertices;
-    BuildDesc.IndexBuffer  = InGeometryDesc.IndexBuffer;
-    BuildDesc.NumIndices   = InGeometryDesc.NumIndices;
-    BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
-    BuildDesc.bUpdate      = false;
-
     FVulkanGeometryAccelerationStructureRHIRef NewGeometry = new FVulkanGeometryAccelerationStructureRHI(GetDevice(), InGeometryDesc);
 
     {
         FVulkanScopedCommandContext BuildContext(*GetDevice()->GetGraphicsQueue());
-        if (NewGeometry->Build(*BuildContext, BuildDesc))
+
+        bool bSucceeded = false;
+        if (InGeometryDesc.IsSerialized())
+        {
+            bSucceeded = NewGeometry->BuildSerialized(*BuildContext, InGeometryDesc.SerializedData, InGeometryDesc.SerializedSizeInBytes);
+        }
+        else
+        {
+            const FRHIGeometryAccelerationStructureBuildDesc BuildDesc(InGeometryDesc.VertexBuffer, InGeometryDesc.NumVertices, InGeometryDesc.IndexBuffer, InGeometryDesc.NumIndices, InGeometryDesc.IndexFormat, false);
+            bSucceeded = NewGeometry->Build(*BuildContext, BuildDesc);
+        }
+
+        if (bSucceeded)
         {
             BuildContext->AddAccelerationStructureBarrier();
         }
         else
         {
-            DEBUG_BREAK();
+            if (!InGeometryDesc.IsSerialized())
+            {
+                DEBUG_BREAK();
+            }
+
             NewGeometry.Reset();
         }
     }

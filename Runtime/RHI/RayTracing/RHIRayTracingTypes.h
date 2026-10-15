@@ -35,6 +35,9 @@ enum class EAccelerationStructureBuildFlags : uint8
 
     /** Hint for streaming / scratch-tight scenarios */
     MinimizeMemory = FLAG(5),
+
+    /** The structure is deserialized from the description's SerializedData instead of built, so the graphics APIs never see this flag */
+    Deserialize = FLAG(6),
 };
 
 ENUM_CLASS_OPERATORS(EAccelerationStructureBuildFlags);

@@ -22,6 +22,7 @@ FMesh::FMesh()
     , BoundingBox()
     , SubMeshes()
     , MaterialSlots()
+    , ContentHash(0)
 {
 }
 
@@ -195,7 +196,7 @@ void FMesh::SetVertexBuffers(FRHICommandList& CommandList, const FVertexStreamBi
 
 bool FMesh::EnsureRayTracingResources()
 {
-    if (RayTracingGeometry)
+    if (RayTracingGeometry && AttributeBufferSRV && IndexBufferSRV)
     {
         return true;
     }
@@ -205,8 +206,7 @@ bool FMesh::EnsureRayTracingResources()
         return false;
     }
 
-    FRHIBuffer* AttributeBuffer = GetAttributeBuffer();
-    if (!AttributeBuffer || !IndexBuffer || IndexFormat != EIndexFormat::uint32)
+    if (!IsRayTracingReady())
     {
         LOG_ERROR("Mesh '%s' was not created ray-tracing-ready and cannot be ray traced", MeshName.Data());
         CHECK(false);
@@ -215,7 +215,7 @@ bool FMesh::EnsureRayTracingResources()
 
     if (!AttributeBufferSRV)
     {
-        AttributeBufferSRV = RHI::CreateShaderResourceView(AttributeBuffer, FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount));
+        AttributeBufferSRV = RHI::CreateShaderResourceView(GetAttributeBuffer(), FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount));
         if (!AttributeBufferSRV)
         {
             return false;
@@ -231,8 +231,12 @@ bool FMesh::EnsureRayTracingResources()
         }
     }
 
-    FRHIGeometryAccelerationStructureDesc GeometryDesc(GetPositionBuffer(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::AllowCompaction);
-    RayTracingGeometry = RHI::CreateGeometryAccelerationStructure(GeometryDesc);
+    if (RayTracingGeometry)
+    {
+        return true;
+    }
+
+    RayTracingGeometry = RHI::CreateGeometryAccelerationStructure(GetRayTracingGeometryDesc());
     if (!RayTracingGeometry)
     {
         return false;
@@ -240,6 +244,25 @@ bool FMesh::EnsureRayTracingResources()
 
     RayTracingGeometry->SetDebugName(TEXT("RayTracing Geometry"));
     return true;
+}
+
+bool FMesh::IsRayTracingReady() const
+{
+    return GetAttributeBuffer() && IndexBuffer && IndexFormat == EIndexFormat::uint32;
+}
+
+FRHIGeometryAccelerationStructureDesc FMesh::GetRayTracingGeometryDesc() const
+{
+    return FRHIGeometryAccelerationStructureDesc(GetPositionBuffer(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::AllowCompaction);
+}
+
+void FMesh::SetRayTracingGeometry(const FRHIGeometryAccelerationStructureRef& Geometry)
+{
+    RayTracingGeometry = Geometry;
+    if (RayTracingGeometry)
+    {
+        RayTracingGeometry->SetDebugName(TEXT("RayTracing Geometry"));
+    }
 }
 
 void FMesh::ReleaseRayTracingResources()

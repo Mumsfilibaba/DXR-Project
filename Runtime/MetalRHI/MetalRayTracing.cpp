@@ -69,7 +69,8 @@ FMetalAccelerationStructure::FMetalAccelerationStructure(FMetalDevice* InDevice)
     , Storage()
     , PinnedEntry(nullptr)
     , DebugName()
-    , TrackedMemory(0)
+    , TrackedAccelerationStructureMemory(0)
+    , UncompactedSize(0)
 {
 }
 
@@ -78,14 +79,15 @@ FMetalAccelerationStructure::~FMetalAccelerationStructure()
     GetDevice()->GetResidencyManager().Unpin(PinnedEntry);
     PinnedEntry = nullptr;
 
-    STAT_SUBTRACT(STAT_RHI_AccelerationStructureMemory, TrackedMemory);
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureMemory, TrackedAccelerationStructureMemory);
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
 }
 
 void FMetalAccelerationStructure::UpdateMemoryStat()
 {
     const int64 NewSize = Storage ? static_cast<int64>(Storage->GetSize()) : 0;
-    STAT_ADD(STAT_RHI_AccelerationStructureMemory, NewSize - TrackedMemory);
-    TrackedMemory = NewSize;
+    STAT_ADD(STAT_RHI_AccelerationStructureMemory, NewSize - TrackedAccelerationStructureMemory);
+    TrackedAccelerationStructureMemory = NewSize;
 }
 
 bool FMetalAccelerationStructure::CompactInPlace(FMetalCommandContext& Context, uint64 CompactedSizeInBytes)
@@ -96,8 +98,16 @@ bool FMetalAccelerationStructure::CompactInPlace(FMetalCommandContext& Context, 
         return false;
     }
 
-    const MTLSizeAndAlign SizeAndAlign = [GetDevice()->GetMTLDevice() heapAccelerationStructureSizeAndAlignWithSize:CompactedSizeInBytes];
-    return EncodeCopy(Context, Source, GetResidencyEntry(), SizeAndAlign, true);
+    const int64           SavingsBefore = GetCompactionSavings();
+    const MTLSizeAndAlign SizeAndAlign  = [GetDevice()->GetMTLDevice() heapAccelerationStructureSizeAndAlignWithSize:CompactedSizeInBytes];
+
+    if (!EncodeCopy(Context, Source, GetResidencyEntry(), SizeAndAlign, true))
+    {
+        return false;
+    }
+
+    STAT_ADD(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings() - SavingsBefore);
+    return true;
 }
 
 bool FMetalAccelerationStructure::CopyFrom(FMetalCommandContext& Context, const FMetalAccelerationStructure& Source, bool bCompact)
@@ -110,8 +120,17 @@ bool FMetalAccelerationStructure::CopyFrom(FMetalCommandContext& Context, const 
         return false;
     }
 
-    const MTLSizeAndAlign SizeAndAlign = [GetDevice()->GetMTLDevice() heapAccelerationStructureSizeAndAlignWithSize:SourceStructure.size];
-    return EncodeCopy(Context, SourceStructure, Source.GetResidencyEntry(), SizeAndAlign, bCompact);
+    const int64           SavingsBefore = GetCompactionSavings();
+    const MTLSizeAndAlign SizeAndAlign  = [GetDevice()->GetMTLDevice() heapAccelerationStructureSizeAndAlignWithSize:SourceStructure.size];
+
+    if (!EncodeCopy(Context, SourceStructure, Source.GetResidencyEntry(), SizeAndAlign, bCompact))
+    {
+        return false;
+    }
+
+    UncompactedSize = Math::Max(Source.UncompactedSize, Storage->GetSize());
+    STAT_ADD(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings() - SavingsBefore);
+    return true;
 }
 
 bool FMetalAccelerationStructure::ReserveStorage(FMetalCommandContext& Context, MTLSizeAndAlign SizeAndAlign)
@@ -127,7 +146,9 @@ bool FMetalAccelerationStructure::ReserveStorage(FMetalCommandContext& Context, 
         return false;
     }
 
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
     SetStorage(Context, Move(NewStorage));
+    UncompactedSize = Storage->GetSize();
     return true;
 }
 

@@ -63,6 +63,11 @@ public:
             return false;
         }
 
+        if (Header.SerializedSizeInBytes != uint64(Bytes.Size()) - GetPayloadOffset())
+        {
+            return false;
+        }
+
         if (!RHI::IsAccelerationStructureSerializationHeaderValid(Header))
         {
             return false;

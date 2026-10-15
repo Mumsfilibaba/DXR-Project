@@ -1,7 +1,5 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/Paths.h"
-#include "Core/Templates/CString.h"
 #include "RHI/RHI.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Model.h"
@@ -23,13 +21,13 @@ static FAutoConsoleVariableRef CVarRayTracingCompaction(
 static bool GRayTracingASCache = false;
 static FAutoConsoleVariableRef CVarRayTracingASCache(
     TEXT("Renderer.RayTracing.ASCache"),
-    TEXT("When true, each BLAS is serialized once after build into the on-disk acceleration-structure cache. UNVALIDATED on hardware."),
+    TEXT("When true, the BLAS of a mesh asset is loaded from the acceleration structure cache under the engine's or the project's Cache folder "
+    "instead of built, and written there once built and compacted."),
     GRayTracingASCache);
 
 FRayTracingSceneBuilder::FRayTracingSceneBuilder(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , GeometryTableCapacity(0)
-    , SerializationHelper(&ASCache)
 {
 }
 
@@ -40,8 +38,7 @@ FRayTracingSceneBuilder::~FRayTracingSceneBuilder()
 
 bool FRayTracingSceneBuilder::Initialize()
 {
-    ASCacheBackend = MakeUniquePtr<FDiskAccelerationStructureCacheBackend>(Paths::GetEngineCacheDir() + TEXT("/RTASCache"));
-    ASCache.SetBackend(ASCacheBackend.Get());
+    StructureCache.Initialize();
     return true;
 }
 
@@ -49,10 +46,9 @@ void FRayTracingSceneBuilder::Release()
 {
     CompactionHelper.ReleaseAll();
     SerializationHelper.ReleaseAll();
-    CompactionRequested.Clear();
-    SerializationRequested.Clear();
-    ASCache.SetBackend(nullptr);
-    ASCacheBackend.Reset();
+    HandledStructures.Clear();
+    AwaitingCompaction.Clear();
+    StructureCache.Release();
 
     GeometryTableCapacity = 0;
 }
@@ -70,8 +66,7 @@ void FRayTracingSceneBuilder::ReleaseRayTracingResources(FScene* Scene)
         }
     }
 
-    CompactionRequested.Clear();
-    SerializationRequested.Clear();
+    HandledStructures.Clear();
 }
 
 void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, bool bNeedBindlessData)
@@ -85,8 +80,11 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
 
     uint32 NextInstanceIndex       = 0;
     uint32 LazyBLASBuildsThisFrame = 0;
+    uint32 CacheLoadsThisFrame     = 0;
+    uint32 CacheMissesThisFrame    = 0;
     uint32 SkippedNullGeometry     = 0;
 
+    TSet<FRHIRayTracingAccelerationStructure*> StructuresInScene;
     for (const FSceneStaticMesh* StaticMesh : Scene->GetStaticMeshes())
     {
         TSharedPtr<FMaterial> Material = StaticMesh->GetMaterial();
@@ -95,19 +93,41 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
             continue;
         }
 
-        const bool bHadGeometry = StaticMesh->Mesh->GetRayTracingGeometry() != nullptr;
-        StaticMesh->Mesh->EnsureRayTracingResources();
+        FMesh& Mesh = *StaticMesh->Mesh;
 
-        FRHIGeometryAccelerationStructure* Geometry = StaticMesh->Mesh->GetRayTracingGeometry();
+        const bool bHadGeometry     = Mesh.GetRayTracingGeometry() != nullptr;
+        const bool bLoadedFromCache = !bHadGeometry && GRayTracingASCache && StructureCache.TryLoad(Mesh);
+        Mesh.EnsureRayTracingResources();
+
+        FRHIGeometryAccelerationStructure* Geometry = Mesh.GetRayTracingGeometry();
         if (!Geometry)
         {
             ++SkippedNullGeometry;
             continue;
         }
 
-        if (!bHadGeometry)
+        if (bLoadedFromCache)
+        {
+            ++CacheLoadsThisFrame;
+        }
+        else if (!bHadGeometry)
         {
             ++LazyBLASBuildsThisFrame;
+            if (GRayTracingASCache && Mesh.IsAsset())
+            {
+                ++CacheMissesThisFrame;
+            }
+        }
+
+        StructuresInScene.Add(Geometry);
+
+        if ((GRayTracingCompaction || GRayTracingASCache) && !HandledStructures.Contains(Geometry))
+        {
+            HandledStructures.Add(Geometry);
+            if (!bLoadedFromCache)
+            {
+                RequestCompactionAndCacheWrite(CommandList, Mesh, Geometry);
+            }
         }
 
         const uint32 InstanceIndex = NextInstanceIndex++;
@@ -188,6 +208,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
     STAT_SET(STAT_RT_HitGroupCount,           Resources.RayTracingHitGroupBindings.Size());
     STAT_SET(STAT_RT_GeometryTableRows,       Resources.RayTracingGeometryTableData.Size());
     STAT_SET(STAT_RT_LazyBLASBuildsThisFrame, LazyBLASBuildsThisFrame);
+    STAT_SET(STAT_RT_BLASCacheLoadsThisFrame, CacheLoadsThisFrame);
     STAT_SET(STAT_RT_SkippedNullGeometry,     SkippedNullGeometry);
 
     if (!Resources.RayTracingScene)
@@ -211,65 +232,24 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
         CommandList.UnorderedAccessBarrier(Resources.RayTracingScene.Get());
     }
 
-    if (GRayTracingCompaction || GRayTracingASCache)
     {
-        for (const FRHIGeometryAccelerationStructureInstance& Instance : Resources.RayTracingGeometryInstances)
+        TSet<FRHIRayTracingAccelerationStructure*> StillInScene;
+        for (FRHIRayTracingAccelerationStructure* Structure : HandledStructures)
         {
-            FRHIGeometryAccelerationStructure* Geometry = Instance.Geometry;
-            if (!Geometry)
+            if (StructuresInScene.Contains(Structure))
             {
-                continue;
-            }
-
-            if (GRayTracingCompaction && !CompactionRequested.Contains(Geometry))
-            {
-                CompactionHelper.RequestCompaction(CommandList, Geometry);
-                CompactionRequested.Emplace(Geometry);
-            }
-
-            if (GRayTracingASCache && ASCache.HasBackend() && !SerializationRequested.Contains(Geometry))
-            {
-                CHAR_T KeyBuffer[32] = {};
-                CString::Snprintf(KeyBuffer, ARRAY_COUNT(KeyBuffer), TEXT("blas_%llx"), static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(Geometry)));
-
-                SerializationHelper.RequestSerialize(CommandList, Geometry, FString(KeyBuffer));
-                SerializationRequested.Emplace(Geometry);
-            }
-        }
-    }
-
-    const auto IsInScene = [&Resources](const FRHIRayTracingAccelerationStructure* Structure)
-    {
-        for (const FRHIGeometryAccelerationStructureInstance& Instance : Resources.RayTracingGeometryInstances)
-        {
-            if (Instance.Geometry == Structure)
-            {
-                return true;
+                StillInScene.Add(Structure);
             }
         }
 
-        return false;
-    };
-
-    for (TArray<FRHIRayTracingAccelerationStructure*>* Requested : { &CompactionRequested, &SerializationRequested })
-    {
-        for (int32 Index = Requested->Size() - 1; Index >= 0; --Index)
-        {
-            if (!IsInScene((*Requested)[Index]))
-            {
-                Requested->RemoveAt(Index);
-            }
-        }
+        HandledStructures = ::Move(StillInScene);
     }
 
-    if (CompactionHelper.HasPendingWork())
-    {
-        CompactionHelper.Tick(CommandList);
-    }
+    TickCompactionAndCacheWrites(CommandList);
 
-    if (SerializationHelper.HasPendingWork())
+    if (CacheLoadsThisFrame > 0 || CacheMissesThisFrame > 0)
     {
-        SerializationHelper.Tick(CommandList);
+        LOG_INFO("[FRayTracingSceneBuilder]: Loaded %u mesh asset structures from the cache and built %u", CacheLoadsThisFrame, CacheMissesThisFrame);
     }
 
     if (!Resources.RayTracingGeometryTableData.IsEmpty())
@@ -296,5 +276,54 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
         {
             CommandList.UpdateBuffer(Resources.RayTracingGeometryTableBuffer.Get(), FBufferRegion(0, sizeof(FRayTracingGeometryIndicesHLSL) * RequiredCount), Resources.RayTracingGeometryTableData.Data());
         }
+    }
+}
+
+void FRayTracingSceneBuilder::RequestCompactionAndCacheWrite(FRHICommandList& CommandList, const FMesh& Mesh, FRHIGeometryAccelerationStructure* Geometry)
+{
+    FString                      Key;
+    FAccelerationStructureCache* Cache = GRayTracingASCache ? StructureCache.FindCache(Mesh, Key) : nullptr;
+
+    if (GRayTracingCompaction && CompactionHelper.RequestCompaction(CommandList, Geometry))
+    {
+        if (Cache)
+        {
+            FPendingCacheWrite& Pending = AwaitingCompaction.Emplace();
+            Pending.Structure = Geometry;
+            Pending.Cache     = Cache;
+            Pending.Key       = ::Move(Key);
+        }
+    }
+    else if (Cache)
+    {
+        SerializationHelper.RequestSerialize(CommandList, Geometry, *Cache, Key);
+    }
+}
+
+void FRayTracingSceneBuilder::TickCompactionAndCacheWrites(FRHICommandList& CommandList)
+{
+    if (CompactionHelper.HasPendingWork())
+    {
+        TArray<FRHIRayTracingAccelerationStructureRef> Compacted;
+        CompactionHelper.Tick(CommandList, Compacted);
+
+        for (const FRHIRayTracingAccelerationStructureRef& Structure : Compacted)
+        {
+            for (int32 Index = 0; Index < AwaitingCompaction.Size(); ++Index)
+            {
+                FPendingCacheWrite& Pending = AwaitingCompaction[Index];
+                if (Pending.Structure == Structure.Get())
+                {
+                    SerializationHelper.RequestSerialize(CommandList, Structure.Get(), *Pending.Cache, Pending.Key);
+                    AwaitingCompaction.RemoveAt(Index);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (SerializationHelper.HasPendingWork())
+    {
+        SerializationHelper.Tick(CommandList);
     }
 }

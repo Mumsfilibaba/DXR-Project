@@ -11,6 +11,7 @@
 #include "TestCommon/TestMacros.h"
 #include "LaunchProgram/ProgramEntry.h"
 
+#include "AccelerationStructureCacheTests.h"
 #include "RenderGraphTests.h"
 #include "SwapChainAcquireTests.h"
 
@@ -103,6 +104,7 @@ static int32 RunRendererCoreTests()
     RUN_TEST(TEXT("RenderGraphViewTypelessFormat"), RenderGraphViewTypelessFormat_Test());
     RUN_TEST(TEXT("RenderGraphViewHybridUsage"), RenderGraphViewHybridUsage_Test());
     RUN_TEST(TEXT("RenderGraphSubresourceRejoin"), RenderGraphSubresourceRejoin_Test());
+    RUN_TEST(TEXT("AccelerationStructureCacheBackend"), AccelerationStructureCacheBackend_Test());
 
     FRenderGraphResourcePool::Release();
     RHI::Release();

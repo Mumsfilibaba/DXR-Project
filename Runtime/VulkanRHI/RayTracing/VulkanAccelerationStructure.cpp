@@ -3,6 +3,7 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanRHI.h"
 #include "RHI/RHIStats.h"
 
 static void VulkanUpdateAccelerationStructureMemoryStat(uint64& Tracked, uint64 NewSize)
@@ -45,9 +46,8 @@ FVulkanGeometryAccelerationStructureRHI::FVulkanGeometryAccelerationStructureRHI
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
     , AABBBuffer(nullptr)
-    , StaleGeometry(VK_NULL_HANDLE)
-    , StaleGeometryLocation(InDevice)
     , TrackedAccelerationStructureMemory(0)
+    , UncompactedSize(0)
 #if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
 #endif
@@ -57,12 +57,6 @@ FVulkanGeometryAccelerationStructureRHI::FVulkanGeometryAccelerationStructureRHI
 
 FVulkanGeometryAccelerationStructureRHI::~FVulkanGeometryAccelerationStructureRHI()
 {
-    if (VULKAN_CHECK_HANDLE(StaleGeometry))
-    {
-        vkDestroyAccelerationStructureKHR(GetDevice()->GetVkDevice(), StaleGeometry, nullptr);
-        StaleGeometry = VK_NULL_HANDLE;
-    }
-
     if (VULKAN_CHECK_HANDLE(AccelerationStructure))
     {
         vkDestroyAccelerationStructureKHR(GetDevice()->GetVkDevice(), AccelerationStructure, nullptr);
@@ -70,6 +64,7 @@ FVulkanGeometryAccelerationStructureRHI::~FVulkanGeometryAccelerationStructureRH
     }
 
     VulkanUpdateAccelerationStructureMemoryStat(TrackedAccelerationStructureMemory, 0);
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
     STAT_SUBTRACT(STAT_RHI_BLASCount, 1);
 }
 
@@ -193,6 +188,9 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
         AccelerationStructure = VK_NULL_HANDLE;
     }
 
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
+    UncompactedSize = 0;
+
     GeometryLocation.ReleaseMemory();
     ScratchLocation.ReleaseMemory();
 
@@ -227,7 +225,8 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
         return false;
     }
 
-    VulkanUpdateAccelerationStructureMemoryStat(TrackedAccelerationStructureMemory, GeometryLocation.GetSize() + ScratchLocation.GetSize() + StaleGeometryLocation.GetSize());
+    UncompactedSize = GeometryLocation.GetSize();
+    VulkanUpdateAccelerationStructureMemoryStat(TrackedAccelerationStructureMemory, GeometryLocation.GetSize() + ScratchLocation.GetSize());
 
     AccelerationStructureBuildGeometryInfo.dstAccelerationStructure  = AccelerationStructure;
     AccelerationStructureBuildGeometryInfo.scratchData.deviceAddress = ScratchLocation.GetDeviceAddress();
@@ -282,6 +281,91 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
         return false;
     }
 
+    if (!IsEnumFlagSet(GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))
+    {
+        ScratchLocation.ReleaseMemory();
+        VulkanUpdateAccelerationStructureMemoryStat(TrackedAccelerationStructureMemory, GeometryLocation.GetSize());
+    }
+
+    return true;
+}
+
+bool FVulkanGeometryAccelerationStructureRHI::BuildSerialized(FVulkanCommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes)
+{
+    static constexpr uint64 DeserializedSizeOffset = 2 * VK_UUID_SIZE + sizeof(uint64);
+
+    if (!SerializedData || SerializedSizeInBytes < DeserializedSizeOffset + sizeof(uint64))
+    {
+        return false;
+    }
+
+    uint64 DeserializedSize = 0;
+    Memory::Memcpy(&DeserializedSize, static_cast<const uint8*>(SerializedData) + DeserializedSizeOffset, sizeof(uint64));
+    
+    if (!AllocateResultStorage(DeserializedSize, GeometryLocation, AccelerationStructure, DeviceAddress))
+    {
+        return false;
+    }
+
+    UncompactedSize = GeometryLocation.GetSize();
+    VulkanUpdateAccelerationStructureMemoryStat(TrackedAccelerationStructureMemory, GeometryLocation.GetSize());
+
+    constexpr EBufferFlags BufferFlags = 
+        EBufferFlags::Default | 
+        EBufferFlags::CopySource | 
+        EBufferFlags::AccelerationStructure;
+
+    const FRHIBufferDesc UploadDesc(BufferFlags, 0, SerializedSizeInBytes);
+    FRHIBufferRef Upload = FVulkanDeviceRHI::Get()->CreateBuffer(UploadDesc, ERHIResourceState::CopySource, SerializedData);
+
+    if (!Upload)
+    {
+        return false;
+    }
+
+    CmdContext.DeserializeAccelerationStructure(this, Upload.Get(), 0);
+    return true;
+}
+
+bool FVulkanGeometryAccelerationStructureRHI::AllocateResultStorage(uint64 Size, FVulkanMemoryLocation& OutLocation, VkAccelerationStructureKHR& OutAccelerationStructure, VkDeviceAddress& OutDeviceAddress)
+{
+    if (Size == 0)
+    {
+        return false;
+    }
+
+    const VkMemoryAllocateFlags AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    const VkBufferUsageFlags    GeometryUsage    = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+
+    if (!GetDevice()->GetMemoryManager().AllocateBufferMemory(MemoryProperties, GeometryUsage, AllocateFlags, Size, 256, OutLocation))
+    {
+        VULKAN_WARNING("AllocateResultStorage: failed to allocate the geometry buffer");
+        return false;
+    }
+
+    VkAccelerationStructureCreateInfoKHR CreateInfo = {};
+    CreateInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+    CreateInfo.buffer        = OutLocation.GetBackingBuffer();
+    CreateInfo.offset        = OutLocation.GetBufferOffset();
+    CreateInfo.size          = Size;
+    CreateInfo.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+    CreateInfo.deviceAddress = 0;
+
+    VkAccelerationStructureKHR NewAccelerationStructure = VK_NULL_HANDLE;
+    if (VULKAN_FAILED(vkCreateAccelerationStructureKHR(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &NewAccelerationStructure)))
+    {
+        OutLocation.ReleaseMemory();
+        VULKAN_WARNING("AllocateResultStorage: failed to create the acceleration structure");
+        return false;
+    }
+
+    VkAccelerationStructureDeviceAddressInfoKHR AddressInfo = {};
+    AddressInfo.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+    AddressInfo.accelerationStructure = NewAccelerationStructure;
+
+    OutAccelerationStructure = NewAccelerationStructure;
+    OutDeviceAddress         = vkGetAccelerationStructureDeviceAddressKHR(GetDevice()->GetVkDevice(), &AddressInfo);
     return true;
 }
 
@@ -292,32 +376,12 @@ bool FVulkanGeometryAccelerationStructureRHI::CompactInPlace(FVulkanCommandConte
         return false;
     }
 
-    const VkMemoryAllocateFlags  AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
-    const VkMemoryPropertyFlags  MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    const VkBufferUsageFlags     GeometryUsage    = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-
-    FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-
-    FVulkanMemoryLocation CompactedLocation(GetDevice());
-    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, GeometryUsage, AllocateFlags, CompactedSize, 256, CompactedLocation))
-    {
-        VULKAN_WARNING("CompactInPlace: failed to allocate compacted geometry buffer");
-        return false;
-    }
-
-    VkAccelerationStructureCreateInfoKHR CreateInfo = {};
-    CreateInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-    CreateInfo.buffer        = CompactedLocation.GetBackingBuffer();
-    CreateInfo.offset        = CompactedLocation.GetBufferOffset();
-    CreateInfo.size          = CompactedSize;
-    CreateInfo.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-    CreateInfo.deviceAddress = 0;
-
+    FVulkanMemoryLocation      CompactedLocation(GetDevice());
     VkAccelerationStructureKHR CompactedGeometry = VK_NULL_HANDLE;
-    if (VULKAN_FAILED(vkCreateAccelerationStructureKHR(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &CompactedGeometry)))
+    VkDeviceAddress            CompactedAddress  = 0;
+
+    if (!AllocateResultStorage(CompactedSize, CompactedLocation, CompactedGeometry, CompactedAddress))
     {
-        CompactedLocation.ReleaseMemory();
-        VULKAN_WARNING("CompactInPlace: failed to create compacted acceleration structure");
         return false;
     }
 
@@ -332,28 +396,16 @@ bool FVulkanGeometryAccelerationStructureRHI::CompactInPlace(FVulkanCommandConte
     CmdContext.GetCommandBuffer()->CopyAccelerationStructure(&CopyInfo);
     STAT_ADD_FRAME(STAT_Vulkan_AccelerationStructureCompactions, 1);
 
-    VkAccelerationStructureDeviceAddressInfoKHR AddressInfo = {};
-    AddressInfo.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-    AddressInfo.accelerationStructure = CompactedGeometry;
-    
-    const VkDeviceAddress CompactedAddress = vkGetAccelerationStructureDeviceAddressKHR(GetDevice()->GetVkDevice(), &AddressInfo);
-    if (VULKAN_CHECK_HANDLE(StaleGeometry))
-    {
-        vkDestroyAccelerationStructureKHR(GetDevice()->GetVkDevice(), StaleGeometry, nullptr);
-        StaleGeometry = VK_NULL_HANDLE;
-    }
-
-    StaleGeometryLocation.ReleaseMemory();
-
-    StaleGeometry = AccelerationStructure;
-    StaleGeometryLocation.Swap(GeometryLocation);
+    const int64 SavingsBefore = GetCompactionSavings();
+    FVulkanDeviceRHI::DeferDeletion(AccelerationStructure);
+    GeometryLocation.ReleaseMemory();
 
     AccelerationStructure = CompactedGeometry;
     GeometryLocation.Swap(CompactedLocation);
-
     DeviceAddress = CompactedAddress;
 
-    VulkanUpdateAccelerationStructureMemoryStat(TrackedAccelerationStructureMemory, GeometryLocation.GetSize() + ScratchLocation.GetSize() + StaleGeometryLocation.GetSize());
+    VulkanUpdateAccelerationStructureMemoryStat(TrackedAccelerationStructureMemory, GeometryLocation.GetSize() + ScratchLocation.GetSize());
+    STAT_ADD(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings() - SavingsBefore);
     return true;
 }
 

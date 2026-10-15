@@ -415,25 +415,33 @@ FRHISceneAccelerationStructure* FD3D12DeviceRHI::CreateSceneAccelerationStructur
 
 FRHIGeometryAccelerationStructure* FD3D12DeviceRHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
-    FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
-    BuildDesc.VertexBuffer = InGeometryDesc.VertexBuffer;
-    BuildDesc.NumVertices  = InGeometryDesc.NumVertices;
-    BuildDesc.IndexBuffer  = InGeometryDesc.IndexBuffer;
-    BuildDesc.NumIndices   = InGeometryDesc.NumIndices;
-    BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
-    BuildDesc.bUpdate      = false;
-
     FD3D12GeometryAccelerationStructureRHIRef D3D12Geometry = new FD3D12GeometryAccelerationStructureRHI(GetDevice(), InGeometryDesc);
 
     {
         FD3D12ScopedCommandContext BuildContext(*GetDevice()->GetQueue(ED3D12CommandQueueType::Direct));
-        if (D3D12Geometry->Build(*BuildContext, BuildDesc))
+
+        bool bSucceeded = false;
+        if (InGeometryDesc.IsSerialized())
+        {
+            bSucceeded = D3D12Geometry->BuildSerialized(*BuildContext, InGeometryDesc.SerializedData, InGeometryDesc.SerializedSizeInBytes);
+        }
+        else
+        {
+            const FRHIGeometryAccelerationStructureBuildDesc BuildDesc(InGeometryDesc.VertexBuffer, InGeometryDesc.NumVertices, InGeometryDesc.IndexBuffer, InGeometryDesc.NumIndices, InGeometryDesc.IndexFormat, false);
+            bSucceeded = D3D12Geometry->Build(*BuildContext, BuildDesc);
+        }
+
+        if (bSucceeded)
         {
             BuildContext->AccelerationStructureBarrier(D3D12Geometry.Get());
         }
         else
         {
-            DEBUG_BREAK();
+            if (!InGeometryDesc.IsSerialized())
+            {
+                DEBUG_BREAK();
+            }
+
             D3D12Geometry.Reset();
         }
     }

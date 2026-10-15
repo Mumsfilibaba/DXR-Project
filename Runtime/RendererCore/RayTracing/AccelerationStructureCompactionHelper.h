@@ -27,16 +27,17 @@ public:
         ReleaseAll();
     }
 
-    void RequestCompaction(FRHICommandList& CommandList, FRHIRayTracingAccelerationStructure* AccelerationStructure)
+    /** @return Returns false if the structure won't be compacted, so Tick won't report it */
+    bool RequestCompaction(FRHICommandList& CommandList, FRHIRayTracingAccelerationStructure* AccelerationStructure)
     {
         if (!AccelerationStructure)
         {
-            return;
+            return false;
         }
 
         if (!IsEnumFlagSet(AccelerationStructure->GetFlags(), EAccelerationStructureBuildFlags::AllowCompaction))
         {
-            return;
+            return false;
         }
 
         const FRHIBufferDesc ReadbackDesc = FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint64), sizeof(uint64));
@@ -44,7 +45,7 @@ public:
         FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(ReadbackDesc, ERHIResourceState::CopyDest, nullptr);
         if (!ReadbackBuffer)
         {
-            return;
+            return false;
         }
 
         FRHIRayTracingAccelerationStructure* Sources[] = { AccelerationStructure };
@@ -55,9 +56,11 @@ public:
         Pending.SizeReadbackBuffer = ::Move(ReadbackBuffer);
         Pending.FramesRemaining    = ReadbackLatencyInFrames;
         PendingCompactions.Emplace(::Move(Pending));
+        return true;
     }
 
-    void Tick(FRHICommandList& CommandList)
+    /** @param OutFinished Receives the structures whose compaction was recorded, or which turned out not to shrink */
+    void Tick(FRHICommandList& CommandList, TArray<FRHIRayTracingAccelerationStructureRef>& OutFinished)
     {
         for (int32 Index = PendingCompactions.Size() - 1; Index >= 0; --Index)
         {
@@ -81,6 +84,7 @@ public:
                 CommandList.UnorderedAccessBarrier(Pending.Source.Get());
             }
 
+            OutFinished.Add(::Move(Pending.Source));
             PendingCompactions.RemoveAt(Index);
         }
     }

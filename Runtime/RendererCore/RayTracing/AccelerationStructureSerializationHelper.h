@@ -21,6 +21,7 @@ class FAccelerationStructureSerializationHelper
 
     struct FPendingSerialize
     {
+        FAccelerationStructureCache*           Cache = nullptr;
         FString                                CacheKey;
         FRHIRayTracingAccelerationStructureRef Source;
         FRHIBufferRef                          SizeReadbackBuffer;
@@ -32,9 +33,8 @@ class FAccelerationStructureSerializationHelper
     };
 
 public:
-    explicit FAccelerationStructureSerializationHelper(FAccelerationStructureCache* InCache, uint32 InReadbackLatencyInFrames = 3)
-        : Cache(InCache)
-        , ReadbackLatencyInFrames(InReadbackLatencyInFrames)
+    explicit FAccelerationStructureSerializationHelper(uint32 InReadbackLatencyInFrames = 3)
+        : ReadbackLatencyInFrames(InReadbackLatencyInFrames)
     {
     }
 
@@ -43,9 +43,9 @@ public:
         ReleaseAll();
     }
 
-    void RequestSerialize(FRHICommandList& CommandList, FRHIRayTracingAccelerationStructure* AccelerationStructure, const FString& CacheKey)
+    void RequestSerialize(FRHICommandList& CommandList, FRHIRayTracingAccelerationStructure* AccelerationStructure, FAccelerationStructureCache& Cache, const FString& CacheKey)
     {
-        if (!AccelerationStructure || !Cache || !Cache->HasBackend() || CacheKey.IsEmpty())
+        if (!AccelerationStructure || !Cache.HasBackend() || CacheKey.IsEmpty())
         {
             return;
         }
@@ -63,6 +63,7 @@ public:
 
         FPendingSerialize Pending;
         Pending.Source             = MakeSharedRef<FRHIRayTracingAccelerationStructure>(AccelerationStructure);
+        Pending.Cache              = &Cache;
         Pending.CacheKey           = CacheKey;
         Pending.SizeReadbackBuffer = ::Move(ReadbackBuffer);
         Pending.FramesRemaining    = ReadbackLatencyInFrames;
@@ -176,18 +177,14 @@ private:
 
             Pending.BytesReadbackBuffer->Unmap(0, SerializedSize);
 
-            if (Cache)
-            {
-                Cache->Store(FStringView(Pending.CacheKey), Blob);
-            }
+            Pending.Cache->Store(FStringView(Pending.CacheKey), Blob);
         }
 
         PendingSerializes.RemoveAt(Index);
     }
 
-    FAccelerationStructureCache* Cache;
-    TArray<FPendingSerialize>    PendingSerializes;
-    uint32                       ReadbackLatencyInFrames;
+    TArray<FPendingSerialize> PendingSerializes;
+    uint32                    ReadbackLatencyInFrames;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

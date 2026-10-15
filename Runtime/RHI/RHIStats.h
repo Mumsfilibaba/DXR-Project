@@ -31,6 +31,7 @@ STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_MiscBufferMemory);
 // -------------------------------------------------------------------------------------------
 
 STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_AccelerationStructureMemory);
+STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_AccelerationStructureCompactionSavings);
 STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_UploadMemory);
 STAT_DECLARE_EXTERN(RHI_API, STAT_RHI_ReadbackMemory);
 

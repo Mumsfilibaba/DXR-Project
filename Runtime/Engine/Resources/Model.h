@@ -33,8 +33,18 @@ public:
 
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
 
+    /** @brief Create the views ray tracing reads the mesh through, and build its geometry unless one was set */
     bool EnsureRayTracingResources();
     void ReleaseRayTracingResources();
+
+    /** @return Returns whether the mesh was created with the buffers ray tracing needs */
+    bool IsRayTracingReady() const;
+
+    /** @return Returns the geometry the mesh's acceleration structure is built from */
+    FRHIGeometryAccelerationStructureDesc GetRayTracingGeometryDesc() const;
+
+    /** @brief Use Geometry, created for GetRayTracingGeometryDesc elsewhere such as from a cache, instead of building one */
+    void SetRayTracingGeometry(const FRHIGeometryAccelerationStructureRef& Geometry);
 
     void SetVertexBuffers(FRHICommandList& CommandList, const FVertexStreamBinding& Binding) const;
 
@@ -118,6 +128,17 @@ public:
     {
         MaterialSlots = InMaterialSlots;
     }
+
+    /** @return Returns a hash of the asset data the mesh was loaded from, which changes when the asset is reimported, or zero */
+    uint64 GetContentHash() const
+    {
+        return ContentHash;
+    }
+
+    void SetContentHash(uint64 InContentHash)
+    {
+        ContentHash = InContentHash;
+    }
     
 private:
     bool Initialize(const FMeshData& MeshData, bool bCreateRayTracingResources);
@@ -142,6 +163,7 @@ private:
     FAABB                                BoundingBox;
     TArray<FSubMesh>                     SubMeshes;
     TArray<FMeshMaterialSlot>            MaterialSlots;
+    uint64                               ContentHash;
 };
 
 template<>

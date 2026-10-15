@@ -41,11 +41,20 @@ public:
     }
 
 protected:
+    bool AllocateResultStorage(uint64 Size, FD3D12ResourceStorage& OutStorage);
     void UpdateAccelerationStructureMemoryStat();
+
+    FORCEINLINE int64 GetCompactionSavings() const
+    {
+        return UncompactedSize > ResultResourceStorage.GetSize() 
+            ? static_cast<int64>(UncompactedSize - ResultResourceStorage.GetSize()) 
+            : 0;
+    }
 
     FD3D12ResourceStorage ResultResourceStorage;
     FD3D12ResourceStorage ScratchResourceStorage;
-    uint64                TrackedASMemory;
+    uint64                TrackedAccelerationStructureMemory;
+    uint64                UncompactedSize;
 };
 
 class FD3D12GeometryAccelerationStructureRHI : public FRHIGeometryAccelerationStructure, public FD3D12AccelerationStructure
@@ -61,6 +70,7 @@ public:
     virtual void GetDebugName(FString& OutDebugName) const override final;
     
     bool Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
+    bool BuildSerialized(FD3D12CommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes);
     
     FD3D12BufferRHI* GetVertexBuffer() const
     { 

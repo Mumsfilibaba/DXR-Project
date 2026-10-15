@@ -107,9 +107,9 @@ struct FRHIDevice
     virtual FRHISceneAccelerationStructure* CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc) = 0;
 
     /**
-     * @brief Creates a new ray tracing geometry.
+     * @brief Creates a new ray tracing geometry, built from its buffers, or deserialized when the description holds serialized data.
      * @param InGeometryDesc Structure containing information about the ray tracing geometry.
-     * @return The newly created ray tracing geometry.
+     * @return The newly created ray tracing geometry, or nullptr when serialized data can't be deserialized here.
      */
     virtual FRHIGeometryAccelerationStructure* CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc) = 0;
 

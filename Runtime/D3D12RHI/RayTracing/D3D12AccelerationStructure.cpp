@@ -9,42 +9,39 @@ FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , ResultResourceStorage(InDevice)
     , ScratchResourceStorage(InDevice)
-    , TrackedASMemory(0)
+    , TrackedAccelerationStructureMemory(0)
+    , UncompactedSize(0)
 {
 }
 
 FD3D12AccelerationStructure::~FD3D12AccelerationStructure()
 {
-    if (TrackedASMemory > 0)
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
+
+    if (TrackedAccelerationStructureMemory > 0)
     {
-        STAT_SUBTRACT(STAT_RHI_AccelerationStructureMemory, TrackedASMemory);
-        TrackedASMemory = 0;
+        STAT_SUBTRACT(STAT_RHI_AccelerationStructureMemory, TrackedAccelerationStructureMemory);
+        TrackedAccelerationStructureMemory = 0;
     }
 }
 
 void FD3D12AccelerationStructure::UpdateAccelerationStructureMemoryStat()
 {
     const uint64 NewSize = ResultResourceStorage.GetSize() + ScratchResourceStorage.GetSize();
-    if (NewSize > TrackedASMemory)
+    if (NewSize > TrackedAccelerationStructureMemory)
     {
-        STAT_ADD(STAT_RHI_AccelerationStructureMemory, NewSize - TrackedASMemory);
+        STAT_ADD(STAT_RHI_AccelerationStructureMemory, NewSize - TrackedAccelerationStructureMemory);
     }
-    else if (NewSize < TrackedASMemory)
+    else if (NewSize < TrackedAccelerationStructureMemory)
     {
-        STAT_SUBTRACT(STAT_RHI_AccelerationStructureMemory, TrackedASMemory - NewSize);
+        STAT_SUBTRACT(STAT_RHI_AccelerationStructureMemory, TrackedAccelerationStructureMemory - NewSize);
     }
 
-    TrackedASMemory = NewSize;
+    TrackedAccelerationStructureMemory = NewSize;
 }
 
-bool FD3D12AccelerationStructure::CompactInPlace(FD3D12CommandContext& CmdContext, uint64 CompactedSize)
+bool FD3D12AccelerationStructure::AllocateResultStorage(uint64 Size, FD3D12ResourceStorage& OutStorage)
 {
-#if D3D12_USE_ID3D12COMMANDLIST_4
-    if (CompactedSize == 0 || !ResultResourceStorage.GetResource())
-    {
-        return false;
-    }
-
     FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
     if (!Allocator)
     {
@@ -56,7 +53,7 @@ bool FD3D12AccelerationStructure::CompactInPlace(FD3D12CommandContext& CmdContex
     ResourceDesc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
     ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    ResourceDesc.Width              = CompactedSize;
+    ResourceDesc.Width              = Size;
     ResourceDesc.Height             = 1;
     ResourceDesc.DepthOrArraySize   = 1;
     ResourceDesc.MipLevels          = 1;
@@ -64,16 +61,27 @@ bool FD3D12AccelerationStructure::CompactInPlace(FD3D12CommandContext& CmdContex
     ResourceDesc.SampleDesc.Count   = 1;
     ResourceDesc.SampleDesc.Quality = 0;
 
-    FD3D12ResourceStorage CompactedStorage(GetDevice());
     const bool bAllocated = Allocator->TryAllocate(
         D3D12_HEAP_TYPE_DEFAULT,
         ResourceDesc,
         D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
         ED3D12ResourceStateMode::MultipleStates,
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
-        CompactedStorage);
+        OutStorage);
 
-    if (!bAllocated || CompactedStorage.GetResource() == nullptr)
+    return bAllocated && OutStorage.GetResource() != nullptr;
+}
+
+bool FD3D12AccelerationStructure::CompactInPlace(FD3D12CommandContext& CmdContext, uint64 CompactedSize)
+{
+#if D3D12_USE_ID3D12COMMANDLIST_4
+    if (CompactedSize == 0 || !ResultResourceStorage.GetResource())
+    {
+        return false;
+    }
+
+    FD3D12ResourceStorage CompactedStorage(GetDevice());
+    if (!AllocateResultStorage(CompactedSize, CompactedStorage))
     {
         return false;
     }
@@ -90,8 +98,11 @@ bool FD3D12AccelerationStructure::CompactInPlace(FD3D12CommandContext& CmdContex
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT);
     STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureCompactions, 1);
 
+    const int64 SavingsBefore = GetCompactionSavings();
     ResultResourceStorage.Swap(CompactedStorage);
     UpdateAccelerationStructureMemoryStat();
+
+    STAT_ADD(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings() - SavingsBefore);
     return true;
 #else
     UNREFERENCED_VARIABLE(CmdContext);
@@ -122,7 +133,9 @@ bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRH
 {
 #if D3D12_USE_ID3D12DEVICE_5 && D3D12_USE_ID3D12COMMANDLIST_4
     FD3D12BufferRHI* DescBuffer = FD3D12DeviceRHI::ResourceCast(BuildDesc.OMMDescriptorBuffer);
-    FD3D12BufferRHI* DataBuffer = BuildDesc.OpacityMicroTriangleDataBuffer ? FD3D12DeviceRHI::ResourceCast(BuildDesc.OpacityMicroTriangleDataBuffer) : DescBuffer;
+    FD3D12BufferRHI* DataBuffer = BuildDesc.OpacityMicroTriangleDataBuffer 
+        ? FD3D12DeviceRHI::ResourceCast(BuildDesc.OpacityMicroTriangleDataBuffer) 
+        : DescBuffer;
 
     if (!DescBuffer || !DataBuffer || BuildDesc.NumOpacityMicromaps == 0)
     {
@@ -152,7 +165,9 @@ bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRH
 
     const D3D12_GPU_VIRTUAL_ADDRESS DescAddress = DescBuffer->GetGPUVirtualAddress() + BuildDesc.OMMDescriptorBufferOffset;
     const D3D12_GPU_VIRTUAL_ADDRESS DataAddress = DataBuffer->GetGPUVirtualAddress() + BuildDesc.OpacityMicroTriangleDataBufferOffset;
-    const uint32 DescStride = (BuildDesc.OMMDescriptorStrideInBytes != 0) ? BuildDesc.OMMDescriptorStrideInBytes : sizeof(D3D12_RAYTRACING_OPACITY_MICROMAP_DESC);
+    const uint32 DescStride = (BuildDesc.OMMDescriptorStrideInBytes != 0) 
+        ? BuildDesc.OMMDescriptorStrideInBytes 
+        : sizeof(D3D12_RAYTRACING_OPACITY_MICROMAP_DESC);
 
     D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC OMMArrayDesc = {};
     OMMArrayDesc.NumOmmHistogramEntries    = static_cast<uint32>(HistogramEntries.Size());
@@ -212,22 +227,23 @@ bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRH
     {
         return false;
     }
+
     if (!AllocateBuffer(Math::Max(PreBuildInfo.ScratchDataSizeInBytes, uint64(1)), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, ScratchResourceStorage))
     {
         return false;
     }
 
-    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildAS = {};
-    BuildAS.Inputs                           = Inputs;
-    BuildAS.DestAccelerationStructureData    = ResultResourceStorage.GetGPUVirtualAddress();
-    BuildAS.ScratchAccelerationStructureData = ScratchResourceStorage.GetGPUVirtualAddress();
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildAccelerationStructure = {};
+    BuildAccelerationStructure.Inputs                           = Inputs;
+    BuildAccelerationStructure.DestAccelerationStructureData    = ResultResourceStorage.GetGPUVirtualAddress();
+    BuildAccelerationStructure.ScratchAccelerationStructureData = ScratchResourceStorage.GetGPUVirtualAddress();
 
     CmdContext.TransitionTrackedResourceState(DescBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     CmdContext.TransitionTrackedResourceState(DataBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     CmdContext.TransitionTrackedResourceState(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
-    CmdContext.GetCommandList().GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&BuildAS, 0, nullptr);
+    CmdContext.GetCommandList().GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&BuildAccelerationStructure, 0, nullptr);
     STAT_ADD_FRAME(STAT_D3D12_OpacityMicromapBuilds, 1);
 
     CmdContext.GetBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
@@ -322,40 +338,15 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     uint64 CurrentSize = ResultResourceStorage.GetSize();
     if (CurrentSize < PreBuildInfo.ResultDataMaxSizeInBytes)
     {
-        FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
-        if (!Allocator)
-        {
-            return false;
-        }
-
-        D3D12_RESOURCE_DESC ResourceDesc = {};
-        ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-        ResourceDesc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
-        ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        ResourceDesc.Width              = PreBuildInfo.ResultDataMaxSizeInBytes;
-        ResourceDesc.Height             = 1;
-        ResourceDesc.DepthOrArraySize   = 1;
-        ResourceDesc.MipLevels          = 1;
-        ResourceDesc.Alignment          = 0;
-        ResourceDesc.SampleDesc.Count   = 1;
-        ResourceDesc.SampleDesc.Quality = 0;
-
         FD3D12ResourceStorage NewStorage(GetDevice());
-        bool bResult = Allocator->TryAllocate(
-            D3D12_HEAP_TYPE_DEFAULT, 
-            ResourceDesc, 
-            D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, 
-            ED3D12ResourceStateMode::MultipleStates, 
-            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, 
-            NewStorage);
-
-        if (!bResult || NewStorage.GetResource() == nullptr)
+        if (!AllocateResultStorage(PreBuildInfo.ResultDataMaxSizeInBytes, NewStorage))
         {
             return false;
         }
 
+        STAT_SUBTRACT(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
         ResultResourceStorage.Swap(NewStorage);
+        UncompactedSize = ResultResourceStorage.GetSize();
         bReallocated = true;
     }
 
@@ -465,11 +456,52 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     }
 #endif
 
+    if (!IsEnumFlagSet(GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))
+    {
+        ScratchResourceStorage.ReleaseResource();
+        UpdateAccelerationStructureMemoryStat();
+    }
+
     return true;
 #else
     D3D12_ERROR_CRITICAL("[D3D12RayTracingGeometry]: ID3D12Device5 is required for ray tracing");
     return false;
 #endif
+}
+
+bool FD3D12GeometryAccelerationStructureRHI::BuildSerialized(FD3D12CommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes)
+{
+    D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER SerializedHeader;
+    if (!SerializedData || SerializedSizeInBytes < sizeof(SerializedHeader))
+    {
+        return false;
+    }
+
+    Memory::Memcpy(&SerializedHeader, SerializedData, sizeof(SerializedHeader));
+    if (SerializedHeader.DeserializedSizeInBytes == 0 || 
+        !AllocateResultStorage(SerializedHeader.DeserializedSizeInBytes, ResultResourceStorage))
+    {
+        return false;
+    }
+
+    UncompactedSize = ResultResourceStorage.GetSize();
+    UpdateAccelerationStructureMemoryStat();
+
+    constexpr EBufferFlags BufferFlags = 
+        EBufferFlags::Default | 
+        EBufferFlags::CopySource | 
+        EBufferFlags::AccelerationStructure;
+
+    const FRHIBufferDesc UploadDesc(BufferFlags, 0, SerializedSizeInBytes);
+    FRHIBufferRef Upload = FD3D12DeviceRHI::Get()->CreateBuffer(UploadDesc, ERHIResourceState::CopySource, SerializedData);
+
+    if (!Upload)
+    {
+        return false;
+    }
+
+    CmdContext.DeserializeAccelerationStructure(this, Upload.Get(), 0);
+    return true;
 }
 
 void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
