@@ -241,6 +241,134 @@ bool TSet_Test()
         TEST_EXPECT(FInstanced::LiveCount() == 0);
     }
 
+    TEST_SECTION(TEXT("Aligned pointers allocated one after another spread over the table's home slots"));
+    {
+        for (uintptr_t Stride : { uintptr_t(16), uintptr_t(64), uintptr_t(256), uintptr_t(4096) })
+        {
+            static constexpr uint32 NumSlots = 1024;
+
+            TSet<uint32> Homes;
+            for (uint32 Index = 0; Index < NumSlots; ++Index)
+            {
+                uint8* const Pointer = reinterpret_cast<uint8*>(uintptr_t(0x1D2CA760000) + uintptr_t(Index) * Stride);
+                Homes.Add(TDefaultKeyFuncs<uint8*>::GetKeyHash(Pointer) & (NumSlots - 1));
+            }
+
+            if (Homes.Size() < static_cast<int32>(NumSlots / 2))
+            {
+                LOG_ERROR("[STRESS FAIL] %d aligned pointers at stride %llu reached only %d of %u home slots", NumSlots, static_cast<unsigned long long>(Stride), Homes.Size(), NumSlots);
+            }
+
+            TEST_EXPECT(Homes.Size() >= static_cast<int32>(NumSlots / 2));
+        }
+    }
+
+    TEST_SECTION(TEXT("TSet removes every element of a full pointer set in random order"));
+    {
+        for (uint32 Seed = 1; Seed <= 4; ++Seed)
+        {
+            for (int32 Count : { 1000, 10000, 50000 })
+            {
+                for (uintptr_t Stride : { uintptr_t(16), uintptr_t(48), uintptr_t(256), uintptr_t(4096) })
+                {
+                FRandom Random(Seed);
+
+                TArray<uint8*> Pointers;
+                TSet<uint8*>   Set;
+                for (int32 Index = 0; Index < Count; ++Index)
+                {
+                    uint8* const Pointer = reinterpret_cast<uint8*>(uintptr_t(0x1D2CA760000) + uintptr_t(Index) * Stride);
+                    Set.Add(Pointer);
+                    Pointers.Add(Pointer);
+                }
+
+                for (int32 Index = Pointers.Size() - 1; Index > 0; --Index)
+                {
+                    ::Swap(Pointers[Index], Pointers[static_cast<int32>(Random.RandInt(0, Index))]);
+                }
+
+                bool bMatches = true;
+                for (int32 Index = 0; Index < Pointers.Size() && bMatches; ++Index)
+                {
+                    Set.Remove(Pointers[Index]);
+                    bMatches = !Set.Contains(Pointers[Index]) && Set.Size() == Pointers.Size() - Index - 1;
+
+                    if (bMatches && (Index % 97) == 0 && Index + 1 < Pointers.Size())
+                    {
+                        bMatches = Set.Contains(Pointers[Index + 1 + static_cast<int32>(Random.RandInt(0, Pointers.Size() - Index - 2))]);
+                    }
+                }
+
+                if (!bMatches)
+                {
+                    LOG_ERROR("[STRESS FAIL] TSet pointer removal seed=%u count=%d stride=%llu", Seed, Count, static_cast<unsigned long long>(Stride));
+                }
+
+                TEST_EXPECT(bMatches);
+                TEST_EXPECT(Set.IsEmpty());
+                }
+            }
+        }
+    }
+
+    TEST_SECTION(TEXT("TSet keeps pointers right through random adds and removes over reused addresses"));
+    {
+        for (uint32 Seed = 1; Seed <= 4; ++Seed)
+        {
+            for (uintptr_t Stride : { uintptr_t(16), uintptr_t(64), uintptr_t(256), uintptr_t(4096) })
+            {
+                FRandom Random(Seed);
+
+                static constexpr int32 PoolSize = 20000;
+
+                TArray<uint8*> Live;
+                TArray<uint8*> Free;
+                for (int32 Index = 0; Index < PoolSize; ++Index)
+                {
+                    Free.Add(reinterpret_cast<uint8*>(uintptr_t(0x1D2CA760000) + uintptr_t(Index) * Stride));
+                }
+
+                TSet<uint8*> Set;
+                bool         bMatches = true;
+                for (int32 Step = 0; Step < 400000 && bMatches; ++Step)
+                {
+                    const bool bAdd = !Free.IsEmpty() && (Live.IsEmpty() || Random.RandInt(0, 99) < 52);
+
+                    TArray<uint8*>& From  = bAdd ? Free : Live;
+                    const int32     Index = static_cast<int32>(Random.RandInt(0, From.Size() - 1));
+                    uint8* const    Pointer = From[Index];
+                    From[Index] = From.Last();
+                    From.Pop();
+
+                    if (bAdd)
+                    {
+                        Set.Add(Pointer);
+                        Live.Add(Pointer);
+                    }
+                    else
+                    {
+                        Set.Remove(Pointer);
+                        Free.Add(Pointer);
+                    }
+
+                    bMatches = (Set.Contains(Pointer) == bAdd) && (Set.Size() == Live.Size());
+                }
+
+                for (int32 Index = 0; Index < Live.Size() && bMatches; ++Index)
+                {
+                    bMatches = Set.Contains(Live[Index]);
+                }
+
+                if (!bMatches)
+                {
+                    LOG_ERROR("[STRESS FAIL] TSet pointer churn seed=%u stride=%llu", Seed, static_cast<unsigned long long>(Stride));
+                }
+
+                TEST_EXPECT(bMatches);
+            }
+        }
+    }
+
     TEST_SECTION(TEXT("TInlineSet stays inline then spills to the heap"));
     {
         TInlineSet<int32, 4> Set;

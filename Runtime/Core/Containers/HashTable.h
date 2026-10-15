@@ -29,13 +29,20 @@ static constexpr uint32 HashLoadNumerator = 15;
 static constexpr uint32 HashLoadDenominator = 16;
 
 /**
- * @brief Applies Fibonacci mixing to a hash
+ * @brief Mixes a hash with MurmurHash3's 64-bit finalizer, so that every bit of the result depends on every bit of the hash.
+ * The table picks a key's home slot from the result's lowest bits, and keys such as aligned pointers allocated one after
+ * another differ only in their higher bits.
  * @param Hash Hash to mix
  * @return Returns the mixed hash
  */
 FORCEINLINE constexpr uint32 MixHash(uint64 Hash)
 {
-    return static_cast<uint32>(Hash * 0x9E3779B97F4A7C15ull);
+    Hash ^= Hash >> 33;
+    Hash *= 0xFF51AFD7ED558CCDull;
+    Hash ^= Hash >> 33;
+    Hash *= 0xC4CEB9FE1A85EC53ull;
+    Hash ^= Hash >> 33;
+    return static_cast<uint32>(Hash);
 }
 
 /**
@@ -1009,6 +1016,11 @@ private:
             return;
         }
 
+        RebuildTo(NewSlotCount);
+    }
+
+    void RebuildTo(SizeType NewSlotCount)
+    {
         ElementType* const OldSlots   = Slots;
         uint8* const       OldControl = Control;
         const SizeType     OldCount   = SlotCount;
@@ -1090,37 +1102,15 @@ private:
 
     bool RemoveSlotByRebuild(SizeType RemovedSlot)
     {
-        ElementType* const OldSlots   = Slots;
-        uint8* const       OldControl = Control;
-        const SizeType     OldCount   = SlotCount;
+        DestroyObject(&Slots[RemovedSlot]);
+        Control[RemovedSlot] = HashControlEmpty;
+        --NumElements;
 
-        AllocatorType NewAllocator;
-        NewAllocator.Allocate(OldCount);
-        BindStorage(NewAllocator, OldCount, true);
-        NumElements = 0;
-
-        for (SizeType Index = 0; Index < OldCount; ++Index)
+        if (NumElements > 0)
         {
-            if (OldControl[Index] == HashControlEmpty)
-            {
-                continue;
-            }
-
-            if (Index == RemovedSlot)
-            {
-                DestroyObject(&OldSlots[Index]);
-                continue;
-            }
-
-            const SizeType Slot = TryClaimSlot(KeyFuncs::GetKey(OldSlots[Index]));
-            CHECK(Slot != HashInvalidSlot);
-            RelocateObjects(&Slots[Slot], &OldSlots[Index], SizeType(1));
-            ++NumElements;
+            RebuildTo(SlotCount);
         }
 
-        Allocator.Free();
-        Allocator.MoveFrom(Move(NewAllocator), OldCount);
-        BindStorage(Allocator, OldCount, false);
         return true;
     }
 
