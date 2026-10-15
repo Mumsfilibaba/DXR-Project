@@ -150,20 +150,21 @@ private:
         SubMeshes.Add(InSubMesh);
     }
 
-    FString                              MeshName;
-    FVertexDeclaration                   Declaration;
-    FRHIBufferRef                        VertexStreams[VERTEX_MAX_STREAMS];
-    FRHIShaderResourceViewRef            AttributeBufferSRV;
-    FRHIBufferRef                        IndexBuffer;
-    FRHIShaderResourceViewRef            IndexBufferSRV;
-    FRHIGeometryAccelerationStructureRef RayTracingGeometry;
-    EIndexFormat                         IndexFormat;
-    int32                                IndexCount;
-    int32                                VertexCount;
-    FAABB                                BoundingBox;
-    TArray<FSubMesh>                     SubMeshes;
-    TArray<FMeshMaterialSlot>            MaterialSlots;
-    uint64                               ContentHash;
+    FString                               MeshName;
+    FVertexDeclaration                    Declaration;
+    FRHIBufferRef                         VertexStreams[VERTEX_MAX_STREAMS];
+    FRHIShaderResourceViewRef             AttributeBufferSRV;
+    FRHIBufferRef                         IndexBuffer;
+    FRHIShaderResourceViewRef             IndexBufferSRV;
+    FRHIGeometryAccelerationStructureRef  RayTracingGeometry;
+    EIndexFormat                          IndexFormat;
+    int32                                 IndexCount;
+    int32                                 VertexCount;
+    FAABB                                 BoundingBox;
+    TArray<FSubMesh>                      SubMeshes;
+    TArray<FRHIRayTracingGeometrySegment> RayTracingSegments;
+    TArray<FMeshMaterialSlot>             MaterialSlots;
+    uint64                                ContentHash;
 };
 
 template<>

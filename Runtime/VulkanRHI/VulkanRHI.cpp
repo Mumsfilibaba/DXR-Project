@@ -682,7 +682,9 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
         }
         else
         {
-            const FRHIGeometryAccelerationStructureBuildDesc BuildDesc(InGeometryDesc.VertexBuffer, InGeometryDesc.NumVertices, InGeometryDesc.IndexBuffer, InGeometryDesc.NumIndices, InGeometryDesc.IndexFormat, false);
+            FRHIGeometryAccelerationStructureBuildDesc BuildDesc(InGeometryDesc.VertexBuffer, InGeometryDesc.NumVertices, InGeometryDesc.IndexBuffer, InGeometryDesc.NumIndices, InGeometryDesc.IndexFormat, false);
+            BuildDesc.Segments    = InGeometryDesc.Segments;
+            BuildDesc.NumSegments = InGeometryDesc.NumSegments;
             bSucceeded = NewGeometry->Build(*BuildContext, BuildDesc);
         }
 

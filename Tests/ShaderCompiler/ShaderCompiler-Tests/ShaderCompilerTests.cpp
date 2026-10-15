@@ -762,13 +762,15 @@ bool ShaderCompilerRayTracing_Test()
         const CHAR_T* Filename;
         const CHAR_T* EntryPoint;
         EShaderStage  Stage;
+        EShaderModel  MinShaderModel;
     };
 
     const FRayTracingCase Cases[] =
     {
-        { TEXT("Shaders/RayGen.hlsl"),     TEXT("RayGen"),     EShaderStage::RayGen        },
-        { TEXT("Shaders/Miss.hlsl"),       TEXT("Miss"),       EShaderStage::RayMiss       },
-        { TEXT("Shaders/ClosestHit.hlsl"), TEXT("ClosestHit"), EShaderStage::RayClosestHit },
+        { TEXT("Shaders/RayGen.hlsl"),     TEXT("RayGen"),     EShaderStage::RayGen,        EShaderModel::SM_6_3 },
+        { TEXT("Shaders/Miss.hlsl"),       TEXT("Miss"),       EShaderStage::RayMiss,       EShaderModel::SM_6_3 },
+        { TEXT("Shaders/ClosestHit.hlsl"), TEXT("ClosestHit"), EShaderStage::RayClosestHit, EShaderModel::SM_6_5 },
+        { TEXT("Shaders/AnyHit.hlsl"),     TEXT("AnyHit"),     EShaderStage::RayAnyHit,     EShaderModel::SM_6_5 },
     };
 
     struct FPermutation
@@ -813,8 +815,10 @@ bool ShaderCompilerRayTracing_Test()
                     FShaderDefine(TEXT("RAY_TRACING_SHADER_EXECUTION_REORDERING"), Permutation.bSER ? TEXT("1") : TEXT("0")),
                 };
 
+                const EShaderModel ShaderModel = Permutation.ShaderModel > Case.MinShaderModel ? Permutation.ShaderModel : Case.MinShaderModel;
+
                 TArray<uint8> ShaderCode;
-                const bool bCompiled = CompileFile(Case.Filename, Case.EntryPoint, Permutation.ShaderModel, Case.Stage, OutputLanguage, false, ShaderCode, TArrayView<FShaderDefine>(Defines));
+                const bool bCompiled = CompileFile(Case.Filename, Case.EntryPoint, ShaderModel, Case.Stage, OutputLanguage, false, ShaderCode, TArrayView<FShaderDefine>(Defines));
                 TEST_EXPECT(bCompiled);
                 if (!bCompiled)
                 {
@@ -828,14 +832,14 @@ bool ShaderCompilerRayTracing_Test()
                 TEST_SECTION(TEXT("Ray-tracing shaders report their demangled export name"));
                 TEST_EXPECT(CString::Strcmp(CodeView.GetEntryPoint(), Case.EntryPoint) == 0);
 
-                TEST_SECTION(TEXT("Only the non-bindless closest-hit shader has local SRVs"));
+                TEST_SECTION(TEXT("Only the non-bindless hit shaders have local SRVs"));
                 uint32 NumLocalBindings = 0;
                 for (const FShaderResourceBinding& Binding : CodeView.GetBindings())
                 {
                     NumLocalBindings += Binding.Space == EShaderBindingSpace::RayTracingLocal ? 1 : 0;
                 }
 
-                if (Case.Stage == EShaderStage::RayClosestHit && !Permutation.bBindless)
+                if ((Case.Stage == EShaderStage::RayClosestHit || Case.Stage == EShaderStage::RayAnyHit) && !Permutation.bBindless)
                 {
                     bool bHasAttributes = false;
                     bool bHasIndices    = false;

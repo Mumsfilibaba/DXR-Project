@@ -5,6 +5,11 @@
 
 #define RAY_TRACING_MIRROR_ROUGHNESS_THRESHOLD (0.05f)
 
+#define RAY_TRACING_INSTANCE_MASK_ALL      (0xff)
+#define RAY_TRACING_RAY_TYPE_REFLECTION    (0)
+#define RAY_TRACING_NUM_RAY_TYPES          (1)
+#define RAY_TRACING_MISS_SHADER_REFLECTION (0)
+
 #if RAY_TRACING_SHADER_EXECUTION_REORDERING
     #define RAY_PAYLOAD [raypayload]
     #define RAY_PAYLOAD_QUALIFY(Member) Member : read(caller) : write(caller, closesthit, miss)

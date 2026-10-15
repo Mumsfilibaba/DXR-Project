@@ -33,7 +33,7 @@ SamplerState LUTSampler         : register(s3);
 [shader("closesthit")]
 void ClosestHit(inout FRayPayload PayLoad, in BuiltInTriangleIntersectionAttributes IntersectionAttributes)
 {
-    const FRayTracingGeometryIndices GeometryIndices = GeometryTable[InstanceID()];
+    const FRayTracingGeometryIndices GeometryIndices = GeometryTable[InstanceID() + GeometryIndex()];
     const FMaterial                  MaterialData    = Materials[GeometryIndices.MaterialIndex];
 
 #if ENABLE_BINDLESS
@@ -41,7 +41,7 @@ void ClosestHit(inout FRayPayload PayLoad, in BuiltInTriangleIntersectionAttribu
     ByteAddressBuffer                   InIndices    = GetResourceFromPackedDescriptorIndex(GeometryIndices.IndicesHandle);
 #endif
 
-    FHitSurface Surface = InterpolateTriangleHit(InAttributes, InIndices, PrimitiveIndex(), IntersectionAttributes.barycentrics);
+    FHitSurface Surface = InterpolateTriangleHit(InAttributes, InIndices, GeometryIndices.FirstTriangle + PrimitiveIndex(), IntersectionAttributes.barycentrics);
     TransformHitSurfaceToWorld(Surface, ObjectToWorld3x4(), WorldToObject3x4());
 
     const float3 FacingViewDir = normalize(-WorldRayDirection());

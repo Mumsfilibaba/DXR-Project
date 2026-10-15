@@ -373,6 +373,8 @@ FRHIGeometryAccelerationStructure* FMetalDeviceRHI::CreateGeometryAccelerationSt
     BuildDesc.IndexBuffer  = InGeometryDesc.IndexBuffer;
     BuildDesc.NumIndices   = InGeometryDesc.NumIndices;
     BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
+    BuildDesc.Segments     = InGeometryDesc.Segments;
+    BuildDesc.NumSegments  = InGeometryDesc.NumSegments;
     BuildDesc.bUpdate      = false;
 
     {

@@ -18,7 +18,7 @@ FRayTracingPrimaryDebugPass::~FRayTracingPrimaryDebugPass()
 
 bool FRayTracingPrimaryDebugPass::Initialize(FFrameResources& /*Resources*/)
 {
-    if (!RHI::bSupportsInlineRayTracing)
+    if (!RHI::bSupportsInlineRayTracing || !RHI::bSupportsBindless)
     {
         return true;
     }
@@ -72,6 +72,17 @@ void FRayTracingPrimaryDebugPass::Record(FRHICommandList& CommandList, FFrameRes
     CommandList.SetComputePipelineState(PrimaryRayDebugPipeline.Get());
     CommandList.SetConstantBuffer(PrimaryRayDebugShader.Get(), Resources.CameraBuffer.Get(), 0);
     CommandList.SetShaderResourceView(PrimaryRayDebugShader.Get(), Resources.RayTracingScene->GetShaderResourceView(), 0);
+
+    if (Resources.MaterialDataBufferSRV)
+    {
+        CommandList.SetShaderResourceView(PrimaryRayDebugShader.Get(), Resources.MaterialDataBufferSRV.Get(), 8);
+    }
+
+    if (Resources.RayTracingGeometryTableSRV)
+    {
+        CommandList.SetShaderResourceView(PrimaryRayDebugShader.Get(), Resources.RayTracingGeometryTableSRV.Get(), 9);
+    }
+
     CommandList.SetUnorderedAccessView(PrimaryRayDebugShader.Get(), Output->GetUnorderedAccessView(), 0);
 
     const uint32 Width  = Output->GetDesc().Extent.X;

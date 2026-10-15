@@ -337,7 +337,7 @@ bool FMetalGeometryAccelerationStructureRHI::Build(FMetalCommandContext& Context
 
 MTLPrimitiveAccelerationStructureDescriptor* FMetalGeometryAccelerationStructureRHI::CreateDescriptor(const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) const
 {
-    MTLAccelerationStructureGeometryDescriptor* GeometryDescriptor = nil;
+    NSMutableArray<MTLAccelerationStructureGeometryDescriptor*>* GeometryDescriptors = [NSMutableArray array];
     if (GetGeometryType() == ERayTracingGeometryType::ProceduralAABBs)
     {
         FMetalBufferRHI* AABBBuffer = GetMetalBuffer(BuildDesc.AABBBuffer);
@@ -352,7 +352,8 @@ MTLPrimitiveAccelerationStructureDescriptor* FMetalGeometryAccelerationStructure
         BoundingBoxes.boundingBoxBufferOffset = AABBBuffer->GetMetalBindOffset();
         BoundingBoxes.boundingBoxStride       = BuildDesc.AABBStride;
         BoundingBoxes.boundingBoxCount        = BuildDesc.NumAABBs;
-        GeometryDescriptor = BoundingBoxes;
+        BoundingBoxes.opaque                  = YES;
+        [GeometryDescriptors addObject:BoundingBoxes];
     }
     else
     {
@@ -363,32 +364,38 @@ MTLPrimitiveAccelerationStructureDescriptor* FMetalGeometryAccelerationStructure
             return nil;
         }
 
-        MTLAccelerationStructureTriangleGeometryDescriptor* Triangles = [MTLAccelerationStructureTriangleGeometryDescriptor descriptor];
-        Triangles.vertexBuffer       = VertexBuffer->GetMTLBuffer();
-        Triangles.vertexBufferOffset = VertexBuffer->GetMetalBindOffset();
-        Triangles.vertexStride       = VertexBuffer->GetDesc().Stride;
-        Triangles.vertexFormat       = MTLAttributeFormatFloat3;
-
         FMetalBufferRHI* IndexBuffer = GetMetalBuffer(BuildDesc.IndexBuffer);
-        if (IndexBuffer && BuildDesc.NumIndices > 0)
-        {
-            Triangles.indexBuffer       = IndexBuffer->GetMTLBuffer();
-            Triangles.indexBufferOffset = IndexBuffer->GetMetalBindOffset();
-            Triangles.indexType         = BuildDesc.IndexFormat == EIndexFormat::uint16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
-            Triangles.triangleCount     = BuildDesc.NumIndices / 3;
-        }
-        else
-        {
-            Triangles.triangleCount = BuildDesc.NumVertices / 3;
-        }
+        const bool       bIndexed    = IndexBuffer && BuildDesc.NumIndices > 0;
+        const uint32     IndexStride = GetStrideFromIndexFormat(BuildDesc.IndexFormat);
 
-        GeometryDescriptor = Triangles;
+        for (uint32 GeometryIndex = 0; GeometryIndex < (bIndexed ? BuildDesc.GetNumGeometries() : 1u); ++GeometryIndex)
+        {
+            MTLAccelerationStructureTriangleGeometryDescriptor* Triangles = [MTLAccelerationStructureTriangleGeometryDescriptor descriptor];
+            Triangles.vertexBuffer       = VertexBuffer->GetMTLBuffer();
+            Triangles.vertexBufferOffset = VertexBuffer->GetMetalBindOffset();
+            Triangles.vertexStride       = VertexBuffer->GetDesc().Stride;
+            Triangles.vertexFormat       = MTLAttributeFormatFloat3;
+            Triangles.opaque             = YES;
+
+            if (bIndexed)
+            {
+                const FRHIRayTracingGeometrySegment Segment = BuildDesc.GetSegment(GeometryIndex);
+                Triangles.indexBuffer       = IndexBuffer->GetMTLBuffer();
+                Triangles.indexBufferOffset = IndexBuffer->GetMetalBindOffset() + NSUInteger(Segment.FirstIndex) * IndexStride;
+                Triangles.indexType         = BuildDesc.IndexFormat == EIndexFormat::uint16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+                Triangles.triangleCount     = Segment.NumIndices / 3;
+            }
+            else
+            {
+                Triangles.triangleCount = BuildDesc.NumVertices / 3;
+            }
+
+            [GeometryDescriptors addObject:Triangles];
+        }
     }
 
-    GeometryDescriptor.opaque = YES;
-
     MTLPrimitiveAccelerationStructureDescriptor* Descriptor = [MTLPrimitiveAccelerationStructureDescriptor descriptor];
-    Descriptor.geometryDescriptors = @[ GeometryDescriptor ];
+    Descriptor.geometryDescriptors = GeometryDescriptors;
     Descriptor.usage               = ConvertAccelerationStructureUsage(GetFlags());
     return Descriptor;
 }

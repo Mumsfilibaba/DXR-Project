@@ -1,4 +1,5 @@
 #include "Core/Templates/CString.h"
+#include "Core/Stats/Stats.h"
 #include "RendererCore/Shaders/ShaderType.h"
 
 static FShaderType* GShaderTypeList = nullptr;
@@ -52,6 +53,7 @@ bool FShaderType::ShouldCompilePermutation(const FShaderPermutationDesc& Desc) c
 void FShaderType::BuildCompilationEnvironment(const FShaderPermutationDesc& Desc, FShaderCompilationEnvironment& OutEnvironment) const
 {
     OutEnvironment.RequireShaderModel(MinShaderModel);
+    OutEnvironment.SetDefine(TEXT("STATS_ENABLED"), STATS_ENABLED ? TEXT("(1)") : TEXT("(0)"));
 
     if (BuildEnvironment)
     {

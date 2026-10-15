@@ -3,6 +3,8 @@
 
 #define RT_MAX_POINT_LIGHTS 8
 
+#define RT_GEOMETRY_FLAG_ALPHA_TESTED (1u)
+
 struct FRayTracingSceneConstants
 {
     // 0-16
@@ -49,6 +51,9 @@ struct FRayTracingGeometryIndices
     uint  IndicesHandle;
     uint  MaterialIndex;
     float DeterminantSign;
+    // 16-24
+    uint  FirstTriangle;
+    uint  Flags;
 };
 
 #endif

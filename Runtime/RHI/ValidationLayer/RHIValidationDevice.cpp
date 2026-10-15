@@ -877,6 +877,12 @@ FRHIGeometryAccelerationStructure* FRHIValidationDevice::CreateGeometryAccelerat
             RHI_VALIDATION_ERROR("CreateGeometryAccelerationStructure indexed geometry requires an index buffer and valid index format.");
             return nullptr;
         }
+
+        if (!RHIValidationHelpers::AreGeometrySegmentsValid(InGeometryDesc.Segments, InGeometryDesc.NumSegments, InGeometryDesc.NumIndices))
+        {
+            RHI_VALIDATION_ERROR("CreateGeometryAccelerationStructure: each segment must cover a whole number of triangles within the index buffer.");
+            return nullptr;
+        }
     }
 
     if (InGeometryDesc.IsClusteredGeometry() && !RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure)

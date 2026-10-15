@@ -36,6 +36,8 @@ struct FRHIGeometryAccelerationStructureDesc
         , IndexBuffer(nullptr)
         , NumIndices(0)
         , IndexFormat(EIndexFormat::Unknown)
+        , Segments(nullptr)
+        , NumSegments(0)
     {
     }
 
@@ -52,6 +54,8 @@ struct FRHIGeometryAccelerationStructureDesc
         , IndexBuffer(InIndexBuffer)
         , NumIndices(InNumIndices)
         , IndexFormat(InIndexFormat)
+        , Segments(nullptr)
+        , NumSegments(0)
     {
     }
 
@@ -70,11 +74,13 @@ struct FRHIGeometryAccelerationStructureDesc
     {
         struct
         {
-            FRHIBuffer*  VertexBuffer;
-            uint32       NumVertices;
-            FRHIBuffer*  IndexBuffer;
-            uint32       NumIndices;
-            EIndexFormat IndexFormat;
+            FRHIBuffer*                          VertexBuffer;
+            uint32                               NumVertices;
+            FRHIBuffer*                          IndexBuffer;
+            uint32                               NumIndices;
+            EIndexFormat                         IndexFormat;
+            const FRHIRayTracingGeometrySegment* Segments;
+            uint32                               NumSegments;
         };
 
         struct

@@ -427,7 +427,9 @@ FRHIGeometryAccelerationStructure* FD3D12DeviceRHI::CreateGeometryAccelerationSt
         }
         else
         {
-            const FRHIGeometryAccelerationStructureBuildDesc BuildDesc(InGeometryDesc.VertexBuffer, InGeometryDesc.NumVertices, InGeometryDesc.IndexBuffer, InGeometryDesc.NumIndices, InGeometryDesc.IndexFormat, false);
+            FRHIGeometryAccelerationStructureBuildDesc BuildDesc(InGeometryDesc.VertexBuffer, InGeometryDesc.NumVertices, InGeometryDesc.IndexBuffer, InGeometryDesc.NumIndices, InGeometryDesc.IndexFormat, false);
+            BuildDesc.Segments    = InGeometryDesc.Segments;
+            BuildDesc.NumSegments = InGeometryDesc.NumSegments;
             bSucceeded = D3D12Geometry->Build(*BuildContext, BuildDesc);
         }
 

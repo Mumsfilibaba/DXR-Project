@@ -75,8 +75,9 @@ struct FD3D12HitGroup
 
 struct FD3D12Library
 {
-    FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWideString>& InExportNames)
+    FD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWideString>& InExportNames, const TArray<FWideString>& InRenamedExports)
         : ExportNames(InExportNames)
+        , RenamedExports(InRenamedExports)
         , ExportDescs(InExportNames.Size())
         , Desc()
     {
@@ -85,7 +86,7 @@ struct FD3D12Library
             D3D12_EXPORT_DESC& TempDesc = ExportDescs[i];
             TempDesc.Flags          = D3D12_EXPORT_FLAG_NONE;
             TempDesc.Name           = *ExportNames[i];
-            TempDesc.ExportToRename = nullptr;
+            TempDesc.ExportToRename = RenamedExports.IsValidIndex(i) ? *RenamedExports[i] : nullptr;
         }
 
         Desc.DXILLibrary = ByteCode;
@@ -94,6 +95,7 @@ struct FD3D12Library
     }
 
     TArray<FWideString>       ExportNames;
+    TArray<FWideString>       RenamedExports;
     TArray<D3D12_EXPORT_DESC> ExportDescs;
     D3D12_DXIL_LIBRARY_DESC   Desc;
 };
@@ -106,9 +108,9 @@ public:
 
     void Generate();
 
-    void AddLibrary(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWideString>& ExportNames)
+    void AddLibrary(D3D12_SHADER_BYTECODE ByteCode, const TArray<FWideString>& ExportNames, const TArray<FWideString>& RenamedExports = TArray<FWideString>())
     {
-        Libraries.Emplace(ByteCode, ExportNames);
+        Libraries.Emplace(ByteCode, ExportNames, RenamedExports);
     }
 
     void AddHitGroup(const FWideString& HitGroupName, ERayTracingHitGroupType HitGroupType, const FWideString& ClosestHit, const FWideString& AnyHit, const FWideString& Intersection)

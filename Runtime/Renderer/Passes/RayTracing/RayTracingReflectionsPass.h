@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Stats/Stats.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
 #include "Engine/Resources/Texture.h"
@@ -61,6 +62,16 @@ private:
 
     void LoadReflectionNoiseMask();
 
+#if STATS_ENABLED
+    void ClearAlphaTestCounter(FRHICommandList& CommandList);
+    void ReadBackAlphaTestCounter(FRHICommandList& CommandList);
+
+    static constexpr uint32 NumAlphaTestReadbacks = 3;
+#else
+    void ClearAlphaTestCounter(FRHICommandList&) { }
+    void ReadBackAlphaTestCounter(FRHICommandList&) { }
+#endif
+
     FRayTracingVariant          LocalVariant;
     FRayTracingVariant          BindlessVariant;
     FRayTracingVariant          SERVariant;
@@ -71,4 +82,11 @@ private:
     uint32                      CurrentBindlessHitGroupCapacity;
     TSharedPtr<FTexture>        ReflectionNoiseTexture;
     uint32                      ReflectionNoiseSize;
+
+#if STATS_ENABLED
+    FRHIBufferRef               AlphaTestCounter;
+    FRHIUnorderedAccessViewRef  AlphaTestCounterUAV;
+    FRHIBufferRef               AlphaTestReadbacks[NumAlphaTestReadbacks];
+    uint32                      AlphaTestFrame;
+#endif
 };

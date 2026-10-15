@@ -15,7 +15,7 @@ static FAutoConsoleVariableRef CVarRayTracingASCacheMaxSizeMB(
     GRayTracingASCacheMaxSizeMB);
 
 // Bump when the renderer builds structures differently from the same mesh data, so earlier entries miss
-static constexpr uint32 CacheKeyVersion = 1;
+static constexpr uint32 CacheKeyVersion = 2;
 
 static constexpr const CHAR_T* CacheFolderName = TEXT("/RayTracing");
 
@@ -64,6 +64,8 @@ FString FRayTracingStructureCache::CreateKey(const FMesh& Mesh)
     Hash = HashValue(Hash, GeometryDesc.IndexFormat);
     Hash = HashValue(Hash, GeometryDesc.Flags);
     Hash = HashValue(Hash, Mesh.GetVertexDeclaration().GetStreamStride(0));
+    Hash = HashValue(Hash, GeometryDesc.NumSegments);
+    Hash = HashBytes(Hash, GeometryDesc.Segments, GeometryDesc.NumSegments * sizeof(FRHIRayTracingGeometrySegment));
 
     return GetKeyPrefix(Mesh) + FString::Printf(TEXT("%016llx"), static_cast<unsigned long long>(Hash));
 }

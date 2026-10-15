@@ -6,6 +6,9 @@
 // Must match RT_MAX_POINT_LIGHTS in Assets/Shaders/RayTracingBindless.hlsli
 #define RT_MAX_POINT_LIGHTS 8
 
+// Must match RT_GEOMETRY_FLAG_ALPHA_TESTED in Assets/Shaders/RayTracingBindless.hlsli
+#define RT_GEOMETRY_FLAG_ALPHA_TESTED (1u)
+
 // Mirrors RayTracingSceneConstants in Assets/Shaders/RayTracingBindless.hlsli.
 struct FRayTracingSceneConstantsHLSL
 {
@@ -41,8 +44,10 @@ struct FRayTracingGeometryIndicesHLSL
     FRHIDescriptorHandle IndicesHandle    = {};
     uint32               MaterialIndex    = 0;
     float                DeterminantSign  = 1.0f; // -1 when the instance transform mirrors, matching FPerObject.
+    uint32               FirstTriangle    = 0;
+    uint32               Flags            = 0;
 };
 
 static_assert(sizeof(FRHIDescriptorHandle) == sizeof(uint32), "FRHIDescriptorHandle must be 4 bytes for the HLSL layout");
 static_assert(sizeof(FRayTracingSceneConstantsHLSL) == 368, "FRayTracingSceneConstantsHLSL must match the HLSL constant buffer layout");
-static_assert(sizeof(FRayTracingGeometryIndicesHLSL) == 16, "FRayTracingGeometryIndicesHLSL must match the HLSL structured-buffer layout");
+static_assert(sizeof(FRayTracingGeometryIndicesHLSL) == 24, "FRayTracingGeometryIndicesHLSL must match the HLSL structured-buffer layout");

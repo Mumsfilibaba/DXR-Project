@@ -12,6 +12,7 @@
 #define MATERIAL_SLOT_NON_UNIFORM (1)
 #define MATERIAL_ARRAY_REGISTER   t8
 #include "MaterialSampling.hlsli"
+#include "RayTracingAlphaTest.hlsli"
 
 ConstantBuffer<FCamera>                     CameraBuffer   : register(b0);
 ConstantBuffer<FRayTracingSceneConstants>   SceneConstants : register(b1);
@@ -26,6 +27,10 @@ TextureCube<float4>                          IBLSpecular     : register(t6);
 Texture2D<float2>                            IntegrationLUT  : register(t7);
 StructuredBuffer<FRayTracingGeometryIndices> GeometryTable   : register(t9);
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4>   OutTexture      : register(u0);
+
+#if STATS_ENABLED
+    RWStructuredBuffer<uint> AlphaTests : register(u1);
+#endif
 
 SamplerState GBufferSampler     : register(s0);
 SamplerState EnvironmentSampler : register(s2);
@@ -77,8 +82,30 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     Ray.TMax      = SceneConstants.ReflectionMaxRayDistance;
 
     RayQuery<RAY_FLAG_CULL_BACK_FACING_TRIANGLES> Query;
-    Query.TraceRayInline(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, Ray);
-    Query.Proceed();
+    Query.TraceRayInline(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, RAY_TRACING_INSTANCE_MASK_ALL, Ray);
+
+    while (Query.Proceed())
+    {
+        if (Query.CandidateType() == CANDIDATE_NON_OPAQUE_TRIANGLE)
+        {
+            const FRayTracingGeometryIndices CandidateIndices = GeometryTable[Query.CandidateInstanceID() + Query.CandidateGeometryIndex()];
+            if ((CandidateIndices.Flags & RT_GEOMETRY_FLAG_ALPHA_TESTED) == 0)
+            {
+                Query.CommitNonOpaqueTriangleHit();
+            }
+            else
+            {
+            #if STATS_ENABLED
+                CountAlphaTests(AlphaTests);
+            #endif
+
+                if (PassesAlphaTestBindless(CandidateIndices, Materials[CandidateIndices.MaterialIndex], Query.CandidatePrimitiveIndex(), Query.CandidateTriangleBarycentrics()))
+                {
+                    Query.CommitNonOpaqueTriangleHit();
+                }
+            }
+        }
+    }
 
     float3 Color;
     float  OutHitT = -1.0f;
@@ -88,13 +115,13 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         const float HitT = Query.CommittedRayT();
         OutHitT = HitT;
 
-        const FRayTracingGeometryIndices GeometryIndices = GeometryTable[Query.CommittedInstanceID()];
+        const FRayTracingGeometryIndices GeometryIndices = GeometryTable[Query.CommittedInstanceID() + Query.CommittedGeometryIndex()];
         const FMaterial                  MaterialData    = Materials[GeometryIndices.MaterialIndex];
 
         StructuredBuffer<FVertexAttributes> InAttributes = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.AttributesHandle);
         ByteAddressBuffer                   InIndices    = GetResourceFromPackedDescriptorIndexNonUniform(GeometryIndices.IndicesHandle);
 
-        FHitSurface Surface = InterpolateTriangleHit(InAttributes, InIndices, Query.CommittedPrimitiveIndex(), Query.CommittedTriangleBarycentrics());
+        FHitSurface Surface = InterpolateTriangleHit(InAttributes, InIndices, GeometryIndices.FirstTriangle + Query.CommittedPrimitiveIndex(), Query.CommittedTriangleBarycentrics());
         TransformHitSurfaceToWorld(Surface, Query.CommittedObjectToWorld3x4(), Query.CommittedWorldToObject3x4());
 
         const float3 HitViewDir = normalize(-Ray.Direction);

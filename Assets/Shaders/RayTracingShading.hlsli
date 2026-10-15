@@ -49,6 +49,16 @@ FHitSurface InterpolateTriangleHit(StructuredBuffer<FVertexAttributes> InAttribu
     return Surface;
 }
 
+float2 InterpolateTriangleTexCoord(StructuredBuffer<FVertexAttributes> InAttributes, ByteAddressBuffer InIndices, uint PrimitiveIndex, float2 Barycentrics)
+{
+    const uint  TriangleIndexStride = 3 * 4;
+    const uint3 Indices             = InIndices.Load3(PrimitiveIndex * TriangleIndexStride);
+
+    return (InAttributes[Indices[0]].TexCoord * (1.0f - Barycentrics.x - Barycentrics.y)) +
+           (InAttributes[Indices[1]].TexCoord * Barycentrics.x) +
+           (InAttributes[Indices[2]].TexCoord * Barycentrics.y);
+}
+
 void TransformHitSurfaceToWorld(inout FHitSurface Surface, float3x4 ObjectToWorld, float3x4 WorldToObject)
 {
     Surface.Normal  = normalize(mul(Surface.Normal, (float3x3)WorldToObject));

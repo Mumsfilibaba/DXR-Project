@@ -64,15 +64,45 @@ void RayGen()
 #if SHADER_BACKEND == SHADER_BACKEND_VULKAN && RAY_TRACING_SHADER_EXECUTION_REORDERING
     HitObjectEXT Hit;
     HitObjectRecordEmptyEXT(Hit);
-    HitObjectTraceRayEXT(Hit, Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray.Origin, Ray.TMin, Ray.Direction, Ray.TMax, PayLoad);
+    HitObjectTraceRayEXT(
+        Hit, 
+        Scene,
+        RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 
+        RAY_TRACING_INSTANCE_MASK_ALL, 
+        RAY_TRACING_RAY_TYPE_REFLECTION, 
+        RAY_TRACING_NUM_RAY_TYPES, 
+        RAY_TRACING_MISS_SHADER_REFLECTION, 
+        Ray.Origin, 
+        Ray.TMin, 
+        Ray.Direction, 
+        Ray.TMax, 
+        PayLoad);
+
     ReorderThreadWithHitObjectEXT(Hit);
     HitObjectExecuteShaderEXT(Hit, PayLoad);
 #elif RAY_TRACING_SHADER_EXECUTION_REORDERING
-    dx::HitObject Hit = dx::HitObject::TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, PayLoad);
+    dx::HitObject Hit = dx::HitObject::TraceRay(
+        Scene, 
+        RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 
+        RAY_TRACING_INSTANCE_MASK_ALL, 
+        RAY_TRACING_RAY_TYPE_REFLECTION, 
+        RAY_TRACING_NUM_RAY_TYPES, 
+        RAY_TRACING_MISS_SHADER_REFLECTION, 
+        Ray, 
+        PayLoad);
+
     dx::MaybeReorderThread(Hit);
     dx::HitObject::Invoke(Hit, PayLoad);
 #else
-    TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, PayLoad);
+    TraceRay(
+        Scene, 
+        RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 
+        RAY_TRACING_INSTANCE_MASK_ALL, 
+        RAY_TRACING_RAY_TYPE_REFLECTION, 
+        RAY_TRACING_NUM_RAY_TYPES, 
+        RAY_TRACING_MISS_SHADER_REFLECTION, 
+        Ray, 
+        PayLoad);
 #endif
 
     OutTexture[DispatchIndex.xy] = float4(PayLoad.Color, PayLoad.HitT);

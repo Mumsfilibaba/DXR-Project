@@ -260,10 +260,11 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
                 continue;
             }
 
-            const FWideString ShaderIdentifier = StringCast<WIDECHAR>(D3D12HitGroupShader->GetIdentifier()).ToString();
+            const FWideString FunctionName     = StringCast<WIDECHAR>(D3D12HitGroupShader->GetIdentifier()).ToString();
+            const FWideString ShaderIdentifier = StringCast<WIDECHAR>(HitGroup.Name + TEXT("_") + D3D12HitGroupShader->GetIdentifier()).ToString();
 
             Shaders.Emplace(D3D12HitGroupShader);
-            PipelineStream.AddLibrary(D3D12HitGroupShader->GetByteCode().GetD3D12Bytecode(), { ShaderIdentifier });
+            PipelineStream.AddLibrary(D3D12HitGroupShader->GetByteCode().GetD3D12Bytecode(), { ShaderIdentifier }, { FunctionName });
             PipelineStream.PayLoadExportNames.Emplace(ShaderIdentifier);
             HitGroupMemberExports.Emplace(ShaderIdentifier);
             HitGroupMemberShaders.Emplace(D3D12HitGroupShader);

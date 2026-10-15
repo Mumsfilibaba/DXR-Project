@@ -21,6 +21,7 @@ FMesh::FMesh()
     , VertexCount(0)
     , BoundingBox()
     , SubMeshes()
+    , RayTracingSegments()
     , MaterialSlots()
     , ContentHash(0)
 {
@@ -98,15 +99,6 @@ bool FMesh::Initialize(const FMeshData& MeshData, bool bCreateRayTracingResource
         IndexBuffer->SetDebugName(TEXT("IndexBuffer"));
     }
 
-    if (bCreateRayTracingResources)
-    {
-        if (!EnsureRayTracingResources())
-        {
-            return false;
-        }
-    }
-    
-    // Add submeshes
     if (!MeshData.SubMeshes.IsEmpty())
     {
         SubMeshes = MeshData.SubMeshes;
@@ -118,6 +110,19 @@ bool FMesh::Initialize(const FMeshData& MeshData, bool bCreateRayTracingResource
         WholeMesh.IndexCount  = IndexCount;
 
         AddSubMesh(WholeMesh);
+    }
+
+    for (const FSubMesh& SubMesh : SubMeshes)
+    {
+        RayTracingSegments.Emplace(SubMesh.StartIndex, SubMesh.IndexCount);
+    }
+
+    if (bCreateRayTracingResources)
+    {
+        if (!EnsureRayTracingResources())
+        {
+            return false;
+        }
     }
 
     MeshName = MeshData.Name;
@@ -253,7 +258,10 @@ bool FMesh::IsRayTracingReady() const
 
 FRHIGeometryAccelerationStructureDesc FMesh::GetRayTracingGeometryDesc() const
 {
-    return FRHIGeometryAccelerationStructureDesc(GetPositionBuffer(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::AllowCompaction);
+    FRHIGeometryAccelerationStructureDesc GeometryDesc(GetPositionBuffer(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::AllowCompaction);
+    GeometryDesc.Segments    = RayTracingSegments.Data();
+    GeometryDesc.NumSegments = RayTracingSegments.Size();
+    return GeometryDesc;
 }
 
 void FMesh::SetRayTracingGeometry(const FRHIGeometryAccelerationStructureRef& Geometry)
@@ -285,6 +293,8 @@ bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
     BuildDesc.IndexBuffer  = IndexBuffer.Get();
     BuildDesc.NumIndices   = IndexCount;
     BuildDesc.IndexFormat  = IndexFormat;
+    BuildDesc.Segments     = RayTracingSegments.Data();
+    BuildDesc.NumSegments  = RayTracingSegments.Size();
     BuildDesc.bUpdate      = true;
 
     CommandList.BuildGeometryAccelerationStructure(RayTracingGeometry.Get(), BuildDesc);

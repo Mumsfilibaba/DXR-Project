@@ -6,6 +6,9 @@
 // Mirrors MATERIAL_SRV_REGISTER_BASE in Assets/Shaders/ClosestHit.hlsl.
 constexpr uint32 RAY_TRACING_MATERIAL_SLOT_REGISTER = 2;
 
+constexpr uint32 RAY_TRACING_HIT_GROUP_OPAQUE       = 0;
+constexpr uint32 RAY_TRACING_HIT_GROUP_ALPHA_TESTED = 1;
+
 class FRayTracingSER : SHADER_PERMUTATION_BOOL(TEXT("RAY_TRACING_SHADER_EXECUTION_REORDERING"));
 
 using FRayTracingPermutation = TShaderPermutation<FBindless, FRayTracingSER>;
@@ -55,6 +58,13 @@ class FRayMissShader : public TRayTracingShaderRules<FRayMissShader>
 class FRayClosestHitShader : public TRayTracingShaderRules<FRayClosestHitShader>
 {
     DECLARE_SHADER_TYPE(FRayClosestHitShader, EShaderStage::RayClosestHit);
+
+    using FPermutation = FRayTracingPermutation;
+};
+
+class FRayAnyHitShader : public TRayTracingShaderRules<FRayAnyHitShader>
+{
+    DECLARE_SHADER_TYPE(FRayAnyHitShader, EShaderStage::RayAnyHit);
 
     using FPermutation = FRayTracingPermutation;
 };

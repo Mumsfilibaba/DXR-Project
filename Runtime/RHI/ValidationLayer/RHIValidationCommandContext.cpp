@@ -1564,6 +1564,12 @@ void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeomet
             RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure indexed geometry requires an index buffer and valid format.");
             return;
         }
+
+        if (!RHIValidationHelpers::AreGeometrySegmentsValid(BuildDesc.Segments, BuildDesc.NumSegments, BuildDesc.NumIndices))
+        {
+            RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure: each segment must cover a whole number of triangles within the index buffer.");
+            return;
+        }
     }
 
     if (BuildDesc.bUpdate && !IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate))

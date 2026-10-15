@@ -25,6 +25,12 @@ static FAutoConsoleVariableRef CVarRayTracingASCache(
     "instead of built, and written there once built and compacted."),
     GRayTracingASCache);
 
+static FMaterial* GetSubMeshMaterial(const FSceneStaticMesh& StaticMesh, int32 SubMeshIndex)
+{
+    TSharedPtr<FMaterial> Material = StaticMesh.GetMaterial(SubMeshIndex);
+    return Material ? Material.Get() : StaticMesh.GetMaterial().Get();
+}
+
 FRayTracingSceneBuilder::FRayTracingSceneBuilder(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , GeometryTableCapacity(0)
@@ -75,10 +81,10 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
 
     Resources.RayTracingGeometryInstances.Clear();
     Resources.RayTracingHitGroupBindings.Clear();
+    Resources.RayTracingHitGroupShaderIndices.Clear();
     Resources.RayTracingMeshToHitGroupIndex.Clear();
     Resources.RayTracingGeometryTableData.Clear();
 
-    uint32 NextInstanceIndex       = 0;
     uint32 LazyBLASBuildsThisFrame = 0;
     uint32 CacheLoadsThisFrame     = 0;
     uint32 CacheMissesThisFrame    = 0;
@@ -87,12 +93,6 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
     TSet<FRHIRayTracingAccelerationStructure*> StructuresInScene;
     for (const FSceneStaticMesh* StaticMesh : Scene->GetStaticMeshes())
     {
-        TSharedPtr<FMaterial> Material = StaticMesh->GetMaterial();
-        if (Material->HasAlphaMask())
-        {
-            continue;
-        }
-
         FMesh& Mesh = *StaticMesh->Mesh;
 
         const bool bHadGeometry     = Mesh.GetRayTracingGeometry() != nullptr;
@@ -130,75 +130,97 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
             }
         }
 
-        const uint32 InstanceIndex = NextInstanceIndex++;
-
         FRHIShaderResourceView* AttributeBufferSRV = StaticMesh->Mesh->GetAttributeBufferSRV();
         FRHIShaderResourceView* IndexBufferSRV     = StaticMesh->Mesh->GetIndexBufferSRV();
 
         const FMatrix3x4 InstanceTransform = StaticMesh->PerObjectBuffer.Transform;
 
+        FRayTracingHitGroupKey HitGroupKey;
+        HitGroupKey.Mesh = &Mesh;
+
+        bool bAnyAlphaTested = false;
+        bool bAnyDoubleSided = false;
+
+        for (int32 SubMeshIndex = 0; SubMeshIndex < Mesh.GetNumSubMeshes(); ++SubMeshIndex)
+        {
+            FMaterial* Material = GetSubMeshMaterial(*StaticMesh, SubMeshIndex);
+            HitGroupKey.Materials.Add(Material);
+
+            bAnyAlphaTested |= Material->HasAlphaMask();
+            bAnyDoubleSided |= Material->IsDoubleSided();
+        }
+
         uint32 HitGroupIndex = 0;
-        if (uint32* ExistingIndex = Resources.RayTracingMeshToHitGroupIndex.Find(StaticMesh->Mesh.Get()))
+        if (uint32* ExistingIndex = Resources.RayTracingMeshToHitGroupIndex.Find(HitGroupKey))
         {
             HitGroupIndex = *ExistingIndex;
         }
         else
         {
             HitGroupIndex = Resources.RayTracingHitGroupBindings.Size();
-            Resources.RayTracingMeshToHitGroupIndex[StaticMesh->Mesh.Get()] = HitGroupIndex;
+            Resources.RayTracingMeshToHitGroupIndex[HitGroupKey] = HitGroupIndex;
 
-            TArray<FRHIHitGroupLocalShaderBinding>& Record = Resources.RayTracingHitGroupBindings.Emplace();
-            if (!bNeedBindlessData)
+            for (FMaterial* Material : HitGroupKey.Materials)
             {
-                if (AttributeBufferSRV)
-                {
-                    Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(AttributeBufferSRV, 0));
-                }
+                Resources.RayTracingHitGroupShaderIndices.Add(Material->HasAlphaMask() ? RAY_TRACING_HIT_GROUP_ALPHA_TESTED : RAY_TRACING_HIT_GROUP_OPAQUE);
 
-                if (IndexBufferSRV)
+                TArray<FRHIHitGroupLocalShaderBinding>& Record = Resources.RayTracingHitGroupBindings.Emplace();
+                if (!bNeedBindlessData)
                 {
-                    Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(IndexBufferSRV, 1));
-                }
+                    if (AttributeBufferSRV)
+                    {
+                        Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(AttributeBufferSRV, 0));
+                    }
 
-                for (uint32 Slot = 0; Slot < EMaterialTextureSlot::Count; ++Slot)
-                {
-                    FRHITexture* SlotTexture = ResolveMaterialSlotTexture(*Material, EMaterialTextureSlot::Type(Slot));
-                    Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(SafeGetDefaultSRV(SlotTexture), RAY_TRACING_MATERIAL_SLOT_REGISTER + Slot));
-                }
+                    if (IndexBufferSRV)
+                    {
+                        Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(IndexBufferSRV, 1));
+                    }
 
-                Record.Add(FRHIHitGroupLocalShaderBinding::CreateSamplerState(Material->GetMaterialSampler(), 0));
+                    for (uint32 Slot = 0; Slot < EMaterialTextureSlot::Count; ++Slot)
+                    {
+                        FRHITexture* SlotTexture = ResolveMaterialSlotTexture(*Material, EMaterialTextureSlot::Type(Slot));
+                        Record.Add(FRHIHitGroupLocalShaderBinding::CreateShaderResourceView(SafeGetDefaultSRV(SlotTexture), RAY_TRACING_MATERIAL_SLOT_REGISTER + Slot));
+                    }
+
+                    Record.Add(FRHIHitGroupLocalShaderBinding::CreateSamplerState(Material->GetMaterialSampler(), 0));
+                }
             }
         }
 
+        const uint32 FirstGeometryRow = Resources.RayTracingGeometryTableData.Size();
+        for (int32 SubMeshIndex = 0; SubMeshIndex < Mesh.GetNumSubMeshes(); ++SubMeshIndex)
         {
-            FRayTracingGeometryIndicesHLSL Geo;
+            const FMaterial* Material = HitGroupKey.Materials[SubMeshIndex];
+
+            FRayTracingGeometryIndicesHLSL& GeometryTableRow = Resources.RayTracingGeometryTableData.Emplace();
             if (AttributeBufferSRV)
             {
-                Geo.AttributesHandle = AttributeBufferSRV->GetBindlessHandle();
+                GeometryTableRow.AttributesHandle = AttributeBufferSRV->GetBindlessHandle();
             }
 
             if (IndexBufferSRV)
             {
-                Geo.IndicesHandle = IndexBufferSRV->GetBindlessHandle();
+                GeometryTableRow.IndicesHandle = IndexBufferSRV->GetBindlessHandle();
             }
 
-            Geo.MaterialIndex   = Material->GetBufferIndex();
-            Geo.DeterminantSign = StaticMesh->PerObjectBuffer.DeterminantSign;
-
-            if (int32(InstanceIndex) >= Resources.RayTracingGeometryTableData.Size())
-            {
-                Resources.RayTracingGeometryTableData.Resize(int32(InstanceIndex) + 1);
-            }
-
-            Resources.RayTracingGeometryTableData[InstanceIndex] = Geo;
+            GeometryTableRow.MaterialIndex   = Material->GetBufferIndex();
+            GeometryTableRow.DeterminantSign = StaticMesh->PerObjectBuffer.DeterminantSign;
+            GeometryTableRow.FirstTriangle   = Mesh.GetSubMesh(SubMeshIndex).StartIndex / 3;
+            GeometryTableRow.Flags           = Material->HasAlphaMask() ? RT_GEOMETRY_FLAG_ALPHA_TESTED : 0;
         }
 
         FRHIGeometryAccelerationStructureInstance Instance;
         Instance.Geometry      = Geometry;
-        Instance.Flags         = Material->IsDoubleSided() ? ERayTracingInstanceFlags::CullDisable : ERayTracingInstanceFlags::None;
+        Instance.Flags         = bAnyDoubleSided ? ERayTracingInstanceFlags::CullDisable : ERayTracingInstanceFlags::None;
+
+        if (bAnyAlphaTested)
+        {
+            Instance.Flags |= ERayTracingInstanceFlags::ForceNonOpaque;
+        }
+
         Instance.HitGroupIndex = HitGroupIndex;
-        Instance.InstanceIndex = InstanceIndex;
-        Instance.Mask          = 0xff;
+        Instance.InstanceIndex = FirstGeometryRow;
         Instance.Transform     = InstanceTransform;
         Resources.RayTracingGeometryInstances.Emplace(Instance);
     }

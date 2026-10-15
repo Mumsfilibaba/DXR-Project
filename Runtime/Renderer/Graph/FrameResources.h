@@ -192,6 +192,29 @@ struct RendererTextureFormats
     static constexpr EFormat LightProbeFormat       = EFormat::R11G11B10_Float;
 };
 
+struct FRayTracingHitGroupKey
+{
+    bool operator==(const FRayTracingHitGroupKey& Other) const = default;
+
+    class FMesh*             Mesh = nullptr;
+    TArray<class FMaterial*> Materials;
+};
+
+template<>
+struct THash<FRayTracingHitGroupKey>
+{
+    static uint64 GetHash(const FRayTracingHitGroupKey& Key)
+    {
+        uint64 Hash = THash<FMesh*>::GetHash(Key.Mesh);
+        for (FMaterial* Material : Key.Materials)
+        {
+            HashCombine(Hash, Material);
+        }
+
+        return Hash;
+    }
+};
+
 struct FFrameResources
 {
     FFrameResources();
@@ -313,8 +336,9 @@ struct FFrameResources
     FRHIShaderBindingTableRef                         RayTracingBindlessShaderBindingTable;
     FRHIShaderBindingTableRef                         RayTracingSERShaderBindingTable;     
     TArray<TArray<FRHIHitGroupLocalShaderBinding>>    RayTracingHitGroupBindings;
+    TArray<uint32>                                    RayTracingHitGroupShaderIndices;
     TArray<FRHIGeometryAccelerationStructureInstance> RayTracingGeometryInstances;
-    TMap<class FMesh*, uint32>                        RayTracingMeshToHitGroupIndex;
+    TMap<FRayTracingHitGroupKey, uint32>              RayTracingMeshToHitGroupIndex;
     FRHIBufferRef                                     RayTracingSceneConstantsBuffer;
     FRHIBufferRef                                     RayTracingGeometryTableBuffer; 
     FRHIShaderResourceViewRef                         RayTracingGeometryTableSRV;

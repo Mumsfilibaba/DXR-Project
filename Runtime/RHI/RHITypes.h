@@ -1261,6 +1261,22 @@ struct FRHIRayTracingAABB
 
 static_assert(sizeof(FRHIRayTracingAABB) == 24, "FRHIRayTracingAABB must match D3D12_RAYTRACING_AABB / VkAabbPositionsKHR");
 
+struct FRHIRayTracingGeometrySegment
+{
+    constexpr FRHIRayTracingGeometrySegment() noexcept = default;
+
+    constexpr FRHIRayTracingGeometrySegment(uint32 InFirstIndex, uint32 InNumIndices) noexcept
+        : FirstIndex(InFirstIndex)
+        , NumIndices(InNumIndices)
+    {
+    }
+
+    constexpr bool operator==(const FRHIRayTracingGeometrySegment& Other) const noexcept = default;
+
+    uint32 FirstIndex = 0;
+    uint32 NumIndices = 0;
+};
+
 struct FRHISceneAccelerationStructureBuildDesc
 {
     constexpr FRHISceneAccelerationStructureBuildDesc() noexcept = default;
@@ -1313,16 +1329,28 @@ struct FRHIGeometryAccelerationStructureBuildDesc
     {
     }
 
-    FRHIBuffer*             VertexBuffer = nullptr;
-    uint32                  NumVertices  = 0;
-    FRHIBuffer*             IndexBuffer  = nullptr;
-    uint32                  NumIndices   = 0;
-    EIndexFormat            IndexFormat  = EIndexFormat::uint32;
-    FRHIBuffer*             AABBBuffer   = nullptr;
-    uint32                  NumAABBs     = 0;
-    uint32                  AABBStride   = sizeof(FRHIRayTracingAABB);
-    ERayTracingGeometryType GeometryType = ERayTracingGeometryType::Triangles;
-    bool                    bUpdate      = false;
+    NODISCARD constexpr uint32 GetNumGeometries() const noexcept
+    {
+        return NumSegments > 0 ? NumSegments : 1;
+    }
+
+    NODISCARD constexpr FRHIRayTracingGeometrySegment GetSegment(uint32 Index) const noexcept
+    {
+        return NumSegments > 0 ? Segments[Index] : FRHIRayTracingGeometrySegment(0, NumIndices);
+    }
+
+    FRHIBuffer*                          VertexBuffer = nullptr;
+    uint32                               NumVertices  = 0;
+    FRHIBuffer*                          IndexBuffer  = nullptr;
+    uint32                               NumIndices   = 0;
+    EIndexFormat                         IndexFormat  = EIndexFormat::uint32;
+    const FRHIRayTracingGeometrySegment* Segments     = nullptr;
+    uint32                               NumSegments  = 0;
+    FRHIBuffer*                          AABBBuffer   = nullptr;
+    uint32                               NumAABBs     = 0;
+    uint32                               AABBStride   = sizeof(FRHIRayTracingAABB);
+    ERayTracingGeometryType              GeometryType = ERayTracingGeometryType::Triangles;
+    bool                                 bUpdate      = false;
 };
 
 enum class ERHIResourceStateTrackingMode : uint8

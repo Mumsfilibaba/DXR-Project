@@ -281,8 +281,7 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
 {
     const bool bIsProceduralGeometry = (GetGeometryType() == ERayTracingGeometryType::ProceduralAABBs);
 
-    D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
-    GeometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+    TArray<D3D12_RAYTRACING_GEOMETRY_DESC> GeometryDescs;
 
     if (bIsProceduralGeometry)
     {
@@ -293,6 +292,8 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
             return false;
         }
 
+        D3D12_RAYTRACING_GEOMETRY_DESC& GeometryDesc = GeometryDescs.Emplace();
+        GeometryDesc.Flags                     = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
         GeometryDesc.Type                      = D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS;
         GeometryDesc.AABBs.AABBCount           = BuildDesc.NumAABBs;
         GeometryDesc.AABBs.AABBs.StartAddress  = AABBBuffer->GetGPUVirtualAddress();
@@ -303,24 +304,31 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
         VertexBuffer = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.VertexBuffer);
         IndexBuffer  = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.IndexBuffer);
 
-        GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-        GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetGPUVirtualAddress();
-        GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetDesc().Stride;
-        GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
-        GeometryDesc.Triangles.VertexCount                = BuildDesc.NumVertices;
-
-        if (IndexBuffer)
+        const uint32 IndexStride = GetStrideFromIndexFormat(BuildDesc.IndexFormat);
+        for (uint32 GeometryIndex = 0; GeometryIndex < BuildDesc.GetNumGeometries(); ++GeometryIndex)
         {
-            GeometryDesc.Triangles.IndexFormat = D3D12RHI::ConvertIndexFormat(BuildDesc.IndexFormat);
-            GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetGPUVirtualAddress();
-            GeometryDesc.Triangles.IndexCount  = BuildDesc.NumIndices;
+            D3D12_RAYTRACING_GEOMETRY_DESC& GeometryDesc = GeometryDescs.Emplace();
+            GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+            GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+            GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetGPUVirtualAddress();
+            GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetDesc().Stride;
+            GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
+            GeometryDesc.Triangles.VertexCount                = BuildDesc.NumVertices;
+
+            if (IndexBuffer)
+            {
+                const FRHIRayTracingGeometrySegment Segment = BuildDesc.GetSegment(GeometryIndex);
+                GeometryDesc.Triangles.IndexFormat = D3D12RHI::ConvertIndexFormat(BuildDesc.IndexFormat);
+                GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetGPUVirtualAddress() + uint64(Segment.FirstIndex) * IndexStride;
+                GeometryDesc.Triangles.IndexCount  = Segment.NumIndices;
+            }
         }
     }
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
     Inputs.DescsLayout    = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs       = 1;
-    Inputs.pGeometryDescs = &GeometryDesc;
+    Inputs.NumDescs       = GeometryDescs.Size();
+    Inputs.pGeometryDescs = GeometryDescs.Data();
     Inputs.Type           = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
     Inputs.Flags          = D3D12RHI::ConvertAccelerationStructureBuildFlags(GetFlags());
 

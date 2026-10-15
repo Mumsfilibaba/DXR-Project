@@ -89,6 +89,9 @@ FRayTracingReflectionsPass::FRayTracingReflectionsPass(FSceneRenderer* InRendere
     , CurrentHitGroupCapacity(0)
     , CurrentBindlessHitGroupCapacity(0)
     , ReflectionNoiseSize(0)
+#if STATS_ENABLED
+    , AlphaTestFrame(0)
+#endif
 {
 }
 
@@ -102,8 +105,9 @@ FRayTracingVariant FRayTracingReflectionsPass::CreateVariant(const FRayTracingPe
     FRHIRayGenShaderRef        RayGenShader     = FShaderCache::Get().GetShader<FRayGenShader>(Permutation);
     FRHIRayMissShaderRef       MissShader       = FShaderCache::Get().GetShader<FRayMissShader>(Permutation);
     FRHIRayClosestHitShaderRef ClosestHitShader = FShaderCache::Get().GetShader<FRayClosestHitShader>(Permutation);
+    FRHIRayAnyHitShaderRef     AnyHitShader     = FShaderCache::Get().GetShader<FRayAnyHitShader>(Permutation);
 
-    if (!RayGenShader || !MissShader || !ClosestHitShader)
+    if (!RayGenShader || !MissShader || !ClosestHitShader || !AnyHitShader)
     {
         return FRayTracingVariant();
     }
@@ -121,7 +125,8 @@ FRayTracingVariant FRayTracingReflectionsPass::CreateVariant(const FRayTracingPe
 
     PSODesc.HitGroups =
     {
-        FRHIRayTracingHitGroupInfo(TEXT("HitGroup"), ERayTracingHitGroupType::Triangles, { ClosestHitShader.Get() })
+        FRHIRayTracingHitGroupInfo(TEXT("HitGroup"), ERayTracingHitGroupType::Triangles, { ClosestHitShader.Get() }),
+        FRHIRayTracingHitGroupInfo(TEXT("AlphaTestedHitGroup"), ERayTracingHitGroupType::Triangles, { ClosestHitShader.Get(), AnyHitShader.Get() })
     };
 
     PSODesc.MaxRecursionDepth       = 1;
@@ -229,6 +234,26 @@ bool FRayTracingReflectionsPass::Initialize(FFrameResources& Resources)
         }
     }
 
+#if STATS_ENABLED
+    {
+        const FRHIBufferDesc CounterDesc = FRHIBufferDesc::CreateStructuredBuffer(sizeof(uint32), 1, EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer | EBufferFlags::CopySource | EBufferFlags::CopyDest);
+        AlphaTestCounter = RHI::CreateBuffer(CounterDesc, ERHIResourceState::UnorderedAccess, nullptr);
+        if (!AlphaTestCounter)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        AlphaTestCounter->SetDebugName(TEXT("RayTracing Alpha Test Counter"));
+        AlphaTestCounterUAV = RHI::CreateUnorderedAccessView(AlphaTestCounter.Get(), FRHIUnorderedAccessViewDesc::CreateBuffer(0, 1));
+
+        for (FRHIBufferRef& Readback : AlphaTestReadbacks)
+        {
+            Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint32)), ERHIResourceState::CopyDest, nullptr);
+        }
+    }
+#endif
+
     LoadReflectionNoiseMask();
     return true;
 }
@@ -248,7 +273,50 @@ void FRayTracingReflectionsPass::Release()
 
     ReflectionNoiseTexture.Reset();
     ReflectionNoiseSize = 0;
+
+#if STATS_ENABLED
+    AlphaTestCounterUAV.Reset();
+    AlphaTestCounter.Reset();
+    for (FRHIBufferRef& Readback : AlphaTestReadbacks)
+    {
+        Readback.Reset();
+    }
+
+    AlphaTestFrame = 0;
+#endif
 }
+
+#if STATS_ENABLED
+
+void FRayTracingReflectionsPass::ClearAlphaTestCounter(FRHICommandList& CommandList)
+{
+    static constexpr uint32 Zero = 0;
+
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(AlphaTestCounter.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopyDest));
+    CommandList.UpdateBuffer(AlphaTestCounter.Get(), FBufferRegion(0, sizeof(uint32)), &Zero);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(AlphaTestCounter.Get(), ERHIResourceState::CopyDest, ERHIResourceState::UnorderedAccess));
+}
+
+void FRayTracingReflectionsPass::ReadBackAlphaTestCounter(FRHICommandList& CommandList)
+{
+    FRHIBuffer* Readback = AlphaTestReadbacks[AlphaTestFrame % NumAlphaTestReadbacks].Get();
+    if (AlphaTestFrame >= NumAlphaTestReadbacks)
+    {
+        if (void* Mapped = Readback->Map(0, sizeof(uint32)))
+        {
+            STAT_SET(STAT_RT_AlphaTests, *static_cast<const uint32*>(Mapped));
+            Readback->Unmap(0, sizeof(uint32));
+        }
+    }
+
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(AlphaTestCounter.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+    CommandList.CopyBuffer(Readback, AlphaTestCounter.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(AlphaTestCounter.Get(), ERHIResourceState::CopySource, ERHIResourceState::UnorderedAccess));
+
+    ++AlphaTestFrame;
+}
+
+#endif
 
 bool FRayTracingReflectionsPass::CreateResources(FFrameResources& Resources, uint32 Width, uint32 Height)
 {
@@ -581,6 +649,10 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
 
         CommandList.SetUnorderedAccessView(Shader, TraceTarget->GetUnorderedAccessView(), 0);
 
+#if STATS_ENABLED
+        CommandList.SetUnorderedAccessView(Shader, AlphaTestCounterUAV.Get(), 1);
+#endif
+
         CommandList.SetSamplerState(Shader, Resources.GBufferSampler.Get(), 0);
         CommandList.SetSamplerState(Shader, EnvSampler, 2);
         CommandList.SetSamplerState(Shader, LUTSampler, 3);
@@ -591,6 +663,7 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
 
     if (Path == EReflectionPath::Inline)
     {
+        ClearAlphaTestCounter(CommandList);
         CommandList.SetComputePipelineState(InlineReflectionsPipeline.Get());
 
         BindReflectionGlobals(InlineReflectionsShader.Get());
@@ -600,6 +673,7 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
         const uint32 DispatchHeight  = Math::DivideByMultiple<uint32>(Height, ThreadCount);
 
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+        ReadBackAlphaTestCounter(CommandList);
         return;
     }
 
@@ -654,7 +728,8 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
         {
             const TArray<FRHIHitGroupLocalShaderBinding>&          Record = Resources.RayTracingHitGroupBindings[RecordIndex];
             const TArrayView<const FRHIHitGroupLocalShaderBinding> Bindings(Record.Data(), Record.Size());
-            CommandList.SetShaderRecord(ShaderBindingTable, FRHIShaderRecordDesc(ERayTracingShaderRecordKind::HitGroup, RecordIndex, 0, Bindings));
+            const uint32                                           HitGroup = Resources.RayTracingHitGroupShaderIndices[RecordIndex];
+            CommandList.SetShaderRecord(ShaderBindingTable, FRHIShaderRecordDesc(ERayTracingShaderRecordKind::HitGroup, RecordIndex, HitGroup, Bindings));
         }
         else
         {
@@ -663,11 +738,14 @@ void FRayTracingReflectionsPass::Record(FRHICommandList& CommandList, FFrameReso
     }
 
     CommandList.BuildShaderBindingTable(ShaderBindingTable);
+
+    ClearAlphaTestCounter(CommandList);
     CommandList.SetRayTracingPipelineState(ActivePipeline);
 
     BindReflectionGlobals(ActiveVariant.RayGenShader.Get());
 
     CommandList.DispatchRays(ShaderBindingTable, Width, Height, 1);
+    ReadBackAlphaTestCounter(CommandList);
 }
 
 void FRayTracingReflectionsPass::AddRenderGraphPass(FRenderGraphBuilder& GraphBuilder, const FSceneRenderGraphContext& Context, bool bDenoise)

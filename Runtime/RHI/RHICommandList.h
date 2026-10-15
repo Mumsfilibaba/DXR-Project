@@ -399,7 +399,12 @@ public:
 
     FORCEINLINE void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) noexcept
     {
-        EmplaceCommand<FRHICommandBuildGeometryAccelerationStructure>(RayTracingGeometry, BuildDesc);
+        const TArrayView<const FRHIRayTracingGeometrySegment> Segments = AllocateArray(TArrayView<const FRHIRayTracingGeometrySegment>(BuildDesc.Segments, BuildDesc.NumSegments));
+
+        FRHIGeometryAccelerationStructureBuildDesc CommandBuildDesc = BuildDesc;
+        CommandBuildDesc.Segments = Segments.Data();
+
+        EmplaceCommand<FRHICommandBuildGeometryAccelerationStructure>(RayTracingGeometry, CommandBuildDesc);
     }
 
     FORCEINLINE void TransitionBarrier(const TArrayView<const FRHITransitionBarrierDesc> InTransitionDescs) noexcept

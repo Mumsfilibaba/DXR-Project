@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/CoreDefines.h"
 #include "Core/CoreTypes.h"
+#include "RHI/RHITypes.h"
 
 namespace RHIValidationHelpers
 {
@@ -38,5 +39,24 @@ namespace RHIValidationHelpers
 
         const uint64 RemainingSize = TotalSize - Offset;
         return uint64(CommandCount) <= RemainingSize / RecordSize;
+    }
+
+    NODISCARD constexpr bool AreGeometrySegmentsValid(const FRHIRayTracingGeometrySegment* Segments, uint32 NumSegments, uint32 NumIndices)
+    {
+        if (NumSegments > 0 && (!Segments || NumIndices == 0))
+        {
+            return false;
+        }
+
+        for (uint32 Index = 0; Index < NumSegments; ++Index)
+        {
+            const FRHIRayTracingGeometrySegment& Segment = Segments[Index];
+            if (Segment.FirstIndex > NumIndices || Segment.NumIndices > NumIndices - Segment.FirstIndex || (Segment.NumIndices % 3) != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

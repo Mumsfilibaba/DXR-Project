@@ -461,6 +461,7 @@ void FFrameResources::ReleaseRayTracingResources()
     RayTracingBindlessShaderBindingTable.Reset();
     RayTracingSERShaderBindingTable.Reset();
     RayTracingHitGroupBindings.Clear();
+    RayTracingHitGroupShaderIndices.Clear();
     RayTracingGeometryInstances.Clear();
     RayTracingMeshToHitGroupIndex.Clear();
     RayTracingSceneConstantsBuffer.Reset();
