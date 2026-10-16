@@ -335,10 +335,7 @@ FRHISceneAccelerationStructure* FMetalDeviceRHI::CreateSceneAccelerationStructur
         return nullptr;
     }
 
-    FRHISceneAccelerationStructureBuildDesc BuildDesc;
-    BuildDesc.Instances    = InSceneDesc.Instances.Data();
-    BuildDesc.NumInstances = InSceneDesc.Instances.Size();
-    BuildDesc.bUpdate      = false;
+    const FRHISceneAccelerationStructureBuildDesc BuildDesc = InSceneDesc.GetBuildDesc();
 
     FMetalSceneAccelerationStructureRHIRef MetalScene = new FMetalSceneAccelerationStructureRHI(GetMetalDevice(), InSceneDesc);
 
@@ -369,19 +366,9 @@ FRHIGeometryAccelerationStructure* FMetalDeviceRHI::CreateGeometryAccelerationSt
         return MetalGeometry.ReleaseOwnership();
     }
 
-    FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
-    BuildDesc.VertexBuffer = InGeometryDesc.VertexBuffer;
-    BuildDesc.NumVertices  = InGeometryDesc.NumVertices;
-    BuildDesc.IndexBuffer  = InGeometryDesc.IndexBuffer;
-    BuildDesc.NumIndices   = InGeometryDesc.NumIndices;
-    BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
-    BuildDesc.Segments     = InGeometryDesc.Segments;
-    BuildDesc.NumSegments  = InGeometryDesc.NumSegments;
-    BuildDesc.bUpdate      = false;
-
     {
         FMetalScopedCommandContext BuildContext(*GetMetalDevice()->GetQueue(EMetalQueueType::Direct));
-        if (!MetalGeometry->Build(*BuildContext, BuildDesc))
+        if (!MetalGeometry->Build(*BuildContext, InGeometryDesc.GetBuildDesc()))
         {
             METAL_ERROR("Failed to build the geometry acceleration structure");
             MetalGeometry.Reset();

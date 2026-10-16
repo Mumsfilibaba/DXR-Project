@@ -97,6 +97,11 @@ FVulkanAccelerationStructure* FVulkanDeviceRHI::ResourceCast(FRHIRayTracingAccel
         case ERayTracingAccelerationStructureType::PartitionedScene:
             return static_cast<FVulkanPartitionedSceneAccelerationStructureRHI*>(AccelerationStructure);
 
+    #if VK_KHR_opacity_micromap && VK_KHR_device_address_commands
+        case ERayTracingAccelerationStructureType::OpacityMicromap:
+            return static_cast<FVulkanOpacityMicromapRHI*>(AccelerationStructure);
+    #endif
+
         default:
             return nullptr;
     }
@@ -122,6 +127,11 @@ const FVulkanAccelerationStructure* FVulkanDeviceRHI::ResourceCast(const FRHIRay
 
         case ERayTracingAccelerationStructureType::PartitionedScene:
             return static_cast<const FVulkanPartitionedSceneAccelerationStructureRHI*>(AccelerationStructure);
+
+    #if VK_KHR_opacity_micromap && VK_KHR_device_address_commands
+        case ERayTracingAccelerationStructureType::OpacityMicromap:
+            return static_cast<const FVulkanOpacityMicromapRHI*>(AccelerationStructure);
+    #endif
 
         default:
             return nullptr;
@@ -644,10 +654,7 @@ FRHIFence* FVulkanDeviceRHI::CreateFence()
 
 FRHISceneAccelerationStructure* FVulkanDeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
 {
-    FRHISceneAccelerationStructureBuildDesc BuildDesc;
-    BuildDesc.Instances    = InSceneDesc.Instances.Data();
-    BuildDesc.NumInstances = InSceneDesc.Instances.Size();
-    BuildDesc.bUpdate      = false;
+    const FRHISceneAccelerationStructureBuildDesc BuildDesc = InSceneDesc.GetBuildDesc();
 
     FVulkanSceneAccelerationStructureRHIRef NewScene = new FVulkanSceneAccelerationStructureRHI(GetDevice(), InSceneDesc);
 
@@ -682,10 +689,7 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
         }
         else
         {
-            FRHIGeometryAccelerationStructureBuildDesc BuildDesc(InGeometryDesc.VertexBuffer, InGeometryDesc.NumVertices, InGeometryDesc.IndexBuffer, InGeometryDesc.NumIndices, InGeometryDesc.IndexFormat, false);
-            BuildDesc.Segments    = InGeometryDesc.Segments;
-            BuildDesc.NumSegments = InGeometryDesc.NumSegments;
-            bSucceeded = NewGeometry->Build(*BuildContext, BuildDesc);
+            bSucceeded = NewGeometry->Build(*BuildContext, InGeometryDesc.GetBuildDesc());
         }
 
         if (bSucceeded)
@@ -712,7 +716,27 @@ FRHIOpacityMicromap* FVulkanDeviceRHI::CreateOpacityMicromap(const FRHIOpacityMi
 #if VK_KHR_opacity_micromap && VK_KHR_device_address_commands
     if (GVulkanSupportsOpacityMicromap)
     {
-        return new FVulkanOpacityMicromapRHI(GetDevice(), InDesc);
+        FVulkanOpacityMicromapRHIRef OpacityMicromap = new FVulkanOpacityMicromapRHI(GetDevice(), InDesc);
+
+        {
+            FVulkanScopedCommandContext BuildContext(*GetDevice()->GetGraphicsQueue());
+
+            const bool bSucceeded = InDesc.IsSerialized()
+                ? OpacityMicromap->BuildSerialized(*BuildContext, InDesc.SerializedData, InDesc.SerializedSizeInBytes)
+                : OpacityMicromap->Build(*BuildContext, InDesc.GetBuildDesc());
+
+            if (bSucceeded)
+            {
+                BuildContext->AddAccelerationStructureBarrier();
+            }
+            else
+            {
+                OpacityMicromap.Reset();
+            }
+        }
+
+        FlushCompletedSubmissions();
+        return OpacityMicromap.ReleaseOwnership();
     }
 #endif
 

@@ -107,7 +107,11 @@ public:
     // FRHIOpacityMicromap Interface
     virtual void* GetRHINativeResource() const override final;
 
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
+
     bool Build(FD3D12CommandContext& CmdContext, const FRHIOpacityMicromapBuildDesc& BuildDesc);
+    bool BuildSerialized(FD3D12CommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes);
 
 private:
     EOpacityMicromapFormat Format;

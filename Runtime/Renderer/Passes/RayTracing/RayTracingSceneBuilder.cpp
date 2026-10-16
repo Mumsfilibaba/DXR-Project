@@ -73,6 +73,8 @@ void FRayTracingSceneBuilder::Release()
     GeometryTableCapacity = 0;
 
     PlaceholderOpacityMicromap.Reset();
+    PlaceholderOpacityMicromapDescriptors.Reset();
+    PlaceholderOpacityMicromapData.Reset();
     PlaceholderOpacityMicromapIndices.Reset();
     PlaceholderOpacityMicromapIndexCapacity = 0;
 }
@@ -86,34 +88,21 @@ bool FRayTracingSceneBuilder::CreatePlaceholderOpacityMicromap()
         EBufferFlags::Default | 
         EBufferFlags::RayTracingBuildInput;
 
-    FRHIBufferRef DescriptorBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(Triangle), 1, InputFlags), ERHIResourceState::Common, &Triangle);
-    FRHIBufferRef DataBuffer       = RHI::CreateBuffer(FRHIBufferDesc(InputFlags, sizeof(uint32), sizeof(uint32)), ERHIResourceState::Common, &UnknownOpaqueState);
+    PlaceholderOpacityMicromapDescriptors = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(Triangle), 1, InputFlags), ERHIResourceState::Common, &Triangle);
+    PlaceholderOpacityMicromapData        = RHI::CreateBuffer(FRHIBufferDesc(InputFlags, sizeof(uint32), sizeof(uint32)), ERHIResourceState::Common, &UnknownOpaqueState);
 
-    if (!DescriptorBuffer || !DataBuffer)
-    {
-        return false;
-    }
-
-    FRHIOpacityMicromapDesc MicromapDesc;
-    MicromapDesc.Format = EOpacityMicromapFormat::OC1_4State;
-
-    PlaceholderOpacityMicromap = RHI::CreateOpacityMicromap(MicromapDesc);
-    if (!PlaceholderOpacityMicromap)
+    if (!PlaceholderOpacityMicromapDescriptors || !PlaceholderOpacityMicromapData)
     {
         return false;
     }
 
     FRHIOpacityMicromapBuildDesc BuildDesc;
-    BuildDesc.OMMDescriptorBuffer            = DescriptorBuffer.Get();
-    BuildDesc.OpacityMicroTriangleDataBuffer = DataBuffer.Get();
+    BuildDesc.OMMDescriptorBuffer            = PlaceholderOpacityMicromapDescriptors.Get();
+    BuildDesc.OpacityMicroTriangleDataBuffer = PlaceholderOpacityMicromapData.Get();
     BuildDesc.NumOpacityMicromaps            = 1;
 
-    FRHICommandList CommandList;
-    CommandList.BuildOpacityMicromap(PlaceholderOpacityMicromap.Get(), BuildDesc);
-
-    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
-    FRHICommandListExecutor::Get().WaitForGPU();
-    return true;
+    PlaceholderOpacityMicromap = RHI::CreateOpacityMicromap(FRHIOpacityMicromapDesc(EOpacityMicromapFormat::OC1_4State, 0, BuildDesc));
+    return PlaceholderOpacityMicromap != nullptr;
 }
 
 FRHIBuffer* FRayTracingSceneBuilder::GetPlaceholderOpacityMicromapIndices(uint32 NumTriangles)

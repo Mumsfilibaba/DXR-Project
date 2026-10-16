@@ -112,6 +112,13 @@ static FD3D12AccelerationStructure* GetD3D12AccelerationStructure(FRHIRayTracing
             return static_cast<FD3D12SceneAccelerationStructureRHI*>(AccelerationStructure);
         }
 
+    #if D3D12_ENABLE_OPACITY_MICROMAPS
+        case ERayTracingAccelerationStructureType::OpacityMicromap:
+        {
+            return static_cast<FD3D12OpacityMicromapRHI*>(AccelerationStructure);
+        }
+    #endif
+
         default:
         {
             return nullptr;

@@ -66,6 +66,14 @@ struct FRHIGeometryAccelerationStructureDesc
     NODISCARD constexpr bool IsClusteredGeometry() const noexcept { return bIsClusteredGeometry; }
     NODISCARD constexpr bool IsSerialized()        const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::Deserialize); }
 
+    NODISCARD constexpr FRHIGeometryAccelerationStructureBuildDesc GetBuildDesc() const noexcept
+    {
+        FRHIGeometryAccelerationStructureBuildDesc BuildDesc(VertexBuffer, NumVertices, IndexBuffer, NumIndices, IndexFormat, false);
+        BuildDesc.Segments    = Segments;
+        BuildDesc.NumSegments = NumSegments;
+        return BuildDesc;
+    }
+
     EAccelerationStructureBuildFlags Flags                = EAccelerationStructureBuildFlags::None;
     ERayTracingGeometryType          GeometryType         = ERayTracingGeometryType::Triangles;
     bool                             bIsClusteredGeometry = false;
@@ -108,6 +116,11 @@ struct FRHISceneAccelerationStructureDesc
     NODISCARD constexpr bool AllowUpdate()     const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
     NODISCARD constexpr bool AllowCompaction() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowCompaction); }
     NODISCARD constexpr bool IsPartitioned()   const noexcept { return bIsPartitioned; }
+
+    NODISCARD FRHISceneAccelerationStructureBuildDesc GetBuildDesc() const noexcept
+    {
+        return FRHISceneAccelerationStructureBuildDesc(Instances.Data(), static_cast<uint32>(Instances.Size()), false);
+    }
 
     bool operator==(const FRHISceneAccelerationStructureDesc& Other) const noexcept = default;
 

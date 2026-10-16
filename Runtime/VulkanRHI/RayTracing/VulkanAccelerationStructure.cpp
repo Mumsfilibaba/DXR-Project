@@ -770,21 +770,23 @@ bool FVulkanSceneAccelerationStructureRHI::Build(FVulkanCommandContext& CmdConte
 
 FVulkanOpacityMicromapRHI::FVulkanOpacityMicromapRHI(FVulkanDevice* InDevice, const FRHIOpacityMicromapDesc& InDesc)
     : FRHIOpacityMicromap(InDesc)
-    , FVulkanDeviceChild(InDevice)
+    , FVulkanAccelerationStructure(InDevice)
     , MicromapDesc(InDesc)
-    , Micromap(VK_NULL_HANDLE)
     , MicromapLocation(InDevice)
     , ScratchLocation(InDevice)
     , TrackedMicromapMemory(0)
+#if VULKAN_STORE_DEBUG_NAMES
+    , DebugName()
+#endif
 {
 }
 
 FVulkanOpacityMicromapRHI::~FVulkanOpacityMicromapRHI()
 {
-    if (VULKAN_CHECK_HANDLE(Micromap))
+    if (VULKAN_CHECK_HANDLE(AccelerationStructure))
     {
-        vkDestroyAccelerationStructureKHR(GetDevice()->GetVkDevice(), Micromap, nullptr);
-        Micromap = VK_NULL_HANDLE;
+        vkDestroyAccelerationStructureKHR(GetDevice()->GetVkDevice(), AccelerationStructure, nullptr);
+        AccelerationStructure = VK_NULL_HANDLE;
     }
 
     VulkanUpdateAccelerationStructureMemoryStat(TrackedMicromapMemory, 0);
@@ -792,23 +794,84 @@ FVulkanOpacityMicromapRHI::~FVulkanOpacityMicromapRHI()
 
 void* FVulkanOpacityMicromapRHI::GetRHINativeResource() const
 {
-    return reinterpret_cast<void*>(Micromap);
+    return reinterpret_cast<void*>(AccelerationStructure);
 }
 
-bool FVulkanOpacityMicromapRHI::Build(FVulkanCommandContext& CmdContext, const FRHIOpacityMicromapBuildDesc& BuildDesc)
+void FVulkanOpacityMicromapRHI::SetDebugName(const FString& InName)
+{
+    if (VULKAN_CHECK_HANDLE(AccelerationStructure))
+    {
+        VulkanSetObjectName(GetDevice()->GetVkDevice(), InName.Data(), AccelerationStructure, VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR);
+    }
+
+#if VULKAN_STORE_DEBUG_NAMES
+    DebugName = InName;
+#endif
+}
+
+void FVulkanOpacityMicromapRHI::GetDebugName(FString& OutDebugName) const
+{
+#if VULKAN_STORE_DEBUG_NAMES
+    OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
+}
+
+bool FVulkanOpacityMicromapRHI::AllocateMicromapStorage(uint64 Size)
 {
 #if VK_KHR_opacity_micromap && VK_KHR_device_address_commands
-    if (!vkCreateAccelerationStructure2KHR)
+    if (!vkCreateAccelerationStructure2KHR || Size == 0)
     {
         VULKAN_ERROR_CRITICAL("vkCreateAccelerationStructure2KHR is unavailable, so no opacity micromap can be created");
         return false;
     }
 
-    FVulkanBufferRHI* DescriptorBuffer = FVulkanDeviceRHI::ResourceCast(BuildDesc.OMMDescriptorBuffer);
-    FVulkanBufferRHI* DataBuffer       = BuildDesc.OpacityMicroTriangleDataBuffer 
-        ? FVulkanDeviceRHI::ResourceCast(BuildDesc.OpacityMicroTriangleDataBuffer) 
-        : DescriptorBuffer;
+    if (VULKAN_CHECK_HANDLE(AccelerationStructure))
+    {
+        FVulkanDeviceRHI::DeferDeletion(AccelerationStructure);
+        AccelerationStructure = VK_NULL_HANDLE;
+        DeviceAddress         = 0;
+    }
 
+    MicromapLocation.ReleaseMemory();
+
+    const VkMemoryAllocateFlags AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    const VkBufferUsageFlags    MicromapUsage    = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+
+    if (!GetDevice()->GetMemoryManager().AllocateBufferMemory(MemoryProperties, MicromapUsage, AllocateFlags, Size, 256, MicromapLocation))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to allocate opacity micromap memory");
+        return false;
+    }
+
+    VkAccelerationStructureCreateInfo2KHR CreateInfo = {};
+    CreateInfo.sType                = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_2_KHR;
+    CreateInfo.addressRange.address = MicromapLocation.GetDeviceAddress();
+    CreateInfo.addressRange.size    = Size;
+    CreateInfo.type                 = VK_ACCELERATION_STRUCTURE_TYPE_OPACITY_MICROMAP_KHR;
+
+    if (VULKAN_FAILED(vkCreateAccelerationStructure2KHR(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &AccelerationStructure)))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to create opacity micromap");
+        return false;
+    }
+
+    DeviceAddress = MicromapLocation.GetDeviceAddress();
+    VulkanUpdateAccelerationStructureMemoryStat(TrackedMicromapMemory, MicromapLocation.GetSize());
+    return true;
+#else
+    UNREFERENCED_VARIABLE(Size);
+    return false;
+#endif
+}
+
+bool FVulkanOpacityMicromapRHI::Build(FVulkanCommandContext& CmdContext, const FRHIOpacityMicromapBuildDesc& BuildDesc)
+{
+#if VK_KHR_opacity_micromap && VK_KHR_device_address_commands
+    FVulkanBufferRHI* DescriptorBuffer = FVulkanDeviceRHI::ResourceCast(BuildDesc.OMMDescriptorBuffer);
+    FVulkanBufferRHI* DataBuffer       = BuildDesc.OpacityMicroTriangleDataBuffer ? FVulkanDeviceRHI::ResourceCast(BuildDesc.OpacityMicroTriangleDataBuffer) : DescriptorBuffer;
     if (!DescriptorBuffer || !DataBuffer || BuildDesc.NumOpacityMicromaps == 0)
     {
         VULKAN_ERROR("An opacity micromap build needs its descriptor and data buffers and at least one micromap");
@@ -847,10 +910,7 @@ bool FVulkanOpacityMicromapRHI::Build(FVulkanCommandContext& CmdContext, const F
     Geometry.pNext        = &MicromapData;
     Geometry.geometryType = VK_GEOMETRY_TYPE_MICROMAP_KHR;
 
-    const VkBuildAccelerationStructureFlagsKHR AllowedFlags = 
-        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR | 
-        VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | 
-        VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+    const VkBuildAccelerationStructureFlagsKHR AllowedFlags = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
 
     VkAccelerationStructureBuildGeometryInfoKHR BuildInfo = {};
     BuildInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
@@ -864,62 +924,30 @@ bool FVulkanOpacityMicromapRHI::Build(FVulkanCommandContext& CmdContext, const F
     SizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
     vkGetAccelerationStructureBuildSizesKHR(GetDevice()->GetVkDevice(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &BuildInfo, nullptr, &SizesInfo);
-    if (VULKAN_CHECK_HANDLE(Micromap))
-    {
-        FVulkanDeviceRHI::DeferDeletion(Micromap);
-        Micromap = VK_NULL_HANDLE;
-    }
 
-    MicromapLocation.ReleaseMemory();
     ScratchLocation.ReleaseMemory();
+    if (!AllocateMicromapStorage(SizesInfo.accelerationStructureSize))
+    {
+        return false;
+    }
 
     const VkMemoryAllocateFlags AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    const VkBufferUsageFlags    ScratchUsage     = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
-    const VkBufferUsageFlags MicromapUsage = 
-        VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | 
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-    
-    const VkBufferUsageFlags ScratchUsage = 
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-
-    FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, MicromapUsage, AllocateFlags, SizesInfo.accelerationStructureSize, 256, MicromapLocation))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to allocate opacity micromap memory");
-        return false;
-    }
-
-    VkAccelerationStructureCreateInfo2KHR CreateInfo = {};
-    CreateInfo.sType                = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_2_KHR;
-    CreateInfo.addressRange.address = MicromapLocation.GetDeviceAddress();
-    CreateInfo.addressRange.size    = SizesInfo.accelerationStructureSize;
-    CreateInfo.type                 = VK_ACCELERATION_STRUCTURE_TYPE_OPACITY_MICROMAP_KHR;
-
-    if (VULKAN_FAILED(vkCreateAccelerationStructure2KHR(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &Micromap)))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to create opacity micromap");
-        return false;
-    }
-
-    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, ScratchUsage, AllocateFlags, SizesInfo.buildScratchSize, 256, ScratchLocation))
+    if (!GetDevice()->GetMemoryManager().AllocateBufferMemory(MemoryProperties, ScratchUsage, AllocateFlags, SizesInfo.buildScratchSize, 256, ScratchLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate opacity micromap scratch memory");
         return false;
     }
 
-    BuildInfo.dstAccelerationStructure  = Micromap;
+    BuildInfo.dstAccelerationStructure  = AccelerationStructure;
     BuildInfo.scratchData.deviceAddress = ScratchLocation.GetDeviceAddress();
 
     const VkAccelerationStructureBuildRangeInfoKHR* BuildRangeInfos[] = { nullptr };
 
-    const ERHIResourceState BuildInputAccess = 
-        ERHIResourceState::NonPixelShaderResource | 
-        ERHIResourceState::RayTracingAccelerationStructure;
-
+    const ERHIResourceState BuildInputAccess = ERHIResourceState::NonPixelShaderResource | ERHIResourceState::RayTracingAccelerationStructure;
     CmdContext.RequireBufferState(DescriptorBuffer, BuildInputAccess);
-
     if (DataBuffer != DescriptorBuffer)
     {
         CmdContext.RequireBufferState(DataBuffer, BuildInputAccess);
@@ -934,13 +962,40 @@ bool FVulkanOpacityMicromapRHI::Build(FVulkanCommandContext& CmdContext, const F
     CmdContext.AddAccelerationStructureBarrier();
 
     ScratchLocation.ReleaseMemory();
-    VulkanUpdateAccelerationStructureMemoryStat(TrackedMicromapMemory, MicromapLocation.GetSize());
     return true;
 #else
     UNREFERENCED_VARIABLE(CmdContext);
     UNREFERENCED_VARIABLE(BuildDesc);
     return false;
 #endif
+}
+
+bool FVulkanOpacityMicromapRHI::BuildSerialized(FVulkanCommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes)
+{
+    static constexpr uint64 DeserializedSizeOffset = 2 * VK_UUID_SIZE + sizeof(uint64);
+
+    if (!SerializedData || SerializedSizeInBytes < DeserializedSizeOffset + sizeof(uint64))
+    {
+        return false;
+    }
+
+    uint64 DeserializedSize = 0;
+    Memory::Memcpy(&DeserializedSize, static_cast<const uint8*>(SerializedData) + DeserializedSizeOffset, sizeof(uint64));
+
+    if (!AllocateMicromapStorage(DeserializedSize))
+    {
+        return false;
+    }
+
+    const FRHIBufferDesc UploadDesc(EBufferFlags::Default | EBufferFlags::CopySource | EBufferFlags::AccelerationStructure, 0, SerializedSizeInBytes);
+    FRHIBufferRef Upload = FVulkanDeviceRHI::Get()->CreateBuffer(UploadDesc, ERHIResourceState::CopySource, SerializedData);
+    if (!Upload)
+    {
+        return false;
+    }
+
+    CmdContext.DeserializeAccelerationStructure(this, Upload.Get(), 0);
+    return true;
 }
 
 FVulkanClusterAccelerationStructureRHI::FVulkanClusterAccelerationStructureRHI(FVulkanDevice* InDevice, const FRHIClusterAccelerationStructureDesc& InDesc)

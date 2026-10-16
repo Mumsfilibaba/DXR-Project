@@ -100,6 +100,7 @@ enum class ERayTracingAccelerationStructureType : uint8
     Scene            = 1,
     Cluster          = 2,
     PartitionedScene = 3,
+    OpacityMicromap  = 4,
 };
 
 NODISCARD constexpr const CHAR_T* ToString(ERayTracingAccelerationStructureType Type)
@@ -110,6 +111,7 @@ NODISCARD constexpr const CHAR_T* ToString(ERayTracingAccelerationStructureType 
         case ERayTracingAccelerationStructureType::Scene:            return TEXT("Scene");
         case ERayTracingAccelerationStructureType::Cluster:          return TEXT("Cluster");
         case ERayTracingAccelerationStructureType::PartitionedScene: return TEXT("PartitionedScene");
+        case ERayTracingAccelerationStructureType::OpacityMicromap:  return TEXT("OpacityMicromap");
         default:                                                     return TEXT("Unknown");
     }
 }

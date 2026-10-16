@@ -45,6 +45,8 @@ private:
     TSet<FRHIRayTracingAccelerationStructure*> HandledStructures;
     TArray<FPendingCacheWrite>                 AwaitingCompaction;
     FRHIOpacityMicromapRef                     PlaceholderOpacityMicromap;
+    FRHIBufferRef                              PlaceholderOpacityMicromapDescriptors;
+    FRHIBufferRef                              PlaceholderOpacityMicromapData;
     FRHIBufferRef                              PlaceholderOpacityMicromapIndices;
     uint32                                     PlaceholderOpacityMicromapIndexCapacity;
 };

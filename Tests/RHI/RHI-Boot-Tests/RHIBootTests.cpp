@@ -2796,6 +2796,73 @@ static bool TracePipelineProbeRay(const FRayTracingPipelineProbe& Probe, FRHISce
     return true;
 }
 
+static bool WaitForProbeFence(FRHICommandList& CommandList)
+{
+    FRHIFenceRef Fence = RHI::CreateFence();
+    CommandList.WriteFence(Fence.Get());
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
+    return Fence->Wait(5ull * 1000ull * 1000ull * 1000ull);
+}
+
+static bool SerializeProbeStructure(FRHIRayTracingAccelerationStructure* Source, TArray<uint8>& OutBytes)
+{
+    FRHIBufferRef SizeReadback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint64) * 2, sizeof(uint64)), ERHIResourceState::CopyDest, nullptr);
+    if (!SizeReadback)
+    {
+        return false;
+    }
+
+    FRHIRayTracingAccelerationStructure* Sources[] = { Source };
+
+    FRHICommandList SizeCommandList;
+    SizeCommandList.WriteAccelerationStructurePostBuildInfo(SizeReadback.Get(), 0, EAccelerationStructurePostBuildInfoType::Serialization, Sources, 1);
+    if (!WaitForProbeFence(SizeCommandList))
+    {
+        return false;
+    }
+
+    uint64 SerializedSize = 0;
+    if (const uint64* Mapped = static_cast<const uint64*>(SizeReadback->Map()))
+    {
+        SerializedSize = *Mapped;
+        SizeReadback->Unmap();
+    }
+
+    if (SerializedSize == 0)
+    {
+        return false;
+    }
+
+    const EBufferFlags DestFlags = EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer | EBufferFlags::CopySource | EBufferFlags::AccelerationStructure;
+    FRHIBufferRef Destination   = RHI::CreateBuffer(FRHIBufferDesc(DestFlags, 0, Math::AlignUp<uint64>(SerializedSize, RHI::AccelerationStructureBufferAlignment)), ERHIResourceState::UnorderedAccess, nullptr);
+    FRHIBufferRef BytesReadback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(SerializedSize), ERHIResourceState::CopyDest, nullptr);
+    if (!Destination || !BytesReadback)
+    {
+        return false;
+    }
+
+    FRHICommandList CommandList;
+    CommandList.SerializeAccelerationStructure(Source, Destination.Get(), 0);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Destination.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+    CommandList.CopyBuffer(BytesReadback.Get(), Destination.Get(), FRHIBufferCopyDesc(0, 0, static_cast<uint32>(SerializedSize)));
+    if (!WaitForProbeFence(CommandList))
+    {
+        return false;
+    }
+
+    const uint8* Mapped = static_cast<const uint8*>(BytesReadback->Map());
+    if (!Mapped)
+    {
+        return false;
+    }
+
+    OutBytes.Resize(static_cast<int32>(SerializedSize));
+    Memory::Memcpy(OutBytes.Data(), Mapped, SerializedSize);
+    BytesReadback->Unmap();
+    return true;
+}
+
 struct FOpacityMicromapProbe
 {
     FRHIBufferRef                        DescriptorBuffer;
@@ -2806,7 +2873,7 @@ struct FOpacityMicromapProbe
     FRHISceneAccelerationStructureRef    Scene;
 };
 
-static bool CreateOpacityMicromapProbe(bool bOpaque, bool bSpecialIndexOnly, FOpacityMicromapProbe& OutProbe)
+static bool CreateOpacityMicromapProbe(bool bOpaque, bool bSpecialIndexOnly, FOpacityMicromapProbe& OutProbe, bool bDeserializedCopy = false)
 {
     const EBufferFlags InputFlags = EBufferFlags::Default | EBufferFlags::RayTracingBuildInput;
 
@@ -2818,10 +2885,7 @@ static bool CreateOpacityMicromapProbe(bool bOpaque, bool bSpecialIndexOnly, FOp
         OutProbe.DescriptorBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(FRHIOpacityMicromapTriangleDesc), 1, InputFlags), ERHIResourceState::Common, &Triangle);
         OutProbe.DataBuffer       = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(uint32), 1, InputFlags), ERHIResourceState::Common, &StateData);
 
-        FRHIOpacityMicromapDesc MicromapDesc;
-        MicromapDesc.Format = EOpacityMicromapFormat::OC1_4State;
-        OutProbe.Micromap = RHI::CreateOpacityMicromap(MicromapDesc);
-        if (!OutProbe.DescriptorBuffer || !OutProbe.DataBuffer || !OutProbe.Micromap)
+        if (!OutProbe.DescriptorBuffer || !OutProbe.DataBuffer)
         {
             return false;
         }
@@ -2831,9 +2895,26 @@ static bool CreateOpacityMicromapProbe(bool bOpaque, bool bSpecialIndexOnly, FOp
         BuildDesc.OpacityMicroTriangleDataBuffer = OutProbe.DataBuffer.Get();
         BuildDesc.NumOpacityMicromaps            = 1;
 
-        FRHICommandList CommandList;
-        CommandList.BuildOpacityMicromap(OutProbe.Micromap.Get(), BuildDesc);
-        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        OutProbe.Micromap = RHI::CreateOpacityMicromap(FRHIOpacityMicromapDesc(EOpacityMicromapFormat::OC1_4State, 0, BuildDesc));
+        if (!OutProbe.Micromap)
+        {
+            return false;
+        }
+
+        if (bDeserializedCopy)
+        {
+            TArray<uint8> SerializedMicromap;
+            if (!SerializeProbeStructure(OutProbe.Micromap.Get(), SerializedMicromap))
+            {
+                return false;
+            }
+
+            OutProbe.Micromap = RHI::CreateOpacityMicromap(FRHIOpacityMicromapDesc::CreateSerialized(SerializedMicromap.Data(), SerializedMicromap.Size(), EAccelerationStructureBuildFlags::None));
+            if (!OutProbe.Micromap)
+            {
+                return false;
+            }
+        }
     }
 
     const uint16 SpecialIndex     = static_cast<uint16>(static_cast<int16>(bOpaque ? EOpacityMicromapSpecialIndex::FullyOpaque : EOpacityMicromapSpecialIndex::FullyTransparent));
@@ -3311,6 +3392,69 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
     }
 
+    TEST_SECTION(TEXT("A micromap created opaque and rebuilt on a command list with transparent data is missed"));
+    if (RHI::bSupportsOpacityMicromap && bPipelineProbe)
+    {
+        FOpacityMicromapProbe MicromapProbe;
+        const bool bCreated = CreateOpacityMicromapProbe(true, false, MicromapProbe);
+        TEST_EXPECT(bCreated);
+
+        if (bCreated)
+        {
+            const FRHIOpacityMicromapTriangleDesc Triangle(0, 0, EOpacityMicromapFormat::OC1_4State);
+            const uint32                          TransparentState = 0;
+
+            const EBufferFlags InputFlags = EBufferFlags::Default | EBufferFlags::RayTracingBuildInput;
+            FRHIBufferRef DescriptorBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(FRHIOpacityMicromapTriangleDesc), 1, InputFlags), ERHIResourceState::Common, &Triangle);
+            FRHIBufferRef DataBuffer       = RHI::CreateBuffer(FRHIBufferDesc(InputFlags, sizeof(uint32), sizeof(uint32)), ERHIResourceState::Common, &TransparentState);
+
+            FRHIOpacityMicromapBuildDesc BuildDesc;
+            BuildDesc.OMMDescriptorBuffer            = DescriptorBuffer.Get();
+            BuildDesc.OpacityMicroTriangleDataBuffer = DataBuffer.Get();
+            BuildDesc.NumOpacityMicromaps            = 1;
+
+            FRHICommandList CommandList;
+            CommandList.BuildOpacityMicromap(MicromapProbe.Micromap.Get(), BuildDesc);
+            TEST_EXPECT(WaitForProbeFence(CommandList));
+
+            FRHIRayTracingGeometrySegment Segment(0, GProbeNumVertices);
+            Segment.OpacityMicromap            = MicromapProbe.Micromap.Get();
+            Segment.OpacityMicromapIndexBuffer = MicromapProbe.IndexBuffer.Get();
+            Segment.OpacityMicromapIndexFormat = EOpacityMicromapIndexFormat::uint16;
+
+            FRHIGeometryAccelerationStructureDesc GeometryDesc(MicromapProbe.Geometry.VertexBuffer.Get(), GProbeNumVertices, MicromapProbe.Geometry.IndexBuffer.Get(), GProbeNumVertices, EIndexFormat::uint32, EAccelerationStructureBuildFlags::None);
+            GeometryDesc.Segments    = &Segment;
+            GeometryDesc.NumSegments = 1;
+
+            FRHIGeometryAccelerationStructureRef Geometry = RHI::CreateGeometryAccelerationStructure(GeometryDesc);
+            const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Get(), 3, 0.0f) };
+            FRHISceneAccelerationStructureRef Scene = Geometry ? RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None)) : nullptr;
+
+            bool bHit = true;
+            TEST_EXPECT(Scene && TracePipelineProbeRay(PipelineProbe, Scene.Get(), 0.0f, bHit) && !bHit);
+        }
+    }
+
+    TEST_SECTION(TEXT("A micromap serialized and deserialized into a new one is missed when transparent and hit when opaque"));
+    if (RHI::bSupportsOpacityMicromap && bPipelineProbe)
+    {
+        for (const bool bOpaque : { false, true })
+        {
+            FOpacityMicromapProbe MicromapProbe;
+            const bool bCreated = CreateOpacityMicromapProbe(bOpaque, false, MicromapProbe, true);
+            TEST_EXPECT(bCreated);
+
+            bool bHit = !bOpaque;
+            TEST_EXPECT(bCreated && TracePipelineProbeRay(PipelineProbe, MicromapProbe.Scene.Get(), 0.0f, bHit) && bHit == bOpaque);
+
+            if (bCreated && Probe.OpacityMicromapPipeline)
+            {
+                FRayQueryProbeHit Hit = {};
+                TEST_EXPECT(TraceProbeRay(Probe, MicromapProbe.Scene.Get(), false, 0.0f, Hit, true) && (bOpaque ? IsExpectedProbeHit(Hit, 3, 0, 5.0f) : Hit.bHit == 0));
+            }
+        }
+    }
+
     TEST_SECTION(TEXT("An opacity micromap builds from a descriptor and its micro-triangle data"));
     if (RHI::bSupportsOpacityMicromap)
     {
@@ -3322,25 +3466,16 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         FRHIBufferRef DataBuffer       = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(uint32), 1, InputFlags), ERHIResourceState::Common, &OpaqueData);
         TEST_EXPECT(DescriptorBuffer != nullptr && DataBuffer != nullptr);
 
-        FRHIOpacityMicromapDesc MicromapDesc;
-        MicromapDesc.Format = EOpacityMicromapFormat::OC1_4State;
-
-        FRHIOpacityMicromapRef Micromap = RHI::CreateOpacityMicromap(MicromapDesc);
-        TEST_EXPECT(Micromap != nullptr);
-
-        if (Micromap && DescriptorBuffer && DataBuffer)
+        if (DescriptorBuffer && DataBuffer)
         {
             FRHIOpacityMicromapBuildDesc BuildDesc;
             BuildDesc.OMMDescriptorBuffer            = DescriptorBuffer.Get();
             BuildDesc.OpacityMicroTriangleDataBuffer = DataBuffer.Get();
             BuildDesc.NumOpacityMicromaps            = 1;
 
-            FRHICommandList CommandList;
-            CommandList.BuildOpacityMicromap(Micromap.Get(), BuildDesc);
-            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
-            FRHICommandListExecutor::Get().WaitForGPU();
-
-            TEST_EXPECT(Micromap->GetRHINativeResource() != nullptr);
+            FRHIOpacityMicromapRef Micromap = RHI::CreateOpacityMicromap(FRHIOpacityMicromapDesc(EOpacityMicromapFormat::OC1_4State, 0, BuildDesc));
+            TEST_EXPECT(Micromap != nullptr);
+            TEST_EXPECT(!Micromap || Micromap->GetRHINativeResource() != nullptr);
         }
     }
     else

@@ -103,28 +103,36 @@ private:
 #endif
 };
 
-class FVulkanOpacityMicromapRHI : public FRHIOpacityMicromap, public FVulkanDeviceChild
+class FVulkanOpacityMicromapRHI : public FRHIOpacityMicromap, public FVulkanAccelerationStructure
 {
 public:
     FVulkanOpacityMicromapRHI(FVulkanDevice* InDevice, const FRHIOpacityMicromapDesc& InDesc);
     ~FVulkanOpacityMicromapRHI();
-    
-    bool Build(FVulkanCommandContext& CmdContext, const FRHIOpacityMicromapBuildDesc& BuildDesc);
-    
+
     // FRHIOpacityMicromap Interface
     virtual void* GetRHINativeResource() const override final;
 
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
+
+    bool Build(FVulkanCommandContext& CmdContext, const FRHIOpacityMicromapBuildDesc& BuildDesc);
+    bool BuildSerialized(FVulkanCommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes);
+
     VkAccelerationStructureKHR GetVkMicromap() const
     {
-        return Micromap;
+        return AccelerationStructure;
     }
 
 private:
-    FRHIOpacityMicromapDesc    MicromapDesc;
-    VkAccelerationStructureKHR Micromap;
-    FVulkanMemoryLocation      MicromapLocation;
-    FVulkanMemoryLocation      ScratchLocation;
-    uint64                     TrackedMicromapMemory;
+    bool AllocateMicromapStorage(uint64 Size);
+
+    FRHIOpacityMicromapDesc MicromapDesc;
+    FVulkanMemoryLocation   MicromapLocation;
+    FVulkanMemoryLocation   ScratchLocation;
+    uint64                  TrackedMicromapMemory;
+#if VULKAN_STORE_DEBUG_NAMES
+    FString                 DebugName;
+#endif
 };
 
 #if VK_NV_cluster_acceleration_structure

@@ -194,6 +194,51 @@ bool RHIValidationInternal::ValidateIndirectCountBuffer(const CHAR_T* Operation,
     return true;
 }
 
+bool RHIValidationInternal::ValidateOpacityMicromapBuild(const CHAR_T* Operation, const FRHIOpacityMicromapBuildDesc& BuildDesc)
+{
+    if (!BuildDesc.OMMDescriptorBuffer || BuildDesc.NumOpacityMicromaps == 0)
+    {
+        RHI_VALIDATION_ERROR("%s: a micromap build needs its descriptor buffer and at least one micromap.", Operation);
+        return false;
+    }
+
+    FRHIBuffer* const DataBuffer = BuildDesc.OpacityMicroTriangleDataBuffer ? BuildDesc.OpacityMicroTriangleDataBuffer : BuildDesc.OMMDescriptorBuffer;
+    if (!BuildDesc.OMMDescriptorBuffer->GetDesc().IsRayTracingBuildInput() || !DataBuffer->GetDesc().IsRayTracingBuildInput())
+    {
+        RHI_VALIDATION_ERROR("%s: the descriptor and data buffers must be created with EBufferFlags::RayTracingBuildInput.", Operation);
+        return false;
+    }
+
+    if ((BuildDesc.OpacityMicroTriangleDataBufferOffset % 128) != 0 || (BuildDesc.OMMDescriptorBufferOffset % 4) != 0)
+    {
+        RHI_VALIDATION_ERROR("%s: the data offset must be a multiple of 128 bytes and the descriptor offset a multiple of 4.", Operation);
+        return false;
+    }
+
+    if (BuildDesc.OMMDescriptorStrideInBytes != 0 && (BuildDesc.OMMDescriptorStrideInBytes < sizeof(FRHIOpacityMicromapTriangleDesc) || (BuildDesc.OMMDescriptorStrideInBytes % 4) != 0))
+    {
+        RHI_VALIDATION_ERROR("%s: the descriptor stride must be zero or a multiple of 4 no smaller than FRHIOpacityMicromapTriangleDesc.", Operation);
+        return false;
+    }
+
+    if (!BuildDesc.HistogramEntries.IsEmpty())
+    {
+        uint64 HistogramTotal = 0;
+        for (const FRHIOpacityMicromapHistogramEntry& Entry : BuildDesc.HistogramEntries)
+        {
+            HistogramTotal += Entry.Count;
+        }
+
+        if (HistogramTotal != BuildDesc.NumOpacityMicromaps)
+        {
+            RHI_VALIDATION_ERROR("%s: the histogram entry counts must sum to the number of micromaps.", Operation);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool RHIValidationInternal::ValidateGeometrySegments(const CHAR_T* Operation, const FRHIRayTracingGeometrySegment* Segments, uint32 NumSegments, uint32 NumIndices)
 {
     if (!RHIValidationHelpers::AreGeometrySegmentsValid(Segments, NumSegments, NumIndices))

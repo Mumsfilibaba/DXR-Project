@@ -129,6 +129,54 @@ void* FD3D12OpacityMicromapRHI::GetRHINativeResource() const
     return Resource ? reinterpret_cast<void*>(Resource->GetD3D12Resource()) : nullptr;
 }
 
+void FD3D12OpacityMicromapRHI::SetDebugName(const FString& InName)
+{
+    if (FD3D12Resource* D3D12Resource = GetResource())
+    {
+        D3D12Resource->SetDebugName(InName);
+    }
+}
+
+void FD3D12OpacityMicromapRHI::GetDebugName(FString& OutDebugName) const
+{
+    if (FD3D12Resource* D3D12Resource = GetResource())
+    {
+        D3D12Resource->GetDebugName(OutDebugName);
+    }
+    else
+    {
+        OutDebugName.Clear();
+    }
+}
+
+bool FD3D12OpacityMicromapRHI::BuildSerialized(FD3D12CommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes)
+{
+    D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER SerializedHeader;
+    if (!SerializedData || SerializedSizeInBytes < sizeof(SerializedHeader))
+    {
+        return false;
+    }
+
+    Memory::Memcpy(&SerializedHeader, SerializedData, sizeof(SerializedHeader));
+    if (SerializedHeader.DeserializedSizeInBytes == 0 || !AllocateResultStorage(SerializedHeader.DeserializedSizeInBytes, ResultResourceStorage))
+    {
+        return false;
+    }
+
+    UncompactedSize = ResultResourceStorage.GetSize();
+    UpdateAccelerationStructureMemoryStat();
+
+    const FRHIBufferDesc UploadDesc(EBufferFlags::Default | EBufferFlags::CopySource | EBufferFlags::AccelerationStructure, 0, SerializedSizeInBytes);
+    FRHIBufferRef Upload = FD3D12DeviceRHI::Get()->CreateBuffer(UploadDesc, ERHIResourceState::CopySource, SerializedData);
+    if (!Upload)
+    {
+        return false;
+    }
+
+    CmdContext.DeserializeAccelerationStructure(this, Upload.Get(), 0);
+    return true;
+}
+
 bool FD3D12OpacityMicromapRHI::Build(FD3D12CommandContext& CmdContext, const FRHIOpacityMicromapBuildDesc& BuildDesc)
 {
 #if D3D12_USE_ID3D12DEVICE_5 && D3D12_USE_ID3D12COMMANDLIST_4

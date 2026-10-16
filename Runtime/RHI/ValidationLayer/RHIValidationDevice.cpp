@@ -2078,6 +2078,19 @@ FRHIOpacityMicromap* FRHIValidationDevice::CreateOpacityMicromap(const FRHIOpaci
         return nullptr;
     }
 
+    if (InDesc.IsSerialized())
+    {
+        if (!InDesc.SerializedData || InDesc.SerializedSizeInBytes == 0)
+        {
+            RHI_VALIDATION_ERROR("CreateOpacityMicromap: a deserialized micromap needs its serialized data and size.");
+            return nullptr;
+        }
+    }
+    else if (!RHIValidationInternal::ValidateOpacityMicromapBuild(TEXT("CreateOpacityMicromap"), InDesc.GetBuildDesc()))
+    {
+        return nullptr;
+    }
+
     return TrackLiveResource(Device->CreateOpacityMicromap(InDesc));
 }
 

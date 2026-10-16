@@ -389,10 +389,7 @@ FRHISamplerState* FD3D12DeviceRHI::CreateSamplerState(const FRHISamplerStateDesc
 
 FRHISceneAccelerationStructure* FD3D12DeviceRHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
 {
-    FRHISceneAccelerationStructureBuildDesc BuildDesc;
-    BuildDesc.Instances    = InSceneDesc.Instances.Data();
-    BuildDesc.NumInstances = InSceneDesc.Instances.Size();
-    BuildDesc.bUpdate      = false;
+    const FRHISceneAccelerationStructureBuildDesc BuildDesc = InSceneDesc.GetBuildDesc();
 
     FD3D12SceneAccelerationStructureRHIRef D3D12Scene = new FD3D12SceneAccelerationStructureRHI(GetDevice(), InSceneDesc);
 
@@ -427,10 +424,7 @@ FRHIGeometryAccelerationStructure* FD3D12DeviceRHI::CreateGeometryAccelerationSt
         }
         else
         {
-            FRHIGeometryAccelerationStructureBuildDesc BuildDesc(InGeometryDesc.VertexBuffer, InGeometryDesc.NumVertices, InGeometryDesc.IndexBuffer, InGeometryDesc.NumIndices, InGeometryDesc.IndexFormat, false);
-            BuildDesc.Segments    = InGeometryDesc.Segments;
-            BuildDesc.NumSegments = InGeometryDesc.NumSegments;
-            bSucceeded = D3D12Geometry->Build(*BuildContext, BuildDesc);
+            bSucceeded = D3D12Geometry->Build(*BuildContext, InGeometryDesc.GetBuildDesc());
         }
 
         if (bSucceeded)
@@ -456,6 +450,25 @@ FRHIOpacityMicromap* FD3D12DeviceRHI::CreateOpacityMicromap(const FRHIOpacityMic
 {
 #if D3D12_ENABLE_OPACITY_MICROMAPS
     FD3D12OpacityMicromapRHIRef OpacityMicromap = new FD3D12OpacityMicromapRHI(GetDevice(), InDesc);
+
+    {
+        FD3D12ScopedCommandContext BuildContext(*GetDevice()->GetQueue(ED3D12CommandQueueType::Direct));
+
+        const bool bSucceeded = InDesc.IsSerialized()
+            ? OpacityMicromap->BuildSerialized(*BuildContext, InDesc.SerializedData, InDesc.SerializedSizeInBytes)
+            : OpacityMicromap->Build(*BuildContext, InDesc.GetBuildDesc());
+
+        if (bSucceeded)
+        {
+            BuildContext->AccelerationStructureBarrier(OpacityMicromap.Get());
+        }
+        else
+        {
+            OpacityMicromap.Reset();
+        }
+    }
+
+    FlushCompletedSubmissions();
     return OpacityMicromap.ReleaseOwnership();
 #else
     UNREFERENCED_VARIABLE(InDesc);
