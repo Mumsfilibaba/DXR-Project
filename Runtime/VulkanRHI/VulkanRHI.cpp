@@ -709,10 +709,10 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
 
 FRHIOpacityMicromap* FVulkanDeviceRHI::CreateOpacityMicromap(const FRHIOpacityMicromapDesc& InDesc)
 {
-#if VK_EXT_opacity_micromap
+#if VK_KHR_opacity_micromap && VK_KHR_device_address_commands
     if (GVulkanSupportsOpacityMicromap)
     {
-        return new FVulkanOpacityMicromap(GetDevice(), InDesc);
+        return new FVulkanOpacityMicromapRHI(GetDevice(), InDesc);
     }
 #endif
 
@@ -1189,7 +1189,7 @@ FRHIRayTracingPipelineState* FVulkanDeviceRHI::CreateRayTracingPipelineState(con
 
 FRHIShaderBindingTable* FVulkanDeviceRHI::CreateShaderBindingTable(const FRHIShaderBindingTableDesc& InDesc)
 {
-    FVulkanShaderBindingTableRef NewTable = new FVulkanShaderBindingTable(GetDevice(), InDesc);
+    FVulkanShaderBindingTableRHIRef NewTable = new FVulkanShaderBindingTableRHI(GetDevice(), InDesc);
     if (!NewTable->Initialize())
     {
         return nullptr;

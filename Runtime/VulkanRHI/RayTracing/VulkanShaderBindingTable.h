@@ -6,13 +6,13 @@
 #include "VulkanRHI/VulkanMemoryManager.h"
 #include "VulkanRHI/RayTracing/VulkanRayTracingPipeline.h"
 
-typedef TSharedRef<class FVulkanShaderBindingTable> FVulkanShaderBindingTableRef;
+typedef TSharedRef<class FVulkanShaderBindingTableRHI> FVulkanShaderBindingTableRHIRef;
 
-class FVulkanShaderBindingTable : public FRHIShaderBindingTable, public FVulkanDeviceChild
+class FVulkanShaderBindingTableRHI : public FRHIShaderBindingTable, public FVulkanDeviceChild
 {
 public:
-    FVulkanShaderBindingTable(FVulkanDevice* InDevice, const FRHIShaderBindingTableDesc& InDesc);
-    virtual ~FVulkanShaderBindingTable();
+    FVulkanShaderBindingTableRHI(FVulkanDevice* InDevice, const FRHIShaderBindingTableDesc& InDesc);
+    virtual ~FVulkanShaderBindingTableRHI();
 
     // FRHIShaderBindingTable Interface
     virtual void* GetRHINativeResource() const override final;

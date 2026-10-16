@@ -38,6 +38,9 @@ enum class EAccelerationStructureBuildFlags : uint8
 
     /** The structure is deserialized from the description's SerializedData instead of built, so the graphics APIs never see this flag */
     Deserialize = FLAG(6),
+
+    /** Instances of the structure may turn its opacity micromaps off with ERayTracingInstanceFlags::DisableOpacityMicromaps */
+    AllowDisableOpacityMicromaps = FLAG(7),
 };
 
 ENUM_CLASS_OPERATORS(EAccelerationStructureBuildFlags);
@@ -53,6 +56,12 @@ enum class ERayTracingInstanceFlags : uint8
     FrontCounterClockwise = FLAG(2),
     ForceOpaque           = FLAG(3),
     ForceNonOpaque        = FLAG(4),
+
+    /** Ignore the instance's opacity micromaps and use the geometry's opaque flag, for a structure built with AllowDisableOpacityMicromaps */
+    DisableOpacityMicromaps = FLAG(5),
+
+    /** Treat the unknown states of the instance's 4-state opacity micromaps as their opaque or transparent bit */
+    ForceOpacityMicromap2State = FLAG(6),
 };
 
 ENUM_CLASS_OPERATORS(ERayTracingInstanceFlags);

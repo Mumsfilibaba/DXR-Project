@@ -18,7 +18,7 @@ static FD3D12BufferRHI* GetViewedBuffer(FRHIResource* ViewedResource)
     return FD3D12DeviceRHI::ResourceCast(static_cast<FRHIBuffer*>(ViewedResource));
 }
 
-FD3D12ShaderBindingTable::FD3D12ShaderBindingTable(FD3D12Device* InDevice, const FRHIShaderBindingTableDesc& InDesc)
+FD3D12ShaderBindingTableRHI::FD3D12ShaderBindingTableRHI(FD3D12Device* InDevice, const FRHIShaderBindingTableDesc& InDesc)
     : FRHIShaderBindingTable(InDesc)
     , FD3D12DeviceChild(InDevice)
     , Pipeline(MakeSharedRef<FD3D12RayTracingPipelineStateRHI>(FD3D12DeviceRHI::ResourceCast(InDesc.Pipeline)))
@@ -35,15 +35,15 @@ FD3D12ShaderBindingTable::FD3D12ShaderBindingTable(FD3D12Device* InDevice, const
     Memory::Memzero(CpuShadow.Data(), CpuShadow.SizeInBytes());
 }
 
-FD3D12ShaderBindingTable::~FD3D12ShaderBindingTable() = default;
+FD3D12ShaderBindingTableRHI::~FD3D12ShaderBindingTableRHI() = default;
 
-void* FD3D12ShaderBindingTable::GetRHINativeResource() const
+void* FD3D12ShaderBindingTableRHI::GetRHINativeResource() const
 {
     FD3D12Resource* Resource = TableResourceStorage.GetResource();
     return Resource ? reinterpret_cast<void*>(Resource->GetD3D12Resource()) : nullptr;
 }
 
-bool FD3D12ShaderBindingTable::Initialize()
+bool FD3D12ShaderBindingTableRHI::Initialize()
 {
     const uint64 RequiredSize = uint64(CpuShadow.SizeInBytes());
     if (RequiredSize == 0)
@@ -82,7 +82,7 @@ bool FD3D12ShaderBindingTable::Initialize()
     return TableResourceStorage.GetResource() != nullptr;
 }
 
-FRHIShaderBindingTableAddressInfo FD3D12ShaderBindingTable::GetAddressInfo() const
+FRHIShaderBindingTableAddressInfo FD3D12ShaderBindingTableRHI::GetAddressInfo() const
 {
     FRHIShaderBindingTableAddressInfo AddressInfo = {};
     if (!TableResourceStorage.GetResource())
@@ -104,7 +104,7 @@ FRHIShaderBindingTableAddressInfo FD3D12ShaderBindingTable::GetAddressInfo() con
     return AddressInfo;
 }
 
-uint32 FD3D12ShaderBindingTable::GetSubTableBaseRecord(ERayTracingShaderRecordKind RecordKind) const
+uint32 FD3D12ShaderBindingTableRHI::GetSubTableBaseRecord(ERayTracingShaderRecordKind RecordKind) const
 {
     switch (RecordKind)
     {
@@ -125,7 +125,7 @@ uint32 FD3D12ShaderBindingTable::GetSubTableBaseRecord(ERayTracingShaderRecordKi
     }
 }
 
-void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSignature, uint8* OutRecord, uint64 RecordByteOffset, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FString& ExportName, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FD3D12ShaderBindingTableRHI::PopulateRecord(FD3D12RootSignature* LocalRootSignature, uint8* OutRecord, uint64 RecordByteOffset, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, const FString& ExportName, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
     UNREFERENCED_VARIABLE(RecordKind);
     UNREFERENCED_VARIABLE(RecordIndex);
@@ -152,7 +152,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     }
     else
     {
-        D3D12_ERROR("[FD3D12ShaderBindingTable]: Failed to resolve shader identifier for record kind '%s' index %u (export name '%s')."
+        D3D12_ERROR("[FD3D12ShaderBindingTableRHI]: Failed to resolve shader identifier for record kind '%s' index %u (export name '%s')."
             "The record would be written with a zeroed identifier and its shader would never execute. verify the pipeline registered an export for this shader.",
             ToString(RecordKind), RecordIndex, ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName);
     }
@@ -193,7 +193,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     {
         if (ParamIndex >= D3D12_MAX_LOCAL_RECORD_ENTRIES && !bReportedBudgetOverflow)
         {
-            D3D12_ERROR("[FD3D12ShaderBindingTable]: Local root signature for '%s' exceeds the %d-entry hit-record budget. local binding at parameter %d dropped.", ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName, int32(D3D12_MAX_LOCAL_RECORD_ENTRIES), int32(ParamIndex));
+            D3D12_ERROR("[FD3D12ShaderBindingTableRHI]: Local root signature for '%s' exceeds the %d-entry hit-record budget. local binding at parameter %d dropped.", ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName, int32(D3D12_MAX_LOCAL_RECORD_ENTRIES), int32(ParamIndex));
             bReportedBudgetOverflow = true;
         }
     };
@@ -203,7 +203,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     {
         if (Slot >= int8(FD3D12PendingLocalTable::MaxDescriptors) && !bReportedTableOverflow)
         {
-            D3D12_ERROR("[FD3D12ShaderBindingTable]: Local descriptor table for '%s' exceeds the %u-descriptor capacity. local binding at table slot %d dropped.", ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName, FD3D12PendingLocalTable::MaxDescriptors, int32(Slot));
+            D3D12_ERROR("[FD3D12ShaderBindingTableRHI]: Local descriptor table for '%s' exceeds the %u-descriptor capacity. local binding at table slot %d dropped.", ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName, FD3D12PendingLocalTable::MaxDescriptors, int32(Slot));
             bReportedTableOverflow = true;
         }
     };
@@ -244,7 +244,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
                     const uint64 ElementSize = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
                     if (ElementSize == 0)
                     {
-                        D3D12_ERROR("[FD3D12ShaderBindingTable]: Root SRV at register %u has a zero element size and cannot be addressed.", uint32(Register));
+                        D3D12_ERROR("[FD3D12ShaderBindingTableRHI]: Root SRV at register %u has a zero element size and cannot be addressed.", uint32(Register));
                         break;
                     }
 
@@ -287,7 +287,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
                     const uint64 ElementSize = GetBufferViewElementSize(ViewedBuffer->GetDesc(), BufferViewDesc);
                     if (ElementSize == 0)
                     {
-                        D3D12_ERROR("[FD3D12ShaderBindingTable]: Root UAV at register %u has a zero element size and cannot be addressed.", uint32(Register));
+                        D3D12_ERROR("[FD3D12ShaderBindingTableRHI]: Root UAV at register %u has a zero element size and cannot be addressed.", uint32(Register));
                         break;
                     }
 
@@ -361,7 +361,7 @@ void FD3D12ShaderBindingTable::PopulateRecord(FD3D12RootSignature* LocalRootSign
     }
 }
 
-void FD3D12ShaderBindingTable::SetRecord(const FRHIShaderRecordDesc& RecordDesc)
+void FD3D12ShaderBindingTableRHI::SetRecord(const FRHIShaderRecordDesc& RecordDesc)
 {
     const ERayTracingShaderRecordKind     RecordKind  = RecordDesc.RecordKind;
     const uint32                          RecordIndex = RecordDesc.RecordIndex;
@@ -393,7 +393,7 @@ void FD3D12ShaderBindingTable::SetRecord(const FRHIShaderRecordDesc& RecordDesc)
     }
 }
 
-void FD3D12ShaderBindingTable::RemovePendingTablesInRange(uint64 BeginByteOffset, uint64 EndByteOffset)
+void FD3D12ShaderBindingTableRHI::RemovePendingTablesInRange(uint64 BeginByteOffset, uint64 EndByteOffset)
 {
     for (int32 i = PendingLocalTables.Size() - 1; i >= 0; --i)
     {
@@ -405,13 +405,13 @@ void FD3D12ShaderBindingTable::RemovePendingTablesInRange(uint64 BeginByteOffset
     }
 }
 
-void FD3D12ShaderBindingTable::ClearTableRecords()
+void FD3D12ShaderBindingTableRHI::ClearTableRecords()
 {
     Memory::Memzero(CpuShadow.Data(), CpuShadow.SizeInBytes());
     PendingLocalTables.Clear();
 }
 
-void FD3D12ShaderBindingTable::UploadCpuShadow(FD3D12CommandContext& CmdContext)
+void FD3D12ShaderBindingTableRHI::UploadCpuShadow(FD3D12CommandContext& CmdContext)
 {
     const uint64 RequiredSize = uint64(CpuShadow.SizeInBytes());
     if (RequiredSize == 0)
@@ -430,12 +430,12 @@ void FD3D12ShaderBindingTable::UploadCpuShadow(FD3D12CommandContext& CmdContext)
     CmdContext.TransitionResourceState(TableResourceStorage.GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 }
 
-void FD3D12ShaderBindingTable::Build(FD3D12CommandContext& CmdContext)
+void FD3D12ShaderBindingTableRHI::Build(FD3D12CommandContext& CmdContext)
 {
     UploadCpuShadow(CmdContext);
 }
 
-bool FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext& CmdContext, FD3D12LocalDescriptorHeap& ResourceHeap, FD3D12LocalDescriptorHeap& SamplerHeap)
+bool FD3D12ShaderBindingTableRHI::ResolveLocalDescriptorTables(FD3D12CommandContext& CmdContext, FD3D12LocalDescriptorHeap& ResourceHeap, FD3D12LocalDescriptorHeap& SamplerHeap)
 {
     if (PendingLocalTables.IsEmpty())
     {
@@ -569,14 +569,14 @@ bool FD3D12ShaderBindingTable::ResolveLocalDescriptorTables(FD3D12CommandContext
     return true;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS_RANGE FD3D12ShaderBindingTable::GetRayGenRecord() const
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE FD3D12ShaderBindingTableRHI::GetRayGenRecord() const
 {
     CHECK(TableResourceStorage.GetResource() != nullptr);
     const uint64 BaseAddress = TableResourceStorage.GetGPUVirtualAddress();
     return { BaseAddress, RecordStride };
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTable::GetMissTable() const
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTableRHI::GetMissTable() const
 {
     CHECK(TableResourceStorage.GetResource() != nullptr);
     if (NumMiss == 0)
@@ -588,7 +588,7 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTable::GetMissTabl
     return { BaseAddress, uint64(NumMiss) * RecordStride, RecordStride };
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTable::GetHitGroupTable() const
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTableRHI::GetHitGroupTable() const
 {
     CHECK(TableResourceStorage.GetResource() != nullptr);
     if (NumHitGroup == 0)
@@ -600,7 +600,7 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTable::GetHitGroup
     return { BaseAddress, uint64(NumHitGroup) * RecordStride, RecordStride };
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTable::GetCallableTable() const
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12ShaderBindingTableRHI::GetCallableTable() const
 {
     CHECK(TableResourceStorage.GetResource() != nullptr);
 

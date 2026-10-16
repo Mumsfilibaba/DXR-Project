@@ -1514,7 +1514,7 @@ FRHIShaderBindingTable* FD3D12DeviceRHI::CreateShaderBindingTable(const FRHIShad
         return nullptr;
     }
 
-    FD3D12ShaderBindingTableRef ShaderBindingTable = new FD3D12ShaderBindingTable(GetDevice(), InDesc);
+    FD3D12ShaderBindingTableRHIRef ShaderBindingTable = new FD3D12ShaderBindingTableRHI(GetDevice(), InDesc);
     if (!ShaderBindingTable->Initialize())
     {
         return nullptr;

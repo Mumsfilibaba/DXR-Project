@@ -548,7 +548,10 @@ public:
 
     FORCEINLINE void BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc) noexcept
     {
-        EmplaceCommand<FRHICommandBuildOpacityMicromap>(OpacityMicromap, BuildDesc);
+        FRHIOpacityMicromapBuildDesc CommandBuildDesc = BuildDesc;
+        CommandBuildDesc.HistogramEntries = AllocateArray(BuildDesc.HistogramEntries);
+
+        EmplaceCommand<FRHICommandBuildOpacityMicromap>(OpacityMicromap, CommandBuildDesc);
     }
 
     FORCEINLINE void ExecuteIndirectRayTracingAccelerationStructureOperations(const FRHIRayTracingAccelerationStructureOperationDesc* Operations, uint32 NumOperations) noexcept

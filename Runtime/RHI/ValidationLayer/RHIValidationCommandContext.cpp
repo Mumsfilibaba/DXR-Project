@@ -1824,6 +1824,25 @@ void FRHIValidationCommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* Opa
         return;
     }
 
+    FRHIBuffer* const DataBuffer = BuildDesc.OpacityMicroTriangleDataBuffer ? BuildDesc.OpacityMicroTriangleDataBuffer : BuildDesc.OMMDescriptorBuffer;
+    if (!BuildDesc.OMMDescriptorBuffer->GetDesc().IsRayTracingBuildInput() || !DataBuffer->GetDesc().IsRayTracingBuildInput())
+    {
+        RHI_VALIDATION_ERROR("BuildOpacityMicromap: the descriptor and data buffers must be created with EBufferFlags::RayTracingBuildInput.");
+        return;
+    }
+
+    if ((BuildDesc.OpacityMicroTriangleDataBufferOffset % 128) != 0 || (BuildDesc.OMMDescriptorBufferOffset % 4) != 0)
+    {
+        RHI_VALIDATION_ERROR("BuildOpacityMicromap: the data offset must be a multiple of 128 bytes and the descriptor offset a multiple of 4.");
+        return;
+    }
+
+    if (BuildDesc.OMMDescriptorStrideInBytes != 0 && (BuildDesc.OMMDescriptorStrideInBytes < sizeof(FRHIOpacityMicromapTriangleDesc) || (BuildDesc.OMMDescriptorStrideInBytes % 4) != 0))
+    {
+        RHI_VALIDATION_ERROR("BuildOpacityMicromap: the descriptor stride must be zero or a multiple of 4 no smaller than FRHIOpacityMicromapTriangleDesc.");
+        return;
+    }
+
     if (!BuildDesc.HistogramEntries.IsEmpty())
     {
         uint64 HistogramTotal = 0;

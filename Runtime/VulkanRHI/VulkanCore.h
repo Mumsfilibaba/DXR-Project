@@ -906,6 +906,13 @@ constexpr VkBuildAccelerationStructureFlagsKHR ConvertAccelerationStructureBuild
         Result |= VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR;
     }
 
+#if VK_KHR_opacity_micromap
+    if (IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowDisableOpacityMicromaps))
+    {
+        Result |= VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_DISABLE_OPACITY_MICROMAPS_BIT_KHR;
+    }
+#endif
+
     return Result;
 }
 
@@ -931,6 +938,18 @@ constexpr VkGeometryInstanceFlagsKHR ConvertRayTracingInstanceFlags(ERayTracingI
     {
         Result |= VK_GEOMETRY_INSTANCE_FORCE_NO_OPAQUE_BIT_KHR;
     }
+
+#if VK_KHR_opacity_micromap
+    if (IsEnumFlagSet(Flags, ERayTracingInstanceFlags::DisableOpacityMicromaps))
+    {
+        Result |= VK_GEOMETRY_INSTANCE_DISABLE_OPACITY_MICROMAPS_BIT_KHR;
+    }
+
+    if (IsEnumFlagSet(Flags, ERayTracingInstanceFlags::ForceOpacityMicromap2State))
+    {
+        Result |= VK_GEOMETRY_INSTANCE_FORCE_OPACITY_MICROMAP_2_STATE_BIT_KHR;
+    }
+#endif
 
     return Result;
 }

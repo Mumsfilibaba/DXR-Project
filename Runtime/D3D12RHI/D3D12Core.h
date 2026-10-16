@@ -1337,6 +1337,13 @@ NODISCARD constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertA
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY;
     }
 
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    if ((InFlags & EAccelerationStructureBuildFlags::AllowDisableOpacityMicromaps) != EAccelerationStructureBuildFlags::None)
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS;
+    }
+#endif
+
     return Flags;
 }
 
@@ -1362,6 +1369,18 @@ NODISCARD constexpr D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFla
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
     }
+
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    if ((InFlags & ERayTracingInstanceFlags::DisableOpacityMicromaps) != ERayTracingInstanceFlags::None)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS;
+    }
+
+    if ((InFlags & ERayTracingInstanceFlags::ForceOpacityMicromap2State) != ERayTracingInstanceFlags::None)
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OMM_2_STATE;
+    }
+#endif
 
     return Flags;
 }

@@ -13,7 +13,7 @@
 #include "D3D12RHI/D3D12CommandContextState.h"
 #include "D3D12RHI/D3D12ResourceState.h"
 
-class FD3D12ShaderBindingTable;
+class FD3D12ShaderBindingTableRHI;
 
 class FD3D12BarrierBatcher
 {
@@ -227,7 +227,7 @@ public:
 private:
     bool HasPendingWork() const;
     void ConditionalSplitCommandList();
-    bool PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTable* ShaderBindingTable);
+    bool PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTableRHI* ShaderBindingTable);
     void CloseEventStack();
     void ReopenEventStack();
 

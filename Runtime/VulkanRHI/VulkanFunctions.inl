@@ -250,11 +250,8 @@ VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdCopyMemoryToAccelerationStructureKHR)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdWriteAccelerationStructuresPropertiesKHR)
 #endif
 
-#if VK_EXT_opacity_micromap
-VULKAN_DEVICE_FUNCTION_OPTIONAL(CreateMicromapEXT)
-VULKAN_DEVICE_FUNCTION_OPTIONAL(DestroyMicromapEXT)
-VULKAN_DEVICE_FUNCTION_OPTIONAL(GetMicromapBuildSizesEXT)
-VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdBuildMicromapsEXT)
+#if VK_KHR_device_address_commands
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CreateAccelerationStructure2KHR)
 #endif
 
 #if VK_NV_cluster_acceleration_structure

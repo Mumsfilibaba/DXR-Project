@@ -374,13 +374,6 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
         }
     #endif
 
-    #if VK_EXT_opacity_micromap
-        FORCEINLINE void BuildMicromaps(uint32 InfoCount, const VkMicromapBuildInfoEXT* Infos)
-        {
-            vkCmdBuildMicromapsEXT(CommandBuffer, InfoCount, Infos);
-        }
-    #endif
-
     #if VK_KHR_ray_tracing_pipeline
         FORCEINLINE void TraceRays(const VkStridedDeviceAddressRegionKHR* RayGenRegion, const VkStridedDeviceAddressRegionKHR* MissRegion,
             const VkStridedDeviceAddressRegionKHR* HitGroupRegion, const VkStridedDeviceAddressRegionKHR* CallableRegion, uint32 Width, uint32 Height, uint32 Depth)

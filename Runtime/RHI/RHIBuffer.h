@@ -50,6 +50,9 @@ enum class EBufferFlags : uint16
     /** May be consumed by indirect draw/dispatch commands */
     IndirectArguments = FLAG(14),
 
+    /** Read by acceleration structure and opacity micromap builds, such as micromap data and per-triangle micromap indices */
+    RayTracingBuildInput = FLAG(15),
+
     RWBuffer = UnorderedAccessBuffer | ShaderResourceBuffer,
 };
 
@@ -138,6 +141,7 @@ struct FRHIBufferDesc
     NODISCARD constexpr bool IsCopyDest()              const { return IsEnumFlagSet(Flags, EBufferFlags::CopyDest); }
     NODISCARD constexpr bool IsAccelerationStructure() const { return IsEnumFlagSet(Flags, EBufferFlags::AccelerationStructure); }
     NODISCARD constexpr bool IsIndirectArguments()     const { return IsEnumFlagSet(Flags, EBufferFlags::IndirectArguments); }
+    NODISCARD constexpr bool IsRayTracingBuildInput()  const { return IsEnumFlagSet(Flags, EBufferFlags::RayTracingBuildInput); }
 
     EBufferFlags                  Flags        = EBufferFlags::None;
     uint32                        Stride       = 0;

@@ -13,7 +13,7 @@
 
 class FD3D12CommandContext;
 class FD3D12LocalDescriptorHeap;
-typedef TSharedRef<class FD3D12ShaderBindingTable> FD3D12ShaderBindingTableRef;
+typedef TSharedRef<class FD3D12ShaderBindingTableRHI> FD3D12ShaderBindingTableRHIRef;
 
 enum class ED3D12LocalTableDescriptorType : uint8
 {
@@ -57,11 +57,11 @@ struct FD3D12PendingLocalTable
     FD3D12SamplerStateRHI*         Samplers[MaxDescriptors]             = {};
 };
 
-class FD3D12ShaderBindingTable : public FRHIShaderBindingTable, public FD3D12DeviceChild
+class FD3D12ShaderBindingTableRHI : public FRHIShaderBindingTable, public FD3D12DeviceChild
 {
 public:
-    FD3D12ShaderBindingTable(FD3D12Device* InDevice, const FRHIShaderBindingTableDesc& InDesc);
-    virtual ~FD3D12ShaderBindingTable();
+    FD3D12ShaderBindingTableRHI(FD3D12Device* InDevice, const FRHIShaderBindingTableDesc& InDesc);
+    virtual ~FD3D12ShaderBindingTableRHI();
 
     // FRHIShaderBindingTable Interface
     virtual void* GetRHINativeResource() const override final;

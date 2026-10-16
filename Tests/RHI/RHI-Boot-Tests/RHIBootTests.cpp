@@ -3011,6 +3011,43 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         FRHICommandListExecutor::Get().WaitForGPU();
     }
 
+    TEST_SECTION(TEXT("An opacity micromap builds from a descriptor and its micro-triangle data"));
+    if (RHI::bSupportsOpacityMicromap)
+    {
+        const FRHIOpacityMicromapTriangleDesc Triangle(0, 0, EOpacityMicromapFormat::OC1_4State);
+        const uint32                          OpaqueData = 1;
+
+        const EBufferFlags InputFlags = EBufferFlags::Default | EBufferFlags::RayTracingBuildInput;
+        FRHIBufferRef DescriptorBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(FRHIOpacityMicromapTriangleDesc), 1, InputFlags), ERHIResourceState::Common, &Triangle);
+        FRHIBufferRef DataBuffer       = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(uint32), 1, InputFlags), ERHIResourceState::Common, &OpaqueData);
+        TEST_EXPECT(DescriptorBuffer != nullptr && DataBuffer != nullptr);
+
+        FRHIOpacityMicromapDesc MicromapDesc;
+        MicromapDesc.Format = EOpacityMicromapFormat::OC1_4State;
+
+        FRHIOpacityMicromapRef Micromap = RHI::CreateOpacityMicromap(MicromapDesc);
+        TEST_EXPECT(Micromap != nullptr);
+
+        if (Micromap && DescriptorBuffer && DataBuffer)
+        {
+            FRHIOpacityMicromapBuildDesc BuildDesc;
+            BuildDesc.OMMDescriptorBuffer            = DescriptorBuffer.Get();
+            BuildDesc.OpacityMicroTriangleDataBuffer = DataBuffer.Get();
+            BuildDesc.NumOpacityMicromaps            = 1;
+
+            FRHICommandList CommandList;
+            CommandList.BuildOpacityMicromap(Micromap.Get(), BuildDesc);
+            FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+            FRHICommandListExecutor::Get().WaitForGPU();
+
+            TEST_EXPECT(Micromap->GetRHINativeResource() != nullptr);
+        }
+    }
+    else
+    {
+        LOG_INFO("[BOOT] Opacity micromap probe skipped, the backend reports no opacity micromaps");
+    }
+
     if (bCanTrace)
     {
         FShaderCompiler::Destroy();

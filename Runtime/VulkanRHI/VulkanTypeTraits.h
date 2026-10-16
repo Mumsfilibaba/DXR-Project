@@ -15,11 +15,11 @@ class FVulkanSwapChainRHI;
 class FVulkanAccelerationStructure;
 class FVulkanGeometryAccelerationStructureRHI;
 class FVulkanSceneAccelerationStructureRHI;
-class FVulkanOpacityMicromap;
+class FVulkanOpacityMicromapRHI;
 class FVulkanClusterAccelerationStructureRHI;
 class FVulkanClusterTemplateRHI;
 class FVulkanPartitionedSceneAccelerationStructureRHI;
-class FVulkanShaderBindingTable;
+class FVulkanShaderBindingTableRHI;
 class FVulkanGraphicsPipelineStateRHI;
 class FVulkanComputePipelineStateRHI;
 class FVulkanMeshletPipelineStateRHI;
@@ -115,12 +115,12 @@ template<> struct TVulkanRHIResourceType<FRHISceneAccelerationStructure>
 
 template<> struct TVulkanRHIResourceType<FRHIShaderBindingTable>
 {
-    typedef FVulkanShaderBindingTable Type;
+    typedef FVulkanShaderBindingTableRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIOpacityMicromap>
 {
-    typedef FVulkanOpacityMicromap Type;
+    typedef FVulkanOpacityMicromapRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIClusterAccelerationStructure>

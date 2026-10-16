@@ -11,7 +11,7 @@ static FORCEINLINE uint64 VulkanAlignUp(uint64 Value, uint64 Alignment)
     return Alignment ? ((Value + (Alignment - 1)) & ~(Alignment - 1)) : Value;
 }
 
-FVulkanShaderBindingTable::FVulkanShaderBindingTable(FVulkanDevice* InDevice, const FRHIShaderBindingTableDesc& InDesc)
+FVulkanShaderBindingTableRHI::FVulkanShaderBindingTableRHI(FVulkanDevice* InDevice, const FRHIShaderBindingTableDesc& InDesc)
     : FRHIShaderBindingTable(InDesc)
     , FVulkanDeviceChild(InDevice)
     , Pipeline(MakeSharedRef<FVulkanRayTracingPipelineStateRHI>(FVulkanDeviceRHI::ResourceCast(InDesc.Pipeline)))
@@ -49,17 +49,17 @@ FVulkanShaderBindingTable::FVulkanShaderBindingTable(FVulkanDevice* InDevice, co
     Memory::Memzero(CpuShadow.Data(), CpuShadow.SizeInBytes());
 }
 
-FVulkanShaderBindingTable::~FVulkanShaderBindingTable()
+FVulkanShaderBindingTableRHI::~FVulkanShaderBindingTableRHI()
 {
     TableLocation.ReleaseMemory();
 }
 
-void* FVulkanShaderBindingTable::GetRHINativeResource() const
+void* FVulkanShaderBindingTableRHI::GetRHINativeResource() const
 {
     return reinterpret_cast<void*>(TableLocation.GetBackingBuffer());
 }
 
-bool FVulkanShaderBindingTable::Initialize()
+bool FVulkanShaderBindingTableRHI::Initialize()
 {
     const uint64 RequiredSize = uint64(CpuShadow.SizeInBytes());
     if (RequiredSize == 0)
@@ -75,7 +75,7 @@ bool FVulkanShaderBindingTable::Initialize()
     return GetDevice()->GetMemoryManager().AllocateBufferMemory(MemoryProperties, Usage, AllocateFlags, RequiredSize, BaseAlignment, TableLocation);
 }
 
-FRHIShaderBindingTableAddressInfo FVulkanShaderBindingTable::GetAddressInfo() const
+FRHIShaderBindingTableAddressInfo FVulkanShaderBindingTableRHI::GetAddressInfo() const
 {
     FRHIShaderBindingTableAddressInfo AddressInfo = {};
     if (!TableLocation.IsValid())
@@ -97,7 +97,7 @@ FRHIShaderBindingTableAddressInfo FVulkanShaderBindingTable::GetAddressInfo() co
     return AddressInfo;
 }
 
-uint64 FVulkanShaderBindingTable::GetRegionBaseOffset(ERayTracingShaderRecordKind RecordKind) const
+uint64 FVulkanShaderBindingTableRHI::GetRegionBaseOffset(ERayTracingShaderRecordKind RecordKind) const
 {
     switch (RecordKind)
     {
@@ -109,7 +109,7 @@ uint64 FVulkanShaderBindingTable::GetRegionBaseOffset(ERayTracingShaderRecordKin
     }
 }
 
-void FVulkanShaderBindingTable::PopulateRecord(uint8* OutRecord, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, uint32 ShaderIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
+void FVulkanShaderBindingTableRHI::PopulateRecord(uint8* OutRecord, ERayTracingShaderRecordKind RecordKind, uint32 RecordIndex, uint32 ShaderIndex, const FRHIHitGroupLocalShaderBinding* Bindings, uint32 NumBindings)
 {
     FString ExportName;
     if (Pipeline)
@@ -125,7 +125,7 @@ void FVulkanShaderBindingTable::PopulateRecord(uint8* OutRecord, ERayTracingShad
     }
     else
     {
-        VULKAN_ERROR("[FVulkanShaderBindingTable]: Failed to resolve shader-group handle for record kind '%s' index %u (export name '%s'). The record would be written with a zeroed handle and its shader would never execute; verify the pipeline registered a group for this shader.",
+        VULKAN_ERROR("[FVulkanShaderBindingTableRHI]: Failed to resolve shader-group handle for record kind '%s' index %u (export name '%s'). The record would be written with a zeroed handle and its shader would never execute; verify the pipeline registered a group for this shader.",
             ToString(RecordKind), RecordIndex, ExportName.IsEmpty() ? TEXT("<empty>") : *ExportName);
     }
 
@@ -156,7 +156,7 @@ void FVulkanShaderBindingTable::PopulateRecord(uint8* OutRecord, ERayTracingShad
     }
 }
 
-void FVulkanShaderBindingTable::SetRecord(const FRHIShaderRecordDesc& RecordDesc)
+void FVulkanShaderBindingTableRHI::SetRecord(const FRHIShaderRecordDesc& RecordDesc)
 {
     const uint64 RegionBase = GetRegionBaseOffset(RecordDesc.RecordKind);
     const uint64 ByteOffset = RegionBase + uint64(RecordDesc.RecordIndex) * RecordStride;
@@ -167,12 +167,12 @@ void FVulkanShaderBindingTable::SetRecord(const FRHIShaderRecordDesc& RecordDesc
     }
 }
 
-void FVulkanShaderBindingTable::ClearTableRecords()
+void FVulkanShaderBindingTableRHI::ClearTableRecords()
 {
     Memory::Memzero(CpuShadow.Data(), CpuShadow.SizeInBytes());
 }
 
-void FVulkanShaderBindingTable::Build(FVulkanCommandContext& CmdContext)
+void FVulkanShaderBindingTableRHI::Build(FVulkanCommandContext& CmdContext)
 {
     const uint64 RequiredSize = uint64(CpuShadow.SizeInBytes());
     if (RequiredSize == 0)
@@ -221,7 +221,7 @@ void FVulkanShaderBindingTable::Build(FVulkanCommandContext& CmdContext)
     BarrierBatcher.AddMemoryBarrier(0, CopyToReadBarrier);
 }
 
-VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTable::GetRayGenRegion() const
+VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTableRHI::GetRayGenRegion() const
 {
     VkStridedDeviceAddressRegionKHR Region = {};
     Region.deviceAddress = TableLocation.GetDeviceAddress() + RayGenOffset;
@@ -230,7 +230,7 @@ VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTable::GetRayGenRegion() con
     return Region;
 }
 
-VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTable::GetMissRegion() const
+VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTableRHI::GetMissRegion() const
 {
     VkStridedDeviceAddressRegionKHR Region = {};
     if (NumMiss > 0)
@@ -243,7 +243,7 @@ VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTable::GetMissRegion() const
     return Region;
 }
 
-VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTable::GetHitGroupRegion() const
+VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTableRHI::GetHitGroupRegion() const
 {
     VkStridedDeviceAddressRegionKHR Region = {};
     if (NumHitGroup > 0)
@@ -256,7 +256,7 @@ VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTable::GetHitGroupRegion() c
     return Region;
 }
 
-VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTable::GetCallableRegion() const
+VkStridedDeviceAddressRegionKHR FVulkanShaderBindingTableRHI::GetCallableRegion() const
 {
     VkStridedDeviceAddressRegionKHR Region = {};
     if (NumCallable > 0)

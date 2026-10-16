@@ -17,7 +17,7 @@ class FD3D12FenceRHI;
 class FD3D12SwapChainRHI;
 class FD3D12SceneAccelerationStructureRHI;
 class FD3D12GeometryAccelerationStructureRHI;
-class FD3D12ShaderBindingTable;
+class FD3D12ShaderBindingTableRHI;
 class FD3D12OpacityMicromapRHI;
 class FD3D12GraphicsPipelineStateRHI;
 class FD3D12ComputePipelineStateRHI;
@@ -109,7 +109,7 @@ template<> struct TD3D12RHIResourceType<FRHIGeometryAccelerationStructure>
 
 template<> struct TD3D12RHIResourceType<FRHIShaderBindingTable>
 {
-    typedef FD3D12ShaderBindingTable Type;
+    typedef FD3D12ShaderBindingTableRHI Type;
 };
 
 template<> struct TD3D12RHIResourceType<FRHIOpacityMicromap>

@@ -226,6 +226,70 @@ public:
 };
 #endif
 
+#if VK_KHR_device_address_commands
+class FVulkanKHRDeviceAddressCommandsExtension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanKHRDeviceAddressCommandsExtension()
+        : FVulkanDeviceExtension(VK_KHR_DEVICE_ADDRESS_COMMANDS_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_ADDRESS_COMMANDS_FEATURES_KHR;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (AvailableFeatures.deviceAddressCommands != VK_TRUE)
+        {
+            return;
+        }
+
+        EnableFeatures.sType                 = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_ADDRESS_COMMANDS_FEATURES_KHR;
+        EnableFeatures.deviceAddressCommands = VK_TRUE;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceDeviceAddressCommandsFeaturesKHR EnableFeatures    = {};
+    VkPhysicalDeviceDeviceAddressCommandsFeaturesKHR AvailableFeatures = {};
+};
+#endif
+
+#if VK_KHR_opacity_micromap
+class FVulkanKHROpacityMicromapExtension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanKHROpacityMicromapExtension()
+        : FVulkanDeviceExtension(VK_KHR_OPACITY_MICROMAP_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_KHR;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (AvailableFeatures.micromap != VK_TRUE)
+        {
+            return;
+        }
+
+        EnableFeatures.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_KHR;
+        EnableFeatures.micromap = VK_TRUE;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceOpacityMicromapFeaturesKHR EnableFeatures    = {};
+    VkPhysicalDeviceOpacityMicromapFeaturesKHR AvailableFeatures = {};
+};
+#endif
+
 #if VK_KHR_fragment_shading_rate
 class FVulkanKHRFragmentShadingRateExtension : public FVulkanDeviceExtension
 {
@@ -1083,6 +1147,15 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #endif
 #if VK_KHR_ray_query
     OutExtensions.Add(MakeUniquePtr<FVulkanKHRRayQueryExtension>());
+#endif
+#if VK_EXT_extended_dynamic_state
+    OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME, false, true));
+#endif
+#if VK_KHR_device_address_commands
+    OutExtensions.Add(MakeUniquePtr<FVulkanKHRDeviceAddressCommandsExtension>());
+#endif
+#if VK_KHR_opacity_micromap
+    OutExtensions.Add(MakeUniquePtr<FVulkanKHROpacityMicromapExtension>());
 #endif
 #if VK_KHR_fragment_shading_rate
     OutExtensions.Add(MakeUniquePtr<FVulkanKHRFragmentShadingRateExtension>());

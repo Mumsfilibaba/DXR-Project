@@ -3213,7 +3213,7 @@ void FD3D12CommandContext::SetShaderRecord(FRHIShaderBindingTable* ShaderBinding
         return;
     }
 
-    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    FD3D12ShaderBindingTableRHI* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
     D3D12ShaderBindingTable->SetRecord(RecordDesc);
 }
 
@@ -3224,7 +3224,7 @@ void FD3D12CommandContext::BuildShaderBindingTable(FRHIShaderBindingTable* Shade
         return;
     }
 
-    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    FD3D12ShaderBindingTableRHI* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
     D3D12ShaderBindingTable->Build(*this);
 }
 
@@ -3235,7 +3235,7 @@ void FD3D12CommandContext::ResetShaderBindingTable(FRHIShaderBindingTable* Shade
         return;
     }
 
-    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    FD3D12ShaderBindingTableRHI* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
     D3D12ShaderBindingTable->ClearTableRecords();
 }
 
@@ -3245,7 +3245,7 @@ void FD3D12CommandContext::SetRayTracingPipelineState(FRHIRayTracingPipelineStat
     ContextState.SetRayTracingPipelineState(D3D12PipelineState);
 }
 
-bool FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTable* ShaderBindingTable)
+bool FD3D12CommandContext::PrepareShaderBindingTableForDispatch(FD3D12ShaderBindingTableRHI* ShaderBindingTable)
 {
     CHECK(ShaderBindingTable != nullptr);
 
@@ -3284,7 +3284,7 @@ void FD3D12CommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTab
     FD3D12RayTracingPipelineStateRHI* D3D12PipelineState = ContextState.GetRayTracingPipelineState();
     CHECK(D3D12PipelineState != nullptr);
 
-    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    FD3D12ShaderBindingTableRHI* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
     CHECK(D3D12ShaderBindingTable != nullptr);
     CHECK(D3D12ShaderBindingTable->GetPipeline() == D3D12PipelineState);
 
@@ -3352,7 +3352,7 @@ void FD3D12CommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderBi
     FD3D12RayTracingPipelineStateRHI* D3D12PipelineState = ContextState.GetRayTracingPipelineState();
     CHECK(D3D12PipelineState != nullptr);
 
-    FD3D12ShaderBindingTable* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
+    FD3D12ShaderBindingTableRHI* D3D12ShaderBindingTable = FD3D12DeviceRHI::ResourceCast(ShaderBindingTable);
     CHECK(D3D12ShaderBindingTable != nullptr);
     CHECK(D3D12ShaderBindingTable->GetPipeline() == D3D12PipelineState);
 

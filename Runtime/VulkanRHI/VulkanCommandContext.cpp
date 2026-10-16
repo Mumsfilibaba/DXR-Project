@@ -2620,7 +2620,7 @@ void FVulkanCommandContext::WriteAccelerationStructurePostBuildInfo(FRHIBuffer* 
 
 void FVulkanCommandContext::SetShaderRecord(FRHIShaderBindingTable* ShaderBindingTable, const FRHIShaderRecordDesc& RecordDesc)
 {
-    if (FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
+    if (FVulkanShaderBindingTableRHI* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
     {
         VulkanShaderBindingTable->SetRecord(RecordDesc);
     }
@@ -2628,7 +2628,7 @@ void FVulkanCommandContext::SetShaderRecord(FRHIShaderBindingTable* ShaderBindin
 
 void FVulkanCommandContext::BuildShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)
 {
-    if (FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
+    if (FVulkanShaderBindingTableRHI* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
     {
         CHECK(!IsInsideRenderPass());
 
@@ -2639,7 +2639,7 @@ void FVulkanCommandContext::BuildShaderBindingTable(FRHIShaderBindingTable* Shad
 
 void FVulkanCommandContext::ResetShaderBindingTable(FRHIShaderBindingTable* ShaderBindingTable)
 {
-    if (FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
+    if (FVulkanShaderBindingTableRHI* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable))
     {
         VulkanShaderBindingTable->ClearTableRecords();
     }
@@ -2647,7 +2647,7 @@ void FVulkanCommandContext::ResetShaderBindingTable(FRHIShaderBindingTable* Shad
 
 void FVulkanCommandContext::BuildOpacityMicromap(FRHIOpacityMicromap* OpacityMicromap, const FRHIOpacityMicromapBuildDesc& BuildDesc)
 {
-    if (FVulkanOpacityMicromap* VulkanMicromap = FVulkanDeviceRHI::ResourceCast(OpacityMicromap))
+    if (FVulkanOpacityMicromapRHI* VulkanMicromap = FVulkanDeviceRHI::ResourceCast(OpacityMicromap))
     {
         ConditionalSplitCommandBuffer();
         VulkanMicromap->Build(*this, BuildDesc);
@@ -2662,7 +2662,7 @@ void FVulkanCommandContext::SetRayTracingPipelineState(FRHIRayTracingPipelineSta
 void FVulkanCommandContext::DispatchRays(FRHIShaderBindingTable* ShaderBindingTable, uint32 Width, uint32 Height, uint32 Depth)
 {
 #if VK_KHR_ray_tracing_pipeline
-    FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable);
+    FVulkanShaderBindingTableRHI* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable);
     if (!ContextState.GetRayTracingPipelineState() || !VulkanShaderBindingTable || !vkCmdTraceRaysKHR)
     {
         return;
@@ -2693,7 +2693,7 @@ void FVulkanCommandContext::DispatchRaysIndirect(FRHIShaderBindingTable* ShaderB
 {
 #if VK_KHR_ray_tracing_pipeline && VK_KHR_ray_tracing_maintenance1
     FVulkanBufferRHI*          VulkanArgumentBuffer     = FVulkanDeviceRHI::ResourceCast(ArgumentBuffer);
-    FVulkanShaderBindingTable* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable);
+    FVulkanShaderBindingTableRHI* VulkanShaderBindingTable = FVulkanDeviceRHI::ResourceCast(ShaderBindingTable);
 
     if (!ContextState.GetRayTracingPipelineState() || !VulkanShaderBindingTable || !VulkanArgumentBuffer || !vkCmdTraceRaysIndirect2KHR)
     {

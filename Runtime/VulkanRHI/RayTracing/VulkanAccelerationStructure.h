@@ -9,7 +9,7 @@
 
 typedef TSharedRef<class FVulkanGeometryAccelerationStructureRHI>         FVulkanGeometryAccelerationStructureRHIRef; 
 typedef TSharedRef<class FVulkanSceneAccelerationStructureRHI>            FVulkanSceneAccelerationStructureRHIRef;
-typedef TSharedRef<class FVulkanOpacityMicromap>                          FVulkanOpacityMicromapRef;
+typedef TSharedRef<class FVulkanOpacityMicromapRHI>                       FVulkanOpacityMicromapRHIRef;
 typedef TSharedRef<class FVulkanClusterAccelerationStructureRHI>          FVulkanClusterAccelerationStructureRHIRef;
 typedef TSharedRef<class FVulkanClusterTemplateRHI>                       FVulkanClusterTemplateRHIRef;
 typedef TSharedRef<class FVulkanPartitionedSceneAccelerationStructureRHI> FVulkanPartitionedSceneAccelerationStructureRHIRef;
@@ -101,32 +101,28 @@ private:
 #endif
 };
 
-class FVulkanOpacityMicromap : public FRHIOpacityMicromap, public FVulkanDeviceChild
+class FVulkanOpacityMicromapRHI : public FRHIOpacityMicromap, public FVulkanDeviceChild
 {
 public:
-    FVulkanOpacityMicromap(FVulkanDevice* InDevice, const FRHIOpacityMicromapDesc& InDesc);
-    ~FVulkanOpacityMicromap();
+    FVulkanOpacityMicromapRHI(FVulkanDevice* InDevice, const FRHIOpacityMicromapDesc& InDesc);
+    ~FVulkanOpacityMicromapRHI();
     
     bool Build(FVulkanCommandContext& CmdContext, const FRHIOpacityMicromapBuildDesc& BuildDesc);
     
     // FRHIOpacityMicromap Interface
     virtual void* GetRHINativeResource() const override final;
 
-#if VK_EXT_opacity_micromap
-    VkMicromapEXT GetVkMicromap() const
+    VkAccelerationStructureKHR GetVkMicromap() const
     {
         return Micromap;
     }
-#endif
 
 private:
-    FRHIOpacityMicromapDesc MicromapDesc;
-#if VK_EXT_opacity_micromap
-    VkMicromapEXT           Micromap;
-#endif
-    FVulkanMemoryLocation   MicromapLocation;
-    FVulkanMemoryLocation   ScratchLocation;
-    uint64                  TrackedMicromapMemory;
+    FRHIOpacityMicromapDesc    MicromapDesc;
+    VkAccelerationStructureKHR Micromap;
+    FVulkanMemoryLocation      MicromapLocation;
+    FVulkanMemoryLocation      ScratchLocation;
+    uint64                     TrackedMicromapMemory;
 };
 
 #if VK_NV_cluster_acceleration_structure

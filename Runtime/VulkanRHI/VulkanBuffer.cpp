@@ -193,6 +193,14 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, ERHIR
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, RHI::AccelerationStructureBufferAlignment); // 256
     }
 
+#if VK_KHR_acceleration_structure
+    if (Desc.IsRayTracingBuildInput() && bIsRayTracingSupported)
+    {
+        UsageFlags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, RHI::AccelerationStructureBufferAlignment);
+    }
+#endif
+
     const VkDeviceSize AlignedSize = Math::AlignUp(static_cast<VkDeviceSize>(Desc.Size), RequiredAlignment);
 
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;

@@ -30,6 +30,24 @@ struct FRHIOpacityMicromapDesc
     uint32                           SubdivisionLevel = 0;
 };
 
+struct FRHIOpacityMicromapTriangleDesc
+{
+    constexpr FRHIOpacityMicromapTriangleDesc() noexcept = default;
+
+    constexpr FRHIOpacityMicromapTriangleDesc(uint32 InDataOffset, uint16 InSubdivisionLevel, EOpacityMicromapFormat InFormat) noexcept
+        : DataOffset(InDataOffset)
+        , SubdivisionLevel(InSubdivisionLevel)
+        , Format(static_cast<uint16>(InFormat))
+    {
+    }
+
+    uint32 DataOffset       = 0;
+    uint16 SubdivisionLevel = 0;
+    uint16 Format           = static_cast<uint16>(EOpacityMicromapFormat::OC1_2State);
+};
+
+static_assert(sizeof(FRHIOpacityMicromapTriangleDesc) == 8, "FRHIOpacityMicromapTriangleDesc must match D3D12_RAYTRACING_OPACITY_MICROMAP_DESC and VkMicromapTriangleKHR");
+
 struct FRHIOpacityMicromapHistogramEntry
 {
     uint32                 Count            = 0;

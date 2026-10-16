@@ -728,8 +728,24 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         GVulkanSupportsIndirectRayDispatch = false;
     #endif
 
-    #if VK_EXT_opacity_micromap
-        GVulkanSupportsOpacityMicromap = IsExtensionEnabled(VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME);
+    #if VK_KHR_opacity_micromap && VK_KHR_device_address_commands
+        if (IsExtensionEnabled(VK_KHR_OPACITY_MICROMAP_EXTENSION_NAME) && IsExtensionEnabled(VK_KHR_DEVICE_ADDRESS_COMMANDS_EXTENSION_NAME))
+        {
+            VkPhysicalDeviceOpacityMicromapFeaturesKHR MicromapFeatures = {};
+            MicromapFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_KHR;
+
+            VkPhysicalDeviceDeviceAddressCommandsFeaturesKHR AddressCommandsFeatures = {};
+            AddressCommandsFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_ADDRESS_COMMANDS_FEATURES_KHR;
+
+            VkPhysicalDeviceFeatures2 DeviceFeatures2 = {};
+            DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+
+            AddToStructChain(DeviceFeatures2, MicromapFeatures);
+            AddToStructChain(DeviceFeatures2, AddressCommandsFeatures);
+            vkGetPhysicalDeviceFeatures2(PhysicalDeviceHandle, &DeviceFeatures2);
+
+            GVulkanSupportsOpacityMicromap = MicromapFeatures.micromap == VK_TRUE && AddressCommandsFeatures.deviceAddressCommands == VK_TRUE && vkCreateAccelerationStructure2KHR;
+        }
     #endif
     #if VK_EXT_ray_tracing_invocation_reorder || VK_NV_ray_tracing_invocation_reorder
         GVulkanSupportsShaderExecutionReordering         = bHasInvocationReorder;

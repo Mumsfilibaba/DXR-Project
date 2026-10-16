@@ -24,7 +24,7 @@ uint64 FD3D12BufferRHI::GetBufferAlignment(const FRHIBufferDesc& Desc)
         Alignment = Math::Max<uint64>(Alignment, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
     }
 
-    if (Desc.IsAccelerationStructure())
+    if (Desc.IsAccelerationStructure() || Desc.IsRayTracingBuildInput())
     {
         Alignment = Math::Max<uint64>(Alignment, RHI::AccelerationStructureBufferAlignment); // 256
     }
