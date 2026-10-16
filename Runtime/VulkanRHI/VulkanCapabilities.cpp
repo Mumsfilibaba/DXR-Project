@@ -782,6 +782,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
 
         RHI::bSupportsOpacityMicromap                                  = GVulkanSupportsOpacityMicromap;
         RHI::bSupportsOpacityMicromap8BitIndices                       = GVulkanSupportsOpacityMicromap && GVulkanSupportsIndexTypeUint8;
+        RHI::bSupportsRayQueryOpacityMicromaps                         = GVulkanSupportsOpacityMicromap && GVulkanSupportsRayQuery;
         RHI::bSupportsShaderExecutionReordering                        = GVulkanSupportsShaderExecutionReordering;
         RHI::bShaderExecutionReorderingActuallyReorders                = GVulkanShaderExecutionReorderingActuallyReorders;
         RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure = GVulkanSupportsClustersAndPTLAS;

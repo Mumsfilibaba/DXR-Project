@@ -9,6 +9,7 @@
 
 class FMesh;
 class FScene;
+struct FSceneStaticMesh;
 
 class FRayTracingSceneBuilder : public FRenderPass
 {
@@ -19,7 +20,7 @@ public:
     bool Initialize();
     void Release();
 
-    void BuildSceneAccelerationData(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, bool bNeedBindlessData);
+    void BuildSceneAccelerationData(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, bool bNeedBindlessData, bool bRayQueryInUse);
     void ReleaseRayTracingResources(FScene* Scene);
 
 private:
@@ -33,10 +34,17 @@ private:
     void RequestCompactionAndCacheWrite(FRHICommandList& CommandList, const FMesh& Mesh, FRHIGeometryAccelerationStructure* Geometry);
     void TickCompactionAndCacheWrites(FRHICommandList& CommandList);
 
+    bool        CreatePlaceholderOpacityMicromap();
+    FRHIBuffer* GetPlaceholderOpacityMicromapIndices(uint32 NumTriangles);
+    void        LinkOpacityMicromaps(FMesh& Mesh, const FSceneStaticMesh& StaticMesh);
+
     uint32                                     GeometryTableCapacity;
     FRayTracingStructureCache                  StructureCache;
     FAccelerationStructureCompactionHelper     CompactionHelper;
     FAccelerationStructureSerializationHelper  SerializationHelper;
     TSet<FRHIRayTracingAccelerationStructure*> HandledStructures;
     TArray<FPendingCacheWrite>                 AwaitingCompaction;
+    FRHIOpacityMicromapRef                     PlaceholderOpacityMicromap;
+    FRHIBufferRef                              PlaceholderOpacityMicromapIndices;
+    uint32                                     PlaceholderOpacityMicromapIndexCapacity;
 };

@@ -136,6 +136,11 @@ FRayTracingVariant FRayTracingReflectionsPass::CreateVariant(const FRayTracingPe
         ? ERayTracingPipelineFlags::AllowShaderExecutionReordering
         : ERayTracingPipelineFlags::None;
 
+    if (RHI::bSupportsOpacityMicromap)
+    {
+        PSODesc.Flags |= ERayTracingPipelineFlags::AllowOpacityMicromap;
+    }
+
     FRayTracingVariant Variant;
     Variant.Pipeline = RHI::CreateRayTracingPipelineState(PSODesc);
 
@@ -424,6 +429,11 @@ uint32& FRayTracingReflectionsPass::GetHitGroupCapacity(EReflectionPath Path)
 bool FRayTracingReflectionsPass::NeedsBindlessData() const
 {
     return SelectPath() != EReflectionPath::Local;
+}
+
+bool FRayTracingReflectionsPass::UsesInlineRayTracing() const
+{
+    return SelectPath() == EReflectionPath::Inline;
 }
 
 bool FRayTracingReflectionsPass::IsTraceEnabled() const

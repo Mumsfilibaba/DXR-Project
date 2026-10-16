@@ -174,7 +174,8 @@ void FSceneRenderer::BuildAndExecuteSceneGraph(const FSceneRenderView& SceneRend
         if (bIsRayTracingActive)
         {
             RayTracingSceneBuilder->BuildSceneAccelerationData(CommandList, FrameResourcesRef, Scene,
-                RayTracingReflectionsPass->NeedsBindlessData() || bNeedsPrimaryRayDebug);
+                RayTracingReflectionsPass->NeedsBindlessData() || bNeedsPrimaryRayDebug,
+                RayTracingReflectionsPass->UsesInlineRayTracing() || bNeedsPrimaryRayDebug);
         }
 
     #if EDITOR_BUILD

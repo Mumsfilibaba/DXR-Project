@@ -405,6 +405,7 @@ FShaderPermutationDesc FShaderCache::CreatePermutationDesc(int32 PermutationID)
     Desc.bSupportsRayTracingPipeline        = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsRayTracingPipeline;
     Desc.bSupportsInlineRayTracing          = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsInlineRayTracing;
     Desc.bSupportsShaderExecutionReordering = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsShaderExecutionReordering;
+    Desc.bSupportsRayQueryOpacityMicromaps  = RenderSettings::IsRayTracingEnabled() && RHI::bSupportsRayQueryOpacityMicromaps;
     return Desc;
 }
 

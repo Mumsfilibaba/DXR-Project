@@ -6,6 +6,7 @@
 #include "Core/Math/AABB.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
+#include "RHI/RHIRayTracing.h"
 #include "Engine/EngineModule.h"
 #include "AssetCore/MeshData.h"
 #include "Engine/Assets/ModelData.h"
@@ -45,6 +46,15 @@ public:
 
     /** @brief Use Geometry, created for GetRayTracingGeometryDesc elsewhere such as from a cache, instead of building one */
     void SetRayTracingGeometry(const FRHIGeometryAccelerationStructureRef& Geometry);
+
+    /** @brief Link an opacity micromap to a sub-mesh's ray tracing geometry, before that geometry is built */
+    void SetRayTracingOpacityMicromap(int32 SubMeshIndex, FRHIOpacityMicromap* Micromap, FRHIBuffer* MicromapIndices, EOpacityMicromapIndexFormat MicromapIndexFormat);
+
+    /** @return Returns whether any sub-mesh's ray tracing geometry links an opacity micromap */
+    bool HasRayTracingOpacityMicromaps() const;
+
+    /** @return Returns whether the sub-mesh's ray tracing geometry links an opacity micromap */
+    bool HasRayTracingOpacityMicromap(int32 SubMeshIndex) const;
 
     void SetVertexBuffers(FRHICommandList& CommandList, const FVertexStreamBinding& Binding) const;
 
@@ -163,6 +173,8 @@ private:
     FAABB                                 BoundingBox;
     TArray<FSubMesh>                      SubMeshes;
     TArray<FRHIRayTracingGeometrySegment> RayTracingSegments;
+    TArray<FRHIOpacityMicromapRef>        RayTracingOpacityMicromaps;
+    TArray<FRHIBufferRef>                 RayTracingOpacityMicromapIndices;
     TArray<FMeshMaterialSlot>             MaterialSlots;
     uint64                                ContentHash;
 };

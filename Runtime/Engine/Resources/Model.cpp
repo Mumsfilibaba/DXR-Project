@@ -22,6 +22,8 @@ FMesh::FMesh()
     , BoundingBox()
     , SubMeshes()
     , RayTracingSegments()
+    , RayTracingOpacityMicromaps()
+    , RayTracingOpacityMicromapIndices()
     , MaterialSlots()
     , ContentHash(0)
 {
@@ -258,7 +260,11 @@ bool FMesh::IsRayTracingReady() const
 
 FRHIGeometryAccelerationStructureDesc FMesh::GetRayTracingGeometryDesc() const
 {
-    FRHIGeometryAccelerationStructureDesc GeometryDesc(GetPositionBuffer(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::AllowCompaction);
+    const EAccelerationStructureBuildFlags Flags = HasRayTracingOpacityMicromaps()
+        ? EAccelerationStructureBuildFlags::AllowCompaction | EAccelerationStructureBuildFlags::AllowDisableOpacityMicromaps
+        : EAccelerationStructureBuildFlags::AllowCompaction;
+
+    FRHIGeometryAccelerationStructureDesc GeometryDesc(GetPositionBuffer(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, Flags);
     GeometryDesc.Segments    = RayTracingSegments.Data();
     GeometryDesc.NumSegments = RayTracingSegments.Size();
     return GeometryDesc;
@@ -273,11 +279,58 @@ void FMesh::SetRayTracingGeometry(const FRHIGeometryAccelerationStructureRef& Ge
     }
 }
 
+void FMesh::SetRayTracingOpacityMicromap(int32 SubMeshIndex, FRHIOpacityMicromap* Micromap, FRHIBuffer* MicromapIndices, EOpacityMicromapIndexFormat MicromapIndexFormat)
+{
+    CHECK(RayTracingSegments.IsValidIndex(SubMeshIndex));
+
+    FRHIRayTracingGeometrySegment& Segment = RayTracingSegments[SubMeshIndex];
+    Segment.OpacityMicromap            = Micromap;
+    Segment.OpacityMicromapIndexBuffer = MicromapIndices;
+    Segment.OpacityMicromapIndexOffset = 0;
+    Segment.OpacityMicromapIndexFormat = MicromapIndices ? MicromapIndexFormat : EOpacityMicromapIndexFormat::None;
+
+    if (Micromap)
+    {
+        RayTracingOpacityMicromaps.AddUnique(MakeSharedRef<FRHIOpacityMicromap>(Micromap));
+    }
+
+    if (MicromapIndices)
+    {
+        RayTracingOpacityMicromapIndices.AddUnique(MakeSharedRef<FRHIBuffer>(MicromapIndices));
+    }
+}
+
+bool FMesh::HasRayTracingOpacityMicromaps() const
+{
+    for (const FRHIRayTracingGeometrySegment& Segment : RayTracingSegments)
+    {
+        if (Segment.HasOpacityMicromap())
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool FMesh::HasRayTracingOpacityMicromap(int32 SubMeshIndex) const
+{
+    return RayTracingSegments.IsValidIndex(SubMeshIndex) && RayTracingSegments[SubMeshIndex].HasOpacityMicromap();
+}
+
 void FMesh::ReleaseRayTracingResources()
 {
     RayTracingGeometry.Reset();
     AttributeBufferSRV.Reset();
     IndexBufferSRV.Reset();
+
+    for (FRHIRayTracingGeometrySegment& Segment : RayTracingSegments)
+    {
+        Segment = FRHIRayTracingGeometrySegment(Segment.FirstIndex, Segment.NumIndices);
+    }
+
+    RayTracingOpacityMicromaps.Clear();
+    RayTracingOpacityMicromapIndices.Clear();
 }
 
 bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)

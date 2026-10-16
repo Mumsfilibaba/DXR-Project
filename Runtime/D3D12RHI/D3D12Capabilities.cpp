@@ -888,6 +888,7 @@ bool FD3D12DeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsInlineRayTracing                                 = GD3D12SupportsInlineRayTracing;
     RHI::bSupportsOpacityMicromap                                  = GD3D12SupportsOpacityMicromap;
     RHI::bSupportsOpacityMicromap8BitIndices                       = GD3D12SupportsOpacityMicromap;
+    RHI::bSupportsRayQueryOpacityMicromaps                         = GD3D12SupportsOpacityMicromap && GD3D12SupportsInlineRayTracing && RHI::MaxShaderModel >= EShaderModel::SM_6_9;
     RHI::bSupportsShaderExecutionReordering                        = GD3D12SupportsShaderExecutionReordering;
     RHI::bShaderExecutionReorderingActuallyReorders                = GD3D12ShaderExecutionReorderingActuallyReorders;
     RHI::bSupportsRayTracingPipelineAdditions                      = GD3D12SupportsRayTracingPipelineAdditions;

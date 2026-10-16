@@ -22,6 +22,8 @@ TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4>   OutTexture    : register(u0);
 [numthreads(8, 8, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
+    RAY_QUERY_ALLOW_OPACITY_MICROMAPS();
+
     uint OutputWidth;
     uint OutputHeight;
     OutTexture.GetDimensions(OutputWidth, OutputHeight);
@@ -42,7 +44,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     Ray.TMin      = 0.0f;
     Ray.TMax      = 100000.0f;
 
-    RayQuery<RAY_FLAG_NONE> Query;
+    RayQuery<RAY_FLAG_NONE, RAY_QUERY_FLAGS> Query;
     Query.TraceRayInline(Scene, RAY_FLAG_NONE, RAY_TRACING_INSTANCE_MASK_ALL, Ray);
 
     while (Query.Proceed())

@@ -33,6 +33,7 @@ struct FShaderPermutationDesc
     bool  bSupportsRayTracingPipeline        = false;
     bool  bSupportsInlineRayTracing          = false;
     bool  bSupportsShaderExecutionReordering = false;
+    bool  bSupportsRayQueryOpacityMicromaps  = false;
 };
 
 class FShaderPermutationBool

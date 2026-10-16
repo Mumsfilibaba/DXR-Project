@@ -79,6 +79,7 @@ RHI_API uint32          RHI::RayTracingMaxRecursionDepth = 0;
 RHI_API bool   RHI::bSupportsInlineRayTracing                                  = false;
 RHI_API bool   RHI::bSupportsOpacityMicromap                                   = false;
 RHI_API bool   RHI::bSupportsOpacityMicromap8BitIndices                        = false;
+RHI_API bool   RHI::bSupportsRayQueryOpacityMicromaps                          = false;
 RHI_API bool   RHI::bSupportsShaderExecutionReordering                         = false;
 RHI_API bool   RHI::bShaderExecutionReorderingActuallyReorders                 = false;
 RHI_API bool   RHI::bSupportsRayTracingPipelineAdditions                       = false;
@@ -215,6 +216,7 @@ RHI_API void RHI::DumpRayTracingCapabilities()
     LOG_INFO("[RHI]   Inline Ray Tracing (RayQuery)         : %s", YesNo(RHI::bSupportsInlineRayTracing));
     LOG_INFO("[RHI]   Opacity Micromap                      : %s", YesNo(RHI::bSupportsOpacityMicromap));
     LOG_INFO("[RHI]   Opacity Micromap 8-bit Indices        : %s", YesNo(RHI::bSupportsOpacityMicromap8BitIndices));
+    LOG_INFO("[RHI]   RayQuery Opacity Micromaps            : %s", YesNo(RHI::bSupportsRayQueryOpacityMicromaps));
     LOG_INFO("[RHI]   Shader Execution Reordering           : %s", YesNo(RHI::bSupportsShaderExecutionReordering));
     LOG_INFO("[RHI]   Shader Execution Reordering (Reorders): %s", YesNo(RHI::bShaderExecutionReorderingActuallyReorders));
     LOG_INFO("[RHI]   Pipeline Additions (AddToStateObject) : %s", YesNo(RHI::bSupportsRayTracingPipelineAdditions));

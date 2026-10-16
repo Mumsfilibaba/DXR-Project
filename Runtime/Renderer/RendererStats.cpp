@@ -14,11 +14,12 @@ STAT_DEFINE_COUNTER(STAT_Render_MeshBatchCount,     TEXT("Mesh Batches"),    TEX
 STAT_DEFINE_COUNTER(STAT_Render_MeshReferenceCount, TEXT("Mesh References"), TEXT("Rendering"));
 
 // Ray Tracing Stats
-STAT_DEFINE_COUNTER(STAT_RT_Active,                  TEXT("Active"),              TEXT("Ray Tracing"));
-STAT_DEFINE_COUNTER(STAT_RT_InstanceCount,           TEXT("Instances"),           TEXT("Ray Tracing"));
-STAT_DEFINE_COUNTER(STAT_RT_HitGroupCount,           TEXT("Hit Groups"),          TEXT("Ray Tracing"));
-STAT_DEFINE_COUNTER(STAT_RT_GeometryTableRows,       TEXT("Geometry Table Rows"), TEXT("Ray Tracing"));
-STAT_DEFINE_COUNTER(STAT_RT_LazyBLASBuildsThisFrame, TEXT("Lazy BLAS Builds"),    TEXT("Ray Tracing"));
-STAT_DEFINE_COUNTER(STAT_RT_BLASCacheLoadsThisFrame, TEXT("BLAS Cache Loads"),    TEXT("Ray Tracing"));
-STAT_DEFINE_COUNTER(STAT_RT_AlphaTests,              TEXT("Alpha Tests"),         TEXT("Ray Tracing"));
-STAT_DEFINE_COUNTER(STAT_RT_SkippedNullGeometry,     TEXT("Skipped Null Geom"),   TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_Active,                   TEXT("Active"),              TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_InstanceCount,            TEXT("Instances"),           TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_HitGroupCount,            TEXT("Hit Groups"),          TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_GeometryTableRows,        TEXT("Geometry Table Rows"), TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_LazyBLASBuildsThisFrame,  TEXT("Lazy BLAS Builds"),    TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_BLASCacheLoadsThisFrame,  TEXT("BLAS Cache Loads"),    TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_AlphaTests,               TEXT("Alpha Tests"),         TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_OpacityMicromapInstances, TEXT("Micromap Instances"), TEXT("Ray Tracing"));
+STAT_DEFINE_COUNTER(STAT_RT_SkippedNullGeometry,      TEXT("Skipped Null Geom"),   TEXT("Ray Tracing"));

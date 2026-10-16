@@ -2,6 +2,7 @@
 #include "RendererCore/Shaders/CommonShaderPermutations.h"
 #include "RendererCore/Shaders/ShaderCache.h"
 #include "RendererCore/Shaders/ShaderType.h"
+#include "RHI/RHI.h"
 
 // Mirrors MATERIAL_SRV_REGISTER_BASE in Assets/Shaders/ClosestHit.hlsl.
 constexpr uint32 RAY_TRACING_MATERIAL_SLOT_REGISTER = 2;
@@ -10,6 +11,18 @@ constexpr uint32 RAY_TRACING_HIT_GROUP_OPAQUE       = 0;
 constexpr uint32 RAY_TRACING_HIT_GROUP_ALPHA_TESTED = 1;
 
 class FRayTracingSER : SHADER_PERMUTATION_BOOL(TEXT("RAY_TRACING_SHADER_EXECUTION_REORDERING"));
+
+inline void ModifyRayQueryCompilationEnvironment(const FShaderPermutationDesc& Desc, FShaderCompilationEnvironment& Environment)
+{
+    if (Desc.bSupportsRayQueryOpacityMicromaps)
+    {
+        Environment.SetDefine(TEXT("RAY_TRACING_OPACITY_MICROMAPS"), TEXT("(1)"));
+        if (RHI::GetShaderOutputLanguage() == EShaderOutputLanguage::DXIL)
+        {
+            Environment.RequireShaderModel(EShaderModel::SM_6_9);
+        }
+    }
+}
 
 using FRayTracingPermutation = TShaderPermutation<FBindless, FRayTracingSER>;
 
@@ -79,6 +92,11 @@ class FInlineReflectionsCS
     {
         return Desc.bSupportsInlineRayTracing;
     }
+
+    static void ModifyCompilationEnvironment(const FShaderPermutationDesc& Desc, FShaderCompilationEnvironment& Environment)
+    {
+        ModifyRayQueryCompilationEnvironment(Desc, Environment);
+    }
 };
 
 class FPrimaryRayDebugCS
@@ -90,6 +108,11 @@ class FPrimaryRayDebugCS
     static bool ShouldCompilePermutation(const FShaderPermutationDesc& Desc)
     {
         return Desc.bSupportsInlineRayTracing;
+    }
+
+    static void ModifyCompilationEnvironment(const FShaderPermutationDesc& Desc, FShaderCompilationEnvironment& Environment)
+    {
+        ModifyRayQueryCompilationEnvironment(Desc, Environment);
     }
 };
 

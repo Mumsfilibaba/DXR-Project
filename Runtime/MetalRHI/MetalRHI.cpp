@@ -150,6 +150,7 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::bSupportsInlineRayTracing                                 = GMetalFeatures.bRayTracing;
     RHI::bSupportsOpacityMicromap                                  = false;
     RHI::bSupportsOpacityMicromap8BitIndices                       = false;
+    RHI::bSupportsRayQueryOpacityMicromaps                         = false;
     RHI::bSupportsShaderExecutionReordering                        = false;
     RHI::bShaderExecutionReorderingActuallyReorders                = false;
     RHI::bSupportsRayTracingPipelineAdditions                      = false;

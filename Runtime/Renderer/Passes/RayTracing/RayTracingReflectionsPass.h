@@ -50,6 +50,7 @@ public:
     void Record(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, bool bDenoise);
 
     NODISCARD bool         NeedsBindlessData() const;
+    NODISCARD bool         UsesInlineRayTracing() const;
     NODISCARD bool         IsTraceEnabled() const;
     NODISCARD FRHITexture* GetReflectionNoiseMask() const;
 
