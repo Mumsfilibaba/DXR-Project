@@ -382,6 +382,13 @@ public:
     void GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo);
 
     /**
+     * @brief Finds the monitor a screen coordinate lies on
+     * @param Point The coordinate in screen space
+     * @return The monitor containing the point, the primary monitor when none does, or nullptr when there are no monitors
+     */
+    const FMonitorInfo* FindMonitor(const FIntVector2& Point);
+
+    /**
      * @brief Overrides the existing platform application with a new IPlatformApplication instance.
      *
      * @param InPlatformApplication The new platform application to set.
@@ -427,7 +434,7 @@ public:
      */
     FORCEINLINE IPlatformInputDevice* GetInputDevice() const
     {
-        return PlatformApplication->GetInputDevice();
+        return GetPlatformApplication()->GetInputDevice();
     }
 
     /**
@@ -468,7 +475,7 @@ public:
      */
     FORCEINLINE TSharedPtr<IPlatformCursor> GetCursor() const
     {
-        return PlatformApplication->GetCursor();
+        return GetPlatformApplication()->GetCursor();
     }
 
     /** @return Every window registered and not yet destroyed, menu popups and floating windows included. */
@@ -502,7 +509,7 @@ public:
      * 
      * @return A shared pointer to the current IPlatformApplication.
      */
-    FORCEINLINE TSharedPtr<IPlatformApplication> GetPlatformApplication() const
+    FORCEINLINE const TSharedPtr<IPlatformApplication>& GetPlatformApplication() const
     {
         return PlatformApplication;
     }

@@ -91,6 +91,7 @@ public:
     virtual TSharedRef<IPlatformWindow> GetWindowUnderCursor() const override final;
 
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final;
+    virtual int32 GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI) const override final;
 
     virtual void SetMessageHandler(const TSharedPtr<IPlatformApplicationMessageHandler>& InMessageHandler) override final;
 

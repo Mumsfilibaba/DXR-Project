@@ -98,8 +98,8 @@ bool FMetalAccelerationStructure::CompactInPlace(FMetalCommandContext& Context, 
         return false;
     }
 
-    const int64           SavingsBefore = GetCompactionSavings();
-    const MTLSizeAndAlign SizeAndAlign  = [GetDevice()->GetMTLDevice() heapAccelerationStructureSizeAndAlignWithSize:CompactedSizeInBytes];
+    MAYBE_UNUSED const int64 SavingsBefore = GetCompactionSavings();
+    const MTLSizeAndAlign    SizeAndAlign  = [GetDevice()->GetMTLDevice() heapAccelerationStructureSizeAndAlignWithSize:CompactedSizeInBytes];
 
     if (!EncodeCopy(Context, Source, GetResidencyEntry(), SizeAndAlign, true))
     {
@@ -120,8 +120,8 @@ bool FMetalAccelerationStructure::CopyFrom(FMetalCommandContext& Context, const 
         return false;
     }
 
-    const int64           SavingsBefore = GetCompactionSavings();
-    const MTLSizeAndAlign SizeAndAlign  = [GetDevice()->GetMTLDevice() heapAccelerationStructureSizeAndAlignWithSize:SourceStructure.size];
+    MAYBE_UNUSED const int64 SavingsBefore = GetCompactionSavings();
+    const MTLSizeAndAlign    SizeAndAlign  = [GetDevice()->GetMTLDevice() heapAccelerationStructureSizeAndAlignWithSize:SourceStructure.size];
 
     if (!EncodeCopy(Context, SourceStructure, Source.GetResidencyEntry(), SizeAndAlign, bCompact))
     {

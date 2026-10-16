@@ -729,7 +729,7 @@ void FImGuiPlugin::UpdateMonitorInfo()
         ImGuiMonitor.MainSize = ImVec2(static_cast<float>(MonitorInfo.MainSize.X), static_cast<float>(MonitorInfo.MainSize.Y));
         ImGuiMonitor.WorkPos  = ImVec2(static_cast<float>(MonitorInfo.WorkPosition.X), static_cast<float>(MonitorInfo.WorkPosition.Y));
         ImGuiMonitor.WorkSize = ImVec2(static_cast<float>(MonitorInfo.WorkSize.X), static_cast<float>(MonitorInfo.WorkSize.Y));
-        ImGuiMonitor.DpiScale = MonitorInfo.DisplayScaling;
+        ImGuiMonitor.DpiScale = MonitorInfo.DPI.GetScale();
 
         ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
         if (MonitorInfo.bIsPrimary)

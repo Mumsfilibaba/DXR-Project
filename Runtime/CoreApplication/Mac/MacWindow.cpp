@@ -56,6 +56,24 @@ TSharedRef<FMacWindow> FMacWindow::Create(FMacApplication* InApplication)
     return NewWindow;
 }
 
+int32 FMacWindow::GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI)
+{
+    UNREFERENCED_VARIABLE(DPI);
+
+    const NSWindowStyleMask CocoaStyle = GetCocoaWindowStyle(Style);
+    if ((CocoaStyle & NSWindowStyleMaskTitled) == 0 || (CocoaStyle & NSWindowStyleMaskFullSizeContentView) != 0)
+    {
+        return 0;
+    }
+
+    @autoreleasepool
+    {
+        const NSRect ContentRect = NSMakeRect(0.0, 0.0, 100.0, 100.0);
+        const NSRect FrameRect   = [NSWindow frameRectForContentRect:ContentRect styleMask:CocoaStyle];
+        return static_cast<int32>(FrameRect.size.height - ContentRect.size.height);
+    }
+}
+
 FMacWindow::FMacWindow(FMacApplication* InApplication)
     : FRefCountedBase()
     , Application(InApplication)

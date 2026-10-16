@@ -2,6 +2,7 @@
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/SharedPtr.h"
+#include "CoreApplication/PlatformInterface/DisplayDPI.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 
 struct IPlatformCursor;
@@ -91,8 +92,7 @@ private:
 struct FMonitorInfo
 {
     FMonitorInfo()
-        : DisplayDPI(0)
-        , DisplayScaling(1.0f)
+        : DPI()
         , bIsPrimary(false)
     {
     }
@@ -104,8 +104,7 @@ struct FMonitorInfo
             && MainSize       == Other.MainSize
             && WorkPosition   == Other.WorkPosition
             && WorkSize       == Other.WorkSize
-            && DisplayDPI     == Other.DisplayDPI
-            && DisplayScaling == Other.DisplayScaling
+            && DPI            == Other.DPI
             && bIsPrimary     == Other.bIsPrimary;
     }
 
@@ -129,11 +128,8 @@ struct FMonitorInfo
     /** @brief The usable workspace size of the monitor, taking UI elements into account. */
     FIntVector2 WorkSize;
 
-    /** @brief The DPI (dots per inch) of the monitor. */
-    int32 DisplayDPI;
-    
-    /** @brief A scaling factor used to scale content according to the monitor's DPI. */
-    float DisplayScaling;
+    /** @brief The monitor's logical DPI, where FDisplayDPI::Standard is 100% scaling. */
+    FDisplayDPI DPI;
 
     /** @brief Indicates if this monitor is marked as the primary display by the platform. */
     bool bIsPrimary;
@@ -258,6 +254,14 @@ struct IPlatformApplication
      * @param OutMonitorInfo An array to receive the monitor information.
      */
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const = 0;
+
+    /**
+     * @brief The height of the frame the platform draws above a window's client area, its title bar and top border together
+     * @param Style The style the window is created with
+     * @param DPI The DPI of the monitor the window is placed on
+     * @return The height, or zero when the platform draws no title bar for the style
+     */
+    virtual int32 GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI) const = 0;
 
     /**
      * @brief Sets the message handler for this application. The message handler is responsible for

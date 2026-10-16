@@ -80,28 +80,13 @@ void Popups::Close(const TSharedPtr<FWindow>& PopupWindow)
 
 FRectangle Popups::FindWorkArea(const FIntVector2& Point)
 {
-    TArray<FMonitorInfo> Monitors;
-    if (FApplication::IsInitialized())
+    if (!FApplication::IsInitialized())
     {
-        FApplication::Get().GetDisplayInfo(Monitors);
+        return FRectangle();
     }
 
-    FRectangle PrimaryArea;
-    for (const FMonitorInfo& Monitor : Monitors)
-    {
-        const FRectangle WorkArea(Monitor.WorkPosition, Monitor.WorkSize.X, Monitor.WorkSize.Y);
-        if (WorkArea.EncapsulatesPoint(Point))
-        {
-            return WorkArea;
-        }
-
-        if (Monitor.bIsPrimary || PrimaryArea.IsEmpty())
-        {
-            PrimaryArea = WorkArea;
-        }
-    }
-
-    return PrimaryArea;
+    const FMonitorInfo* Monitor = FApplication::Get().FindMonitor(Point);
+    return Monitor ? FRectangle(Monitor->WorkPosition, Monitor->WorkSize.X, Monitor->WorkSize.Y) : FRectangle();
 }
 
 FRectangle Popups::ClampToWorkArea(const FRectangle& Bounds)

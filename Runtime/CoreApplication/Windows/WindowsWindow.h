@@ -3,6 +3,7 @@
 #include "Core/RefCountedBase.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
+#include "CoreApplication/PlatformInterface/DisplayDPI.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 
 class FWindowsApplication;
@@ -42,7 +43,8 @@ class COREAPPLICATION_API FWindowsWindow final : public IPlatformWindow, public 
 {
 public:
     static TSharedRef<FWindowsWindow> Create(FWindowsApplication* InApplication);
-    
+    static int32 GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI);
+
     static const WIDECHAR* GetClassName()
     {
         return L"WindowClass";

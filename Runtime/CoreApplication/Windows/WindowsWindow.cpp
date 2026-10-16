@@ -86,6 +86,25 @@ TSharedRef<FWindowsWindow> FWindowsWindow::Create(FWindowsApplication* InApplica
     return NewWindow;
 }
 
+int32 FWindowsWindow::GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI)
+{
+    if (!HasNonClientFrame(Style))
+    {
+        return 0;
+    }
+
+    const FWindowsWindowStyle WindowsStyle = GetWindowsWindowStyle(Style);
+
+    RECT FrameRect = { 0, 0, 0, 0 };
+#if PLATFORM_WINDOWS_10_ANNIVERSARY
+    ::AdjustWindowRectExForDpi(&FrameRect, WindowsStyle.Style, false, WindowsStyle.StyleEx, DPI.GetDotsPerInch());
+#else
+    ::AdjustWindowRectEx(&FrameRect, WindowsStyle.Style, false, WindowsStyle.StyleEx);
+#endif
+
+    return -FrameRect.top;
+}
+
 FWindowsWindow::FWindowsWindow(FWindowsApplication* InApplication)
     : FRefCountedBase()
     , Application(InApplication)

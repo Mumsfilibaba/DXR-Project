@@ -255,9 +255,6 @@ struct FMacScreenInfo
     /** @brief The scale factor between points and backing store pixels. */
     CGFloat BackingScaleFactor;
 
-    /** @brief The dots-per-inch of the monitor. */
-    uint32 DisplayDPI;
-
     /** @brief A human readable name for the monitor. */
     FString DeviceName;
 
@@ -271,7 +268,6 @@ public:
     static TSharedPtr<IPlatformApplication> Create();
 
     static FString FindMonitorName(NSScreen* Screen);
-    static uint32 MonitorDPIFromScreen(NSScreen* Screen);
     static NSPoint ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY);
     static NSPoint ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY);
     static NSRect ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
@@ -305,6 +301,7 @@ public:
     virtual TSharedRef<IPlatformWindow> GetWindowUnderCursor() const override final;
 
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final;
+    virtual int32 GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI) const override final;
 
     virtual void SetMessageHandler(const TSharedPtr<IPlatformApplicationMessageHandler>& InMessageHandler) override final;
 

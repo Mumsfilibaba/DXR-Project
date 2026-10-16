@@ -164,33 +164,6 @@ FString FMacApplication::FindMonitorName(NSScreen* Screen)
     return Result;
 }
 
-uint32 FMacApplication::MonitorDPIFromScreen(NSScreen* Screen)
-{
-    const float BackingScaleFactor = [Screen backingScaleFactor];
-    
-    const NSRect Frame = [Screen frame];
-    
-    CGFloat PixelWidth  = CGRectGetWidth(Frame) * BackingScaleFactor;
-    CGFloat PixelHeight = CGRectGetHeight(Frame) * BackingScaleFactor;
-
-    const CGDirectDisplayID DisplayID = static_cast<CGDirectDisplayID>([[[Screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue]);
-    const CGSize PhysicalSize = CGDisplayScreenSize(DisplayID);
-
-    if (PhysicalSize.width <= 0.0 || PhysicalSize.height <= 0.0)
-    {
-        return 72;
-    }
-
-    const CGFloat InchToMillimeterFactor = 25.4;
-    const CGFloat ScreenWidthDPI         = PixelWidth  / (PhysicalSize.width  / InchToMillimeterFactor);
-    const CGFloat ScreenHeightDPI        = PixelHeight / (PhysicalSize.height / InchToMillimeterFactor);
-
-    CGFloat ScreenDPI = (ScreenWidthDPI + ScreenHeightDPI) / 2.0;
-
-    const uint32 RoundedDPI = static_cast<uint32>(Math::RoundToInt(ScreenDPI));
-    return RoundedDPI;
-}
-
 const FMacScreenInfo* FMacApplication::GetPrimaryScreenUnlocked()
 {
     if (!GMacApplication || GMacApplication->ScreenCache.IsEmpty())
@@ -683,9 +656,13 @@ void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) con
         MonitorInfo.WorkPosition   = FIntVector2(WorkTopLeft.x, WorkTopLeft.y);
         MonitorInfo.WorkSize       = FIntVector2(Screen.VisibleFrame.size.width, Screen.VisibleFrame.size.height);
         MonitorInfo.bIsPrimary     = Screen.bIsPrimary;
-        MonitorInfo.DisplayDPI     = Screen.DisplayDPI;
-        MonitorInfo.DisplayScaling = Screen.BackingScaleFactor;
+        MonitorInfo.DPI            = FDisplayDPI::FromScale(static_cast<float>(Screen.BackingScaleFactor));
     }
+}
+
+int32 FMacApplication::GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI) const
+{
+    return FMacWindow::GetTitleBarHeight(Style, DPI);
 }
 
 void FMacApplication::SetMessageHandler(const TSharedPtr<IPlatformApplicationMessageHandler>& InMessageHandler)
@@ -1003,7 +980,6 @@ void FMacApplication::RefreshScreenCache()
         ScreenInfo.Frame              = [Screen frame];
         ScreenInfo.VisibleFrame       = [Screen visibleFrame];
         ScreenInfo.BackingScaleFactor = [Screen backingScaleFactor];
-        ScreenInfo.DisplayDPI         = MonitorDPIFromScreen(Screen);
         ScreenInfo.DeviceName         = FindMonitorName(Screen);
         ScreenInfo.bIsPrimary         = (Screen == PrimaryScreen);
     }

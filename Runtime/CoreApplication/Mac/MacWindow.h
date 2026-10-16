@@ -3,6 +3,7 @@
 #include "Core/RefCountedBase.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
+#include "CoreApplication/PlatformInterface/DisplayDPI.h"
 #include "CoreApplication/PlatformInterface/IPlatformWindow.h"
 
 @class FCocoaWindow;
@@ -15,6 +16,7 @@ class COREAPPLICATION_API FMacWindow final : public IPlatformWindow, public FRef
 {
 public:
     static TSharedRef<FMacWindow> Create(FMacApplication* InApplication);
+    static int32 GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI);
     
 public:
     ~FMacWindow();

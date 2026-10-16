@@ -177,12 +177,16 @@ public:
         MonitorInfo.DeviceName     = TEXT("Stub");
         MonitorInfo.MainSize       = FIntVector2(1920, 1080);
         MonitorInfo.WorkSize       = FIntVector2(1920, 1080);
-        MonitorInfo.DisplayDPI     = 96;
-        MonitorInfo.DisplayScaling = 1.0f;
+        MonitorInfo.DPI            = FDisplayDPI(FDisplayDPI::Standard);
         MonitorInfo.bIsPrimary     = true;
 
         OutMonitorInfo.Clear();
         OutMonitorInfo.Add(MonitorInfo);
+    }
+
+    virtual int32 GetTitleBarHeight(EWindowStyleFlags, FDisplayDPI) const override final
+    {
+        return 0;
     }
 
     virtual void SetMessageHandler(const TSharedPtr<IPlatformApplicationMessageHandler>& InMessageHandler) override final

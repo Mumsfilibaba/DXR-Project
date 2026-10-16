@@ -98,11 +98,11 @@ bool FD3D12AccelerationStructure::CompactInPlace(FD3D12CommandContext& CmdContex
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT);
     STAT_ADD_FRAME(STAT_D3D12_AccelerationStructureCompactions, 1);
 
-    const int64 SavingsBefore = GetCompactionSavings();
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
     ResultResourceStorage.Swap(CompactedStorage);
     UpdateAccelerationStructureMemoryStat();
 
-    STAT_ADD(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings() - SavingsBefore);
+    STAT_ADD(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
     return true;
 #else
     UNREFERENCED_VARIABLE(CmdContext);

@@ -415,7 +415,7 @@ bool FVulkanGeometryAccelerationStructureRHI::CompactInPlace(FVulkanCommandConte
     CmdContext.GetCommandBuffer()->CopyAccelerationStructure(&CopyInfo);
     STAT_ADD_FRAME(STAT_Vulkan_AccelerationStructureCompactions, 1);
 
-    const int64 SavingsBefore = GetCompactionSavings();
+    STAT_SUBTRACT(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
     FVulkanDeviceRHI::DeferDeletion(AccelerationStructure);
     GeometryLocation.ReleaseMemory();
 
@@ -424,7 +424,7 @@ bool FVulkanGeometryAccelerationStructureRHI::CompactInPlace(FVulkanCommandConte
     DeviceAddress = CompactedAddress;
 
     VulkanUpdateAccelerationStructureMemoryStat(TrackedAccelerationStructureMemory, GeometryLocation.GetSize() + ScratchLocation.GetSize());
-    STAT_ADD(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings() - SavingsBefore);
+    STAT_ADD(STAT_RHI_AccelerationStructureCompactionSavings, GetCompactionSavings());
     return true;
 }
 

@@ -323,6 +323,11 @@ void FWindowsApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo)
     OutMonitorInfo.Shrink();
 }
 
+int32 FWindowsApplication::GetTitleBarHeight(EWindowStyleFlags Style, FDisplayDPI DPI) const
+{
+    return FWindowsWindow::GetTitleBarHeight(Style, DPI);
+}
+
 void FWindowsApplication::SetMessageHandler(const TSharedPtr<IPlatformApplicationMessageHandler>& InMessageHandler)
 {
     MessageHandler = InMessageHandler;
@@ -445,8 +450,7 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContex
     NewMonitorInfo.WorkPosition   = FIntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
     NewMonitorInfo.WorkSize       = FIntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
     NewMonitorInfo.bIsPrimary     = (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0;
-    NewMonitorInfo.DisplayDPI     = DpiX;
-    NewMonitorInfo.DisplayScaling = static_cast<float>(DpiX) / 96.0f;
+    NewMonitorInfo.DPI            = FDisplayDPI(DpiX);
 
     MonitorInfos->Add(NewMonitorInfo);
     return TRUE;
