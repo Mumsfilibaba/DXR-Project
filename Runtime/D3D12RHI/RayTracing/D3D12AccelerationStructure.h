@@ -88,9 +88,13 @@ public:
     }
 
 private:
-    FD3D12BufferRHIRef VertexBuffer;
-    FD3D12BufferRHIRef IndexBuffer;
-    FD3D12BufferRHIRef AABBBuffer;
+    FD3D12BufferRHIRef                  VertexBuffer;
+    FD3D12BufferRHIRef                  IndexBuffer;
+    FD3D12BufferRHIRef                  AABBBuffer;
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    TArray<FD3D12OpacityMicromapRHIRef> OpacityMicromaps;
+    TArray<FD3D12BufferRHIRef>          OpacityMicromapIndexBuffers;
+#endif
 };
 
 #if D3D12_ENABLE_OPACITY_MICROMAPS

@@ -65,7 +65,11 @@ FString FRayTracingStructureCache::CreateKey(const FMesh& Mesh)
     Hash = HashValue(Hash, GeometryDesc.Flags);
     Hash = HashValue(Hash, Mesh.GetVertexDeclaration().GetStreamStride(0));
     Hash = HashValue(Hash, GeometryDesc.NumSegments);
-    Hash = HashBytes(Hash, GeometryDesc.Segments, GeometryDesc.NumSegments * sizeof(FRHIRayTracingGeometrySegment));
+    for (uint32 SegmentIndex = 0; SegmentIndex < GeometryDesc.NumSegments; ++SegmentIndex)
+    {
+        Hash = HashValue(Hash, GeometryDesc.Segments[SegmentIndex].FirstIndex);
+        Hash = HashValue(Hash, GeometryDesc.Segments[SegmentIndex].NumIndices);
+    }
 
     return GetKeyPrefix(Mesh) + FString::Printf(TEXT("%016llx"), static_cast<unsigned long long>(Hash));
 }

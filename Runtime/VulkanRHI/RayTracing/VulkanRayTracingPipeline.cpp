@@ -257,6 +257,13 @@ bool FVulkanRayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineS
     PipelineCreateInfo.maxPipelineRayRecursionDepth = Math::Max<uint32>(InDesc.MaxRecursionDepth, 1);
     PipelineCreateInfo.layout                       = PipelineLayout->GetVkPipelineLayout();
 
+#if VK_KHR_opacity_micromap
+    if (IsEnumFlagSet(InDesc.Flags, ERayTracingPipelineFlags::AllowOpacityMicromap))
+    {
+        PipelineCreateInfo.flags |= VK_PIPELINE_CREATE_RAY_TRACING_OPACITY_MICROMAP_BIT_KHR;
+    }
+#endif
+
     VkResult Result = vkCreateRayTracingPipelinesKHR(
         GetDevice()->GetVkDevice(), 
         VK_NULL_HANDLE, 

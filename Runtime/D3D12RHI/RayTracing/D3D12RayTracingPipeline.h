@@ -132,7 +132,7 @@ public:
     TArray<FD3D12Library>                  Libraries;
     TArray<FD3D12HitGroup>                 HitGroups;
     TArray<FD3D12RootSignatureAssociation> RootSignatureAssociations;
-    D3D12_RAYTRACING_PIPELINE_CONFIG       PipelineConfig;
+    D3D12_RAYTRACING_PIPELINE_CONFIG1      PipelineConfig;
     D3D12_RAYTRACING_SHADER_CONFIG         ShaderConfig;
     D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ShaderConfigAssociation;
     TArray<FWideString>                    PayLoadExportNames;

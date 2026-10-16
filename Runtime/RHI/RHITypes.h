@@ -1261,6 +1261,28 @@ struct FRHIRayTracingAABB
 
 static_assert(sizeof(FRHIRayTracingAABB) == 24, "FRHIRayTracingAABB must match D3D12_RAYTRACING_AABB / VkAabbPositionsKHR");
 
+class FRHIOpacityMicromap;
+
+enum class EOpacityMicromapIndexFormat : uint8
+{
+    /** Each triangle uses the micromap at its own index plus the base location */
+    None   = 0,
+    uint8  = 1,
+    uint16 = 2,
+    uint32 = 3,
+};
+
+NODISCARD constexpr uint32 GetStrideFromOpacityMicromapIndexFormat(EOpacityMicromapIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EOpacityMicromapIndexFormat::uint8:  return sizeof(uint8);
+        case EOpacityMicromapIndexFormat::uint16: return sizeof(uint16);
+        case EOpacityMicromapIndexFormat::uint32: return sizeof(uint32);
+        default:                                  return 0;
+    }
+}
+
 struct FRHIRayTracingGeometrySegment
 {
     constexpr FRHIRayTracingGeometrySegment() noexcept = default;
@@ -1271,10 +1293,26 @@ struct FRHIRayTracingGeometrySegment
     {
     }
 
+    NODISCARD constexpr bool HasOpacityMicromap() const noexcept
+    {
+        return OpacityMicromap != nullptr || OpacityMicromapIndexBuffer != nullptr;
+    }
+
     constexpr bool operator==(const FRHIRayTracingGeometrySegment& Other) const noexcept = default;
 
     uint32 FirstIndex = 0;
     uint32 NumIndices = 0;
+
+    /** The micromap array the segment's triangles index into, which may be null when every index is a special index */
+    FRHIOpacityMicromap* OpacityMicromap = nullptr;
+
+    /** Per-triangle micromap indices (or EOpacityMicromapSpecialIndex values), read from OpacityMicromapIndexOffset */
+    FRHIBuffer*                 OpacityMicromapIndexBuffer  = nullptr;
+    uint64                      OpacityMicromapIndexOffset  = 0;
+    EOpacityMicromapIndexFormat OpacityMicromapIndexFormat  = EOpacityMicromapIndexFormat::None;
+
+    /** Added to every index that isn't a special index */
+    uint32                      OpacityMicromapBaseLocation = 0;
 };
 
 struct FRHISceneAccelerationStructureBuildDesc

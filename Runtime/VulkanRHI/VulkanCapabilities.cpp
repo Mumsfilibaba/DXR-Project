@@ -103,6 +103,7 @@ VULKANRHI_API bool GVulkanSupportsRayQuery               = false;
 VULKANRHI_API bool GVulkanSupportsAccelerationStructures = false;
 
 VULKANRHI_API bool GVulkanSupportsOpacityMicromap                         = false;
+VULKANRHI_API bool GVulkanSupportsIndexTypeUint8                          = false;
 VULKANRHI_API bool GVulkanSupportsShaderExecutionReordering               = false;
 VULKANRHI_API bool GVulkanShaderExecutionReorderingActuallyReorders       = false;
 VULKANRHI_API bool GVulkanSupportsClustersAndPTLAS                        = false;
@@ -780,6 +781,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     #endif
 
         RHI::bSupportsOpacityMicromap                                  = GVulkanSupportsOpacityMicromap;
+        RHI::bSupportsOpacityMicromap8BitIndices                       = GVulkanSupportsOpacityMicromap && GVulkanSupportsIndexTypeUint8;
         RHI::bSupportsShaderExecutionReordering                        = GVulkanSupportsShaderExecutionReordering;
         RHI::bShaderExecutionReorderingActuallyReorders                = GVulkanShaderExecutionReorderingActuallyReorders;
         RHI::bSupportsClustersAndPartitionedSceneAccelerationStructure = GVulkanSupportsClustersAndPTLAS;

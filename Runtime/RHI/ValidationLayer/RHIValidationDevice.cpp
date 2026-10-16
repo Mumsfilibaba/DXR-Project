@@ -878,9 +878,8 @@ FRHIGeometryAccelerationStructure* FRHIValidationDevice::CreateGeometryAccelerat
             return nullptr;
         }
 
-        if (!RHIValidationHelpers::AreGeometrySegmentsValid(InGeometryDesc.Segments, InGeometryDesc.NumSegments, InGeometryDesc.NumIndices))
+        if (!RHIValidationInternal::ValidateGeometrySegments(TEXT("CreateGeometryAccelerationStructure"), InGeometryDesc.Segments, InGeometryDesc.NumSegments, InGeometryDesc.NumIndices))
         {
-            RHI_VALIDATION_ERROR("CreateGeometryAccelerationStructure: each segment must cover a whole number of triangles within the index buffer.");
             return nullptr;
         }
     }

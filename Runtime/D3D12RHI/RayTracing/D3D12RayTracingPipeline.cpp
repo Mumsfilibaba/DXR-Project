@@ -149,7 +149,10 @@ void FD3D12RayTracingPipelineStateStream::Generate()
     GlobalRootSubObject.pDesc = &GlobalRootSignature;
 
     D3D12_STATE_SUBOBJECT& PipelineConfigSubObject = SubObjects[SubObjectIndex++];
-    PipelineConfigSubObject.Type  = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+    PipelineConfigSubObject.Type  = PipelineConfig.Flags != D3D12_RAYTRACING_PIPELINE_FLAG_NONE 
+        ? D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG1 
+        : D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+
     PipelineConfigSubObject.pDesc = &PipelineConfig;
 
     D3D12_STATE_SUBOBJECT& ShaderConfigObject = SubObjects[SubObjectIndex++];
@@ -365,6 +368,13 @@ bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineSt
     PipelineStream.ShaderConfig.MaxAttributeSizeInBytes  = Desc.MaxAttributeSizeInBytes;
     PipelineStream.ShaderConfig.MaxPayloadSizeInBytes    = Desc.MaxPayloadSizeInBytes;
     PipelineStream.PipelineConfig.MaxTraceRecursionDepth = Desc.MaxRecursionDepth;
+
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    if (IsEnumFlagSet(Desc.Flags, ERayTracingPipelineFlags::AllowOpacityMicromap))
+    {
+        PipelineStream.PipelineConfig.Flags |= D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS;
+    }
+#endif
 
     FD3D12RootSignatureLayout GlobalLayout;
     GlobalLayout.SetType(ERootSignatureType::RayTracingGlobal);

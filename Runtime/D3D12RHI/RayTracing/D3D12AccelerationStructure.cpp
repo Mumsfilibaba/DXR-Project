@@ -281,7 +281,11 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
 {
     const bool bIsProceduralGeometry = (GetGeometryType() == ERayTracingGeometryType::ProceduralAABBs);
 
-    TArray<D3D12_RAYTRACING_GEOMETRY_DESC> GeometryDescs;
+    TArray<D3D12_RAYTRACING_GEOMETRY_DESC>             GeometryDescs;
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    TArray<D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC>   OmmTriangles;
+    TArray<D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC> OmmLinkages;
+#endif
 
     if (bIsProceduralGeometry)
     {
@@ -304,24 +308,75 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
         VertexBuffer = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.VertexBuffer);
         IndexBuffer  = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.IndexBuffer);
 
+    #if D3D12_ENABLE_OPACITY_MICROMAPS
+        OpacityMicromaps.Clear();
+        OpacityMicromapIndexBuffers.Clear();
+        OmmTriangles.Reserve(BuildDesc.GetNumGeometries());
+        OmmLinkages.Reserve(BuildDesc.GetNumGeometries());
+    #endif
+
         const uint32 IndexStride = GetStrideFromIndexFormat(BuildDesc.IndexFormat);
         for (uint32 GeometryIndex = 0; GeometryIndex < BuildDesc.GetNumGeometries(); ++GeometryIndex)
         {
-            D3D12_RAYTRACING_GEOMETRY_DESC& GeometryDesc = GeometryDescs.Emplace();
-            GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
-            GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-            GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetGPUVirtualAddress();
-            GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetDesc().Stride;
-            GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
-            GeometryDesc.Triangles.VertexCount                = BuildDesc.NumVertices;
+            const FRHIRayTracingGeometrySegment Segment = BuildDesc.GetSegment(GeometryIndex);
+
+            D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Triangles = {};
+            Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetGPUVirtualAddress();
+            Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetDesc().Stride;
+            Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
+            Triangles.VertexCount                = BuildDesc.NumVertices;
 
             if (IndexBuffer)
             {
-                const FRHIRayTracingGeometrySegment Segment = BuildDesc.GetSegment(GeometryIndex);
-                GeometryDesc.Triangles.IndexFormat = D3D12RHI::ConvertIndexFormat(BuildDesc.IndexFormat);
-                GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetGPUVirtualAddress() + uint64(Segment.FirstIndex) * IndexStride;
-                GeometryDesc.Triangles.IndexCount  = Segment.NumIndices;
+                Triangles.IndexFormat = D3D12RHI::ConvertIndexFormat(BuildDesc.IndexFormat);
+                Triangles.IndexBuffer = IndexBuffer->GetGPUVirtualAddress() + uint64(Segment.FirstIndex) * IndexStride;
+                Triangles.IndexCount  = Segment.NumIndices;
             }
+
+            D3D12_RAYTRACING_GEOMETRY_DESC& GeometryDesc = GeometryDescs.Emplace();
+            GeometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+        #if D3D12_ENABLE_OPACITY_MICROMAPS
+            if (Segment.HasOpacityMicromap())
+            {
+                FD3D12BufferRHI* MicromapIndices = Segment.OpacityMicromapIndexBuffer 
+                    ? FD3D12DeviceRHI::ResourceCast(Segment.OpacityMicromapIndexBuffer) 
+                    : nullptr;
+
+                FD3D12OpacityMicromapRHI* Micromap = Segment.OpacityMicromap 
+                    ? FD3D12DeviceRHI::ResourceCast(Segment.OpacityMicromap) 
+                    : nullptr;
+
+                const uint32 MicromapIndexStride = GetStrideFromOpacityMicromapIndexFormat(Segment.OpacityMicromapIndexFormat);
+
+                D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC& Linkage = OmmLinkages.Emplace();
+                Linkage.OpacityMicromapIndexFormat  = D3D12RHI::ConvertOpacityMicromapIndexFormat(Segment.OpacityMicromapIndexFormat);
+                Linkage.OpacityMicromapBaseLocation = Segment.OpacityMicromapBaseLocation;
+                Linkage.OpacityMicromapArray        = Micromap ? Micromap->GetGPUVirtualAddress() : 0;
+
+                if (MicromapIndices)
+                {
+                    Linkage.OpacityMicromapIndexBuffer.StartAddress  = MicromapIndices->GetGPUVirtualAddress() + Segment.OpacityMicromapIndexOffset;
+                    Linkage.OpacityMicromapIndexBuffer.StrideInBytes = MicromapIndexStride;
+                    OpacityMicromapIndexBuffers.Add(MakeSharedRef<FD3D12BufferRHI>(MicromapIndices));
+                }
+
+                if (Micromap)
+                {
+                    OpacityMicromaps.Add(MakeSharedRef<FD3D12OpacityMicromapRHI>(Micromap));
+                }
+
+                OmmTriangles.Add(Triangles);
+
+                GeometryDesc.Type                     = D3D12_RAYTRACING_GEOMETRY_TYPE_OMM_TRIANGLES;
+                GeometryDesc.OmmTriangles.pTriangles  = &OmmTriangles.Last();
+                GeometryDesc.OmmTriangles.pOmmLinkage = &Linkage;
+                continue;
+            }
+        #endif
+
+            GeometryDesc.Type      = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+            GeometryDesc.Triangles = Triangles;
         }
     }
 
@@ -424,6 +479,13 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     {
         CmdContext.TransitionTrackedResourceState(VertexBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         CmdContext.TransitionTrackedResourceState(IndexBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+    #if D3D12_ENABLE_OPACITY_MICROMAPS
+        for (const FD3D12BufferRHIRef& MicromapIndices : OpacityMicromapIndexBuffers)
+        {
+            CmdContext.TransitionTrackedResourceState(MicromapIndices.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        }
+    #endif
     }
 
     CmdContext.TransitionTrackedResourceState(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);

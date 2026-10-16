@@ -102,8 +102,11 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     AccelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
     AccelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
 
-    TArray<VkAccelerationStructureGeometryKHR>       Geometries;
-    TArray<VkAccelerationStructureBuildRangeInfoKHR> BuildRanges;
+    TArray<VkAccelerationStructureGeometryKHR>                 Geometries;
+    TArray<VkAccelerationStructureBuildRangeInfoKHR>           BuildRanges;
+#if VK_KHR_opacity_micromap
+    TArray<VkAccelerationStructureTrianglesOpacityMicromapKHR> MicromapLinks;
+#endif
 
     if (bIsProceduralGeometry)
     {
@@ -148,6 +151,13 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
             AccelerationStructureGeometry.geometry.triangles.indexType = VulkanRHI::ConvertIndexFormat(BuildDesc.IndexFormat);
             AccelerationStructureGeometry.geometry.triangles.indexData = IndexData;
 
+            OpacityMicromaps.Clear();
+            OpacityMicromapIndexBuffers.Clear();
+
+        #if VK_KHR_opacity_micromap
+            MicromapLinks.Reserve(BuildDesc.GetNumGeometries());
+        #endif
+
             const uint32 IndexStride = GetStrideFromIndexFormat(BuildDesc.IndexFormat);
             for (uint32 GeometryIndex = 0; GeometryIndex < BuildDesc.GetNumGeometries(); ++GeometryIndex)
             {
@@ -157,7 +167,40 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
                     VULKAN_WARNING("Creating acceleration structure with an indexcount that is not a multiple of 3");
                 }
 
-                Geometries.Add(AccelerationStructureGeometry);
+                VkAccelerationStructureGeometryKHR& Geometry = Geometries.Emplace(AccelerationStructureGeometry);
+
+            #if VK_KHR_opacity_micromap
+                if (Segment.HasOpacityMicromap())
+                {
+                    FVulkanOpacityMicromapRHI* Micromap = Segment.OpacityMicromap 
+                        ? FVulkanDeviceRHI::ResourceCast(Segment.OpacityMicromap) 
+                        : nullptr;
+
+                    FVulkanBufferRHI* MicromapIndices = Segment.OpacityMicromapIndexBuffer 
+                        ? FVulkanDeviceRHI::ResourceCast(Segment.OpacityMicromapIndexBuffer)
+                        : nullptr;
+
+                    VkAccelerationStructureTrianglesOpacityMicromapKHR& Link = MicromapLinks.Emplace();
+                    Link.sType        = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_KHR;
+                    Link.indexType    = VulkanRHI::ConvertOpacityMicromapIndexFormat(Segment.OpacityMicromapIndexFormat);
+                    Link.indexStride  = GetStrideFromOpacityMicromapIndexFormat(Segment.OpacityMicromapIndexFormat);
+                    Link.baseTriangle = Segment.OpacityMicromapBaseLocation;
+                    Link.micromap     = Micromap ? Micromap->GetVkMicromap() : VK_NULL_HANDLE;
+
+                    if (MicromapIndices)
+                    {
+                        Link.indexBuffer = MicromapIndices->GetDeviceAddress() + Segment.OpacityMicromapIndexOffset;
+                        OpacityMicromapIndexBuffers.Add(MakeSharedRef<FVulkanBufferRHI>(MicromapIndices));
+                    }
+
+                    if (Micromap)
+                    {
+                        OpacityMicromaps.Add(MakeSharedRef<FVulkanOpacityMicromapRHI>(Micromap));
+                    }
+
+                    Geometry.geometry.triangles.pNext = &Link;
+                }
+            #endif
 
                 VkAccelerationStructureBuildRangeInfoKHR& BuildRange = BuildRanges.Emplace();
                 BuildRange.primitiveCount  = Segment.NumIndices / 3;
@@ -270,6 +313,11 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
         if (IndexBuffer)
         {
             CmdContext.RequireBufferState(IndexBuffer.Get(), BuildInputAccess);
+        }
+
+        for (const FVulkanBufferRHIRef& MicromapIndices : OpacityMicromapIndexBuffers)
+        {
+            CmdContext.RequireBufferState(MicromapIndices.Get(), BuildInputAccess);
         }
     }
 
@@ -866,8 +914,12 @@ bool FVulkanOpacityMicromapRHI::Build(FVulkanCommandContext& CmdContext, const F
 
     const VkAccelerationStructureBuildRangeInfoKHR* BuildRangeInfos[] = { nullptr };
 
-    const ERHIResourceState BuildInputAccess = ERHIResourceState::NonPixelShaderResource | ERHIResourceState::RayTracingAccelerationStructure;
+    const ERHIResourceState BuildInputAccess = 
+        ERHIResourceState::NonPixelShaderResource | 
+        ERHIResourceState::RayTracingAccelerationStructure;
+
     CmdContext.RequireBufferState(DescriptorBuffer, BuildInputAccess);
+
     if (DataBuffer != DescriptorBuffer)
     {
         CmdContext.RequireBufferState(DataBuffer, BuildInputAccess);

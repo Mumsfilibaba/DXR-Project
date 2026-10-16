@@ -916,6 +916,19 @@ constexpr VkBuildAccelerationStructureFlagsKHR ConvertAccelerationStructureBuild
     return Result;
 }
 
+constexpr VkIndexType ConvertOpacityMicromapIndexFormat(EOpacityMicromapIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+    #if VK_KHR_index_type_uint8
+        case EOpacityMicromapIndexFormat::uint8:  return VK_INDEX_TYPE_UINT8_KHR;
+    #endif
+        case EOpacityMicromapIndexFormat::uint16: return VK_INDEX_TYPE_UINT16;
+        case EOpacityMicromapIndexFormat::uint32: return VK_INDEX_TYPE_UINT32;
+        default:                                  return VK_INDEX_TYPE_NONE_KHR;
+    }
+}
+
 constexpr VkGeometryInstanceFlagsKHR ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags Flags)
 {
     VkGeometryInstanceFlagsKHR Result = 0;

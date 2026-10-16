@@ -194,6 +194,63 @@ bool RHIValidationInternal::ValidateIndirectCountBuffer(const CHAR_T* Operation,
     return true;
 }
 
+bool RHIValidationInternal::ValidateGeometrySegments(const CHAR_T* Operation, const FRHIRayTracingGeometrySegment* Segments, uint32 NumSegments, uint32 NumIndices)
+{
+    if (!RHIValidationHelpers::AreGeometrySegmentsValid(Segments, NumSegments, NumIndices))
+    {
+        RHI_VALIDATION_ERROR("%s: each segment must cover a whole number of triangles within the index buffer.", Operation);
+        return false;
+    }
+
+    for (uint32 Index = 0; Index < NumSegments; ++Index)
+    {
+        const FRHIRayTracingGeometrySegment& Segment = Segments[Index];
+        if (!Segment.HasOpacityMicromap())
+        {
+            continue;
+        }
+
+        if (!RHI::bSupportsOpacityMicromap)
+        {
+            RHI_VALIDATION_ERROR("%s: segment %u links an opacity micromap, which this backend doesn't support.", Operation, Index);
+            return false;
+        }
+
+        const bool bIndexed = Segment.OpacityMicromapIndexFormat != EOpacityMicromapIndexFormat::None;
+        if (bIndexed != (Segment.OpacityMicromapIndexBuffer != nullptr))
+        {
+            RHI_VALIDATION_ERROR("%s: segment %u must give a micromap index buffer exactly when it names an index format.", Operation, Index);
+            return false;
+        }
+
+        if (!bIndexed && !Segment.OpacityMicromap)
+        {
+            RHI_VALIDATION_ERROR("%s: segment %u maps its triangles to micromaps one-to-one, so it needs a micromap.", Operation, Index);
+            return false;
+        }
+
+        if (Segment.OpacityMicromapIndexFormat == EOpacityMicromapIndexFormat::uint8 && !RHI::bSupportsOpacityMicromap8BitIndices)
+        {
+            RHI_VALIDATION_ERROR("%s: segment %u uses 8-bit micromap indices, which this backend doesn't support.", Operation, Index);
+            return false;
+        }
+
+        if (bIndexed)
+        {
+            const FRHIBufferDesc& IndexBufferDesc = Segment.OpacityMicromapIndexBuffer->GetDesc();
+            const uint32          IndexStride     = GetStrideFromOpacityMicromapIndexFormat(Segment.OpacityMicromapIndexFormat);
+            if (!IndexBufferDesc.IsRayTracingBuildInput() || (Segment.OpacityMicromapIndexOffset % IndexStride) != 0 ||
+                !RHIValidationHelpers::IsRangeValid(IndexBufferDesc.Size, Segment.OpacityMicromapIndexOffset, uint64(Segment.NumIndices / 3) * IndexStride))
+            {
+                RHI_VALIDATION_ERROR("%s: segment %u needs a RayTracingBuildInput micromap index buffer with an aligned offset and an index for each of its triangles.", Operation, Index);
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 bool RHIValidationInternal::ValidateBufferView(const CHAR_T* Caller, const FRHIBufferDesc& BufferDesc, EBufferViewType ViewType, uint32 FirstElement, uint32 NumElements, EFormat Format)
 {
     if (ViewType == EBufferViewType::Unknown)

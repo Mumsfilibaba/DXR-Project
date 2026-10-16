@@ -1411,6 +1411,17 @@ NODISCARD constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE 
 }
 
 #if D3D12_ENABLE_OPACITY_MICROMAPS
+NODISCARD constexpr DXGI_FORMAT ConvertOpacityMicromapIndexFormat(EOpacityMicromapIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EOpacityMicromapIndexFormat::uint8:  return DXGI_FORMAT_R8_UINT;
+        case EOpacityMicromapIndexFormat::uint16: return DXGI_FORMAT_R16_UINT;
+        case EOpacityMicromapIndexFormat::uint32: return DXGI_FORMAT_R32_UINT;
+        default:                                  return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
 NODISCARD constexpr D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT ConvertOpacityMicromapFormat(EOpacityMicromapFormat Format)
 {
     return (Format == EOpacityMicromapFormat::OC1_4State)

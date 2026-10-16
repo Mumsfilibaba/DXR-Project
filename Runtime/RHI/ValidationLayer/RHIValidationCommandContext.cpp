@@ -1565,9 +1565,8 @@ void FRHIValidationCommandContext::BuildGeometryAccelerationStructure(FRHIGeomet
             return;
         }
 
-        if (!RHIValidationHelpers::AreGeometrySegmentsValid(BuildDesc.Segments, BuildDesc.NumSegments, BuildDesc.NumIndices))
+        if (!RHIValidationInternal::ValidateGeometrySegments(TEXT("BuildGeometryAccelerationStructure"), BuildDesc.Segments, BuildDesc.NumSegments, BuildDesc.NumIndices))
         {
-            RHI_VALIDATION_ERROR("BuildGeometryAccelerationStructure: each segment must cover a whole number of triangles within the index buffer.");
             return;
         }
     }

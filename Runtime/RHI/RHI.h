@@ -462,6 +462,9 @@ struct RHI
     /** Whether opacity micromaps are supported */
     static RHI_API bool bSupportsOpacityMicromap;
 
+    /** Whether a geometry may index its opacity micromaps with 8-bit indices */
+    static RHI_API bool bSupportsOpacityMicromap8BitIndices;
+
     /** Whether shader execution reordering (SER) is supported */
     static RHI_API bool bSupportsShaderExecutionReordering;
 

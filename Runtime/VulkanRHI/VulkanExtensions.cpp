@@ -258,6 +258,43 @@ public:
 };
 #endif
 
+#if VK_KHR_index_type_uint8
+class FVulkanKHRIndexTypeUint8Extension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanKHRIndexTypeUint8Extension()
+        : FVulkanDeviceExtension(VK_KHR_INDEX_TYPE_UINT8_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_KHR;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void ProcessQueriedFeatures() override final
+    {
+        GVulkanSupportsIndexTypeUint8 = AvailableFeatures.indexTypeUint8 == VK_TRUE;
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (!GVulkanSupportsIndexTypeUint8)
+        {
+            return;
+        }
+
+        EnableFeatures.sType          = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_KHR;
+        EnableFeatures.indexTypeUint8 = VK_TRUE;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceIndexTypeUint8FeaturesKHR EnableFeatures    = {};
+    VkPhysicalDeviceIndexTypeUint8FeaturesKHR AvailableFeatures = {};
+};
+#endif
+
 #if VK_KHR_opacity_micromap
 class FVulkanKHROpacityMicromapExtension : public FVulkanDeviceExtension
 {
@@ -1153,6 +1190,9 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #endif
 #if VK_KHR_device_address_commands
     OutExtensions.Add(MakeUniquePtr<FVulkanKHRDeviceAddressCommandsExtension>());
+#endif
+#if VK_KHR_index_type_uint8
+    OutExtensions.Add(MakeUniquePtr<FVulkanKHRIndexTypeUint8Extension>());
 #endif
 #if VK_KHR_opacity_micromap
     OutExtensions.Add(MakeUniquePtr<FVulkanKHROpacityMicromapExtension>());

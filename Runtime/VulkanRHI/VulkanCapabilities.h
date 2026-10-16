@@ -103,6 +103,7 @@ extern VULKANRHI_API bool GVulkanSupportsRayTracingPipeline;
 extern VULKANRHI_API bool GVulkanSupportsRayQuery;
 extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
 extern VULKANRHI_API bool GVulkanSupportsOpacityMicromap;
+extern VULKANRHI_API bool GVulkanSupportsIndexTypeUint8;
 extern VULKANRHI_API bool GVulkanSupportsShaderExecutionReordering;
 extern VULKANRHI_API bool GVulkanShaderExecutionReorderingActuallyReorders;
 extern VULKANRHI_API bool GVulkanSupportsClustersAndPTLAS;

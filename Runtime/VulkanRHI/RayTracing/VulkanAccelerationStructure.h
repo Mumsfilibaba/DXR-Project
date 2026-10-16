@@ -59,15 +59,17 @@ private:
         return UncompactedSize > GeometryLocation.GetSize() ? static_cast<int64>(UncompactedSize - GeometryLocation.GetSize()) : 0;
     }
 
-    FVulkanMemoryLocation      GeometryLocation;
-    FVulkanMemoryLocation      ScratchLocation;
-    FVulkanBufferRHIRef        VertexBuffer;
-    FVulkanBufferRHIRef        IndexBuffer;
-    FVulkanBufferRHIRef        AABBBuffer;
-    uint64                     TrackedAccelerationStructureMemory;
-    uint64                     UncompactedSize;
+    FVulkanMemoryLocation                GeometryLocation;
+    FVulkanMemoryLocation                ScratchLocation;
+    FVulkanBufferRHIRef                  VertexBuffer;
+    FVulkanBufferRHIRef                  IndexBuffer;
+    FVulkanBufferRHIRef                  AABBBuffer;
+    TArray<FVulkanOpacityMicromapRHIRef> OpacityMicromaps;
+    TArray<FVulkanBufferRHIRef>          OpacityMicromapIndexBuffers;
+    uint64                               TrackedAccelerationStructureMemory;
+    uint64                               UncompactedSize;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString                     DebugName;
+    FString                              DebugName;
 #endif
 };
 
@@ -97,7 +99,7 @@ private:
     TArray<FRHIGeometryAccelerationStructureInstance> Instances;
     uint64                                            TrackedAccelerationStructureMemory;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString DebugName;
+    FString                                           DebugName;
 #endif
 };
 
@@ -152,7 +154,7 @@ private:
     FRHIClusterAccelerationStructureDesc ClusterDesc;
     FVulkanMemoryLocation                ResultLocation;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString                               DebugName;
+    FString                              DebugName;
 #endif
 };
 
@@ -199,6 +201,6 @@ private:
     FVulkanMemoryLocation                                     ResultLocation;
     FVulkanShaderResourceViewRHIRef                           View;
 #if VULKAN_STORE_DEBUG_NAMES
-    FString DebugName;
+    FString                                                   DebugName;
 #endif
 };

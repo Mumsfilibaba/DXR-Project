@@ -2443,7 +2443,14 @@ static const CHAR_T GRayQueryProbeSource[] =
     "    Ray.TMin      = 0.0f;\n"
     "    Ray.Direction = RayDirection.xyz;\n"
     "    Ray.TMax      = 1000.0f;\n"
+    "#if PROBE_OPACITY_MICROMAPS && SHADER_BACKEND == SHADER_BACKEND_VULKAN\n"
+    "    [[vk::ext_capability(6032)]] [[vk::ext_extension(\"SPV_KHR_opacity_micromap\")]] vk::ext_execution_mode_id(6031, true);\n"
+    "#endif\n"
+    "#if PROBE_OPACITY_MICROMAPS && SHADER_BACKEND == SHADER_BACKEND_D3D12\n"
+    "    RayQuery<RAY_FLAG_NONE, RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS> Query;\n"
+    "#else\n"
     "    RayQuery<RAY_FLAG_NONE> Query;\n"
+    "#endif\n"
     "    Query.TraceRayInline(Scene, RAY_FLAG_NONE, 0xff, Ray);\n"
     "    Query.Proceed();\n"
     "    uint4 Hit          = uint4(0, 0, 0, 0);\n"
@@ -2473,6 +2480,8 @@ struct FRayQueryProbe
     FRHIComputePipelineStateRef Pipeline;
     FRHIComputeShaderRef        BindlessShader;
     FRHIComputePipelineStateRef BindlessPipeline;
+    FRHIComputeShaderRef        OpacityMicromapShader;
+    FRHIComputePipelineStateRef OpacityMicromapPipeline;
 };
 
 struct FRayTracingProbeGeometry
@@ -2482,12 +2491,24 @@ struct FRayTracingProbeGeometry
     FRHIGeometryAccelerationStructureRef Geometry;
 };
 
-static FRHIComputePipelineStateRef CreateRayQueryPipeline(bool bBindlessScene, FRHIComputeShaderRef& OutShader)
+static bool CanRayQueryUseOpacityMicromaps()
 {
-    FShaderDefine Defines[] = { FShaderDefine(TEXT("PROBE_BINDLESS_SCENE"), bBindlessScene ? TEXT("1") : TEXT("0")) };
+    return RHI::bSupportsOpacityMicromap && (RHI::Device->GetRHIType() == ERHIType::Vulkan || RHI::MaxShaderModel >= EShaderModel::SM_6_9);
+}
+
+static FRHIComputePipelineStateRef CreateRayQueryPipeline(bool bBindlessScene, bool bOpacityMicromaps, FRHIComputeShaderRef& OutShader)
+{
+    FShaderDefine Defines[] =
+    {
+        FShaderDefine(TEXT("PROBE_BINDLESS_SCENE"), bBindlessScene ? TEXT("1") : TEXT("0")),
+        FShaderDefine(TEXT("PROBE_OPACITY_MICROMAPS"), bOpacityMicromaps ? TEXT("1") : TEXT("0")),
+    };
+
+    const bool         bNeedsShaderModel69 = bOpacityMicromaps && RHI::Device->GetRHIType() != ERHIType::Vulkan;
+    const EShaderModel ShaderModel         = bNeedsShaderModel69 ? EShaderModel::SM_6_9 : bBindlessScene ? EShaderModel::SM_6_6 : EShaderModel::SM_6_5;
 
     TArray<uint8> ByteCode;
-    const FShaderCompileInfo CompileInfo(TEXT("Main"), bBindlessScene ? EShaderModel::SM_6_6 : EShaderModel::SM_6_5, EShaderStage::Compute, RHI::GetShaderOutputLanguage(), TArrayView<FShaderDefine>(Defines));
+    const FShaderCompileInfo CompileInfo(TEXT("Main"), ShaderModel, EShaderStage::Compute, RHI::GetShaderOutputLanguage(), TArrayView<FShaderDefine>(Defines));
     if (!FShaderCompiler::Get().CompileFromSource(GRayQueryProbeSource, CompileInfo, ByteCode))
     {
         return nullptr;
@@ -2506,13 +2527,18 @@ static FRHIComputePipelineStateRef CreateRayQueryPipeline(bool bBindlessScene, F
 
 static bool CreateRayQueryProbe(FRayQueryProbe& OutProbe)
 {
-    OutProbe.Pipeline = CreateRayQueryPipeline(false, OutProbe.Shader);
+    OutProbe.Pipeline = CreateRayQueryPipeline(false, false, OutProbe.Shader);
     if (RHI::bSupportsBindless)
     {
-        OutProbe.BindlessPipeline = CreateRayQueryPipeline(true, OutProbe.BindlessShader);
+        OutProbe.BindlessPipeline = CreateRayQueryPipeline(true, false, OutProbe.BindlessShader);
     }
 
-    return OutProbe.Pipeline && (!RHI::bSupportsBindless || OutProbe.BindlessPipeline);
+    if (CanRayQueryUseOpacityMicromaps())
+    {
+        OutProbe.OpacityMicromapPipeline = CreateRayQueryPipeline(false, true, OutProbe.OpacityMicromapShader);
+    }
+
+    return OutProbe.Pipeline && (!RHI::bSupportsBindless || OutProbe.BindlessPipeline) && (!CanRayQueryUseOpacityMicromaps() || OutProbe.OpacityMicromapPipeline);
 }
 
 static bool CreateProbeGeometry(bool bIndexed, EAccelerationStructureBuildFlags Flags, FRayTracingProbeGeometry& OutGeometry)
@@ -2573,10 +2599,10 @@ static bool IsNearlyEqual(float Lhs, float Rhs)
     return Math::Abs(Lhs - Rhs) < 1.0e-3f;
 }
 
-static bool TraceProbeRay(FRHICommandList& CommandList, const FRayQueryProbe& Probe, FRHISceneAccelerationStructure* Scene, bool bBindlessScene, float OriginX, FRayQueryProbeHit& OutHit)
+static bool TraceProbeRay(FRHICommandList& CommandList, const FRayQueryProbe& Probe, FRHISceneAccelerationStructure* Scene, bool bBindlessScene, float OriginX, FRayQueryProbeHit& OutHit, bool bOpacityMicromaps = false)
 {
-    FRHIComputePipelineState* Pipeline = bBindlessScene ? Probe.BindlessPipeline.Get() : Probe.Pipeline.Get();
-    FRHIComputeShader*        Shader   = bBindlessScene ? Probe.BindlessShader.Get() : Probe.Shader.Get();
+    FRHIComputePipelineState* Pipeline = bOpacityMicromaps ? Probe.OpacityMicromapPipeline.Get() : bBindlessScene ? Probe.BindlessPipeline.Get() : Probe.Pipeline.Get();
+    FRHIComputeShader*        Shader   = bOpacityMicromaps ? Probe.OpacityMicromapShader.Get() : bBindlessScene ? Probe.BindlessShader.Get() : Probe.Shader.Get();
     if (!Pipeline || !Shader || !Scene)
     {
         return false;
@@ -2647,10 +2673,205 @@ static bool TraceProbeRay(FRHICommandList& CommandList, const FRayQueryProbe& Pr
     return true;
 }
 
-static bool TraceProbeRay(const FRayQueryProbe& Probe, FRHISceneAccelerationStructure* Scene, bool bBindlessScene, float OriginX, FRayQueryProbeHit& OutHit)
+static bool TraceProbeRay(const FRayQueryProbe& Probe, FRHISceneAccelerationStructure* Scene, bool bBindlessScene, float OriginX, FRayQueryProbeHit& OutHit, bool bOpacityMicromaps = false)
 {
     FRHICommandList CommandList;
-    return TraceProbeRay(CommandList, Probe, Scene, bBindlessScene, OriginX, OutHit);
+    return TraceProbeRay(CommandList, Probe, Scene, bBindlessScene, OriginX, OutHit, bOpacityMicromaps);
+}
+
+static const CHAR_T GRayTracingPipelineProbeSource[] =
+    TEXT("struct FPayload { uint Hit; };\n"
+    "RaytracingAccelerationStructure Scene : register(t0);\n"
+    "RWStructuredBuffer<uint> OutBuffer : register(u0);\n"
+    "cbuffer Params : register(b0) { float4 RayOrigin; };\n"
+    "[shader(\"raygeneration\")]\n"
+    "void RayGen()\n"
+    "{\n"
+    "    RayDesc Ray;\n"
+    "    Ray.Origin    = RayOrigin.xyz;\n"
+    "    Ray.TMin      = 0.0f;\n"
+    "    Ray.Direction = float3(0.0f, 0.0f, 1.0f);\n"
+    "    Ray.TMax      = 1000.0f;\n"
+    "    FPayload Payload;\n"
+    "    Payload.Hit = 0;\n"
+    "    TraceRay(Scene, RAY_FLAG_NONE, 0xff, 0, 1, 0, Ray, Payload);\n"
+    "    OutBuffer[0] = Payload.Hit;\n"
+    "}\n"
+    "[shader(\"miss\")]\n"
+    "void Miss(inout FPayload Payload) { Payload.Hit = 0; }\n"
+    "[shader(\"closesthit\")]\n"
+    "void ClosestHit(inout FPayload Payload, in BuiltInTriangleIntersectionAttributes Attributes) { Payload.Hit = 1; }\n");
+
+struct FRayTracingPipelineProbe
+{
+    FRHIRayGenShaderRef            RayGenShader;
+    FRHIRayMissShaderRef           MissShader;
+    FRHIRayClosestHitShaderRef     ClosestHitShader;
+    FRHIRayTracingPipelineStateRef Pipeline;
+};
+
+static bool CreateRayTracingPipelineProbe(ERayTracingPipelineFlags Flags, FRayTracingPipelineProbe& OutProbe)
+{
+    TArray<uint8> RayGenCode;
+    TArray<uint8> MissCode;
+    TArray<uint8> ClosestHitCode;
+
+    const EShaderOutputLanguage Language = RHI::GetShaderOutputLanguage();
+    if (!FShaderCompiler::Get().CompileFromSource(GRayTracingPipelineProbeSource, FShaderCompileInfo(TEXT("RayGen"), EShaderModel::SM_6_3, EShaderStage::RayGen, Language), RayGenCode) ||
+        !FShaderCompiler::Get().CompileFromSource(GRayTracingPipelineProbeSource, FShaderCompileInfo(TEXT("Miss"), EShaderModel::SM_6_3, EShaderStage::RayMiss, Language), MissCode) ||
+        !FShaderCompiler::Get().CompileFromSource(GRayTracingPipelineProbeSource, FShaderCompileInfo(TEXT("ClosestHit"), EShaderModel::SM_6_3, EShaderStage::RayClosestHit, Language), ClosestHitCode))
+    {
+        return false;
+    }
+
+    OutProbe.RayGenShader     = RHI::CreateRayGenShader(RayGenCode);
+    OutProbe.MissShader       = RHI::CreateRayMissShader(MissCode);
+    OutProbe.ClosestHitShader = RHI::CreateRayClosestHitShader(ClosestHitCode);
+    if (!OutProbe.RayGenShader || !OutProbe.MissShader || !OutProbe.ClosestHitShader)
+    {
+        return false;
+    }
+
+    FRHIRayTracingPipelineStateDesc PipelineDesc;
+    PipelineDesc.RayGenShaders           = { OutProbe.RayGenShader.Get() };
+    PipelineDesc.MissShaders             = { OutProbe.MissShader.Get() };
+    PipelineDesc.HitGroups               = { FRHIRayTracingHitGroupInfo(TEXT("HitGroup"), ERayTracingHitGroupType::Triangles, { OutProbe.ClosestHitShader.Get() }) };
+    PipelineDesc.MaxRecursionDepth       = 1;
+    PipelineDesc.MaxAttributeSizeInBytes = sizeof(float) * 2;
+    PipelineDesc.MaxPayloadSizeInBytes   = sizeof(uint32);
+    PipelineDesc.Flags                   = Flags;
+
+    OutProbe.Pipeline = RHI::CreateRayTracingPipelineState(PipelineDesc);
+    return OutProbe.Pipeline != nullptr;
+}
+
+static bool TracePipelineProbeRay(const FRayTracingPipelineProbe& Probe, FRHISceneAccelerationStructure* Scene, float OriginX, bool& bOutHit)
+{
+    const float RayOrigin[4] = { OriginX, GProbeRayY, GProbeRayZ, 0.0f };
+
+    FRHIBufferRef Params   = RHI::CreateBuffer(FRHIBufferDesc::CreateConstantBuffer(sizeof(RayOrigin)), ERHIResourceState::Common, RayOrigin);
+    FRHIBufferRef Output   = RHI::CreateBuffer(FRHIBufferDesc(EBufferFlags::Default | EBufferFlags::RWBuffer | EBufferFlags::CopySource, sizeof(uint32), sizeof(uint32)));
+    FRHIBufferRef Readback = RHI::CreateBuffer(FRHIBufferDesc::CreateReadbackBuffer(sizeof(uint32)));
+    FRHIUnorderedAccessViewRef OutputUAV = Output
+        ? RHI::CreateUnorderedAccessView(Output.Get(), FRHIUnorderedAccessViewDesc::CreateBuffer(0, 1, EBufferViewType::Structured))
+        : nullptr;
+
+    FRHIShaderBindingTableRef ShaderBindingTable = RHI::CreateShaderBindingTable(FRHIShaderBindingTableDesc(Probe.Pipeline.Get(), 1, 1, 0, 1));
+    if (!Params || !Output || !Readback || !OutputUAV || !ShaderBindingTable || !Scene)
+    {
+        return false;
+    }
+
+    FRHIFenceRef Fence = RHI::CreateFence();
+
+    FRHICommandList CommandList;
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess));
+    CommandList.SetShaderRecord(ShaderBindingTable.Get(), FRHIShaderRecordDesc(ERayTracingShaderRecordKind::RayGeneration, 0, 0));
+    CommandList.SetShaderRecord(ShaderBindingTable.Get(), FRHIShaderRecordDesc(ERayTracingShaderRecordKind::Miss, 0, 0));
+    CommandList.SetShaderRecord(ShaderBindingTable.Get(), FRHIShaderRecordDesc(ERayTracingShaderRecordKind::HitGroup, 0, 0));
+    CommandList.BuildShaderBindingTable(ShaderBindingTable.Get());
+    CommandList.SetRayTracingPipelineState(Probe.Pipeline.Get());
+    CommandList.SetConstantBuffer(Probe.RayGenShader.Get(), Params.Get(), 0);
+    CommandList.SetShaderResourceView(Probe.RayGenShader.Get(), Scene->GetShaderResourceView(), 0);
+    CommandList.SetUnorderedAccessView(Probe.RayGenShader.Get(), OutputUAV.Get(), 0);
+    CommandList.DispatchRays(ShaderBindingTable.Get(), 1, 1, 1);
+    CommandList.TransitionBarrier(FRHITransitionBarrierDesc::CreateBuffer(Output.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource));
+    CommandList.CopyBuffer(Readback.Get(), Output.Get(), FRHIBufferCopyDesc(0, 0, sizeof(uint32)));
+    CommandList.WriteFence(Fence.Get());
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().WaitForCommands();
+    if (!Fence->Wait(5ull * 1000ull * 1000ull * 1000ull))
+    {
+        return false;
+    }
+
+    const uint32* Mapped = static_cast<const uint32*>(Readback->Map());
+    if (!Mapped)
+    {
+        return false;
+    }
+
+    bOutHit = *Mapped != 0;
+    Readback->Unmap();
+    return true;
+}
+
+struct FOpacityMicromapProbe
+{
+    FRHIBufferRef                        DescriptorBuffer;
+    FRHIBufferRef                        DataBuffer;
+    FRHIBufferRef                        IndexBuffer;
+    FRHIOpacityMicromapRef               Micromap;
+    FRayTracingProbeGeometry             Geometry;
+    FRHISceneAccelerationStructureRef    Scene;
+};
+
+static bool CreateOpacityMicromapProbe(bool bOpaque, bool bSpecialIndexOnly, FOpacityMicromapProbe& OutProbe)
+{
+    const EBufferFlags InputFlags = EBufferFlags::Default | EBufferFlags::RayTracingBuildInput;
+
+    if (!bSpecialIndexOnly)
+    {
+        const FRHIOpacityMicromapTriangleDesc Triangle(0, 0, EOpacityMicromapFormat::OC1_4State);
+        const uint32                          StateData = bOpaque ? 1u : 0u;
+
+        OutProbe.DescriptorBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(FRHIOpacityMicromapTriangleDesc), 1, InputFlags), ERHIResourceState::Common, &Triangle);
+        OutProbe.DataBuffer       = RHI::CreateBuffer(FRHIBufferDesc::CreateStructuredBuffer(sizeof(uint32), 1, InputFlags), ERHIResourceState::Common, &StateData);
+
+        FRHIOpacityMicromapDesc MicromapDesc;
+        MicromapDesc.Format = EOpacityMicromapFormat::OC1_4State;
+        OutProbe.Micromap = RHI::CreateOpacityMicromap(MicromapDesc);
+        if (!OutProbe.DescriptorBuffer || !OutProbe.DataBuffer || !OutProbe.Micromap)
+        {
+            return false;
+        }
+
+        FRHIOpacityMicromapBuildDesc BuildDesc;
+        BuildDesc.OMMDescriptorBuffer            = OutProbe.DescriptorBuffer.Get();
+        BuildDesc.OpacityMicroTriangleDataBuffer = OutProbe.DataBuffer.Get();
+        BuildDesc.NumOpacityMicromaps            = 1;
+
+        FRHICommandList CommandList;
+        CommandList.BuildOpacityMicromap(OutProbe.Micromap.Get(), BuildDesc);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    }
+
+    const uint16 SpecialIndex     = static_cast<uint16>(static_cast<int16>(bOpaque ? EOpacityMicromapSpecialIndex::FullyOpaque : EOpacityMicromapSpecialIndex::FullyTransparent));
+    const uint16 MicromapIndex    = bSpecialIndexOnly ? SpecialIndex : 0;
+    const uint16 TriangleIndices[] = { MicromapIndex, MicromapIndex };
+
+    OutProbe.IndexBuffer = RHI::CreateBuffer(FRHIBufferDesc(InputFlags, sizeof(uint32), sizeof(TriangleIndices)), ERHIResourceState::Common, TriangleIndices);
+    if (!OutProbe.IndexBuffer)
+    {
+        return false;
+    }
+
+    const EBufferFlags BufferFlags = EBufferFlags::Default | EBufferFlags::ShaderResourceBuffer | EBufferFlags::CopyDest;
+    OutProbe.Geometry.VertexBuffer = RHI::CreateBuffer(FRHIBufferDesc::CreateVertexBuffer(sizeof(float) * 3, GProbeNumVertices, BufferFlags), ERHIResourceState::Common, GProbeVertices);
+    OutProbe.Geometry.IndexBuffer  = RHI::CreateBuffer(FRHIBufferDesc::CreateIndexBuffer(EIndexFormat::uint32, GProbeNumVertices, BufferFlags), ERHIResourceState::Common, GProbeIndices);
+    if (!OutProbe.Geometry.VertexBuffer || !OutProbe.Geometry.IndexBuffer)
+    {
+        return false;
+    }
+
+    FRHIRayTracingGeometrySegment Segment(0, GProbeNumVertices);
+    Segment.OpacityMicromap            = OutProbe.Micromap.Get();
+    Segment.OpacityMicromapIndexBuffer = OutProbe.IndexBuffer.Get();
+    Segment.OpacityMicromapIndexFormat = EOpacityMicromapIndexFormat::uint16;
+
+    FRHIGeometryAccelerationStructureDesc GeometryDesc(OutProbe.Geometry.VertexBuffer.Get(), GProbeNumVertices, OutProbe.Geometry.IndexBuffer.Get(), GProbeNumVertices, EIndexFormat::uint32, EAccelerationStructureBuildFlags::None);
+    GeometryDesc.Segments    = &Segment;
+    GeometryDesc.NumSegments = 1;
+
+    OutProbe.Geometry.Geometry = RHI::CreateGeometryAccelerationStructure(GeometryDesc);
+    if (!OutProbe.Geometry.Geometry)
+    {
+        return false;
+    }
+
+    const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(OutProbe.Geometry.Geometry.Get(), 3, 0.0f) };
+    OutProbe.Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None));
+    return OutProbe.Scene != nullptr;
 }
 
 static bool IsExpectedProbeHit(const FRayQueryProbeHit& Hit, uint32 InstanceID, uint32 PrimitiveIndex, float HitT)
@@ -3009,6 +3230,85 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
 
         FRHICommandListExecutor::Get().WaitForGPU();
+    }
+
+    TEST_SECTION(TEXT("A ray tracing pipeline probe hits the probe geometry and misses beside it"));
+    FRayTracingPipelineProbe PipelineProbe;
+    const bool bPipelineProbe = RHI::bSupportsRayTracingPipeline && bCanTrace &&
+        CreateRayTracingPipelineProbe(RHI::bSupportsOpacityMicromap ? ERayTracingPipelineFlags::AllowOpacityMicromap : ERayTracingPipelineFlags::None, PipelineProbe);
+
+    if (RHI::bSupportsRayTracingPipeline && bCanTrace)
+    {
+        TEST_EXPECT(bPipelineProbe);
+
+        FRayTracingProbeGeometry Geometry;
+        TEST_EXPECT(CreateProbeGeometry(true, EAccelerationStructureBuildFlags::None, Geometry));
+
+        if (bPipelineProbe && Geometry.Geometry)
+        {
+            const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Geometry.Get(), 3, 0.0f) };
+            FRHISceneAccelerationStructureRef Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None));
+
+            bool bHit = false;
+            TEST_EXPECT(Scene && TracePipelineProbeRay(PipelineProbe, Scene.Get(), 0.0f, bHit) && bHit);
+            TEST_EXPECT(Scene && TracePipelineProbeRay(PipelineProbe, Scene.Get(), 50.0f, bHit) && !bHit);
+        }
+    }
+
+    TEST_SECTION(TEXT("A geometry linked to a transparent micromap is missed and one linked to an opaque micromap is hit"));
+    if (RHI::bSupportsOpacityMicromap && bTrace)
+    {
+        struct FMicromapCase
+        {
+            const CHAR_T* Name;
+            bool          bOpaque;
+            bool          bSpecialIndexOnly;
+        };
+
+        const FMicromapCase Cases[] =
+        {
+            { TEXT("transparent micromap"),         false, false },
+            { TEXT("opaque micromap"),              true,  false },
+            { TEXT("fully transparent index only"), false, true  },
+        };
+
+        for (const FMicromapCase& Case : Cases)
+        {
+            FOpacityMicromapProbe MicromapProbe;
+            const bool bCreated = CreateOpacityMicromapProbe(Case.bOpaque, Case.bSpecialIndexOnly, MicromapProbe);
+            TEST_EXPECT(bCreated);
+            if (!bCreated)
+            {
+                LOG_ERROR("[BOOT] Failed to create the %s probe", Case.Name);
+                continue;
+            }
+
+            if (bPipelineProbe)
+            {
+                bool bHit = !Case.bOpaque;
+                const bool bTraced = TracePipelineProbeRay(PipelineProbe, MicromapProbe.Scene.Get(), 0.0f, bHit);
+                TEST_EXPECT(bTraced && bHit == Case.bOpaque);
+                if (!bTraced || bHit != Case.bOpaque)
+                {
+                    LOG_ERROR("[BOOT] TraceRay with a %s: expected %s, got %s", Case.Name, Case.bOpaque ? TEXT("a hit") : TEXT("a miss"), bTraced ? (bHit ? TEXT("a hit") : TEXT("a miss")) : TEXT("no result"));
+                }
+            }
+
+            if (Probe.OpacityMicromapPipeline)
+            {
+                FRayQueryProbeHit Hit = {};
+                const bool bTraced = TraceProbeRay(Probe, MicromapProbe.Scene.Get(), false, 0.0f, Hit, true);
+                TEST_EXPECT(bTraced && (Case.bOpaque ? IsExpectedProbeHit(Hit, 3, 0, 5.0f) : Hit.bHit == 0));
+                if (bTraced && !Case.bOpaque && Hit.bHit != 0)
+                {
+                    LOG_ERROR("[BOOT] RayQuery with a %s: expected a miss, got a hit", Case.Name);
+                }
+            }
+            else
+            {
+                LOG_INFO("[BOOT] RayQuery with a %s skipped, RayQuery can't opt in to micromaps here", Case.Name);
+            }
+        }
     }
 
     TEST_SECTION(TEXT("An opacity micromap builds from a descriptor and its micro-triangle data"));

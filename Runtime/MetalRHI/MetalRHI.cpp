@@ -149,6 +149,7 @@ bool FMetalDeviceRHI::InitializeDeviceFeatureSupport()
     RHI::RayTracingMaxRecursionDepth                               = 0;
     RHI::bSupportsInlineRayTracing                                 = GMetalFeatures.bRayTracing;
     RHI::bSupportsOpacityMicromap                                  = false;
+    RHI::bSupportsOpacityMicromap8BitIndices                       = false;
     RHI::bSupportsShaderExecutionReordering                        = false;
     RHI::bShaderExecutionReorderingActuallyReorders                = false;
     RHI::bSupportsRayTracingPipelineAdditions                      = false;
