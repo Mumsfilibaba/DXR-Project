@@ -38,6 +38,11 @@ FRHIDevice* FD3D11ModuleRHI::CreateDevice()
     return NewRHI.Release();
 }
 
+ERHIType FD3D11DeviceRHI::GetRHIType() const
+{
+    return ERHIType::D3D11;
+}
+
 FD3D11DeviceRHI::FD3D11DeviceRHI()
     : FRHIDevice()
     , Adapter(nullptr)
@@ -1351,6 +1356,24 @@ FString FD3D11DeviceRHI::GetAdapterName() const
 {
     CHECK(Adapter != nullptr);
     return Adapter->GetDescription();
+}
+
+FRHIAdapterDesc FD3D11DeviceRHI::GetAdapterDesc() const
+{
+    CHECK(Adapter != nullptr);
+    const DXGI_ADAPTER_DESC1& DXGIAdapterDesc = Adapter->GetAdapterDesc();
+
+    FRHIAdapterDesc Desc;
+    Desc.VendorID = DXGIAdapterDesc.VendorId;
+    Desc.DeviceID = DXGIAdapterDesc.DeviceId;
+
+    LARGE_INTEGER UserModeDriverVersion = {};
+    if (SUCCEEDED(Adapter->GetDXGIAdapter()->CheckInterfaceSupport(__uuidof(IDXGIDevice), &UserModeDriverVersion)))
+    {
+        Desc.DriverVersion = static_cast<uint64>(UserModeDriverVersion.QuadPart);
+    }
+
+    return Desc;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -587,7 +587,17 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
 #endif
 }
 
-bool FD3D12GeometryAccelerationStructureRHI::BuildSerialized(FD3D12CommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes)
+static uint64 GetOpacityMicromapAddress(FRHIOpacityMicromap* OpacityMicromap)
+{
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    return FD3D12DeviceRHI::ResourceCast(OpacityMicromap)->GetGPUVirtualAddress();
+#else
+    UNREFERENCED_VARIABLE(OpacityMicromap);
+    return 0;
+#endif
+}
+
+bool FD3D12GeometryAccelerationStructureRHI::BuildSerialized(FD3D12CommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes, const TArrayView<FRHIOpacityMicromap* const>& InOpacityMicromaps)
 {
     D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER SerializedHeader;
     if (!SerializedData || SerializedSizeInBytes < sizeof(SerializedHeader))
@@ -595,7 +605,26 @@ bool FD3D12GeometryAccelerationStructureRHI::BuildSerialized(FD3D12CommandContex
         return false;
     }
 
+    TArray<uint8> LinkedData;
+    if (!LinkSerializedOpacityMicromaps(SerializedData, SerializedSizeInBytes, InOpacityMicromaps, GetOpacityMicromapAddress, LinkedData))
+    {
+        return false;
+    }
+
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    OpacityMicromaps.Clear();
+    
+    for (FRHIOpacityMicromap* OpacityMicromap : InOpacityMicromaps)
+    {
+        if (OpacityMicromap)
+        {
+            OpacityMicromaps.Add(MakeSharedRef<FD3D12OpacityMicromapRHI>(FD3D12DeviceRHI::ResourceCast(OpacityMicromap)));
+        }
+    }
+#endif
+
     Memory::Memcpy(&SerializedHeader, SerializedData, sizeof(SerializedHeader));
+    
     if (SerializedHeader.DeserializedSizeInBytes == 0 || 
         !AllocateResultStorage(SerializedHeader.DeserializedSizeInBytes, ResultResourceStorage))
     {
@@ -611,7 +640,7 @@ bool FD3D12GeometryAccelerationStructureRHI::BuildSerialized(FD3D12CommandContex
         EBufferFlags::AccelerationStructure;
 
     const FRHIBufferDesc UploadDesc(BufferFlags, 0, SerializedSizeInBytes);
-    FRHIBufferRef Upload = FD3D12DeviceRHI::Get()->CreateBuffer(UploadDesc, ERHIResourceState::CopySource, SerializedData);
+    FRHIBufferRef Upload = FD3D12DeviceRHI::Get()->CreateBuffer(UploadDesc, ERHIResourceState::CopySource, LinkedData.Data());
 
     if (!Upload)
     {
@@ -621,6 +650,20 @@ bool FD3D12GeometryAccelerationStructureRHI::BuildSerialized(FD3D12CommandContex
     CmdContext.DeserializeAccelerationStructure(this, Upload.Get(), 0);
     return true;
 }
+
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+bool FD3D12GeometryAccelerationStructureRHI::GetSerializedOpacityMicromaps(const void* SerializedData, uint64 SerializedSizeInBytes, TArray<FRHIOpacityMicromap*>& OutOpacityMicromaps) const
+{
+    TArray<FRHIOpacityMicromap*> LinkedMicromaps;
+    for (const FD3D12OpacityMicromapRHIRef& OpacityMicromap : OpacityMicromaps)
+    {
+        LinkedMicromaps.Add(OpacityMicromap.Get());
+    }
+
+    const TArrayView<FRHIOpacityMicromap* const> LinkedMicromapsView(LinkedMicromaps.Data(), LinkedMicromaps.Size());
+    return FindSerializedOpacityMicromaps(SerializedData, SerializedSizeInBytes, LinkedMicromapsView, GetOpacityMicromapAddress, OutOpacityMicromaps);
+}
+#endif
 
 void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
 {

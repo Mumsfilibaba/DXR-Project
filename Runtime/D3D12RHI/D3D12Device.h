@@ -50,6 +50,11 @@ public:
 
     FString GetDescription() const { return StringCast<CHAR_T>(AdapterDesc.Description).ToString(); }
 
+    FORCEINLINE const DXGI_ADAPTER_DESC1& GetAdapterDesc() const
+    {
+        return AdapterDesc;
+    }
+
     FORCEINLINE uint32 GetAdapterIndex() const
     { 
         return AdapterIndex;

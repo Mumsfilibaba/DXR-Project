@@ -318,6 +318,11 @@ bool FMesh::HasRayTracingOpacityMicromap(int32 SubMeshIndex) const
     return RayTracingSegments.IsValidIndex(SubMeshIndex) && RayTracingSegments[SubMeshIndex].HasOpacityMicromap();
 }
 
+const TArray<FRHIOpacityMicromapRef>& FMesh::GetRayTracingOpacityMicromaps() const
+{
+    return RayTracingOpacityMicromaps;
+}
+
 void FMesh::ReleaseRayTracingResources()
 {
     RayTracingGeometry.Reset();

@@ -274,6 +274,11 @@ public:
         return FString(TEXT("NullRHI Adapter"));
     }
 
+    virtual FRHIAdapterDesc GetAdapterDesc() const override final
+    {
+        return FRHIAdapterDesc();
+    }
+
     virtual ERHIType GetRHIType() const override final;
 
 private:

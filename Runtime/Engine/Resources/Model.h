@@ -56,6 +56,9 @@ public:
     /** @return Returns whether the sub-mesh's ray tracing geometry links an opacity micromap */
     bool HasRayTracingOpacityMicromap(int32 SubMeshIndex) const;
 
+    /** @return Returns the opacity micromaps the sub-meshes link, each once, in the order they were first linked */
+    const TArray<FRHIOpacityMicromapRef>& GetRayTracingOpacityMicromaps() const;
+
     void SetVertexBuffers(FRHICommandList& CommandList, const FVertexStreamBinding& Binding) const;
 
     const FVertexDeclaration& GetVertexDeclaration() const

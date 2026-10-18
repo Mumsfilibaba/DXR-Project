@@ -118,7 +118,10 @@ namespace FunctionInternal
     template<typename FunctorType>
     struct TFunctionContainer : public IFunctionContainer
     {
-        inline static constexpr bool bUseInlineStorage = (sizeof(FunctorType) <= TFUNCTION_NUM_INLINE_BYTES);
+        NODISCARD static constexpr bool IsInlineStorable()
+        {
+            return sizeof(TFunctionContainer) <= TFUNCTION_NUM_INLINE_BYTES;
+        }
 
         TFunctionContainer(const FunctorType& InFunctor)
             : IFunctionContainer()
@@ -143,7 +146,7 @@ namespace FunctionInternal
         virtual void Destroy() override final
         {
             // Free this pointer if we are not using inline storage
-            if constexpr (!bUseInlineStorage)
+            if constexpr (!IsInlineStorable())
             {
                 void* This = this;
                 this->~TFunctionContainer();
@@ -196,8 +199,7 @@ namespace FunctionInternal
             constexpr uint64 FunctorSize = sizeof(TFunctionContainer<FunctorType>);
 
             void* Memory;
-            constexpr bool bUseInlineStorage = (FunctorSize <= TFUNCTION_NUM_INLINE_BYTES);
-            if constexpr (bUseInlineStorage)
+            if constexpr (TFunctionContainer<FunctorType>::IsInlineStorable())
             {
                 Memory = InlineAllocation.Data;
             }
@@ -258,7 +260,7 @@ namespace FunctionInternal
     void TFunctionContainer<FunctorType>::CopyToStorage(FFunctionStorage& Storage) const
     {
         void* Memory;
-        if constexpr (bUseInlineStorage)
+        if constexpr (IsInlineStorable())
         {
             Memory = Storage.InlineAllocation.Data;
         }

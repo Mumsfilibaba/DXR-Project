@@ -38,6 +38,15 @@ NODISCARD constexpr const CHAR_T* ToString(ERHIType RenderLayerApi)
     }
 }
 
+struct FRHIAdapterDesc
+{
+    uint32 VendorID = 0;
+    uint32 DeviceID = 0;
+
+    /** The version the API reports for the driver, which only compares between drivers of the same API */
+    uint64 DriverVersion = 0;
+};
+
 enum class EVideoMemoryType : uint8
 {
     Local = 1,
@@ -445,11 +454,11 @@ struct FRHIDevice
     /** @return D3D12: ID3D12CommandQueue*. Vulkan: nullptr. Metal: id<MTLCommandQueue>, the same queue as direct. Null: nullptr. */
     virtual void* GetRHINativeCopyCommandQueue() = 0;
 
-    /**
-     * @brief Gets the adapter name.
-     * @return A string with the adapter name.
-     */
+    /** @return The name of the adapter in use */
     virtual FString GetAdapterName() const = 0;
+
+    /** @return The vendor, device and driver of the adapter in use */
+    virtual FRHIAdapterDesc GetAdapterDesc() const = 0;
 
     /**
      * @brief Gets the current RHI's API type.

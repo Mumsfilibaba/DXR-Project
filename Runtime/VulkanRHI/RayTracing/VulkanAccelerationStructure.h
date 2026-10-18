@@ -46,9 +46,11 @@ public:
     
     virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
-    
+
+    virtual bool GetSerializedOpacityMicromaps(const void* SerializedData, uint64 SerializedSizeInBytes, TArray<FRHIOpacityMicromap*>& OutOpacityMicromaps) const override final;
+
     bool Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
-    bool BuildSerialized(FVulkanCommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes);
+    bool BuildSerialized(FVulkanCommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes, const TArrayView<FRHIOpacityMicromap* const>& InOpacityMicromaps);
     bool CompactInPlace(FVulkanCommandContext& CmdContext, uint64 CompactedSize);
 
 private:

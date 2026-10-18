@@ -2346,3 +2346,8 @@ FString FRHIValidationDevice::GetAdapterName() const
 {
     return Device->GetAdapterName();
 }
+
+FRHIAdapterDesc FRHIValidationDevice::GetAdapterDesc() const
+{
+    return Device->GetAdapterDesc();
+}

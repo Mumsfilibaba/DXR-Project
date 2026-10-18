@@ -357,13 +357,33 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     return true;
 }
 
-bool FVulkanGeometryAccelerationStructureRHI::BuildSerialized(FVulkanCommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes)
+static uint64 GetOpacityMicromapAddress(FRHIOpacityMicromap* OpacityMicromap)
+{
+    return FVulkanDeviceRHI::ResourceCast(OpacityMicromap)->GetDeviceAddress();
+}
+
+bool FVulkanGeometryAccelerationStructureRHI::BuildSerialized(FVulkanCommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes, const TArrayView<FRHIOpacityMicromap* const>& InOpacityMicromaps)
 {
     static constexpr uint64 DeserializedSizeOffset = 2 * VK_UUID_SIZE + sizeof(uint64);
 
     if (!SerializedData || SerializedSizeInBytes < DeserializedSizeOffset + sizeof(uint64))
     {
         return false;
+    }
+
+    TArray<uint8> LinkedData;
+    if (!LinkSerializedOpacityMicromaps(SerializedData, SerializedSizeInBytes, InOpacityMicromaps, GetOpacityMicromapAddress, LinkedData))
+    {
+        return false;
+    }
+
+    OpacityMicromaps.Clear();
+    for (FRHIOpacityMicromap* OpacityMicromap : InOpacityMicromaps)
+    {
+        if (OpacityMicromap)
+        {
+            OpacityMicromaps.Add(MakeSharedRef<FVulkanOpacityMicromapRHI>(FVulkanDeviceRHI::ResourceCast(OpacityMicromap)));
+        }
     }
 
     uint64 DeserializedSize = 0;
@@ -383,7 +403,7 @@ bool FVulkanGeometryAccelerationStructureRHI::BuildSerialized(FVulkanCommandCont
         EBufferFlags::AccelerationStructure;
 
     const FRHIBufferDesc UploadDesc(BufferFlags, 0, SerializedSizeInBytes);
-    FRHIBufferRef Upload = FVulkanDeviceRHI::Get()->CreateBuffer(UploadDesc, ERHIResourceState::CopySource, SerializedData);
+    FRHIBufferRef Upload = FVulkanDeviceRHI::Get()->CreateBuffer(UploadDesc, ERHIResourceState::CopySource, LinkedData.Data());
 
     if (!Upload)
     {
@@ -392,6 +412,18 @@ bool FVulkanGeometryAccelerationStructureRHI::BuildSerialized(FVulkanCommandCont
 
     CmdContext.DeserializeAccelerationStructure(this, Upload.Get(), 0);
     return true;
+}
+
+bool FVulkanGeometryAccelerationStructureRHI::GetSerializedOpacityMicromaps(const void* SerializedData, uint64 SerializedSizeInBytes, TArray<FRHIOpacityMicromap*>& OutOpacityMicromaps) const
+{
+    TArray<FRHIOpacityMicromap*> LinkedMicromaps;
+    for (const FVulkanOpacityMicromapRHIRef& OpacityMicromap : OpacityMicromaps)
+    {
+        LinkedMicromaps.Add(OpacityMicromap.Get());
+    }
+
+    const TArrayView<FRHIOpacityMicromap* const> LinkedMicromapsView(LinkedMicromaps.Data(), LinkedMicromaps.Size());
+    return FindSerializedOpacityMicromaps(SerializedData, SerializedSizeInBytes, LinkedMicromapsView, GetOpacityMicromapAddress, OutOpacityMicromaps);
 }
 
 bool FVulkanGeometryAccelerationStructureRHI::AllocateResultStorage(uint64 Size, FVulkanMemoryLocation& OutLocation, VkAccelerationStructureKHR& OutAccelerationStructure, VkDeviceAddress& OutDeviceAddress)

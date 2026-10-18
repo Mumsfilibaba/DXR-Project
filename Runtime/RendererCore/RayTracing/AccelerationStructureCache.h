@@ -37,7 +37,11 @@ public:
         return Backend;
     }
 
-    NODISCARD bool TryLoad(const FStringView& Key, TArray<uint8>& OutBytes) const
+    /**
+     * @brief Load the entry under Key: the header and the serialized structure in OutBytes, and what was stored after the structure in OutAttachment
+     * @return Returns false on a miss, or when the entry was written by another build, RHI or driver
+     */
+    NODISCARD bool TryLoad(const FStringView& Key, TArray<uint8>& OutBytes, TArray<uint8>& OutAttachment) const
     {
         if (!Backend)
         {
@@ -63,7 +67,7 @@ public:
             return false;
         }
 
-        if (Header.SerializedSizeInBytes != uint64(Bytes.Size()) - GetPayloadOffset())
+        if (Header.SerializedSizeInBytes > uint64(Bytes.Size()) - GetPayloadOffset())
         {
             return false;
         }
@@ -73,6 +77,11 @@ public:
             return false;
         }
 
+        const int32 AttachmentOffset = static_cast<int32>(GetPayloadOffset() + Header.SerializedSizeInBytes);
+        OutAttachment.Clear();
+        OutAttachment.Append(Bytes.Data() + AttachmentOffset, Bytes.Size() - AttachmentOffset);
+
+        Bytes.Resize(AttachmentOffset);
         OutBytes = ::Move(Bytes);
         return true;
     }

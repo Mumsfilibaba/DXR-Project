@@ -125,9 +125,9 @@ public:
     virtual void* GetRHINativeComputeCommandQueue() override final;
     virtual void* GetRHINativeCopyCommandQueue()    override final;
     
-    virtual FString GetAdapterName() const override final;
-
-    virtual ERHIType GetRHIType() const override final;
+    virtual FString         GetAdapterName() const override final;
+    virtual FRHIAdapterDesc GetAdapterDesc() const override final;
+    virtual ERHIType        GetRHIType()     const override final;
 
     void NotifyCommandListOpened();
     void NotifyCommandListRetired(FD3D12Commands* Commands);

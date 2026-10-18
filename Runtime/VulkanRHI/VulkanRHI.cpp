@@ -685,7 +685,8 @@ FRHIGeometryAccelerationStructure* FVulkanDeviceRHI::CreateGeometryAccelerationS
         bool bSucceeded = false;
         if (InGeometryDesc.IsSerialized())
         {
-            bSucceeded = NewGeometry->BuildSerialized(*BuildContext, InGeometryDesc.SerializedData, InGeometryDesc.SerializedSizeInBytes);
+            const TArrayView<FRHIOpacityMicromap* const> OpacityMicromaps(InGeometryDesc.SerializedOpacityMicromaps, InGeometryDesc.NumSerializedOpacityMicromaps);
+            bSucceeded = NewGeometry->BuildSerialized(*BuildContext, InGeometryDesc.SerializedData, InGeometryDesc.SerializedSizeInBytes, OpacityMicromaps);
         }
         else
         {
@@ -1447,6 +1448,20 @@ FString FVulkanDeviceRHI::GetAdapterName() const
 
     VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
     return StringCast<CHAR_T>(DeviceProperties.deviceName).ToString();
+}
+
+FRHIAdapterDesc FVulkanDeviceRHI::GetAdapterDesc() const
+{
+    FRHIAdapterDesc Desc;
+    if (PhysicalDevice)
+    {
+        const VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
+        Desc.VendorID      = DeviceProperties.vendorID;
+        Desc.DeviceID      = DeviceProperties.deviceID;
+        Desc.DriverVersion = DeviceProperties.driverVersion;
+    }
+
+    return Desc;
 }
 
 IRHICommandContext* FVulkanDeviceRHI::ObtainCommandContext()

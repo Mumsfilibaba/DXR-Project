@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Function.h"
 #include "Core/Containers/String.h"
 #include "Core/Math/Math.h"
 #include "RHI/RHI.h"
@@ -13,6 +14,11 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FAccelerationStructureSerializationHelper
 {
+public:
+
+    typedef TFunction<bool(const uint8* SerializedData, uint64 SerializedSizeInBytes, TArray<uint8>& OutAttachment)> FCreateAttachment;
+
+private:
     enum class EStage : uint8
     {
         SizeQuery = 0,
@@ -23,6 +29,7 @@ class FAccelerationStructureSerializationHelper
     {
         FAccelerationStructureCache*           Cache = nullptr;
         FString                                CacheKey;
+        FCreateAttachment                      CreateAttachment;
         FRHIRayTracingAccelerationStructureRef Source;
         FRHIBufferRef                          SizeReadbackBuffer;
         FRHIBufferRef                          SerializeDestBuffer;
@@ -43,7 +50,12 @@ public:
         ReleaseAll();
     }
 
-    void RequestSerialize(FRHICommandList& CommandList, FRHIRayTracingAccelerationStructure* AccelerationStructure, FAccelerationStructureCache& Cache, const FString& CacheKey)
+    void RequestSerialize(
+        FRHICommandList&                     CommandList, 
+        FRHIRayTracingAccelerationStructure* AccelerationStructure, 
+        FAccelerationStructureCache&         Cache, 
+        const FString&                       CacheKey, 
+        const FCreateAttachment&             CreateAttachment = FCreateAttachment())
     {
         if (!AccelerationStructure || !Cache.HasBackend() || CacheKey.IsEmpty())
         {
@@ -59,12 +71,14 @@ public:
         }
 
         FRHIRayTracingAccelerationStructure* Sources[] = { AccelerationStructure };
-        CommandList.WriteAccelerationStructurePostBuildInfo(ReadbackBuffer.Get(), 0, EAccelerationStructurePostBuildInfoType::Serialization, Sources, 1);
+        CommandList.WriteAccelerationStructurePostBuildInfo(
+            ReadbackBuffer.Get(), 0, EAccelerationStructurePostBuildInfoType::Serialization, Sources, 1);
 
         FPendingSerialize Pending;
         Pending.Source             = MakeSharedRef<FRHIRayTracingAccelerationStructure>(AccelerationStructure);
         Pending.Cache              = &Cache;
         Pending.CacheKey           = CacheKey;
+        Pending.CreateAttachment   = CreateAttachment;
         Pending.SizeReadbackBuffer = ::Move(ReadbackBuffer);
         Pending.FramesRemaining    = ReadbackLatencyInFrames;
         Pending.Stage              = EStage::SizeQuery;
@@ -121,12 +135,17 @@ private:
             return;
         }
 
-        const EBufferFlags DestFlags = EBufferFlags::Default | EBufferFlags::UnorderedAccessBuffer | EBufferFlags::CopySource | EBufferFlags::AccelerationStructure;
-        const FRHIBufferDesc DestDesc(DestFlags, 0, Math::AlignUp<uint64>(SerializedSize, RHI::AccelerationStructureBufferAlignment));
+        const EBufferFlags DestFlags = 
+            EBufferFlags::Default | 
+            EBufferFlags::UnorderedAccessBuffer | 
+            EBufferFlags::CopySource | 
+            EBufferFlags::AccelerationStructure;
 
+        const FRHIBufferDesc DestDesc = FRHIBufferDesc(
+            DestFlags, 0, Math::AlignUp<uint64>(SerializedSize, RHI::AccelerationStructureBufferAlignment));
         const FRHIBufferDesc BytesReadbackDesc = FRHIBufferDesc::CreateReadbackBuffer(SerializedSize);
-
-        FRHIBufferRef DestBuffer     = RHI::CreateBuffer(DestDesc, ERHIResourceState::UnorderedAccess, nullptr);
+    
+        FRHIBufferRef DestBuffer     = RHI::CreateBuffer(DestDesc, ERHIResourceState::UnorderedAccess, nullptr);    
         FRHIBufferRef ReadbackBuffer = RHI::CreateBuffer(BytesReadbackDesc, ERHIResourceState::CopyDest, nullptr);
 
         if (!DestBuffer || !ReadbackBuffer)
@@ -156,6 +175,14 @@ private:
         {
             const uint8* SerializedBytes = reinterpret_cast<const uint8*>(Mapped);
 
+            TArray<uint8> Attachment;
+            if (Pending.CreateAttachment && !Pending.CreateAttachment(SerializedBytes, SerializedSize, Attachment))
+            {
+                Pending.BytesReadbackBuffer->Unmap(0, SerializedSize);
+                PendingSerializes.RemoveAt(Index);
+                return;
+            }
+
             FRHIAccelerationStructureSerializationHeader Header;
             Header.MagicAndVersion           = FRHIAccelerationStructureSerializationHeader::MAGIC_AND_VERSION;
             Header.RHIType                   = RHI::Device ? RHI::Device->GetRHIType() : ERHIType::Unknown;
@@ -174,6 +201,7 @@ private:
 
             Memory::Memcpy(Blob.Data(), &Header, sizeof(FRHIAccelerationStructureSerializationHeader));
             Memory::Memcpy(Blob.Data() + sizeof(FRHIAccelerationStructureSerializationHeader), SerializedBytes, static_cast<SIZE_T>(SerializedSize));
+            Blob.Append(Attachment);
 
             Pending.BytesReadbackBuffer->Unmap(0, SerializedSize);
 

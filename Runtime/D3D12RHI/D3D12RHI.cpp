@@ -420,7 +420,8 @@ FRHIGeometryAccelerationStructure* FD3D12DeviceRHI::CreateGeometryAccelerationSt
         bool bSucceeded = false;
         if (InGeometryDesc.IsSerialized())
         {
-            bSucceeded = D3D12Geometry->BuildSerialized(*BuildContext, InGeometryDesc.SerializedData, InGeometryDesc.SerializedSizeInBytes);
+            const TArrayView<FRHIOpacityMicromap* const> OpacityMicromaps(InGeometryDesc.SerializedOpacityMicromaps, InGeometryDesc.NumSerializedOpacityMicromaps);
+            bSucceeded = D3D12Geometry->BuildSerialized(*BuildContext, InGeometryDesc.SerializedData, InGeometryDesc.SerializedSizeInBytes, OpacityMicromaps);
         }
         else
         {
@@ -1807,10 +1808,28 @@ void FD3D12DeviceRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 }
 
-FString FD3D12DeviceRHI::GetAdapterName() const 
-{ 
+FString FD3D12DeviceRHI::GetAdapterName() const
+{
     CHECK(Adapter != nullptr);
-    return Adapter->GetDescription(); 
+    return Adapter->GetDescription();
+}
+
+FRHIAdapterDesc FD3D12DeviceRHI::GetAdapterDesc() const
+{
+    CHECK(Adapter != nullptr);
+    const DXGI_ADAPTER_DESC1& DXGIAdapterDesc = Adapter->GetAdapterDesc();
+
+    FRHIAdapterDesc Desc;
+    Desc.VendorID = DXGIAdapterDesc.VendorId;
+    Desc.DeviceID = DXGIAdapterDesc.DeviceId;
+
+    LARGE_INTEGER UserModeDriverVersion = {};
+    if (SUCCEEDED(Adapter->GetDXGIAdapter()->CheckInterfaceSupport(__uuidof(IDXGIDevice), &UserModeDriverVersion)))
+    {
+        Desc.DriverVersion = static_cast<uint64>(UserModeDriverVersion.QuadPart);
+    }
+
+    return Desc;
 }
 
 IRHICommandContext* FD3D12DeviceRHI::ObtainCommandContext()

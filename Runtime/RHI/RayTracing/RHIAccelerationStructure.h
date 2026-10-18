@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/Function.h"
 #include "Core/Containers/SharedRef.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RayTracing/RHIRayTracingTypes.h"
@@ -18,15 +19,23 @@ typedef TSharedRef<FRHIGeometryAccelerationStructure>         FRHIGeometryAccele
 
 struct FRHIGeometryAccelerationStructureDesc
 {
+    /**
+     * @brief Describe a geometry structure deserialized from data SerializeAccelerationStructure wrote for a geometry structure on this driver
+     * @param InOpacityMicromaps The micromaps the data links, one for each micromap GetSerializedOpacityMicromaps returned for it: those micromaps or
+     * deserialized copies of them
+     */
     NODISCARD static FORCEINLINE FRHIGeometryAccelerationStructureDesc CreateSerialized(
-        const void*                      InSerializedData, 
-        uint64                           InSerializedSizeInBytes, 
-        EAccelerationStructureBuildFlags InFlags) noexcept
+        const void*                                   InSerializedData,
+        uint64                                        InSerializedSizeInBytes,
+        EAccelerationStructureBuildFlags              InFlags,
+        const TArrayView<FRHIOpacityMicromap* const>& InOpacityMicromaps = TArrayView<FRHIOpacityMicromap* const>()) noexcept
     {
         FRHIGeometryAccelerationStructureDesc Desc;
-        Desc.Flags                 = InFlags | EAccelerationStructureBuildFlags::Deserialize;
-        Desc.SerializedData        = InSerializedData;
-        Desc.SerializedSizeInBytes = InSerializedSizeInBytes;
+        Desc.Flags                         = InFlags | EAccelerationStructureBuildFlags::Deserialize;
+        Desc.SerializedData                = InSerializedData;
+        Desc.SerializedSizeInBytes         = InSerializedSizeInBytes;
+        Desc.SerializedOpacityMicromaps    = InOpacityMicromaps.Data();
+        Desc.NumSerializedOpacityMicromaps = static_cast<uint32>(InOpacityMicromaps.Size());
         return Desc;
     }
 
@@ -93,8 +102,10 @@ struct FRHIGeometryAccelerationStructureDesc
 
         struct
         {
-            const void* SerializedData;
-            uint64      SerializedSizeInBytes;
+            const void*                 SerializedData;
+            uint64                      SerializedSizeInBytes;
+            FRHIOpacityMicromap* const* SerializedOpacityMicromaps;
+            uint32                      NumSerializedOpacityMicromaps;
         };
     };
 };
@@ -167,6 +178,33 @@ protected:
 class FRHIGeometryAccelerationStructure : public FRHIRayTracingAccelerationStructure
 {
 protected:
+
+    /**
+     * @brief Find which of LinkedMicromaps each micromap address in the blocks of a serialized geometry structure is, laid out the same on D3D12 and Vulkan
+     * @param GetAddress Returns the address a micromap is recorded by
+     * @param OutOpacityMicromaps One micromap for each address in order, nullptr for a null address
+     * @return Returns false when the blocks don't fit in the data or an address isn't one of LinkedMicromaps
+     */
+    static RHI_API bool FindSerializedOpacityMicromaps(
+        const void*                                   SerializedData,
+        uint64                                        SerializedSizeInBytes,
+        const TArrayView<FRHIOpacityMicromap* const>& LinkedMicromaps,
+        TFunctionRef<uint64(FRHIOpacityMicromap*)>    GetAddress,
+        TArray<FRHIOpacityMicromap*>&                 OutOpacityMicromaps);
+
+    /**
+     * @brief Copy a serialized geometry structure with the micromap addresses in its blocks pointed at OpacityMicromaps
+     * @param OpacityMicromaps One micromap for each address in order, nullptr for a null address
+     * @param GetAddress Returns the address a micromap is recorded by
+     * @return Returns false when the blocks don't fit in the data or hold a different number of addresses
+     */
+    static RHI_API bool LinkSerializedOpacityMicromaps(
+        const void*                                   SerializedData,
+        uint64                                        SerializedSizeInBytes,
+        const TArrayView<FRHIOpacityMicromap* const>& OpacityMicromaps,
+        TFunctionRef<uint64(FRHIOpacityMicromap*)>    GetAddress,
+        TArray<uint8>&                                OutSerializedData);
+
     explicit FRHIGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
         : FRHIRayTracingAccelerationStructure(ERHIResourceType::GeometryAccelerationStructure, ERayTracingAccelerationStructureType::Geometry, InGeometryDesc.Flags)
         , GeometryType(InGeometryDesc.GeometryType)
@@ -176,6 +214,18 @@ protected:
     virtual ~FRHIGeometryAccelerationStructure() = default;
 
 public:
+
+    /**
+     * @brief Find which of the micromaps the structure links each micromap address in data it serialized is
+     * @param OutOpacityMicromaps One micromap for each address in order, nullptr for a null address, and empty when the structure links none
+     * @return Returns false when the data's blocks don't fit in it or an address isn't a micromap the structure links
+     */
+    virtual bool GetSerializedOpacityMicromaps(const void* SerializedData, uint64 SerializedSizeInBytes, TArray<FRHIOpacityMicromap*>& OutOpacityMicromaps) const
+    {
+        OutOpacityMicromaps.Clear();
+        return true;
+    }
+
     NODISCARD ERayTracingGeometryType GetGeometryType() const
     {
         return GeometryType;

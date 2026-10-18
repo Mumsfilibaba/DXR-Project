@@ -68,9 +68,13 @@ public:
 
     virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
-    
+
+#if D3D12_ENABLE_OPACITY_MICROMAPS
+    virtual bool GetSerializedOpacityMicromaps(const void* SerializedData, uint64 SerializedSizeInBytes, TArray<FRHIOpacityMicromap*>& OutOpacityMicromaps) const override final;
+#endif
+
     bool Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
-    bool BuildSerialized(FD3D12CommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes);
+    bool BuildSerialized(FD3D12CommandContext& CmdContext, const void* SerializedData, uint64 SerializedSizeInBytes, const TArrayView<FRHIOpacityMicromap* const>& InOpacityMicromaps);
     
     FD3D12BufferRHI* GetVertexBuffer() const
     { 

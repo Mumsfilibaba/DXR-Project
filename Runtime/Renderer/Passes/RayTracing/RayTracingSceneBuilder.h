@@ -26,9 +26,10 @@ public:
 private:
     struct FPendingCacheWrite
     {
-        FRHIRayTracingAccelerationStructure* Structure = nullptr;
-        FAccelerationStructureCache*         Cache     = nullptr;
-        FString                              Key;
+        FRHIRayTracingAccelerationStructure*                         Structure = nullptr;
+        FAccelerationStructureCache*                                 Cache     = nullptr;
+        FString                                                      Key;
+        FAccelerationStructureSerializationHelper::FCreateAttachment CreateAttachment;
     };
 
     void RequestCompactionAndCacheWrite(FRHICommandList& CommandList, const FMesh& Mesh, FRHIGeometryAccelerationStructure* Geometry);
@@ -45,6 +46,7 @@ private:
     TSet<FRHIRayTracingAccelerationStructure*> HandledStructures;
     TArray<FPendingCacheWrite>                 AwaitingCompaction;
     FRHIOpacityMicromapRef                     PlaceholderOpacityMicromap;
+    FPendingCacheWrite                         PlaceholderOpacityMicromapCacheWrite;
     FRHIBufferRef                              PlaceholderOpacityMicromapDescriptors;
     FRHIBufferRef                              PlaceholderOpacityMicromapData;
     FRHIBufferRef                              PlaceholderOpacityMicromapIndices;

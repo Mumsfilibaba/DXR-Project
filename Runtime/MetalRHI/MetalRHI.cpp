@@ -875,4 +875,9 @@ FString FMetalDeviceRHI::GetAdapterName() const
     return Device->GetProperties().Name;
 }
 
+FRHIAdapterDesc FMetalDeviceRHI::GetAdapterDesc() const
+{
+    return FRHIAdapterDesc();
+}
+
 ENABLE_UNREFERENCED_VARIABLE_WARNING

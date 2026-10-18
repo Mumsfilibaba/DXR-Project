@@ -85,8 +85,9 @@ public:
     virtual void* GetRHINativeAdapter() override final;
     virtual void* GetRHINativeDevice()  override final;
 
-    virtual FString  GetAdapterName() const override final;
-    virtual ERHIType GetRHIType()     const override final { return ERHIType::D3D11; }
+    virtual FString         GetAdapterName() const override final;
+    virtual FRHIAdapterDesc GetAdapterDesc() const override final;
+    virtual ERHIType        GetRHIType()     const override final;
 
     FD3D11Adapter* GetAdapter() const
     {

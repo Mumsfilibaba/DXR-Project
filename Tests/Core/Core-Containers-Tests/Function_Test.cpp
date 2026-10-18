@@ -106,6 +106,33 @@ bool TFunction_Test()
         TEST_EXPECT(!Moved.IsValid());
     }
 
+    TEST_SECTION(TEXT("TFunction copies a functor that fits the inline bytes but whose container doesn't, without writing past itself"));
+    {
+        const int64 First  = 1;
+        const int64 Second = 2;
+        const int64 Third  = 3;
+
+        TFunction<int64()> Func = [First, Second, Third]() -> int64
+        {
+            return First + Second + Third;
+        };
+
+        static constexpr uint64 Sentinel = 0x5E571E1Full;
+
+        alignas(TFunction<int64()>) uint8 Buffer[sizeof(TFunction<int64()>) + sizeof(uint64)];
+        Memory::Memcpy(Buffer + sizeof(TFunction<int64()>), &Sentinel, sizeof(uint64));
+
+        TFunction<int64()>* Copy = new(Buffer) TFunction<int64()>(Func);
+        TEST_EXPECT((*Copy)() == 6);
+
+        uint64 AfterCopy = 0;
+        Memory::Memcpy(&AfterCopy, Buffer + sizeof(TFunction<int64()>), sizeof(uint64));
+        TEST_EXPECT(AfterCopy == Sentinel);
+
+        Copy->~TFunction();
+        TEST_EXPECT(Func() == 6);
+    }
+
     TEST_SECTION(TEXT("TFunction Swap"));
     {
         TFunction<int32(int32, int32)> First = &FreeAdd;

@@ -32,6 +32,8 @@ static FAutoConsoleVariableRef CVarRayTracingOpacityMicromaps(
     "them. When false, they fall back to the any-hit alpha test."),
     GRayTracingOpacityMicromaps);
 
+static constexpr const CHAR_T* PlaceholderOpacityMicromapName = TEXT("PlaceholderOpacityMicromap");
+
 static FMaterial* GetSubMeshMaterial(const FSceneStaticMesh& StaticMesh, int32 SubMeshIndex)
 {
     TSharedPtr<FMaterial> Material = StaticMesh.GetMaterial(SubMeshIndex);
@@ -73,6 +75,7 @@ void FRayTracingSceneBuilder::Release()
     GeometryTableCapacity = 0;
 
     PlaceholderOpacityMicromap.Reset();
+    PlaceholderOpacityMicromapCacheWrite = FPendingCacheWrite();
     PlaceholderOpacityMicromapDescriptors.Reset();
     PlaceholderOpacityMicromapData.Reset();
     PlaceholderOpacityMicromapIndices.Reset();
@@ -81,6 +84,12 @@ void FRayTracingSceneBuilder::Release()
 
 bool FRayTracingSceneBuilder::CreatePlaceholderOpacityMicromap()
 {
+    PlaceholderOpacityMicromap = GRayTracingASCache ? StructureCache.TryLoadSharedOpacityMicromap(PlaceholderOpacityMicromapName) : nullptr;
+    if (PlaceholderOpacityMicromap)
+    {
+        return true;
+    }
+
     const FRHIOpacityMicromapTriangleDesc Triangle(0, 0, EOpacityMicromapFormat::OC1_4State);
     const uint32                          UnknownOpaqueState = 3;
 
@@ -102,7 +111,15 @@ bool FRayTracingSceneBuilder::CreatePlaceholderOpacityMicromap()
     BuildDesc.NumOpacityMicromaps            = 1;
 
     PlaceholderOpacityMicromap = RHI::CreateOpacityMicromap(FRHIOpacityMicromapDesc(EOpacityMicromapFormat::OC1_4State, 0, BuildDesc));
-    return PlaceholderOpacityMicromap != nullptr;
+    if (!PlaceholderOpacityMicromap)
+    {
+        return false;
+    }
+
+    FPendingCacheWrite& CacheWrite = PlaceholderOpacityMicromapCacheWrite;
+    CacheWrite.Structure = PlaceholderOpacityMicromap.Get();
+    CacheWrite.Cache     = StructureCache.RegisterSharedOpacityMicromap(PlaceholderOpacityMicromapName, PlaceholderOpacityMicromap.Get(), CacheWrite.Key, CacheWrite.CreateAttachment);
+    return true;
 }
 
 FRHIBuffer* FRayTracingSceneBuilder::GetPlaceholderOpacityMicromapIndices(uint32 NumTriangles)
@@ -183,6 +200,13 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
     uint32 CacheMissesThisFrame     = 0;
     uint32 SkippedNullGeometry      = 0;
 
+    if (PlaceholderOpacityMicromapCacheWrite.Cache && GRayTracingASCache)
+    {
+        const FPendingCacheWrite& CacheWrite = PlaceholderOpacityMicromapCacheWrite;
+        SerializationHelper.RequestSerialize(CommandList, CacheWrite.Structure, *CacheWrite.Cache, CacheWrite.Key, CacheWrite.CreateAttachment);
+        PlaceholderOpacityMicromapCacheWrite = FPendingCacheWrite();
+    }
+
     TSet<FRHIRayTracingAccelerationStructure*> StructuresInScene;
     for (const FSceneStaticMesh* StaticMesh : Scene->GetStaticMeshes())
     {
@@ -194,7 +218,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
             LinkOpacityMicromaps(Mesh, *StaticMesh);
         }
 
-        const bool bLoadedFromCache = !bHadGeometry && GRayTracingASCache && !Mesh.HasRayTracingOpacityMicromaps() && StructureCache.TryLoad(Mesh);
+        const bool bLoadedFromCache = !bHadGeometry && GRayTracingASCache && StructureCache.TryLoad(Mesh);
         Mesh.EnsureRayTracingResources();
 
         FRHIGeometryAccelerationStructure* Geometry = Mesh.GetRayTracingGeometry();
@@ -211,7 +235,7 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
         else if (!bHadGeometry)
         {
             ++LazyBLASBuildsThisFrame;
-            if (GRayTracingASCache && Mesh.IsAsset() && !Mesh.HasRayTracingOpacityMicromaps())
+            if (GRayTracingASCache && Mesh.IsAsset())
             {
                 ++CacheMissesThisFrame;
             }
@@ -418,21 +442,22 @@ void FRayTracingSceneBuilder::BuildSceneAccelerationData(FRHICommandList& Comman
 void FRayTracingSceneBuilder::RequestCompactionAndCacheWrite(FRHICommandList& CommandList, const FMesh& Mesh, FRHIGeometryAccelerationStructure* Geometry)
 {
     FString                      Key;
-    FAccelerationStructureCache* Cache = GRayTracingASCache && !Mesh.HasRayTracingOpacityMicromaps() ? StructureCache.FindCache(Mesh, Key) : nullptr;
+    FAccelerationStructureCache* Cache = GRayTracingASCache ? StructureCache.FindCache(Mesh, Key) : nullptr;
 
     if (GRayTracingCompaction && CompactionHelper.RequestCompaction(CommandList, Geometry))
     {
         if (Cache)
         {
             FPendingCacheWrite& Pending = AwaitingCompaction.Emplace();
-            Pending.Structure = Geometry;
-            Pending.Cache     = Cache;
-            Pending.Key       = ::Move(Key);
+            Pending.Structure        = Geometry;
+            Pending.Cache            = Cache;
+            Pending.Key              = ::Move(Key);
+            Pending.CreateAttachment = StructureCache.CreateAttachment(Mesh, Geometry);
         }
     }
     else if (Cache)
     {
-        SerializationHelper.RequestSerialize(CommandList, Geometry, *Cache, Key);
+        SerializationHelper.RequestSerialize(CommandList, Geometry, *Cache, Key, StructureCache.CreateAttachment(Mesh, Geometry));
     }
 }
 
@@ -450,7 +475,7 @@ void FRayTracingSceneBuilder::TickCompactionAndCacheWrites(FRHICommandList& Comm
                 FPendingCacheWrite& Pending = AwaitingCompaction[Index];
                 if (Pending.Structure == Structure.Get())
                 {
-                    SerializationHelper.RequestSerialize(CommandList, Structure.Get(), *Pending.Cache, Pending.Key);
+                    SerializationHelper.RequestSerialize(CommandList, Structure.Get(), *Pending.Cache, Pending.Key, Pending.CreateAttachment);
                     AwaitingCompaction.RemoveAt(Index);
                     break;
                 }

@@ -3455,6 +3455,58 @@ static bool ProbeAccelerationStructures(ERHIType ExpectedType)
         }
     }
 
+    TEST_SECTION(TEXT("A structure deserialized with a deserialized copy of the micromap it was serialized with is missed when transparent and hit when opaque"));
+    if (RHI::bSupportsOpacityMicromap && bPipelineProbe)
+    {
+        for (const bool bOpaque : { false, true })
+        {
+            FOpacityMicromapProbe MicromapProbe;
+            const bool bCreated = CreateOpacityMicromapProbe(bOpaque, false, MicromapProbe);
+            TEST_EXPECT(bCreated);
+
+            TArray<uint8> SerializedMicromap;
+            TArray<uint8> SerializedGeometry;
+            const bool bSerialized = bCreated && SerializeProbeStructure(MicromapProbe.Micromap.Get(), SerializedMicromap) && SerializeProbeStructure(MicromapProbe.Geometry.Geometry.Get(), SerializedGeometry);
+            TEST_EXPECT(bSerialized);
+
+            TArray<FRHIOpacityMicromap*> LinkedMicromaps;
+            const bool bFoundMicromap = bSerialized && MicromapProbe.Geometry.Geometry->GetSerializedOpacityMicromaps(SerializedGeometry.Data(), SerializedGeometry.Size(), LinkedMicromaps) &&
+                LinkedMicromaps.Size() == 1 && LinkedMicromaps[0] == MicromapProbe.Micromap.Get();
+            TEST_EXPECT(bFoundMicromap);
+
+            FRHIOpacityMicromapRef MicromapCopy = bFoundMicromap ? RHI::CreateOpacityMicromap(FRHIOpacityMicromapDesc::CreateSerialized(SerializedMicromap.Data(), SerializedMicromap.Size(), EAccelerationStructureBuildFlags::None)) : nullptr;
+            TEST_EXPECT(MicromapCopy != nullptr);
+            if (!MicromapCopy)
+            {
+                continue;
+            }
+
+            MicromapProbe.Scene.Reset();
+            MicromapProbe.Geometry.Geometry.Reset();
+            MicromapProbe.Micromap.Reset();
+
+            FRHIOpacityMicromap* const CopyMicromaps[] = { MicromapCopy.Get() };
+            FRHIGeometryAccelerationStructureRef Geometry = RHI::CreateGeometryAccelerationStructure(FRHIGeometryAccelerationStructureDesc::CreateSerialized(SerializedGeometry.Data(), SerializedGeometry.Size(), EAccelerationStructureBuildFlags::None, CopyMicromaps));
+            TEST_EXPECT(Geometry != nullptr);
+            if (!Geometry)
+            {
+                continue;
+            }
+
+            const FRHIGeometryAccelerationStructureInstance Instances[] = { MakeProbeInstance(Geometry.Get(), 3, 0.0f) };
+            FRHISceneAccelerationStructureRef Scene = RHI::CreateSceneAccelerationStructure(FRHISceneAccelerationStructureDesc(Instances, EAccelerationStructureBuildFlags::None));
+
+            bool bHit = !bOpaque;
+            TEST_EXPECT(Scene && TracePipelineProbeRay(PipelineProbe, Scene.Get(), 0.0f, bHit) && bHit == bOpaque);
+
+            if (Scene && Probe.OpacityMicromapPipeline)
+            {
+                FRayQueryProbeHit Hit = {};
+                TEST_EXPECT(TraceProbeRay(Probe, Scene.Get(), false, 0.0f, Hit, true) && (bOpaque ? IsExpectedProbeHit(Hit, 3, 0, 5.0f) : Hit.bHit == 0));
+            }
+        }
+    }
+
     TEST_SECTION(TEXT("An opacity micromap builds from a descriptor and its micro-triangle data"));
     if (RHI::bSupportsOpacityMicromap)
     {
